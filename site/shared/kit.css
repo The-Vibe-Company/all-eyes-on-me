@@ -47,6 +47,15 @@
   --gutter: 16px;
   --cols: 4;
   --measure: 62ch;
+
+  /* One column of the page grid, and the distance from one ruler tick to
+     the next. 100cqw is the width of the .grid the element sits in, so
+     these always match the tracks the ruler draws. */
+  --col: calc((100cqw - (var(--cols) - 1) * var(--gutter)) / var(--cols));
+  --step: calc(var(--col) + var(--gutter));
+
+  /* How far a label sits after its tick, on the ruler and in the record */
+  --tick-inset: 6px;
 }
 
 @media (min-width: 720px) {
@@ -127,6 +136,7 @@ p code {
   display: grid;
   grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   column-gap: var(--gutter);
+  container-type: inline-size;
 }
 
 .grid > * { grid-column: 1 / -1; min-width: 0; }
@@ -245,7 +255,7 @@ p code {
 
 .ruler span {
   height: 24px;
-  padding: 5px 0 0 6px;
+  padding: 5px 0 0 var(--tick-inset);
   border-left: 1px solid var(--ink-3);
   font: 500 0.6875rem/1 var(--mono);
   color: var(--ink-3);
@@ -485,6 +495,18 @@ h2 {
 .plate__label--vis { right: calc(100% - var(--split) + 8px); }
 .plate__label--irr { left: calc(var(--split) + 8px); }
 
+/* On a phone the drawing is too small to carry the tags: they hang under
+   it, either side of the split line, in a row of their own. */
+@media (max-width: 719.98px) {
+  .plate__frame { grid-template-rows: 20px auto 26px; }
+  .plate__view {
+    overflow: visible;
+    clip-path: inset(0 0 -26px 0);
+  }
+  .plate__label { top: calc(100% + 6px); }
+  .plate__divider { bottom: -26px; }
+}
+
 /* Visible light: the screen as it looks */
 .v-bg { fill: #fbfaf7; }
 .v-head { fill: #2f4f6b; }
@@ -690,21 +712,29 @@ h2 {
   .notes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* The record: the report's header fields */
+/* The record: the report's header fields, set on the page grid itself so
+   each field starts on a ruler tick and reads like the ruler above it */
 
 .record {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: subgrid;
   border-top: 1.5px solid var(--ink);
   border-bottom: 1px solid var(--rule);
 }
 
 .record > div {
-  padding: 14px 16px 16px 0;
-  border-bottom: 1px solid var(--rule);
+  grid-column: span 2;
+  padding: 14px 12px 16px var(--tick-inset);
+  border-left: 1px solid var(--rule);
 }
 
-.record > div:nth-last-child(-n + 2) { border-bottom: 0; }
+.record > div:nth-child(-n + 2) { border-bottom: 1px solid var(--rule); }
+
+/* Two fields a row: the left one carries the row rule across the gutter */
+.record > div:nth-child(odd) {
+  margin-right: calc(-1 * var(--gutter));
+  padding-right: calc(12px + var(--gutter));
+}
 
 .record dt {
   font: 500 0.6875rem/1.4 var(--mono);
@@ -721,9 +751,9 @@ h2 {
 }
 
 @media (min-width: 720px) {
-  .record { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .record > div { border-bottom: 0; padding-left: 16px; border-left: 1px solid var(--rule); }
-  .record > div:first-child { padding-left: 0; border-left: 0; }
+  .record > div { grid-column: span 3; }
+  .record > div:nth-child(-n + 2) { border-bottom: 0; }
+  .record > div:nth-child(odd) { margin-right: 0; padding-right: 12px; }
 }
 
 /* Sections: heading in the left columns, the body on the right */
@@ -754,8 +784,8 @@ h2 {
 .steps li {
   counter-increment: step;
   display: grid;
-  grid-template-columns: 2.75rem minmax(0, 1fr);
-  column-gap: 12px;
+  grid-template-columns: var(--col) minmax(0, 1fr);
+  column-gap: var(--gutter);
   padding: 16px 0 18px;
   border-bottom: 1px solid var(--rule);
   color: var(--ink-2);
@@ -776,9 +806,13 @@ h2 {
 }
 
 @media (min-width: 720px) {
-  .steps li { grid-template-columns: 3.5rem 10rem minmax(0, 1fr); column-gap: 20px; }
+  .steps li { grid-template-columns: var(--col) calc(3 * var(--step) - var(--gutter)) minmax(0, 1fr); }
   .steps li::before { grid-row: auto; }
   .steps strong { line-height: 1.5; }
+}
+
+@media (min-width: 1080px) {
+  .steps li { grid-template-columns: var(--col) calc(2 * var(--step) - var(--gutter)) minmax(0, 1fr); }
 }
 
 /* Commands: the legend, one swatch per command */
@@ -786,14 +820,14 @@ h2 {
 .legend {
   list-style: none;
   display: grid;
-  column-gap: 32px;
+  column-gap: var(--gutter);
   border-bottom: 1px solid var(--rule);
 }
 
 .legend li {
   position: relative;
   min-height: 74px;
-  padding: 16px 0 16px 56px;
+  padding: 16px 0 16px var(--step);
   border-top: 1px solid var(--rule);
   color: var(--ink-2);
   font-size: 1rem;
@@ -822,6 +856,11 @@ h2 {
 @media (min-width: 720px) {
   .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .legend li:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+}
+
+/* Beside the section heading the body is nine columns wide: five, then four */
+@media (min-width: 1080px) {
+  .legend { grid-template-columns: calc(5 * var(--step) - var(--gutter)) minmax(0, 1fr); }
 }
 
 .legend [data-command="capture"]::before {
@@ -883,11 +922,14 @@ h2 {
   font-weight: 600;
 }
 
+/* A command is never broken: a line too long for the film scrolls inside it */
 .film pre {
   padding: 18px 20px 20px;
   font: 400 0.875rem/1.75 var(--mono);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--xr-dim) transparent;
 }
 
 .film pre code { font-size: inherit; }
@@ -928,15 +970,17 @@ h2 {
   background: var(--sheet);
 }
 
+/* The band fills the first column and the text starts on the next tick;
+   the 1.5px is the frame the layers sit in. */
 .strata li {
-  --band: 36px;
+  --band: calc(var(--col) - 1.5px);
   position: relative;
-  padding: 16px 16px 18px calc(var(--band) + 16px);
+  padding: 16px 16px 18px calc(var(--step) - 1.5px);
   color: var(--ink-2);
 }
 
 @media (min-width: 720px) {
-  .strata li { --band: 56px; padding: 16px 20px 18px calc(var(--band) + 20px); }
+  .strata li { padding-right: 20px; }
 }
 
 .strata li + li { border-top: 1px solid var(--rule); }
