@@ -1,0 +1,41 @@
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_69044d88566a14 4,12-18,23-24,27-29,41-52,54,60,63
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_69044d88566a14 1,12,14-15,53-57,59-68
+packages/core/src/run/snapshot.ts
+  s_4ce34ec42d9105::t_73d390e2e0fb83 2,4-16,18-24,26
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_73d390e2e0fb83 10-13,15-23,25-35,37
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_69044d88566a14 7
+examples/ugly-app/README.md
+  s_4ce34ec42d9105::t_fed5773a95c398 9
+packages/core/src/run/compare.ts
+  s_4ce34ec42d9105::t_73d390e2e0fb83 7,16-20,27,33-36,38-44
+.veebee/autopilot/2026-10-07.md
+  s_4ce34ec42d9105::t_fed5773a95c398 5-8,16-17,20-21,26
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_73d390e2e0fb83 2-3
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_fed5773a95c398 59,67,73-75,97,101
+packages/cli/src/commands/capture.ts
+  s_4ce34ec42d9105::t_69044d88566a14 6
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_73d390e2e0fb83 8,80-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "43b4dc06d4da985680e3a80b99cf66f924cb0bd5",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
