@@ -370,6 +370,17 @@ h2 {
   color: #fff;
 }
 
+/* A count inside a button, set off by a hairline: the repository's stars */
+.btn__count {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  font: 500 0.875rem/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn__count[hidden] { display: none; }
+
 /* Hero */
 
 .hero {
