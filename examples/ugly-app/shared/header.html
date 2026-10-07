@@ -1,0 +1,25 @@
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="/">Super Boutique</a>
+    <nav class="site-nav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="/">Accueil</a></li>
+        <li><a href="/produits">Produits</a></li>
+        <li><a href="/commandes">Commandes</a></li>
+        <li><a href="/contact">Contact</a></li>
+        <li><a href="/aide">Aide</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<script>
+  // Marks the link of the current page (aria-current="page", styled by kit.css).
+  (function () {
+    var path = location.pathname;
+    if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+    document.querySelectorAll(".site-nav a").forEach(function (link) {
+      if (link.getAttribute("href") === path) link.setAttribute("aria-current", "page");
+    });
+  })();
+</script>
