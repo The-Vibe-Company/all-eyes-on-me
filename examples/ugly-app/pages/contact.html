@@ -3,25 +3,99 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contact</title>
-<style>
-  body { margin: 0; font-family: "Courier New", monospace; background: #111; color: #ddd; }
-  .bar { padding: 24px; background: #333; text-align: right; }
-  .bar span { font-size: 28px; float: left; color: orange; }
-  .bar a { color: #aaa; margin-left: 20px; }
-  form { max-width: 420px; margin: 40px auto; display: grid; gap: 10px; }
-  input, textarea { background: #222; color: #ddd; border: 1px solid #555; padding: 8px; }
-  .send { background: orange; color: black; text-align: center; padding: 10px; cursor: default; }
-</style>
+<title>Contact · Super Boutique</title>
+<link rel="stylesheet" href="/shared/kit.css">
 </head>
 <body>
-<div class="bar"><span>~ super boutique ~</span><a href="/">ACCUEIL</a><a href="/aide">AIDE</a></div>
-<form onsubmit="return false">
-  <label for="email">Email</label>
-  <input id="email" type="email">
-  <label for="msg">Message</label>
-  <textarea id="msg" rows="5"></textarea>
-  <div class="send" onclick="alert('Envoyé')">ENVOYER</div>
-</form>
+<!-- include: header -->
+<main id="contenu" class="page">
+  <div class="page-head">
+    <h1>Nous contacter</h1>
+    <p class="lead">Une question sur un produit, une commande ou une livraison ? Laissez-nous votre adresse email et votre message, nous vous répondons par email.</p>
+  </div>
+
+  <form class="form" id="contact-form" novalidate>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-hint">
+      <p class="hint" id="email-hint">Nous l’utilisons seulement pour vous répondre.</p>
+    </div>
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="6" required></textarea>
+    </div>
+    <button type="submit">Envoyer le message</button>
+    <div id="confirmation" role="status" aria-live="polite"></div>
+  </form>
+
+  <p class="note">Pour suivre un colis, consultez vos <a href="/commandes">commandes</a>.</p>
+</main>
+<!-- include: footer -->
+<script>
+  // No backend: check the two fields, then confirm in the page.
+  (function () {
+    var form = document.getElementById("contact-form");
+    var confirmation = document.getElementById("confirmation");
+    var checks = [
+      { id: "email", hint: "email-hint", message: function (input) {
+        if (!input.value.trim()) return "Indiquez votre adresse email.";
+        if (input.validity.typeMismatch) return "Cette adresse email n’est pas valide, par exemple : nom@exemple.fr.";
+        return "";
+      } },
+      { id: "message", message: function (input) {
+        return input.value.trim() ? "" : "Écrivez votre message.";
+      } }
+    ];
+
+    function setError(check, text) {
+      var input = document.getElementById(check.id);
+      var errorId = check.id + "-error";
+      var error = document.getElementById(errorId);
+      if (text) {
+        if (!error) {
+          error = document.createElement("p");
+          error.className = "field-error";
+          error.id = errorId;
+          input.parentNode.appendChild(error);
+        }
+        error.textContent = text;
+        input.setAttribute("aria-invalid", "true");
+        input.setAttribute("aria-describedby", (check.hint ? check.hint + " " : "") + errorId);
+      } else {
+        if (error) error.remove();
+        input.removeAttribute("aria-invalid");
+        if (check.hint) input.setAttribute("aria-describedby", check.hint);
+        else input.removeAttribute("aria-describedby");
+      }
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      confirmation.textContent = "";
+      var firstInvalid = null;
+      checks.forEach(function (check) {
+        var input = document.getElementById(check.id);
+        var text = check.message(input);
+        setError(check, text);
+        if (text && !firstInvalid) firstInvalid = input;
+      });
+      if (firstInvalid) {
+        firstInvalid.focus();
+        return;
+      }
+      var notice = document.createElement("div");
+      notice.className = "notice notice-success";
+      notice.innerHTML = "<p><strong>Message envoyé.</strong></p><p>Merci, nous vous répondrons à l’adresse indiquée.</p>";
+      confirmation.appendChild(notice);
+      form.reset();
+    });
+
+    checks.forEach(function (check) {
+      document.getElementById(check.id).addEventListener("input", function (event) {
+        if (event.target.getAttribute("aria-invalid") === "true") setError(check, check.message(event.target));
+      });
+    });
+  })();
+</script>
 </body>
 </html>
