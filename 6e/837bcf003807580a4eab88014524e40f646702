@@ -1,0 +1,29 @@
+site/run/after/judge.json
+  s_4ce34ec42d9105::t_7391480aac1496 1-129
+site/run/after/check.json
+  s_4ce34ec42d9105::t_7391480aac1496 1-19
+site/run/before/judge.json
+  s_4ce34ec42d9105::t_7391480aac1496 1-130
+.veebee/milestones/01-landing/tickets/02-aeom-refait-la-landing.md
+  s_4ce34ec42d9105::t_f4d99740ee90ff 7
+.veebee/autopilot/2026-10-07.md
+  s_4ce34ec42d9105::t_f4d99740ee90ff 18-19,21-23
+site/run/before/check.json
+  s_4ce34ec42d9105::t_7391480aac1496 1-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6e837bcf003807580a4eab88014524e40f646702",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
