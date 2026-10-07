@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Eyes On Me</title>
+<meta name="description" content="A fleet of agents that rebuilds your frontend in parallel, judges every screen, and keeps only what got better. Open source.">
+<link rel="stylesheet" href="/shared/kit.css">
+</head>
+<body>
+<main>
+<h1>All Eyes On Me</h1>
+<p>Coding agents can build a backend on their own, because tests tell them when they got it right. The frontend has no such oracle, so agents improvise: generic screens, a different header on every page, buttons that do not look clickable.</p>
+<p>All Eyes On Me gives the frontend that oracle. A fleet of agents rebuilds your app's frontend in parallel, judges every screen, and keeps only what got better.</p>
+<p><a href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub</a></p>
+
+<h2>How it works</h2>
+<ol>
+<li><strong>Capture.</strong> It starts your app, follows every link and screenshots each page at phone and desktop width.</li>
+<li><strong>Check.</strong> It measures what a machine can measure: pointer cursors, sideways scrolling, contrast, console errors.</li>
+<li><strong>Judge.</strong> Three independent judges look at every page against a short list of principles, and the majority decides.</li>
+<li><strong>Directions.</strong> On demand, it builds six art directions from things your users know, never from the looks AIs propose by default, and keeps one in a knockout.</li>
+<li><strong>Waves.</strong> One worker writes the shared kit, then one worker per page rebuilds every page at once, each in its own files.</li>
+<li><strong>Ratchet.</strong> A page is kept only if fewer things fail on it than before.</li>
+</ol>
+
+<h2>Commands</h2>
+<ul>
+<li data-command="capture"><code>aeom capture</code> Find every page of a web app and screenshot it</li>
+<li data-command="check"><code>aeom check</code> Run the measurable checks on every page</li>
+<li data-command="judge"><code>aeom judge</code> Count the judges' votes on the captures</li>
+<li data-command="principles"><code>aeom principles</code> Print the principles the judge uses</li>
+<li data-command="snapshot"><code>aeom snapshot</code> Keep a copy of the captures and reports, such as before a fleet run</li>
+<li data-command="compare"><code>aeom compare</code> Compare two snapshots page by page</li>
+<li data-command="sheet"><code>aeom sheet</code> Lay captures side by side in one image</li>
+<li data-command="tournament"><code>aeom tournament</code> Run a knockout between directions, three votes per duel</li>
+</ul>
+
+<h2>Try it</h2>
+<p>AEOM is not on npm yet. From the source, with Node 22 and pnpm:</p>
+<pre><code>git clone https://github.com/The-Vibe-Company/all-eyes-on-me
+cd all-eyes-on-me
+pnpm install
+pnpm build
+pnpm --filter @aeom/core exec playwright install chromium
+node packages/cli/dist/index.js --help</code></pre>
+<p>Then copy <code>skills/aeom</code> and <code>skills/aeom-judge</code> into your project's <code>.claude/skills/</code> and type <code>/aeom</code> in Claude Code.</p>
+
+<h2>Roadmap</h2>
+<ol>
+<li data-stage="v0"><strong>V0, done.</strong> The crudest loop that runs end to end, on a deliberately ugly demo app.</li>
+<li data-stage="landing"><strong>Now.</strong> This page, rebuilt by AEOM itself.</li>
+<li data-stage="ux"><strong>Next, the UX layer.</strong> AEOM understands what an app is for, maps its key journeys, and critiques the existing experience journey by journey. It may reorder steps and navigation, never build features.</li>
+<li data-stage="v1"><strong>Then.</strong> Feedback that turns into principles, a spend cap, the npm package.</li>
+<li data-stage="v2"><strong>Later.</strong> Codex, mobile, new projects from scratch.</li>
+</ol>
+</main>
+<footer>
+<p>MIT licence. Made by <a href="https://thevibecompany.co">The Vibe Company</a>.</p>
+</footer>
+</body>
+</html>
