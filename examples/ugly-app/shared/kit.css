@@ -1,2 +1,1101 @@
-/* The kit: tokens and shared components every page uses.
-   Empty on purpose. Each page styles itself, which is the problem. */
+/* ==========================================================================
+   Super Boutique — the kit. Direction: plan d'aménagement.
+
+   The shop is laid out the way an interior architect draws a furnished
+   floor plan. White plotter paper and ink in three line weights (thin for
+   dimensions and rows, medium for furniture and controls, heavy for cut
+   walls). Technical lettering: Barlow for reading, Barlow Semi Condensed,
+   often in capitals, for labels, figures and titles. Dimensions in
+   centimetres with oblique ticks. Every object carries a round repère that
+   keys into a nomenclature. Sections are separated by dash-dot axis lines,
+   rooms are named with an étiquette (name over a rule, measure below), the
+   header sits on a hatched wall with an opening at the current page, and
+   the page ends on a cartouche (title block).
+
+   One colour on top of the ink: "projet" blue, the blue of a diazo print.
+   Blue means "you can act here" or "you are here": links, the main button,
+   the current page, the row or object under the pointer, focus. Yellow
+   hatching is the "à reprendre" code and marks errors, nothing else.
+   No shadows, no rounded boxes, no gradients, no cards.
+
+   HOW A PAGE USES THE KIT
+     <link rel="stylesheet" href="/shared/kit.css">
+     <link rel="icon" href="/shared/icon.svg">
+     <body>
+       <!-- include: header -->        skip link, brand, numbered nav, wall;
+                                       marks the current page by itself
+       <main id="contenu"> … </main>   the skip link jumps to #contenu
+       <!-- include: footer -->        the cartouche
+     </body>
+   Put content in <section class="wrap grid section"> and place children
+   with span-* (12 columns, start-* to offset). Under 760 px every span takes
+   the full width. Separate sections with <hr class="axe">.
+
+   CLASSES
+     Layout    .wrap  .grid  .span-1…12  .start-1…12  .section  .stack
+               .actions  .axe (hr)  .vh (visually hidden)
+     Type      .titre (page h1)  .h2  .h3  .lead  .label  .muted  .num
+               .dim (a dimension figure, italic: <span class="dim">45 × 52</span>)
+     Plan      .etiquette > .etiquette__nom + .etiquette__meta   room label,
+                   use it as the h2 of a section
+               .repere (.repere--plein)   round tag keyed to a table row
+               .cote (.cote--v) > .cote__val   dimension line, length set by
+                   style="--l: 230" in cm, drawn at --echelle px per cm
+               .encombrement > .objet > .repere + .objet__forme + .cote--v + .cote
+                   footprints at scale; .objet__forme takes --l (width) and
+                   --p (depth) in cm, and --luminaire / --assise / --tapis
+               .echelle > .echelle__barre + .echelle__graduations + .echelle__unite
+                   graphic scale bar, true at any zoom
+               .hachure   wall hatching as a fill
+     Actions   .btn  .btn--trait  .btn--discret  .btn--petit  .btn__fleche
+               .link (every bare <a> already looks like one)
+     Fields    .field > .field__box > .field__label + .field__input
+               then .field__hint and .field__error; .field--invalid shows the
+               error. .field__input works on input, select and textarea.
+     Data      .table-wrap > table.nomenclature; td.num for prices,
+               .nomenclature__repere for the tag column
+     Lists     ol.notes   numbered general notes, as on a drawing
+     States    .state  .state--empty  .state--error  .state__mark
+               .state__body  .state__title  .state__text  .state__actions
+     Shell     .skip  .site-header  .brand  .site-nav  .mur  .cartouche
+               (written by the header and footer partials, not by pages)
+
+   Empty state (dashed: "not built yet"):
+     <div class="state state--empty" role="status">
+       <span class="state__mark repere" aria-hidden="true">0</span>
+       <div class="state__body">
+         <h2 class="state__title">Aucune commande pour l'instant</h2>
+         <p class="state__text">Vos commandes apparaîtront ici dès la première.</p>
+         <p class="state__actions"><a class="btn" href="/produits">Voir les produits</a></p>
+       </div>
+     </div>
+   Error state: same markup with state--error, role="alert", mark "!",
+   a title that says what failed and a text that says what to do.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Semi+Condensed:ital,wght@0,500;0,600;1,400;1,500&display=swap");
+
+:root {
+  /* Colour: paper, ink, graphite, one blue */
+  --papier: #ffffff;
+  --papier-2: #f2f4f6;      /* table heads, quiet zones */
+  --encre: #15191e;         /* text and heavy lines, 17.9:1 on paper */
+  --mine: #4f5761;          /* graphite: secondary text, cotes, 7.3:1 */
+  --trait: #b4bac1;         /* construction lines, never text */
+  --projet: #1d4ab4;        /* diazo blue, 7.8:1 on paper, 7.8:1 under white */
+  --projet-fonce: #15378a;
+  --projet-voile: #e9effb;  /* what is under the pointer */
+  --on-projet: #ffffff;
+  --reprise: #d9a300;       /* "à reprendre" hatching, errors only, never text */
+
+  /* Line weights, as pens: thin, medium, heavy */
+  --t1: 1px;
+  --t2: 2px;
+  --t3: 4px;
+  --mur: 12px;              /* the hatched wall under the header */
+  --hachure: repeating-linear-gradient(-45deg, var(--encre) 0 1px, transparent 1px 6px);
+  --hachure-reprise: repeating-linear-gradient(-45deg, var(--reprise) 0 3px, transparent 3px 7px);
+
+  /* Type */
+  --font: "Barlow", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --tech: "Barlow Semi Condensed", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --text-xs: 0.8125rem;     /* 13 — labels, nav numbers */
+  --text-sm: 0.9375rem;     /* 15 — notes, hints, table */
+  --text-md: 1.0625rem;     /* 17 — body */
+  --text-lg: 1.25rem;       /* 20 — lead */
+  --text-xl: 1.625rem;      /* 26 — h2 */
+  --text-2xl: clamp(2.125rem, 1.4rem + 2.4vw, 3rem); /* 34 → 48 — h1 */
+
+  /* Space, on a 4 px step */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --s9: 96px;
+
+  /* Grid and drawing scale */
+  --wrap: 1200px;
+  --gutter: 24px;
+  --echelle: 1.2;           /* px per cm for .cote, .objet__forme, .echelle */
+}
+
+@media (max-width: 760px) {
+  :root {
+    --gutter: 16px;
+    --echelle: 1;
+  }
+}
+
+/* ---------- Base ---------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papier);
+  color: var(--encre);
+  font-family: var(--font);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: lining-nums;
+}
+
+h1, h2, h3, h4, p, figure, ol, ul { margin: 0; }
+
+h1, h2, h3, h4 {
+  font-family: var(--tech);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+img, svg { display: block; max-width: 100%; }
+
+a[href], button, summary, select, label[for], [role="button"], [onclick],
+input[type="button"], input[type="submit"], input[type="reset"] {
+  cursor: pointer;
+}
+
+a {
+  color: var(--projet);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+a:hover {
+  color: var(--projet-fonce);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: var(--t2) solid var(--projet);
+  outline-offset: 3px;
+}
+
+::selection { background: var(--projet); color: var(--on-projet); }
+
+.vh {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Layout ---------- */
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--wrap) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  row-gap: var(--s6);
+}
+
+.span-1 { grid-column-end: span 1; }   .span-2 { grid-column-end: span 2; }
+.span-3 { grid-column-end: span 3; }   .span-4 { grid-column-end: span 4; }
+.span-5 { grid-column-end: span 5; }   .span-6 { grid-column-end: span 6; }
+.span-7 { grid-column-end: span 7; }   .span-8 { grid-column-end: span 8; }
+.span-9 { grid-column-end: span 9; }   .span-10 { grid-column-end: span 10; }
+.span-11 { grid-column-end: span 11; } .span-12 { grid-column-end: span 12; }
+.start-1 { grid-column-start: 1; }     .start-2 { grid-column-start: 2; }
+.start-3 { grid-column-start: 3; }     .start-4 { grid-column-start: 4; }
+.start-5 { grid-column-start: 5; }     .start-6 { grid-column-start: 6; }
+.start-7 { grid-column-start: 7; }     .start-8 { grid-column-start: 8; }
+.start-9 { grid-column-start: 9; }     .start-10 { grid-column-start: 10; }
+.start-11 { grid-column-start: 11; }   .start-12 { grid-column-start: 12; }
+
+@media (max-width: 760px) {
+  .grid > [class*="span-"] { grid-column: 1 / -1; }
+}
+
+.section { padding-block: var(--s8); }
+
+.stack > * + * { margin-top: var(--s4); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s4) var(--s5);
+}
+
+/* The dash-dot axis line (trait d'axe) between sections. */
+.axe {
+  height: 1px;
+  margin: 0 auto;
+  border: 0;
+  max-width: calc(var(--wrap));
+  width: calc(100% - 2 * var(--gutter));
+  background: repeating-linear-gradient(90deg,
+    var(--mine) 0 28px, transparent 28px 34px,
+    var(--mine) 34px 37px, transparent 37px 43px);
+}
+
+/* ---------- Type ---------- */
+
+.titre {
+  font-family: var(--tech);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.h2 { font-size: var(--text-xl); font-weight: 600; }
+.h3 { font-size: var(--text-lg); font-weight: 600; }
+
+.lead {
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  max-width: 34em;
+}
+
+.label {
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--mine);
+}
+
+.muted { color: var(--mine); }
+
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+.dim {
+  font-family: var(--tech);
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Plan conventions ---------- */
+
+/* Room label: the name in capitals over a rule, the measure below. */
+.etiquette {
+  display: inline-grid;
+  justify-items: start;
+  gap: 3px;
+  font-family: var(--tech);
+  line-height: 1.2;
+}
+
+.etiquette__nom {
+  padding-bottom: 3px;
+  border-bottom: var(--t1) solid var(--encre);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.etiquette__meta {
+  font-size: var(--text-sm);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--mine);
+}
+
+/* Repère: the round tag that keys an object to its line in a table. */
+.repere {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border: var(--t1) solid var(--encre);
+  border-radius: 50%;
+  background: var(--papier);
+  color: var(--encre);
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.repere--plein {
+  background: var(--encre);
+  color: var(--papier);
+}
+
+/* Cote: a dimension line with extension lines and oblique ticks.
+   <span class="cote" style="--l: 230"><span class="cote__val">230</span></span> */
+.cote {
+  --len: calc(var(--l, 100) * var(--echelle) * 1px);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: var(--len);
+  padding-bottom: 7px;
+  border-inline: var(--t1) solid var(--mine);
+  background: linear-gradient(var(--mine), var(--mine)) left bottom 4px / 100% 1px no-repeat;
+  color: var(--mine);
+}
+
+.cote::before,
+.cote::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 9px;
+  height: 9px;
+  background: linear-gradient(to top right,
+    transparent calc(50% - 0.8px), var(--encre) calc(50% - 0.8px),
+    var(--encre) calc(50% + 0.8px), transparent calc(50% + 0.8px));
+}
+
+.cote:not(.cote--v)::before,
+.cote:not(.cote--v)::after {
+  background: linear-gradient(to bottom right,
+    transparent calc(50% - 0.8px), var(--encre) calc(50% - 0.8px),
+    var(--encre) calc(50% + 0.8px), transparent calc(50% + 0.8px));
+}
+
+.cote::before { left: -5px; }
+.cote::after { right: -5px; }
+
+.cote__val {
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cote--v {
+  justify-content: flex-end;
+  align-items: center;
+  width: auto;
+  height: var(--len);
+  padding: 0 7px 0 0;
+  border: 0;
+  border-block: var(--t1) solid var(--mine);
+  background: linear-gradient(var(--mine), var(--mine)) right 4px top / 1px 100% no-repeat;
+}
+
+.cote--v::before,
+.cote--v::after { left: auto; right: 0; bottom: auto; }
+.cote--v::before { top: -5px; }
+.cote--v::after { bottom: -5px; }
+
+.cote--v .cote__val {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  margin-right: 3px;
+}
+
+/* Footprints at scale: objects seen from above, side by side. */
+.encombrement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s6) var(--s7);
+}
+
+.objet {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "rep ."
+    "forme cv"
+    "ch .";
+  justify-items: start;
+  column-gap: 10px;
+  row-gap: 8px;
+  color: var(--encre);
+  text-decoration: none;
+}
+
+.objet > .repere { grid-area: rep; }
+.objet > .objet__forme { grid-area: forme; }
+.objet > .cote--v { grid-area: cv; }
+.objet > .cote:not(.cote--v) { grid-area: ch; }
+
+.objet__forme {
+  position: relative;
+  display: block;
+  width: calc(var(--l, 50) * var(--echelle) * 1px);
+  height: calc(var(--p, 50) * var(--echelle) * 1px);
+  border: var(--t2) solid var(--encre);
+  background-color: var(--papier);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+/* Luminaire: a circle crossed, the light point. */
+.objet__forme--luminaire {
+  border-radius: 50%;
+  background-image:
+    linear-gradient(45deg, transparent calc(50% - 0.6px), var(--encre) calc(50% - 0.6px), var(--encre) calc(50% + 0.6px), transparent calc(50% + 0.6px)),
+    linear-gradient(-45deg, transparent calc(50% - 0.6px), var(--encre) calc(50% - 0.6px), var(--encre) calc(50% + 0.6px), transparent calc(50% + 0.6px));
+}
+
+/* Assise: the seat, its back drawn heavy. */
+.objet__forme--assise { border-top-width: 7px; }
+
+/* Tapis: a thin edge, an inner border, fringes on the short sides. */
+.objet__forme--tapis {
+  border-width: var(--t1);
+  outline: var(--t1) dashed var(--mine);
+  outline-offset: -9px;
+}
+
+.objet__forme--tapis::before,
+.objet__forme--tapis::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 6px;
+  background: repeating-linear-gradient(to bottom, var(--encre) 0 1px, transparent 1px 5px);
+}
+
+.objet__forme--tapis::before { left: -7px; }
+.objet__forme--tapis::after { right: -7px; }
+
+a.objet:hover .objet__forme,
+a.objet:focus-visible .objet__forme {
+  border-color: var(--projet);
+  background-color: var(--projet-voile);
+}
+
+a.objet:hover .repere,
+a.objet:focus-visible .repere {
+  border-color: var(--projet);
+  background: var(--projet);
+  color: var(--on-projet);
+}
+
+/* Graphic scale: true at any zoom, which is why plans carry one. */
+.echelle {
+  display: inline-grid;
+  grid-template-columns: max-content max-content;
+  justify-content: start;
+  justify-self: start;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.echelle__unite {
+  grid-row: 1;
+  grid-column: 2;
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-style: italic;
+  color: var(--mine);
+}
+
+.echelle__barre {
+  grid-column: 1;
+  width: calc(100 * var(--echelle) * 1px);
+  height: 6px;
+  border: var(--t1) solid var(--encre);
+  background: linear-gradient(90deg,
+    var(--encre) 0 25%, transparent 25% 50%,
+    var(--encre) 50% 75%, transparent 75%);
+}
+
+.echelle__graduations {
+  grid-column: 1;
+  position: relative;
+  width: calc(100 * var(--echelle) * 1px);
+  height: 1.2em;
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-style: italic;
+  color: var(--mine);
+}
+
+.echelle__graduations > span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.echelle__graduations > span:nth-child(1) { left: 0; transform: none; }
+.echelle__graduations > span:nth-child(2) { left: 50%; }
+.echelle__graduations > span:nth-child(3) { left: 100%; }
+
+.hachure { background: var(--hachure); }
+
+/* ---------- Actions ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: var(--t2) solid var(--projet);
+  border-radius: 0;
+  background: var(--projet);
+  color: var(--on-projet);
+  font-family: var(--tech);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn:hover {
+  background: var(--projet-fonce);
+  border-color: var(--projet-fonce);
+  color: var(--on-projet);
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn__fleche {
+  display: inline-block;
+  transition: transform 0.15s;
+}
+
+.btn:hover .btn__fleche { transform: translateX(3px); }
+
+.btn--trait {
+  background: transparent;
+  border-color: var(--encre);
+  color: var(--encre);
+}
+
+.btn--trait:hover {
+  background: var(--projet-voile);
+  border-color: var(--projet);
+  color: var(--projet);
+}
+
+.btn--discret {
+  min-height: 40px;
+  padding-inline: 0;
+  background: transparent;
+  border-color: transparent;
+  color: var(--projet);
+}
+
+.btn--discret:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--projet-fonce);
+  text-decoration: underline 2px;
+  text-underline-offset: 0.3em;
+}
+
+.btn--petit {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: var(--text-xs);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  background: var(--papier-2);
+  border: var(--t2) dashed var(--trait);
+  color: var(--mine);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.link {
+  color: var(--projet);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+/* ---------- Fields: each one a cartouche cell ---------- */
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__box {
+  position: relative;
+  display: grid;
+  border: var(--t1) solid var(--encre);
+  background: var(--papier);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field__box:hover { border-color: var(--projet); }
+
+.field__box:focus-within {
+  border-color: var(--projet);
+  box-shadow: inset 0 0 0 1px var(--projet);
+}
+
+.field__label {
+  padding: 8px 12px 0;
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--mine);
+}
+
+.field__input {
+  width: 100%;
+  min-height: 40px;
+  padding: 2px 12px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--encre);
+  font: inherit;
+  font-size: var(--text-md);
+}
+
+.field__input:focus { outline: none; }
+
+.field__input::placeholder { color: var(--mine); opacity: 1; }
+
+textarea.field__input {
+  min-height: 7.5em;
+  resize: vertical;
+}
+
+select.field__input {
+  appearance: none;
+  padding-right: 40px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--encre) 50%),
+    linear-gradient(-45deg, transparent 50%, var(--encre) 50%);
+  background-position: right 20px top 50%, right 14px top 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.field__hint {
+  font-size: var(--text-sm);
+  color: var(--mine);
+}
+
+.field__error {
+  display: none;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--encre);
+}
+
+.field__error::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: var(--t1) solid var(--encre);
+  background: var(--hachure-reprise);
+}
+
+.field--invalid .field__error { display: flex; }
+
+.field--invalid .field__box {
+  border-color: var(--encre);
+  box-shadow: inset 0 0 0 1px var(--encre);
+  padding-left: 10px;
+}
+
+.field--invalid .field__box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 10px;
+  border-right: var(--t1) solid var(--encre);
+  background: var(--hachure-reprise);
+}
+
+/* ---------- Data: the nomenclature ---------- */
+
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.nomenclature {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: var(--t2) solid var(--encre);
+  border-bottom: var(--t2) solid var(--encre);
+  font-size: var(--text-md);
+}
+
+.nomenclature th {
+  padding: 10px 12px;
+  border-bottom: var(--t1) solid var(--encre);
+  background: var(--papier-2);
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  line-height: 1.3;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--mine);
+}
+
+.nomenclature td {
+  padding: 12px;
+  border-bottom: var(--t1) solid var(--trait);
+  vertical-align: middle;
+}
+
+.nomenclature tbody tr:last-child td { border-bottom: 0; }
+
+.nomenclature .num { text-align: right; }
+
+.nomenclature__repere { width: 1%; }
+
+.nomenclature tbody tr { transition: background-color 0.15s; }
+
+.nomenclature tbody tr:hover { background: var(--projet-voile); }
+
+.nomenclature tbody tr:hover .repere {
+  border-color: var(--projet);
+  background: var(--projet);
+  color: var(--on-projet);
+}
+
+@media (max-width: 760px) {
+  .nomenclature { font-size: var(--text-sm); }
+  .nomenclature th, .nomenclature td { padding-inline: 8px; }
+}
+
+/* ---------- Notes: numbered, as on a drawing ---------- */
+
+.notes {
+  display: grid;
+  gap: var(--s2);
+  padding: 0;
+  list-style: none;
+  counter-reset: note;
+  font-size: var(--text-sm);
+}
+
+.notes > li {
+  position: relative;
+  padding-left: 2rem;
+  counter-increment: note;
+}
+
+.notes > li::before {
+  content: counter(note) ".";
+  position: absolute;
+  left: 0;
+  width: 1.5rem;
+  font-family: var(--tech);
+  font-style: italic;
+  font-weight: 500;
+  text-align: right;
+  color: var(--mine);
+}
+
+/* ---------- States ---------- */
+
+.state {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s4) var(--s5);
+  align-items: start;
+  padding: var(--s6);
+}
+
+.state__mark.repere {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--text-lg);
+}
+
+.state__body { display: grid; gap: var(--s2); }
+
+.state__title {
+  font-family: var(--tech);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.state__text { max-width: 40em; }
+
+.state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3) var(--s5);
+  margin-top: var(--s3);
+}
+
+/* Empty: drawn dashed, the convention for what is not built yet. */
+.state--empty { border: var(--t2) dashed var(--mine); }
+
+/* Error: the hatched "à reprendre" band and a filled mark. */
+.state--error {
+  border: var(--t2) solid var(--encre);
+  padding-left: calc(var(--s6) + 14px);
+}
+
+.state--error::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 14px;
+  border-right: var(--t1) solid var(--encre);
+  background: var(--hachure-reprise);
+}
+
+.state--error .state__mark {
+  background: var(--encre);
+  color: var(--papier);
+}
+
+@media (max-width: 560px) {
+  .state {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--s5);
+  }
+  .state--error { padding-left: calc(var(--s5) + 14px); }
+}
+
+/* ---------- Shell: header, nav, wall, cartouche ---------- */
+
+.skip {
+  position: absolute;
+  top: -200px;
+  left: var(--s2);
+  z-index: 10;
+  padding: var(--s2) var(--s4);
+  background: var(--projet);
+  color: var(--on-projet);
+  font-family: var(--tech);
+  font-weight: 600;
+}
+
+.skip:focus { top: var(--s2); color: var(--on-projet); }
+
+.site-header { background: var(--papier); }
+
+.site-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: space-between;
+  column-gap: var(--s5);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-block: var(--s3);
+  color: var(--encre);
+  text-decoration: none;
+}
+
+.brand:hover { color: var(--projet); }
+
+.brand__nord {
+  flex: none;
+  width: 26px;
+  height: 32px;
+}
+
+.brand__texte {
+  display: grid;
+  line-height: 1.15;
+}
+
+.brand__nom {
+  font-family: var(--tech);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand__meta {
+  font-family: var(--tech);
+  font-size: var(--text-xs);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--mine);
+}
+
+.site-nav { display: flex; }
+
+.site-nav ol {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav li { display: flex; }
+
+.site-nav a {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  min-width: 92px;
+  padding: 12px 16px;
+  border-left: var(--t1) solid var(--trait);
+  color: var(--encre);
+  font-family: var(--tech);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1.15;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.site-nav li:last-child a { border-right: var(--t1) solid var(--trait); }
+
+.site-nav__no {
+  font-size: var(--text-xs);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mine);
+}
+
+.site-nav a:hover {
+  background: var(--projet-voile);
+  color: var(--projet);
+}
+
+.site-nav a:hover .site-nav__no,
+.site-nav a[aria-current="page"] .site-nav__no { color: var(--projet); }
+
+.site-nav a:focus-visible { outline-offset: -4px; }
+
+.site-nav a[aria-current="page"] {
+  color: var(--projet);
+  font-weight: 600;
+}
+
+/* The current page is an opening in the wall, its leaf drawn in blue. */
+.site-nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--mur));
+  height: var(--mur);
+  border-inline: var(--t2) solid var(--encre);
+  background: linear-gradient(var(--projet), var(--projet)) center / 100% 4px no-repeat, var(--papier);
+}
+
+/* The cut wall: two heavy lines and hatching. */
+.mur {
+  position: relative;
+  height: var(--mur);
+  border-block: var(--t2) solid var(--encre);
+  background: var(--hachure);
+}
+
+@media (max-width: 760px) {
+  .site-header__row { padding-inline: 0; }
+  .brand { padding-inline: var(--gutter); }
+  .site-nav {
+    flex: 1 1 100%;
+    border-top: var(--t1) solid var(--trait);
+  }
+  .site-nav ol { flex: 1 1 auto; }
+  .site-nav li { flex: 1 1 auto; }
+  .site-nav a {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 6px;
+    justify-items: center;
+    font-size: 0.9375rem;
+  }
+  .site-nav li:first-child a { border-left: 0; }
+  .site-nav li:last-child a { border-right: 0; }
+}
+
+/* The cartouche: the title block every drawing ends on. */
+.cartouche {
+  margin-top: var(--s6);
+  padding-bottom: var(--s7);
+}
+
+.cartouche__grille {
+  display: grid;
+  grid-template-columns: 2fr repeat(3, minmax(0, 1fr));
+  gap: var(--t1);
+  border: var(--t3) solid var(--encre);
+  background: var(--encre);
+}
+
+.cartouche__case {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 10px 14px 12px;
+  background: var(--papier);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.cartouche__case .label { font-size: 0.75rem; }
+
+.cartouche__valeur {
+  font-family: var(--tech);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.cartouche__case--projet .cartouche__valeur {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .cartouche__grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cartouche__case--projet,
+  .cartouche__case:last-child:nth-child(even) { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+}

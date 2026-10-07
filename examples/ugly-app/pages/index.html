@@ -3,31 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Super Boutique</title>
+<title>Super Boutique — lampes, chaises, tapis</title>
+<meta name="description" content="Une lampe, une chaise, un tapis, avec toutes leurs mesures. Prix TTC, livraison offerte dès 50 €.">
+<link rel="icon" href="/shared/icon.svg">
+<link rel="stylesheet" href="/shared/kit.css">
 <style>
-  body { margin: 0; font-family: "Comic Sans MS", cursive; background: #fdf6e3; }
-  header { background: linear-gradient(90deg, #8e2de2, #4a00e0); color: white; padding: 30px; text-align: center; }
-  header nav a { color: #ffe; margin: 0 12px; }
-  .hero { padding: 40px; text-align: center; }
-  .btn { display: inline-block; background: #ff4081; color: white; padding: 14px 28px; border-radius: 30px; cursor: default; }
-  .cards { display: flex; gap: 20px; justify-content: center; padding: 20px; flex-wrap: wrap; }
-  .card { width: 220px; padding: 20px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  /* Home only: the opening (text beside the footprints) and the schedule. */
+  .hero { padding-block: var(--s8); align-items: end; }
+  .hero__texte { display: grid; gap: var(--s5); justify-items: start; }
+  .hero__texte .titre { max-width: 13em; }
+  .hero__texte .actions { margin-top: var(--s2); }
+  .hero__plan { display: grid; gap: var(--s6); justify-items: start; }
+  .hero__legende {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--s2) var(--s5);
+    width: 100%;
+    padding-top: var(--s3);
+    border-top: var(--t1) solid var(--trait);
+  }
+  .hero__legende p { font-size: var(--text-sm); color: var(--mine); }
+  .liste__intro { display: grid; gap: var(--s4); align-content: start; }
+  .liste__intro .label { margin-top: var(--s4); }
+  .liste__table { display: grid; gap: var(--s5); justify-items: start; align-content: start; }
+  .liste__table .table-wrap { width: 100%; }
+  @media (min-width: 761px) {
+    .hero__plan { justify-items: end; }
+    .hero__legende { max-width: 520px; }
+  }
+  @media (max-width: 760px) {
+    .hero { padding-block: var(--s6) var(--s7); row-gap: var(--s7); }
+    .hero__legende { grid-template-columns: minmax(0, 1fr); }
+    .section { padding-block: var(--s7); }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>✨ Super Boutique ✨</h1>
-  <nav><a href="/">Accueil</a><a href="/produits">Produits</a><a href="/commandes">Commandes</a><a href="/contact">Contact</a><a href="/aide">Aide</a></nav>
-</header>
-<section class="hero">
-  <h2>🚀 Bienvenue dans le futur du shopping 🚀</h2>
-  <p>La meilleure boutique de tous les temps, pour tous vos besoins.</p>
-  <div class="btn" onclick="location.href='/produits'">Découvrir 🎉</div>
-</section>
-<section class="cards">
-  <div class="card"><h3>⚡ Rapide</h3><p>Livraison ultra rapide.</p></div>
-  <div class="card"><h3>💎 Premium</h3><p>Des produits premium.</p></div>
-  <div class="card"><h3>🔒 Sécurisé</h3><p>Paiement sécurisé.</p></div>
-</section>
+<!-- include: header -->
+<main id="contenu">
+  <section class="wrap grid hero" aria-labelledby="titre">
+    <div class="hero__texte span-6">
+      <p class="label">Mobilier et objets pour la maison</p>
+      <h1 id="titre" class="titre">Trois objets pour la maison, cotés au centimètre.</h1>
+      <p class="lead">Avant de choisir, voyez la place que chacun prend chez vous&#8239;: toutes les mesures sont données, les prix sont TTC et la livraison est offerte dès 50&nbsp;€.</p>
+      <p class="actions">
+        <a class="btn" href="/produits">Voir les produits <span class="btn__fleche" aria-hidden="true">→</span></a>
+        <a href="/commandes">Suivre mes commandes</a>
+      </p>
+    </div>
+
+    <figure class="hero__plan span-6 start-7" aria-labelledby="plan-titre">
+      <div class="encombrement">
+        <a class="objet" href="/produits" aria-label="Lampe, diamètre 30 centimètres, 39,90 euros">
+          <span class="repere">L1</span>
+          <span class="objet__forme objet__forme--luminaire" style="--l: 30; --p: 30"></span>
+          <span class="cote" style="--l: 30"><span class="cote__val">Ø&nbsp;30</span></span>
+        </a>
+        <a class="objet" href="/produits" aria-label="Chaise, 45 sur 52 centimètres, 89,00 euros">
+          <span class="repere">C1</span>
+          <span class="objet__forme objet__forme--assise" style="--l: 45; --p: 52"></span>
+          <span class="cote cote--v" style="--l: 52"><span class="cote__val">52</span></span>
+          <span class="cote" style="--l: 45"><span class="cote__val">45</span></span>
+        </a>
+        <a class="objet" href="/produits" aria-label="Tapis, 230 sur 160 centimètres, 129,00 euros">
+          <span class="repere">T1</span>
+          <span class="objet__forme objet__forme--tapis" style="--l: 230; --p: 160"></span>
+          <span class="cote cote--v" style="--l: 160"><span class="cote__val">160</span></span>
+          <span class="cote" style="--l: 230"><span class="cote__val">230</span></span>
+        </a>
+      </div>
+      <figcaption class="hero__legende">
+        <div>
+          <p id="plan-titre" class="label">Encombrement au sol</p>
+          <p>Vus de dessus, à la même échelle. Cotes en centimètres.</p>
+        </div>
+        <span class="echelle" aria-hidden="true">
+          <span class="echelle__barre"></span>
+          <span class="echelle__graduations"><span>0</span><span>50</span><span>100</span></span>
+          <span class="echelle__unite">cm</span>
+        </span>
+      </figcaption>
+    </figure>
+  </section>
+
+  <hr class="axe">
+
+  <section class="wrap grid section" aria-labelledby="nomenclature">
+    <div class="liste__intro span-4">
+      <h2 id="nomenclature" class="etiquette">
+        <span class="etiquette__nom">Nomenclature</span>
+        <span class="etiquette__meta">3&nbsp;repères, 3&nbsp;prix</span>
+      </h2>
+      <p>Chaque repère du plan renvoie à une ligne&#8239;: la mesure, puis le prix.</p>
+      <h3 class="label">Notes</h3>
+      <ol class="notes">
+        <li>Cotes en centimètres&#8239;: largeur × profondeur × hauteur.</li>
+        <li>Prix TTC, en euros.</li>
+        <li>Livraison offerte dès 50&nbsp;€ d’achat.</li>
+        <li>Une mesure vous manque&#8239;? <a href="/contact">Écrivez-nous</a>.</li>
+      </ol>
+    </div>
+
+    <div class="liste__table span-8">
+      <div class="table-wrap">
+        <table class="nomenclature">
+          <caption class="vh">Les trois produits, leurs mesures et leurs prix</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="nomenclature__repere">Repère</th>
+              <th scope="col">Désignation</th>
+              <th scope="col">Cotes (cm)</th>
+              <th scope="col" class="num">Prix TTC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="nomenclature__repere"><span class="repere">L1</span></td>
+              <td><a href="/produits">Lampe</a></td>
+              <td><span class="dim">Ø&nbsp;30 × H&nbsp;45</span></td>
+              <td class="num">39,90&nbsp;€</td>
+            </tr>
+            <tr>
+              <td class="nomenclature__repere"><span class="repere">C1</span></td>
+              <td><a href="/produits">Chaise</a></td>
+              <td><span class="dim">45 × 52 × H&nbsp;82</span></td>
+              <td class="num">89,00&nbsp;€</td>
+            </tr>
+            <tr>
+              <td class="nomenclature__repere"><span class="repere">T1</span></td>
+              <td><a href="/produits">Tapis</a></td>
+              <td><span class="dim">230 × 160</span></td>
+              <td class="num">129,00&nbsp;€</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <a class="btn btn--trait" href="/produits">Tout le catalogue <span class="btn__fleche" aria-hidden="true">→</span></a>
+    </div>
+  </section>
+</main>
+<!-- include: footer -->
 </body>
 </html>
