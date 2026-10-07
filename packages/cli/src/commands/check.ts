@@ -14,11 +14,16 @@ ${APP_OPTIONS_HELP}
   --out <dir>          Where to write check.json (default .aeom/reports)`;
 
 export async function runCheck(argv: string[]): Promise<number> {
-  const values = await withConfig(parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" } } }).values);
-  if (values.help) {
+  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" } } }).values;
+  if (parsed.help) {
     console.log(CHECK_HELP);
     return 0;
   }
+  if (parsed.url !== undefined && !parsed.url.trim()) {
+    console.error(`--url cannot be empty.`);
+    return 1;
+  }
+  const values = await withConfig(parsed);
   if (!values.url) {
     console.error(`--url is required, here or in .aeom/config.json.\n\n${CHECK_HELP}`);
     return 1;

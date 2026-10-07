@@ -18,7 +18,7 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
     text = await readFile(file, "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return {};
-    throw error;
+    throw new ConfigError(`${file} cannot be read: ${error instanceof Error ? error.message : String(error)}`);
   }
   let parsed: unknown;
   try {

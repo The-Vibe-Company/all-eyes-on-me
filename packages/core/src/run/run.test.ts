@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import type { CheckReport } from "../checks/index.js";
 import type { JudgeReport } from "../judge/index.js";
-import { comparePages, ConfigError, loadConfig, scorePages, snapshot, SnapshotPathError } from "./index.js";
+import { comparePages, ConfigError, isInside, loadConfig, scorePages, snapshot, SnapshotPathError } from "./index.js";
 
 const check = (findings: [string, string][]): CheckReport => ({
   url: "http://x.test/",
@@ -111,6 +111,36 @@ test("a snapshot never deletes what it copies", async () => {
     await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom")), SnapshotPathError);
     await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "captures", "x")), SnapshotPathError);
     assert.equal(await readFile(join(dir, ".aeom", "captures", "keep.png"), "utf8"), "png");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a folder whose name starts with two dots is still inside its parent", () => {
+  assert.equal(isInside("/p/.aeom/captures/..snapshot", "/p/.aeom/captures"), true);
+  assert.equal(isInside("/p/.aeom", "/p/.aeom/captures"), false);
+  assert.equal(isInside("/p/other", "/p/.aeom"), false);
+});
+
+test("a snapshot is refused through a symlink that points into what it copies", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-snapshot-"));
+  try {
+    await mkdir(join(dir, ".aeom", "captures"), { recursive: true });
+    await writeFile(join(dir, ".aeom", "captures", "keep.png"), "png");
+    await symlink(join(dir, ".aeom", "captures"), join(dir, "alias"));
+    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, "alias", "x")), SnapshotPathError);
+    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "captures", "..snap")), SnapshotPathError);
+    assert.equal(await readFile(join(dir, ".aeom", "captures", "keep.png"), "utf8"), "png");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a config that cannot be read is a config error", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-config-"));
+  try {
+    await mkdir(join(dir, ".aeom", "config.json"), { recursive: true });
+    await assert.rejects(loadConfig(dir), (error: unknown) => error instanceof ConfigError && /cannot be read/.test((error as Error).message));
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
