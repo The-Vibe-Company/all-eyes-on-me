@@ -1,0 +1,30 @@
+packages/cli/package.json
+  s_4ce34ec42d9105::t_f6c1ab0ca8df4d 23-24
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_f6c1ab0ca8df4d 130,134-146
+packages/core/src/judge/principles.ts
+  s_4ce34ec42d9105::t_f6c1ab0ca8df4d 18-19
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_f6c1ab0ca8df4d 103-104,117-123
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_f6c1ab0ca8df4d 1,47-48,75-80
+packages/cli/src/commands/judge.test.ts
+  s_4ce34ec42d9105::t_f6c1ab0ca8df4d 1-78
+  s_4ce34ec42d9105::t_5a5e97c3d11ab9 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7452d31d499f15843848aeaf2e6117145834b6fc",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
