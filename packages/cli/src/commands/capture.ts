@@ -14,11 +14,16 @@ ${APP_OPTIONS_HELP}
   --pages <list>       Capture only these routes, comma-separated, such as /,/produits`;
 
 export async function runCapture(argv: string[]): Promise<number> {
-  const values = await withConfig(parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/captures" }, pages: { type: "string" } } }).values);
-  if (values.help) {
+  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/captures" }, pages: { type: "string" } } }).values;
+  if (parsed.help) {
     console.log(CAPTURE_HELP);
     return 0;
   }
+  if (parsed.url !== undefined && !parsed.url.trim()) {
+    console.error(`--url cannot be empty.`);
+    return 1;
+  }
+  const values = await withConfig(parsed);
   if (!values.url) {
     console.error(`--url is required, here or in .aeom/config.json.\n\n${CAPTURE_HELP}`);
     return 1;

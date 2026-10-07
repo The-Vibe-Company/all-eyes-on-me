@@ -64,6 +64,6 @@ export async function withConfig<T extends { url?: string; start?: string }>(val
     console.error(error.message);
     process.exit(1);
   }
-  if (values.url) return values;
+  if (values.url !== undefined) return values;
   return { ...values, url: config.url, start: values.start ?? config.start };
 }

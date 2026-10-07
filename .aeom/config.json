@@ -1,4 +1,0 @@
-{
-  "url": "http://localhost:4317",
-  "start": "node examples/ugly-app/server.mjs"
-}

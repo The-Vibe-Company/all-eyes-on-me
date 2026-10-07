@@ -15,7 +15,7 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 - **Check** (contrôle): a rule with a pass or fail answer. **Measurable checks** are computed from the page (cursor, overflow, contrast). **Judged checks** are decided by the judge on screenshots (hierarchy, alignment, density). Every check is **blocking**: a screen that fails one is not merged.
 - **Judge** (juge): the model that decides judged checks and compares versions. It votes three times; the majority wins.
 - **Pairwise comparison** (comparaison par paires): the judge picks the better of two versions. AEOM never asks it for a score.
-- **Tournament** (tournoi): pairwise comparisons between directions until one wins.
+- **Tournament** (tournoi): a knockout between directions, two by two, three votes per duel, until one wins. Its shared files become the kit.
 - **Ratchet** (cliquet): a new version of a screen is merged only if the judge prefers it to the current one, so quality never goes down.
 - **Finding** (constat): something wrong that the audit reports. A finding is shown only once a second pass confirms it.
 - **Audit** (état des lieux): capturing and checking every screen to list findings before or between waves.
@@ -23,8 +23,9 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 ## Building
 
 - **Mode**: **redesign** (refonte) on a project that already has a frontend, **launch** (lancement) on one that does not yet. V1 has redesign only.
-- **Direction**: one art direction, built in real code on two or three real screens. AEOM proposes six per run.
-- **Archetype** (archétype): the starting point of a direction (Swiss, brutalist, editorial, retro terminal...). Directions in one run sit far apart on the **axes**: dense or airy, sober or expressive, warm or cold, light or dark, serif or sans.
+- **Direction**: one art direction, built in real code on the home page. With `/aeom --directions`, AEOM builds six per run and keeps one.
+- **Source** (source): where a direction starts: something from the product's own world that its customers know (an object, a document, a place, a trade). Never a design movement.
+- **Banned looks** (liste noire): the looks an AI proposes by default when asked to be bold, listed in `skills/aeom/directions.md`. A direction one of them describes is removed before the tournament.
 - **Kit** (couche design): the tokens and shared components (header, buttons, layout) every screen uses.
 - **Token**: a named design value (color, size, radius, shadow, spacing). Any value outside the tokens fails a check.
 - **Wave** (vague): one round of parallel work. The **kit wave** has a single worker. The **screen wave** has one worker per screen, each confined to its screen's folder.

@@ -12,12 +12,12 @@ export interface SheetItem {
  * Lays screenshots side by side, labelled, and saves the whole sheet as one
  * PNG, so a person or a judge sees every direction at once.
  */
-/** The sheet's HTML: one labelled cell per item, the whole capture shown. */
 function checkLayout(columns: number, cellWidth: number) {
   if (!Number.isInteger(columns) || columns < 1) throw new Error("columns must be a positive whole number.");
   if (!Number.isInteger(cellWidth) || cellWidth < 1) throw new Error("cellWidth must be a positive whole number of pixels.");
 }
 
+/** The sheet's HTML: one labelled cell per item, the whole capture shown. */
 export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640): Promise<string> {
   checkLayout(columns, cellWidth);
   const cells = await Promise.all(
