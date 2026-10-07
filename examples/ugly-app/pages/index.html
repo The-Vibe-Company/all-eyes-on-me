@@ -3,31 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Super Boutique</title>
-<style>
-  body { margin: 0; font-family: "Comic Sans MS", cursive; background: #fdf6e3; }
-  header { background: linear-gradient(90deg, #8e2de2, #4a00e0); color: white; padding: 30px; text-align: center; }
-  header nav a { color: #ffe; margin: 0 12px; }
-  .hero { padding: 40px; text-align: center; }
-  .btn { display: inline-block; background: #ff4081; color: white; padding: 14px 28px; border-radius: 30px; cursor: default; }
-  .cards { display: flex; gap: 20px; justify-content: center; padding: 20px; flex-wrap: wrap; }
-  .card { width: 220px; padding: 20px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
-</style>
+<title>Accueil · Super Boutique</title>
+<meta name="description" content="Super Boutique, la boutique de quartier pour la maison : lampes, chaises, tapis, livrés vite et payés en toute sécurité.">
+<link rel="stylesheet" href="/shared/kit.css">
 </head>
 <body>
-<header>
-  <h1>✨ Super Boutique ✨</h1>
-  <nav><a href="/">Accueil</a><a href="/produits">Produits</a><a href="/commandes">Commandes</a><a href="/contact">Contact</a><a href="/aide">Aide</a></nav>
-</header>
-<section class="hero">
-  <h2>🚀 Bienvenue dans le futur du shopping 🚀</h2>
-  <p>La meilleure boutique de tous les temps, pour tous vos besoins.</p>
-  <div class="btn" onclick="location.href='/produits'">Découvrir 🎉</div>
-</section>
-<section class="cards">
-  <div class="card"><h3>⚡ Rapide</h3><p>Livraison ultra rapide.</p></div>
-  <div class="card"><h3>💎 Premium</h3><p>Des produits premium.</p></div>
-  <div class="card"><h3>🔒 Sécurisé</h3><p>Paiement sécurisé.</p></div>
-</section>
+<!-- include: header -->
+<main id="contenu" class="page">
+  <section class="hero" aria-labelledby="accueil-titre">
+    <h1 id="accueil-titre" class="display">De quoi meubler la maison, sans chichis.</h1>
+    <p class="lead">Lampes, chaises, tapis : une petite sélection d’objets solides, choisis un par un, livrés vite et payés en toute sécurité.</p>
+    <div class="cluster">
+      <a href="/produits" class="btn">Découvrir les produits</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="accueil-pourquoi">
+    <h2 id="accueil-pourquoi">Pourquoi commander chez nous</h2>
+    <ul class="columns">
+      <li>
+        <h3>Rapide</h3>
+        <p class="muted">Livraison rapide, offerte dès 50 € d’achat.</p>
+      </li>
+      <li>
+        <h3>Solide</h3>
+        <p class="muted">Des produits de qualité, choisis pour durer.</p>
+      </li>
+      <li>
+        <h3>Sécurisé</h3>
+        <p class="muted">Paiement sécurisé, prix TTC affichés sans surprise.</p>
+      </li>
+    </ul>
+  </section>
+</main>
+<!-- include: footer -->
 </body>
 </html>
