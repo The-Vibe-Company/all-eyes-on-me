@@ -1,0 +1,36 @@
+examples/ugly-app/shared/kit.css
+  s_4ce34ec42d9105::t_c3d51e1ca354fe 1-1012
+  s_4ce34ec42d9105::t_f043358eac73d0 1013-1014
+examples/ugly-app/pages/index.html
+  s_4ce34ec42d9105::t_45ae0b8b172be1 6-8,11-92
+examples/ugly-app/shared/carton.svg
+  s_4ce34ec42d9105::t_50b0aaa15d9748 1-10
+examples/ugly-app/shared/chaise.svg
+  s_4ce34ec42d9105::t_dd7f5fd97cf9c4 1-13
+examples/ugly-app/shared/footer.html
+  s_4ce34ec42d9105::t_523cec29a64037 1-7
+examples/ugly-app/shared/head.html
+  s_4ce34ec42d9105::t_032861975208ad 1-5
+examples/ugly-app/shared/header.html
+  s_4ce34ec42d9105::t_7d73cb7692ad2c 1-25
+examples/ugly-app/shared/lampe.svg
+  s_4ce34ec42d9105::t_d5e8b466fc5035 1-9
+examples/ugly-app/shared/tapis.svg
+  s_4ce34ec42d9105::t_a1ef870d910bf4 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "295e9a29f97c723784426cd7b7a52fe4bcf5b26f",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
