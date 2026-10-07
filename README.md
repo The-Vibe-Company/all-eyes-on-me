@@ -54,7 +54,11 @@ The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
 
 ## Roadmap
 
-**V1, in progress.** Redesign mode on the web. Claude Code. Capture through e2e. Blocking checks. Six directions and the tournament. Kit and screen waves with the ratchet. Feedback journal and distillation. Base principles v0. Spend cap. The npm package.
+**V0, in progress.** The crudest version that runs end to end, tested on a deliberately ugly demo app in `examples/`. It captures every page with Playwright, runs four measurable checks, judges each page against the base principles inside the Claude Code session, fixes things with parallel workers, and proposes six rough directions. The tickets are in `.veebee/tickets/`.
+
+**First iteration after V0.** This project's landing page, built with AEOM.
+
+**V1.** Redesign mode on the web. Claude Code. Capture through e2e. Blocking checks. Six directions and the tournament. Kit and screen waves with the ratchet. Feedback journal and distillation. Base principles v0. Spend cap. The npm package.
 
 **V2.** Launch mode for new projects. Codex. Mobile (iOS and Android, through e2e). Per-category autonomy. The CI check for other fleets. A landing page, designed by AEOM.
 
