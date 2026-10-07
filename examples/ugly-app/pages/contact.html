@@ -3,25 +3,132 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contact</title>
+<title>Contact — Super Boutique</title>
+<meta name="description" content="Une question sur une mesure, une commande ou une livraison&#8239;? Écrivez à Super Boutique, réponse par e-mail sous deux jours ouvrés.">
+<link rel="icon" href="/shared/icon.svg">
+<link rel="stylesheet" href="/shared/kit.css">
 <style>
-  body { margin: 0; font-family: "Courier New", monospace; background: #111; color: #ddd; }
-  .bar { padding: 24px; background: #333; text-align: right; }
-  .bar span { font-size: 28px; float: left; color: orange; }
-  .bar a { color: #aaa; margin-left: 20px; }
-  form { max-width: 420px; margin: 40px auto; display: grid; gap: 10px; }
-  input, textarea { background: #222; color: #ddd; border: 1px solid #555; padding: 8px; }
-  .send { background: orange; color: black; text-align: center; padding: 10px; cursor: default; }
+  /* Contact only: the cell that takes the form's place once it is sent. */
+  .envoye .state { border: var(--t2) solid var(--encre); }
 </style>
 </head>
 <body>
-<div class="bar"><span>~ super boutique ~</span><a href="/">ACCUEIL</a><a href="/aide">AIDE</a></div>
-<form onsubmit="return false">
-  <label for="email">Email</label>
-  <input id="email" type="email">
-  <label for="msg">Message</label>
-  <textarea id="msg" rows="5"></textarea>
-  <div class="send" onclick="alert('Envoyé')">ENVOYER</div>
-</form>
+<!-- include: header -->
+<main id="contenu">
+  <section class="wrap grid section" aria-labelledby="titre">
+    <div class="span-5 stack">
+      <p class="label">Service client</p>
+      <h1 id="titre" class="titre">Écrire à la boutique</h1>
+      <p class="lead">Une question sur une mesure, une commande ou une livraison&#8239;? Écrivez-nous, nous répondons par e-mail sous deux jours ouvrés.</p>
+      <h2 class="label">Notes</h2>
+      <ol class="notes">
+        <li>Pour une commande, donnez son numéro.</li>
+        <li>Pour une mesure, nommez le repère de l’objet&#8239;: L1, C1 ou T1.</li>
+        <li>Les cotes déjà connues sont sur la <a href="/produits">liste des produits</a>.</li>
+      </ol>
+    </div>
+
+    <div class="span-6 start-7">
+      <form id="formulaire" class="stack" novalidate aria-labelledby="formulaire-titre">
+        <h2 id="formulaire-titre" class="etiquette">
+          <span class="etiquette__nom">Votre message</span>
+          <span class="etiquette__meta">2&nbsp;champs, tous deux requis</span>
+        </h2>
+
+        <div class="field">
+          <div class="field__box">
+            <label class="field__label" for="email">E-mail</label>
+            <input class="field__input" id="email" name="email" type="email" autocomplete="email" inputmode="email" spellcheck="false" required placeholder="nom@exemple.fr" aria-describedby="email-aide email-erreur">
+          </div>
+          <p class="field__hint" id="email-aide">Nous ne l’utilisons que pour vous répondre.</p>
+          <p class="field__error" id="email-erreur"></p>
+        </div>
+
+        <div class="field">
+          <div class="field__box">
+            <label class="field__label" for="message">Message</label>
+            <textarea class="field__input" id="message" name="message" rows="6" required aria-describedby="message-erreur"></textarea>
+          </div>
+          <p class="field__error" id="message-erreur"></p>
+        </div>
+
+        <p class="actions">
+          <button class="btn" type="submit">Envoyer <span class="btn__fleche" aria-hidden="true">→</span></button>
+        </p>
+      </form>
+
+      <div id="envoye" class="envoye" role="status" hidden>
+        <div class="state">
+          <span class="state__mark repere repere--plein" aria-hidden="true">✓</span>
+          <div class="state__body">
+            <h2 id="envoye-titre" class="state__title" tabindex="-1">Message envoyé</h2>
+            <p class="state__text">Merci. Nous vous répondons à <strong id="envoye-email"></strong> sous deux jours ouvrés.</p>
+            <p class="state__actions">
+              <button id="autre-message" class="btn btn--trait" type="button">Écrire un autre message</button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<!-- include: footer -->
+<script>
+  (() => {
+    const form = document.getElementById("formulaire");
+    const sent = document.getElementById("envoye");
+    const rules = {
+      email: (value) =>
+        !value ? "Indiquez votre adresse e-mail, pour que nous puissions vous répondre."
+        : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "Cette adresse semble incomplète : elle s’écrit comme nom@exemple.fr."
+        : "",
+      message: (value) => (!value ? "Écrivez votre message avant de l’envoyer." : ""),
+    };
+    let tried = false;
+
+    function check(name) {
+      const input = form.elements[name];
+      const error = rules[name](input.value.trim());
+      const field = input.closest(".field");
+      field.classList.toggle("field--invalid", Boolean(error));
+      field.querySelector(".field__error").textContent = error;
+      if (error) input.setAttribute("aria-invalid", "true");
+      else input.removeAttribute("aria-invalid");
+      return !error;
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      tried = true;
+      const invalid = Object.keys(rules).filter((name) => !check(name));
+      if (invalid.length) {
+        form.elements[invalid[0]].focus();
+        return;
+      }
+      document.getElementById("envoye-email").textContent = form.elements.email.value.trim();
+      form.hidden = true;
+      sent.hidden = false;
+      document.getElementById("envoye-titre").focus();
+    });
+
+    for (const name of Object.keys(rules)) {
+      form.elements[name].addEventListener("input", () => { if (tried) check(name); });
+    }
+
+    document.getElementById("autre-message").addEventListener("click", () => {
+      form.reset();
+      tried = false;
+      for (const name of Object.keys(rules)) {
+        const field = form.elements[name].closest(".field");
+        field.classList.remove("field--invalid");
+        field.querySelector(".field__error").textContent = "";
+        form.elements[name].removeAttribute("aria-invalid");
+      }
+      sent.hidden = true;
+      form.hidden = false;
+      form.elements.email.focus();
+    });
+  })();
+</script>
 </body>
 </html>
