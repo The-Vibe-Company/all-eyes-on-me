@@ -1,0 +1,19 @@
+examples/ugly-app/pages/produits.html
+  s_4ce34ec42d9105::t_e9461834c024bb 10-13,28,34,40-45,47,51-56,58,62-67,69,74-78,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "29cc124ad253182634a444178ed71d6d510e9543",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
