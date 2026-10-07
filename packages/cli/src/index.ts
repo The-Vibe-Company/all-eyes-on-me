@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
 import { runCapture } from "./commands/capture.js";
+import { runCheck } from "./commands/check.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -11,12 +12,14 @@ Usage: aeom <command>
 
 Commands:
   capture   Find every page of a web app and screenshot it
+  check     Run the measurable checks on every page
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
 
 const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   capture: runCapture,
+  check: runCheck,
 };
 
 const [command, ...rest] = process.argv.slice(2);

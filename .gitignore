@@ -3,4 +3,5 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .aeom/captures/
+.aeom/reports/
 .e2e/
