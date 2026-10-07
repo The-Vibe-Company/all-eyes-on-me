@@ -4,3 +4,4 @@ dist/
 .DS_Store
 .aeom/captures/
 .e2e/
+.aeom/reports/
