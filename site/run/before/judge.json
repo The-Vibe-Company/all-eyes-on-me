@@ -1,0 +1,130 @@
+{
+  "judgedAt": "2026-10-07T21:47:22.777Z",
+  "voters": [
+    "1",
+    "2",
+    "3"
+  ],
+  "principles": [
+    {
+      "id": "one-direction",
+      "text": "One art direction, held on every page. No page borrows another style."
+    },
+    {
+      "id": "consistent-chrome",
+      "text": "The header and the navigation are the same on every page: same place, same look, same order. Buttons share one style everywhere, wherever a page needs them."
+    },
+    {
+      "id": "not-generic",
+      "text": "Nothing generic: no purple-to-blue gradient, no shadowed cards everywhere, no decorative emoji, no layout that could be any SaaS template."
+    },
+    {
+      "id": "not-ai-default",
+      "text": "It does not look like what an AI proposes when asked to be bold: cream or newsprint paper with a big serif and a red or terracotta accent; a near-black screen with one amber, green or phosphor accent in monospace; newspaper rules and columns; a white Swiss poster with a red square; a black-and-yellow brutalist grid; Didot and small caps with a gold accent; kraft paper and stamps; a purple-to-blue gradient; Inter or Space Grotesk on white with rounded cards. If one of these combinations describes the page as a whole, it fails; a single trait, such as a cream background or a serif headline, does not."
+    },
+    {
+      "id": "hierarchy",
+      "text": "A clear hierarchy, with one focal point per page. The eye knows where to start."
+    },
+    {
+      "id": "grid",
+      "text": "Elements line up on a grid. Edges, gutters and baselines agree."
+    },
+    {
+      "id": "density",
+      "text": "Density is controlled: nothing cramped, nothing lost in empty space."
+    },
+    {
+      "id": "states",
+      "text": "The state the page shows is designed: an empty list says it is empty and what to do next, an error says what went wrong. A blank area where content should be is a failure."
+    }
+  ],
+  "pages": [
+    {
+      "page": "/",
+      "verdicts": [
+        {
+          "principle": "one-direction",
+          "pass": false,
+          "votes": "3/3 fail",
+          "reasons": [
+            "There is no art direction at all: the page is raw browser defaults, Times New Roman black on white with underlined blue links, at both widths.",
+            "There is no art direction at all: the page is the browser's default stylesheet, Times on white with blue underlined links, at both widths.",
+            "There is no art direction at all: the page is raw browser defaults, Times on white with a blue underlined link and default list bullets."
+          ]
+        },
+        {
+          "principle": "consistent-chrome",
+          "pass": false,
+          "votes": "3/3 fail",
+          "reasons": [
+            "There is no header and no navigation at all, and the only call to action, \"Star on GitHub\", is a default blue underlined link rather than a button.",
+            "There is no header or navigation on the page, and the only action, \"Star on GitHub\", is a default blue underlined link rather than a button.",
+            "There is no header or navigation, and the only call to action, Star on GitHub, is a default blue underlined link rather than a styled button."
+          ]
+        },
+        {
+          "principle": "not-generic",
+          "pass": false,
+          "votes": "3/3 fail",
+          "reasons": [
+            "The page is the most generic look possible, unstyled browser-default HTML with default serif type, bullets and numbered lists, nothing specific to the product.",
+            "Unstyled default HTML (Times, black on white, blue links, plain bullet and numbered lists) says nothing about the product and could be any page.",
+            "Unstyled default HTML with browser fonts, bullets and link colours is as generic as a page can get; nothing on it belongs to this product."
+          ]
+        },
+        {
+          "principle": "not-ai-default",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "None of the listed AI-default combinations describes it: it is plain white with default Times and blue links, no cream paper, no accent colour, no dark terminal, no gradient, no rounded cards.",
+            "The page is raw browser defaults and matches none of the listed AI looks: no cream paper with terracotta, no dark monospace, no gradient, no rounded Inter cards.",
+            "Plain white with default Times and a blue link matches none of the listed AI-bold combinations: no cream paper with a red accent, no dark phosphor monospace, no gradient, no rounded cards."
+          ]
+        },
+        {
+          "principle": "hierarchy",
+          "pass": false,
+          "votes": "3/3 fail",
+          "reasons": [
+            "Only the default h1 size stands out; the pitch, the \"Star on GitHub\" link and the five section headings all sit at the same weight, so there is no focal point beyond the title and the main action is lost.",
+            "Only the h1 stands out; the section headings all weigh the same and the main call to action is a small underlined link lost under two paragraphs, so there is no focal point.",
+            "Beyond the default-sized h1, five h2 sections carry equal weight and the main action, Star on GitHub, is a small blue link lost between paragraphs, so the eye has no focal point."
+          ]
+        },
+        {
+          "principle": "grid",
+          "pass": false,
+          "votes": "3/3 fail",
+          "reasons": [
+            "Everything hugs an 8px browser margin with no layout grid, list numbers hang outside the text edge, and at 390 the git clone code line runs past the right edge of the viewport.",
+            "Everything hugs an 8px left margin with no column, lines run the full 1280px width, and at 390 the git clone line overflows past the right edge of the viewport.",
+            "Text sits on the 8px browser margin with lists indented by default, nothing aligns to a deliberate column, and at 390 the git clone line runs past the screen edge (the capture is 476px wide)."
+          ]
+        },
+        {
+          "principle": "density",
+          "pass": false,
+          "votes": "3/3 fail",
+          "reasons": [
+            "At 1280 lines of text run nearly the full 1260px width with no measure, while sections are stacked tight with default spacing; at 390 the code block overflows sideways.",
+            "At 1280 paragraphs stretch across the whole screen while the lists leave the right half empty, and at 390 the page is a long undifferentiated stack with tight default spacing.",
+            "At 1280 lines run the full window width and stop at mid-height with the lower page empty, while sections are packed with default tight spacing; at 390 the code block overflows sideways."
+          ]
+        },
+        {
+          "principle": "states",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "Every section shows its content, the steps, commands, install block and roadmap, with no blank area where content should be and no empty or error state on screen.",
+            "All content renders at both widths, with no blank area, missing list or unexplained empty region.",
+            "The page is static content and every section, from How it works to Roadmap, shows its text; there is no blank area, empty list or error left undesigned."
+          ]
+        }
+      ]
+    }
+  ],
+  "failures": 6
+}

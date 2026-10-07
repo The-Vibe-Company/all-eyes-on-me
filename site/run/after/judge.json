@@ -1,0 +1,129 @@
+{
+  "judgedAt": "2026-10-07T22:20:56.703Z",
+  "voters": [
+    "1",
+    "2",
+    "3"
+  ],
+  "principles": [
+    {
+      "id": "one-direction",
+      "text": "One art direction, held on every page. No page borrows another style."
+    },
+    {
+      "id": "consistent-chrome",
+      "text": "The header and the navigation are the same on every page: same place, same look, same order. Buttons share one style everywhere, wherever a page needs them."
+    },
+    {
+      "id": "not-generic",
+      "text": "Nothing generic: no purple-to-blue gradient, no shadowed cards everywhere, no decorative emoji, no layout that could be any SaaS template."
+    },
+    {
+      "id": "not-ai-default",
+      "text": "It does not look like what an AI proposes when asked to be bold: cream or newsprint paper with a big serif and a red or terracotta accent; a near-black screen with one amber, green or phosphor accent in monospace; newspaper rules and columns; a white Swiss poster with a red square; a black-and-yellow brutalist grid; Didot and small caps with a gold accent; kraft paper and stamps; a purple-to-blue gradient; Inter or Space Grotesk on white with rounded cards. If one of these combinations describes the page as a whole, it fails; a single trait, such as a cream background or a serif headline, does not."
+    },
+    {
+      "id": "hierarchy",
+      "text": "A clear hierarchy, with one focal point per page. The eye knows where to start."
+    },
+    {
+      "id": "grid",
+      "text": "Elements line up on a grid. Edges, gutters and baselines agree."
+    },
+    {
+      "id": "density",
+      "text": "Density is controlled: nothing cramped, nothing lost in empty space."
+    },
+    {
+      "id": "states",
+      "text": "The state the page shows is designed: an empty list says it is empty and what to do next, an error says what went wrong. A blank area where content should be is a failure."
+    }
+  ],
+  "pages": [
+    {
+      "page": "/",
+      "verdicts": [
+        {
+          "principle": "one-direction",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "The whole page is held as one cool-grey inspection sheet: the A-L ruler, Fig. 1 with grid references, mono labels in magenta-outlined number boxes, hatched swatches for the commands and the roadmap, and the slate code block, with nothing borrowed from another style.",
+            "Every section, from the A–L ruler under the header to the Fig. 1 plate, the hatch-swatch command legend and the striped roadmap key, speaks the same instrument-plate language of cool grey ground, hairline rules, mono labels in boxed numbers and a single magenta accent, at both widths.",
+            "One imaging-plate direction holds from header to footer at both widths: cool grey sheet, A–L ruler, Fig. 1 VIS/IRR plate, numbered magenta section tags, hatch swatches for commands and roadmap, and an 'XR' code plate that belongs to the same world."
+          ]
+        },
+        {
+          "principle": "consistent-chrome",
+          "pass": true,
+          "votes": "2/3 pass",
+          "reasons": [
+            "The header keeps the same logo, link order (How it works, Commands, Try it, Roadmap) and outlined GitHub button at both widths, the links only dropping to a second row at 390, and all the buttons (GitHub, Star on GitHub, Try it from source, Copy) share the same square, lightly rounded 1px-border style.",
+            "The header is the same light bar with the striped AEOM mark, the links How it works / Commands / Try it / Roadmap in that order and an outlined GitHub button at 390 and 1280, and every button (Star on GitHub, Try it from source, GitHub, Copy) shares the same square-cornered fill-or-outline style."
+          ]
+        },
+        {
+          "principle": "not-generic",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "There is no gradient, shadowed card or emoji, and the hero split, steps and commands list are drawn as a technical sheet, with a column ruler, the visible/infrared Fig. 1 and its C1-D1 callouts, and hatched legend swatches, so no other SaaS could use this page.",
+            "No gradient, no shadowed cards, no emoji: features are a ruled legend with hatch-pattern swatches, the roadmap is a striped key table and the hero carries a captioned visible/infrared figure, none of which reads as a stock SaaS template.",
+            "No gradient, no shadowed cards, no emoji: the page is built from a ruler, a visible/infrared figure with marked defects, a calibration strip and patterned legend swatches, which no SaaS template ships."
+          ]
+        },
+        {
+          "principle": "not-ai-default",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "A cool blue-grey sheet with an extended black grotesk headline, a raspberry-magenta accent and drafting-ruler marks matches none of the listed defaults: it has no cream paper, serif, amber-on-black, Swiss red square, black-and-yellow grid or Inter on rounded cards.",
+            "The page is a cool grey technical plate with a heavy extended grotesque, IBM-style mono labels and a magenta accent, which matches none of the listed defaults (no cream and serif, no dark phosphor terminal, no white Swiss poster, no Inter on white with rounded cards).",
+            "A cool blue-grey sheet with a wide grotesque headline, a magenta accent and an infrared reflectography figure matches none of the listed defaults, neither cream-serif-red, dark-phosphor, Swiss white-and-red nor Inter on white with rounded cards."
+          ]
+        },
+        {
+          "principle": "hierarchy",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "The huge black 'All Eyes On Me' headline at top left is clearly where the eye starts, at both widths, with Fig. 1 second and each section opened by a smaller bold title under its numbered mono label.",
+            "The heavy black 'All Eyes On Me' headline at top left is the clear starting point at both widths, with the subhead, magenta Star on GitHub button and then the lighter Fig. 1 plate reading in order after it.",
+            "The huge 'All Eyes On Me' headline at top left is where the eye starts, followed by the subhead and the single magenta 'Star on GitHub' button, and each lower section repeats one tag-plus-title entry point."
+          ]
+        },
+        {
+          "principle": "grid",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "Content snaps to the ruler's columns: at 1280 the section lists start on D, the titles on E, the descriptions on G, the right-hand commands on J and the figure on F, and at 390 the step titles, command names and roadmap text all line up on column B.",
+            "Content snaps to the visible 12-column ruler on desktop (section labels on A, content on D, titles on E, descriptions on G, figure on F, figure and facts table bottoms aligned) and to the four-column ruler at 16px gutters on mobile, with the second text column held at B in every list.",
+            "Content snaps to the visible ruler: at 1280 step numbers, command swatches, the code block and the roadmap start on column D, titles on E, descriptions on G and the hero figure on F with its bottom level with the facts table; at 390 numbers and swatches sit on A and text on B."
+          ]
+        },
+        {
+          "principle": "density",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "Rows are spaced evenly, with roughly 90px between ruled sections, the hero fact table and Fig. 1 end on the same baseline, and nothing is cramped or adrift; even the empty left column under each section title at 1280 reads as a deliberate margin.",
+            "Sections are separated by even full-width rules and padding, list rows have steady spacing, the hero packs text, CTAs, facts and figure without crowding, and no area is left as unexplained empty space at either width.",
+            "Sections keep an even rhythm of rules and padding, the hero figure and facts table are full without crowding, and on phone the steps, commands and roadmap stack legibly with nothing squeezed or stranded."
+          ]
+        },
+        {
+          "principle": "states",
+          "pass": true,
+          "votes": "3/3 pass",
+          "reasons": [
+            "Every area of this static landing shows its content, including the figure, steps, commands, code block and roadmap, with no blank region, broken image or missing content at either width.",
+            "Every area is filled with designed content (figure with legend, six steps, eight commands, install code, five roadmap rows, footer) and no blank region or missing content appears at either width.",
+            "Every area is filled with designed content (the figure, the facts table, six steps, eight commands, the install block with a Copy button, five roadmap layers) and no blank or broken region shows at either width."
+          ]
+        }
+      ]
+    }
+  ],
+  "failures": 0
+}

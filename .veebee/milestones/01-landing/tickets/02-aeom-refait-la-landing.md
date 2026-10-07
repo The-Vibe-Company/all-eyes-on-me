@@ -4,6 +4,7 @@ title: AEOM refait sa propre landing : 6 directions, un tournoi, la gagnante app
 milestone: 01-landing
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 15, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/15 }
 ---
 
