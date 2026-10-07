@@ -1,0 +1,26 @@
+site/pages/index.html
+  s_4ce34ec42d9105::t_f6889f9e04e32c 8-10,14-15,17-43,45,47-49,59,61-64,70-71,73-75,82-83,85
+site/shared/header.html
+  s_4ce34ec42d9105::t_d24385733dc16a 1-10
+site/shared/footer.html
+  s_4ce34ec42d9105::t_c5ba292a649c55 1-4
+site/shared/kit.css
+  s_4ce34ec42d9105::t_a32dd2f863e46e 1-404
+  s_4ce34ec42d9105::t_f9434082d69b97 405-417
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6166b798302496f0b717a8e9a17a63ef64dd6258",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
