@@ -3,7 +3,7 @@ import { parseArgs } from "node:util";
 import { capture, route } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp, withConfig } from "./app.js";
 
-export const CAPTURE_HELP = `Usage: aeom capture --url <url> [--start "<command>"] [options]
+export const CAPTURE_HELP = `Usage: aeom capture [--url <url>] [--start "<command>"] [options]
 
 Finds every page of a web app by following its links, and screenshots each
 page at every width.

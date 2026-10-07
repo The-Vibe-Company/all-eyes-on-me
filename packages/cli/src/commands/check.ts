@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { CHECKS, checkSite, route, type Finding } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp, withConfig } from "./app.js";
 
-export const CHECK_HELP = `Usage: aeom check --url <url> [--start "<command>"] [options]
+export const CHECK_HELP = `Usage: aeom check [--url <url>] [--start "<command>"] [options]
 
 Runs the measurable checks on every page of a web app: ${CHECKS.join(", ")}.
 Exits with 1 when any check fails.

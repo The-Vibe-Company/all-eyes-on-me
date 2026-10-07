@@ -1,4 +1,4 @@
-import { AppStartError, DEFAULT_WIDTHS, loadConfig, startApp, type RunningApp } from "@aeom/core";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, startApp, type RunningApp } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -9,8 +9,10 @@ export const APP_OPTIONS = {
 } as const;
 
 export const APP_OPTIONS_HELP = `  --url <url>          Where the app answers, such as http://localhost:4317
+                       (default: url in .aeom/config.json)
   --start "<command>"  Start the app with this command first, and stop it after
-                       (both default to url and start in .aeom/config.json)
+                       (default: start in .aeom/config.json, only when --url
+                       is not given, so --url alone captures a running app)
   --widths <list>      Comma-separated widths in px (default ${DEFAULT_WIDTHS.join(",")})
   --timeout <seconds>  How long to wait for the app to answer (default 30)`;
 
@@ -48,8 +50,20 @@ export async function withApp(values: { url: string; start?: string; timeout?: s
 
 export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
-/** Fills --url and --start from .aeom/config.json when they are not given. */
+/**
+ * Fills --url and --start from .aeom/config.json. The config's start command
+ * is used only when --url is not given either: an explicit --url means an app
+ * that is already running there.
+ */
 export async function withConfig<T extends { url?: string; start?: string }>(values: T): Promise<T> {
-  const config = await loadConfig();
-  return { ...values, url: values.url ?? config.url, start: values.start ?? config.start };
+  let config;
+  try {
+    config = await loadConfig();
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    console.error(error.message);
+    process.exit(1);
+  }
+  if (values.url) return values;
+  return { ...values, url: config.url, start: values.start ?? config.start };
 }

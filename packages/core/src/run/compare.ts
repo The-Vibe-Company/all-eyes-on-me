@@ -4,7 +4,7 @@ import type { JudgeReport } from "../judge/tally.js";
 
 export interface PageScore {
   page: string;
-  /** Failing measurable checks on the page. */
+  /** Measurable checks failing on the page, each counted once. */
   checks: number;
   /** Principles the judge failed on the page. */
   principles: number;
@@ -13,26 +13,34 @@ export interface PageScore {
 
 export interface PageComparison {
   page: string;
-  before: PageScore;
-  after: PageScore;
-  verdict: "better" | "same" | "worse";
+  /** null when the page did not exist before. */
+  before: PageScore | null;
+  /** null when the page is missing after: it broke or disappeared. */
+  after: PageScore | null;
+  verdict: "better" | "same" | "worse" | "missing" | "new";
 }
 
 /** Counts, page by page, what fails. Lower is better; 0 is a page that passes everything. */
 export function scorePages(check: CheckReport | undefined, judge: JudgeReport | undefined): PageScore[] {
   const pages = new Set<string>([...(check?.pages ?? []).map(route), ...(judge?.pages ?? []).map((p) => p.page)]);
   return [...pages].map((page) => {
-    const checks = (check?.findings ?? []).filter((f) => route(f.url) === page).length;
+    const checks = new Set((check?.findings ?? []).filter((f) => route(f.url) === page).map((f) => f.check)).size;
     const principles = judge?.pages.find((p) => p.page === page)?.verdicts.filter((v) => !v.pass).length ?? 0;
     return { page, checks, principles, total: checks + principles };
   });
 }
 
-/** In V0, a page is better when fewer things fail on it. */
+/**
+ * In V0, a page is better when fewer things fail on it. A page missing after
+ * never counts as better; a page that only exists after is reported as new.
+ */
 export function comparePages(before: PageScore[], after: PageScore[]): PageComparison[] {
-  const empty = (page: string): PageScore => ({ page, checks: 0, principles: 0, total: 0 });
-  return before.map((b) => {
-    const a = after.find((s) => s.page === b.page) ?? empty(b.page);
-    return { page: b.page, before: b, after: a, verdict: a.total < b.total ? "better" : a.total > b.total ? "worse" : "same" };
+  const pages = [...new Set([...before.map((s) => s.page), ...after.map((s) => s.page)])];
+  return pages.map((page) => {
+    const b = before.find((s) => s.page === page) ?? null;
+    const a = after.find((s) => s.page === page) ?? null;
+    if (!a) return { page, before: b, after: null, verdict: "missing" };
+    if (!b) return { page, before: null, after: a, verdict: "new" };
+    return { page, before: b, after: a, verdict: a.total < b.total ? "better" : a.total > b.total ? "worse" : "same" };
   });
 }

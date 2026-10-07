@@ -127,11 +127,23 @@ test("a list item in the principles file that is not a principle is refused, wit
   }
 });
 
-test("a vote file that cannot be read is not reported as invalid JSON", async () => {
+test("a vote file that cannot be read is named as unreadable, not as invalid JSON", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-votes-"));
   try {
     await mkdir(join(dir, "1.json"));
-    await assert.rejects(readVotes(dir), (error: unknown) => !(error instanceof JudgeVoteError) && /EISDIR/.test(String((error as Error).message ?? error)));
+    await assert.rejects(readVotes(dir), (error: unknown) => error instanceof JudgeVoteError && /1\.json: cannot be read/.test(error.message) && !/not valid JSON/.test(error.message));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("principles files with Windows line endings load, and indented list items are refused", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-principles-"));
+  try {
+    await writeFile(join(dir, "crlf.md"), "# P\r\n\r\n- `grid` — Line up.\r\n- `density` — Breathe.\r\n");
+    assert.deepEqual((await loadPrinciples(join(dir, "crlf.md"))).map((p) => p.id), ["grid", "density"]);
+    await writeFile(join(dir, "indented.md"), "- `grid` — Line up.\n  - `density` — Breathe.\n");
+    await assert.rejects(loadPrinciples(join(dir, "indented.md")), /line 2 is a list item but not a principle/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
