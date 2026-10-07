@@ -1,0 +1,24 @@
+site/server.mjs
+  s_4ce34ec42d9105::t_23d75e96c476d9 12
+site/site.test.mjs
+  s_4ce34ec42d9105::t_23d75e96c476d9 5,36,49,53-67,69-79
+  s_4ce34ec42d9105::t_4d82530e961cc8 68
+site/run/directions/tournament.json
+  s_4ce34ec42d9105::t_ab4a2bb0e41639 1-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "300d54d2652a8e13bd457f64762fca00f5c1327a",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
