@@ -52,20 +52,21 @@ If a worker stops without committing, look at its worktree: when the work is the
 
 Instead of fixing the current look, start from six new ones and keep the best.
 
-1. **Six workers, at once.** For each archetype in [archetypes.md](archetypes.md), create a worktree from the run branch (`.aeom/worktrees/$RUN-dir-<archetype>`) and launch a worker with the direction brief. Each owns the shared files and the home page's files in its own worktree; they never see each other.
-2. **Capture each one.** For each worktree, from inside it, start its app on its own port and capture the home page only:
-   `aeom capture --start "<start command with PORT=<port>>" --url http://localhost:<port> --pages / --widths 1280 --out .aeom/runs/$RUN/directions/<archetype>`, then copy `index@1280.png` to `.aeom/runs/$RUN/directions/<archetype>.png`. A direction that does not start or does not build gets no capture: say so, and leave it out of the tournament.
-3. **Show them.** `aeom sheet --out .aeom/runs/$RUN/directions/sheet.png <archetype>=<its capture>...` with all six, the failed ones included, and show the sheet to the user.
-4. **Knockout.** `aeom tournament start --dir .aeom/runs/$RUN/directions <the archetypes that built>`. Then, until there is a champion: `aeom tournament next` names a duel and its two captures; launch three duel judges at once with the duel brief; when all three reply, record their votes one after another with `aeom tournament vote`. Never let the judges write the tournament file themselves: three writers at once lose votes. `aeom tournament status` shows the bracket and the reasons.
-5. **Apply the champion.** Merge the champion's worktree branch into the run branch: its shared files become the kit and its home page is done. Skip the kit wave, and run the screen wave (step 4) on every other page, then measure (step 5) as usual.
+1. **Six sources.** Follow [directions.md](directions.md): list twelve sources from the product's own world, pick six far apart, and drop any whose obvious rendering is a banned look. Give each a short slug, such as `nuancier`.
+2. **Six workers, at once.** For each source, create a worktree from the run branch (`.aeom/worktrees/$RUN-dir-<source>`) and launch a worker with the direction brief. Each owns the shared files and the home page's files in its own worktree; they never see each other.
+3. **Capture each one.** For each worktree, from inside it, start its app on its own port and capture the home page only:
+   `aeom capture --start "<start command with PORT=<port>>" --url http://localhost:<port> --pages / --widths 1280 --out .aeom/runs/$RUN/directions/<source>`, then copy `index@1280.png` to `.aeom/runs/$RUN/directions/<source>.png`. A direction that does not start or does not build gets no capture: say so, and leave it out of the tournament.
+4. **Show them.** `aeom sheet --out .aeom/runs/$RUN/directions/sheet.png <source>=<its capture>...` with all six, the failed ones included, and show the sheet to the user.
+5. **Knockout.** `aeom tournament start --dir .aeom/runs/$RUN/directions <the sources that built>`. Then, until there is a champion: `aeom tournament next` names a duel and its two captures; launch three duel judges at once with the duel brief; when all three reply, record their votes one after another with `aeom tournament vote`. Never let the judges write the tournament file themselves: three writers at once lose votes. `aeom tournament status` shows the bracket and the reasons. Duels of the same round are independent: run them at once.
+6. **Apply the champion.** Merge the champion's worktree branch into the run branch: its shared files become the kit and its home page is done. Skip the kit wave, and run the screen wave (section 4) on every other page, then measure (section 5) as usual.
 
-**Direction brief.** Give the worker its worktree path, the shared files and the home page files it may edit, the product (what it sells or does, for whom, in which language), its archetype from archetypes.md, and the base principles. Ask it to:
+**Direction brief.** Give the worker its worktree path, the shared files and the home page files it may edit, the product (what it sells or does, for whom, in which language), its source, the banned looks from directions.md, and the base principles. Ask it to:
 
-> Build one art direction for this product from your archetype, in real code: the shared kit (tokens, header, buttons, states) and the home page rebuilt on it. Take the archetype as a stance and make it specific to this product; do not imitate a famous site. Push it far enough that it could not be mistaken for the other directions. Keep the home page's content and purpose. Commit as soon as it works, then check it with `aeom check` on your own port and fix what fails.
+> Build one art direction for this product from your source, in real code: the shared kit (tokens, header, buttons, states) and the home page rebuilt on it. Take from the source what makes it recognisable (its colours, type, layout conventions, marks) and turn it into a web kit; do not draw a picture of it, and do not imitate a famous site. Before you commit, say which banned look yours is closest to and what keeps it apart; if one of them describes it, start again. Keep the home page's content and purpose. Commit as soon as it works, then check it with `aeom check` on your own port and fix what fails.
 
-**Duel brief.** Give each duel judge the two capture paths, the two archetype names, and the base principles. Ask it to:
+**Duel brief.** Give each duel judge the two capture paths, the two source names, the banned looks from directions.md, and the base principles. Ask it to:
 
-> Look at both screenshots. Which one would you ship for this product? Judge against the base principles, then on which is more specific to the product and less generic. Reply with only a JSON object: `{"winner": "<archetype>", "reason": "<one sentence naming what you see>"}`.
+> Look at both screenshots. First: if one of the banned looks describes one page and not the other, the other wins. Then judge against the base principles, and on which is more specific to the product and less like anything an AI would propose. Reply with only a JSON object: `{"winner": "<source>", "reason": "<one sentence naming what you see>"}`.
 
 ## 3. Kit wave: one worker
 
