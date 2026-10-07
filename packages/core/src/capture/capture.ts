@@ -26,6 +26,8 @@ export interface CaptureOptions {
   outDir: string;
   widths?: number[];
   maxPages?: number;
+  /** Capture only these routes, such as `["/"]`, instead of following links. */
+  paths?: string[];
 }
 
 /**
@@ -33,10 +35,10 @@ export interface CaptureOptions {
  * at every width. Writes the screenshots and `manifest.json` to `outDir`,
  * replacing the files of the previous capture.
  */
-export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages }: CaptureOptions): Promise<CaptureManifest> {
+export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, paths }: CaptureOptions): Promise<CaptureManifest> {
   const browser = await chromium.launch();
   try {
-    const { pages, errors } = await discoverPages(browser, url, { maxPages });
+    const { pages, errors } = paths ? { pages: paths.map((p) => new URL(p, url).toString()), errors: [] } : await discoverPages(browser, url, { maxPages });
     await clearPrevious(outDir);
     await mkdir(outDir, { recursive: true });
 
