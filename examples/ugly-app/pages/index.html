@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Boutique</title>
+<style>
+  body { margin: 0; font-family: "Comic Sans MS", cursive; background: #fdf6e3; }
+  header { background: linear-gradient(90deg, #8e2de2, #4a00e0); color: white; padding: 30px; text-align: center; }
+  header nav a { color: #ffe; margin: 0 12px; }
+  .hero { padding: 40px; text-align: center; }
+  .btn { display: inline-block; background: #ff4081; color: white; padding: 14px 28px; border-radius: 30px; cursor: default; }
+  .cards { display: flex; gap: 20px; justify-content: center; padding: 20px; flex-wrap: wrap; }
+  .card { width: 220px; padding: 20px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+</style>
+</head>
+<body>
+<header>
+  <h1>✨ Super Boutique ✨</h1>
+  <nav><a href="/">Accueil</a><a href="/produits">Produits</a><a href="/commandes">Commandes</a><a href="/contact">Contact</a><a href="/aide">Aide</a></nav>
+</header>
+<section class="hero">
+  <h2>🚀 Bienvenue dans le futur du shopping 🚀</h2>
+  <p>La meilleure boutique de tous les temps, pour tous vos besoins.</p>
+  <div class="btn" onclick="location.href='/produits'">Découvrir 🎉</div>
+</section>
+<section class="cards">
+  <div class="card"><h3>⚡ Rapide</h3><p>Livraison ultra rapide.</p></div>
+  <div class="card"><h3>💎 Premium</h3><p>Des produits premium.</p></div>
+  <div class="card"><h3>🔒 Sécurisé</h3><p>Paiement sécurisé.</p></div>
+</section>
+</body>
+</html>

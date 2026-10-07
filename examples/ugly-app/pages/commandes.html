@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes commandes</title>
+<style>
+  body { margin: 0; font-family: Helvetica, Arial, sans-serif; background: #eef; }
+  header { background: #ff0; padding: 4px 40px; border-bottom: 6px solid red; }
+  header h1 { margin: 0; font-size: 40px; color: red; font-style: italic; }
+  aside { float: left; width: 140px; padding: 10px; }
+  aside a { display: block; color: #00f; }
+  main { margin-left: 170px; padding: 10px; }
+</style>
+</head>
+<body>
+<header><h1>Boutique!!!</h1></header>
+<aside><a href="/">Retour</a><a href="/produits">Catalogue</a></aside>
+<main>
+  <h2>Mes commandes</h2>
+  <ul id="orders"></ul>
+</main>
+<script>
+  const orders = [];
+  document.getElementById("orders").innerHTML = orders.map((o) => `<li>${o}</li>`).join("");
+</script>
+</body>
+</html>
