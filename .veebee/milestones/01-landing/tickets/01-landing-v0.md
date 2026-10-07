@@ -4,6 +4,7 @@ title: Un visiteur ouvre la landing V0 : ce que fait AEOM, comment l'installer, 
 milestone: 01-landing
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 14, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/14 }
 ---
 
@@ -14,12 +15,12 @@ Il ouvre la page et comprend en une minute ce que fait AEOM, comment l'essayer, 
 Une page unique en anglais, volontairement brute : la promesse en une phrase, la boucle d'AEOM en quelques lignes, les commandes, l'installation, un lien « Star on GitHub », la feuille de route.
 
 ## C'est fini quand
-- [ ] La page s'ouvre en local avec une seule commande et dit en une phrase ce que fait AEOM
-- [ ] La boucle (capture, check, judge, waves, ratchet, directions) est expliquée en quelques lignes
-- [ ] Les commandes de la CLI affichées sont exactement celles de `aeom --help` ; un test échoue si elles divergent
-- [ ] L'installation affichée marche vraiment aujourd'hui (depuis les sources tant que npm n'est pas publié)
-- [ ] Un lien « Star on GitHub » mène au repo
-- [ ] La feuille de route, sur la landing et dans le README, place la couche UX juste après la landing
+- [x] La page s'ouvre en local avec une seule commande et dit en une phrase ce que fait AEOM
+- [x] La boucle (capture, check, judge, waves, ratchet, directions) est expliquée en quelques lignes
+- [x] Les commandes de la CLI affichées sont exactement celles de `aeom --help` ; un test échoue si elles divergent
+- [x] L'installation affichée marche vraiment aujourd'hui (depuis les sources tant que npm n'est pas publié)
+- [x] Un lien « Star on GitHub » mène au repo
+- [x] La feuille de route, sur la landing et dans le README, place la couche UX juste après la landing
 
 ## Comment
 - `site/` à la racine : HTML statique servi par un petit serveur Node, sur le modèle de `examples/ugly-app/server.mjs` (`pages/`, `shared/`, partials), pour qu'AEOM puisse tourner dessus sans configuration.

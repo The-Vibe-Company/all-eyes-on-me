@@ -58,6 +58,8 @@ The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
 
 **First iteration after V0.** This project's landing page, built with AEOM.
 
+**Then, the UX layer.** Before touching a screen, AEOM understands the product on its own: what it is for, who uses it, its main loop and three to five key journeys, written to `.aeom/product.md` for the user to correct. It critiques the existing experience journey by journey, with captures, and judges journeys, not only pages. It may change navigation and journeys (the order of steps, how screens group, shortcuts to actions that already exist, copy, states), never build features, unless the user asks very explicitly. The first pilot is a workout tracker mixed with a card-collection game.
+
 **V1.** Redesign mode on the web. Claude Code. Capture through e2e. Blocking checks. Six directions and the tournament. Kit and screen waves with the ratchet. Feedback journal and distillation. Base principles v0. Spend cap. The npm package.
 
 **V2.** Launch mode for new projects. Codex. Mobile (iOS and Android, through e2e). Per-category autonomy. The CI check for other fleets. A landing page, designed by AEOM.
