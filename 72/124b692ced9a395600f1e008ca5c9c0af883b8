@@ -1,0 +1,52 @@
+packages/core/src/judge/principles.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-18
+.veebee/tickets/03-juge.md
+  s_4ce34ec42d9105::t_0e21d32e34a962 7
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-99
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-74
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-41
+principles/base.md
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-16
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-98
+packages/cli/package.json
+  s_4ce34ec42d9105::t_0e21d32e34a962 22
+packages/core/package.json
+  s_4ce34ec42d9105::t_0e21d32e34a962 9
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 3
+packages/core/src/judge/index.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 1-2
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_0e21d32e34a962 5,15-18,26
+  s_4ce34ec42d9105::t_80d8dd632badb5 27
+.aeom/reports/check.json
+  s_4ce34ec42d9105::t_f6f6a376f00e09 1-97
+.aeom/reports/judge.json
+  s_4ce34ec42d9105::t_18324151ffdbba 1-382
+.aeom/reports/judge/1.json
+  s_4ce34ec42d9105::t_fc3daf119975b2 1-45
+.aeom/reports/judge/2.json
+  s_4ce34ec42d9105::t_d8e5e8c658aa5f 1-45
+.aeom/reports/judge/3.json
+  s_4ce34ec42d9105::t_4f652894142230 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72124b692ced9a395600f1e008ca5c9c0af883b8",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
