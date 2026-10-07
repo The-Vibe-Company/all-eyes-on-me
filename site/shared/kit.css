@@ -54,8 +54,11 @@
   --col: calc((100cqw - (var(--cols) - 1) * var(--gutter)) / var(--cols));
   --step: calc(var(--col) + var(--gutter));
 
-  /* How far a label sits after its tick, on the ruler and in the record */
+  /* How far a label sits after its tick on the ruler */
   --tick-inset: 6px;
+
+  /* How far text sits inside a ruled cell, as in the plate */
+  --cell-inset: 14px;
 }
 
 @media (min-width: 720px) {
@@ -388,10 +391,13 @@ h2 {
   padding-top: 8px;
 }
 
+/* On a wide screen the record moves under the pitch, so the text column
+   runs as long as Fig. 1 beside it instead of stopping short of it */
 @media (min-width: 1080px) {
   .hero { padding-top: 56px; }
-  .hero__text { grid-column: 1 / span 5; padding-top: 8px; }
-  .hero .plate { grid-column: 6 / -1; }
+  .hero__text { grid-column: 1 / span 5; grid-row: 1; padding-top: 8px; }
+  .hero .plate { grid-column: 6 / -1; grid-row: 1 / span 2; }
+  .hero .record { grid-column: 1 / span 5; grid-row: 2; align-self: end; }
 }
 
 /* Plate: the figure as it sits in a technical report */
@@ -713,7 +719,7 @@ h2 {
 }
 
 /* The record: the report's header fields, set on the page grid itself so
-   each field starts on a ruler tick and reads like the ruler above it */
+   each field's rule stands on a ruler tick */
 
 .record {
   display: grid;
@@ -724,7 +730,7 @@ h2 {
 
 .record > div {
   grid-column: span 2;
-  padding: 14px 12px 16px var(--tick-inset);
+  padding: 14px var(--cell-inset) 16px;
   border-left: 1px solid var(--rule);
 }
 
@@ -733,7 +739,7 @@ h2 {
 /* Two fields a row: the left one carries the row rule across the gutter */
 .record > div:nth-child(odd) {
   margin-right: calc(-1 * var(--gutter));
-  padding-right: calc(12px + var(--gutter));
+  padding-right: calc(var(--cell-inset) + var(--gutter));
 }
 
 .record dt {
@@ -753,7 +759,25 @@ h2 {
 @media (min-width: 720px) {
   .record > div { grid-column: span 3; }
   .record > div:nth-child(-n + 2) { border-bottom: 0; }
-  .record > div:nth-child(odd) { margin-right: 0; padding-right: 12px; }
+  .record > div:nth-child(odd) { margin-right: 0; padding-right: var(--cell-inset); }
+}
+
+/* Under the pitch, one field a row: the name in the first column, the
+   value from the next tick, each after its own rule */
+@media (min-width: 1080px) {
+  .record > div {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: var(--col) minmax(0, 1fr);
+    column-gap: var(--gutter);
+    align-items: baseline;
+    padding: 12px var(--cell-inset);
+    background: linear-gradient(var(--rule), var(--rule)) var(--step) 0 / 1px 100% no-repeat;
+    background-origin: border-box;
+  }
+  .record > div + div { border-top: 1px solid var(--rule); }
+  .record dt { white-space: nowrap; }
+  .record dd { margin-top: 0; }
 }
 
 /* Sections: heading in the left columns, the body on the right */
@@ -922,7 +946,8 @@ h2 {
   font-weight: 600;
 }
 
-/* A command is never broken: a line too long for the film scrolls inside it */
+/* A command is never broken: a long one goes on with a shell line
+   continuation (" \" then an indented line), so it still pastes as typed */
 .film pre {
   padding: 18px 20px 20px;
   font: 400 0.875rem/1.75 var(--mono);
@@ -930,6 +955,21 @@ h2 {
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--xr-dim) transparent;
+}
+
+/* On a phone the film runs edge to edge with its text on the first tick,
+   and the type is only as large as lets the longest line (52 characters)
+   fit between the first tick and the right edge of the grid (100cqw) */
+@media (max-width: 719.98px) {
+  .film {
+    margin-inline: calc(-1 * var(--pad));
+    border-inline: 0;
+  }
+  .film__head { padding-inline: var(--pad); }
+  .film pre {
+    padding: 16px var(--pad) 18px;
+    font-size: min(0.875rem, 100cqw / 32);
+  }
 }
 
 .film pre code { font-size: inherit; }
@@ -946,6 +986,9 @@ h2 {
   content: "$ ";
   color: var(--xr-dim);
 }
+
+/* The rest of a command, after its line continuation: no prompt */
+.film .ln--more::before { content: none; }
 
 .copy {
   min-height: 36px;
