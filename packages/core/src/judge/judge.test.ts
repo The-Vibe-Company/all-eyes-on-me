@@ -112,3 +112,27 @@ test("a vote file that is not valid JSON is named, not mistaken for no vote", as
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("the same voter voting twice is refused", () => {
+  refuses(() => tally([vote("1"), vote("1"), vote("3")], pages, principles), /voter 1 voted more than once/);
+});
+
+test("a list item in the principles file that is not a principle is refused, with its line", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-principles-"));
+  try {
+    await writeFile(join(dir, "p.md"), "# P\n\n- `grid` — Line up.\n- density: not in the right shape\n");
+    await assert.rejects(loadPrinciples(join(dir, "p.md")), /line 4 is a list item but not a principle/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a vote file that cannot be read is not reported as invalid JSON", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-votes-"));
+  try {
+    await mkdir(join(dir, "1.json"));
+    await assert.rejects(readVotes(dir), (error: unknown) => !(error instanceof JudgeVoteError) && /EISDIR/.test(String((error as Error).message ?? error)));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

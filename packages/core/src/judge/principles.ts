@@ -12,7 +12,16 @@ export const DEFAULT_PRINCIPLES_FILE = fileURLToPath(new URL("../../../../princi
 /** Reads the principles of a file: every line shaped `- \`id\` — what it asks for`. */
 export async function loadPrinciples(file: string = DEFAULT_PRINCIPLES_FILE): Promise<Principle[]> {
   const text = await readFile(file, "utf8");
-  const principles = [...text.matchAll(/^- `([a-z0-9-]+)` [—-] (.+)$/gm)].map(([, id, body]) => ({ id: id!, text: body!.trim() }));
+  const ROW = /^- `([a-z0-9-]+)` [—-] (.+)$/;
+  const principles: Principle[] = [];
+  const malformed: number[] = [];
+  text.split("\n").forEach((line, i) => {
+    if (!line.startsWith("- ")) return;
+    const match = ROW.exec(line);
+    if (match) principles.push({ id: match[1]!, text: match[2]!.trim() });
+    else malformed.push(i + 1);
+  });
+  if (malformed.length) throw new Error(`${file}: line ${malformed.join(", ")} is a list item but not a principle. Each one is a line like: - \`id\` — what it asks for`);
   if (principles.length === 0) throw new Error(`No principle found in ${file}. Each one is a line like: - \`id\` — what it asks for`);
   const seen = new Set<string>();
   const twice = principles.filter(({ id }) => seen.has(id) || !seen.add(id)).map(({ id }) => id);

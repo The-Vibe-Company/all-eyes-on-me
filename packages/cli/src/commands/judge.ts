@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { DEFAULT_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, VOTERS, type CaptureManifest, type Vote } from "@aeom/core";
 
@@ -44,6 +44,10 @@ export async function runJudge(argv: string[]): Promise<number> {
     return 1;
   }
   const principles = await loadPrinciples(values.principles ?? DEFAULT_PRINCIPLES_FILE);
+  if (resolve(values.out) === resolve(values.votes)) {
+    console.error(`--out and --votes cannot be the same folder: judge.json would be counted as a vote next time.`);
+    return 1;
+  }
   const voters = Number(values.voters);
   if (!Number.isInteger(voters) || voters < 1) {
     console.error(`--voters must be a positive whole number.`);
@@ -67,6 +71,11 @@ export async function runJudge(argv: string[]): Promise<number> {
     return 1;
   }
 
+  const missing = Array.from({ length: voters }, (_, i) => String(i + 1)).filter((n) => !votes.some((v) => v.voter === n));
+  if (missing.length && votes.length < voters) {
+    console.error(`Missing votes from voter ${missing.join(", ")}: expected ${missing.map((n) => join(values.votes, `${n}.json`)).join(", ")}. Relaunch those voters.`);
+    return 1;
+  }
   let report;
   try {
     report = tally(votes, pages, principles, { voters });

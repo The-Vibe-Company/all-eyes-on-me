@@ -52,6 +52,11 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
   const ids = new Set(principles.map((p) => p.id));
   const problems: string[] = [];
   if (votes.length !== voters) problems.push(`expected ${voters} votes, found ${votes.length}`);
+  const seenVoters = new Set<string>();
+  for (const vote of votes) {
+    if (seenVoters.has(vote.voter)) problems.push(`voter ${vote.voter} voted more than once`);
+    seenVoters.add(vote.voter);
+  }
   for (const vote of votes) {
     for (const page of pages) {
       const verdicts = vote.pages?.[page];
@@ -95,7 +100,8 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
 
 /**
  * Reads every `.json` file of `dir` as one vote. A missing folder means no
- * vote; a file that is not valid JSON is a JudgeVoteError naming it.
+ * vote; a file that is not valid JSON is a JudgeVoteError naming it, and a
+ * file that cannot be read throws its own error.
  */
 export async function readVotes(dir: string): Promise<Vote[]> {
   let files: string[];
@@ -108,8 +114,9 @@ export async function readVotes(dir: string): Promise<Vote[]> {
   const problems: string[] = [];
   const votes: Vote[] = [];
   for (const file of files) {
+    const text = await readFile(join(dir, file), "utf8");
     try {
-      const vote = JSON.parse(await readFile(join(dir, file), "utf8")) as Vote;
+      const vote = JSON.parse(text) as Vote;
       votes.push({ ...vote, voter: String(vote.voter ?? file.replace(/\.json$/, "")) });
     } catch (error) {
       problems.push(`${file}: not valid JSON (${error instanceof Error ? error.message : String(error)})`);

@@ -9,11 +9,11 @@ You run the judge on the latest captures. Three subagents vote independently, th
 
 ## Steps
 
-1. **Captures.** `.aeom/captures/manifest.json` must exist and be recent. If it does not, run `aeom capture` first.
-2. **Clear old votes.** Create `.aeom/reports/judge/` if it does not exist, and delete the `*.json` files in it, so votes from an earlier run are never counted with the new ones.
+1. **Fresh captures.** Run `aeom capture` right before judging, every time, so the judges never see an older state of the app. It reads `url` and `start` from `.aeom/config.json`; without that file, pass `--url` and `--start`.
+2. **Clear the last verdict.** Delete `.aeom/reports/judge.json`, create `.aeom/reports/judge/` if it does not exist, and delete the `*.json` files in it, so neither an old verdict nor old votes can pass for this run's.
 3. **Three voters, in parallel.** Launch three subagents at once, in the background, each with the voter brief below and its number (1, 2, 3). Give them nothing else: no earlier verdicts, no opinion of yours. Independent votes are the whole point.
 4. **Count.** When all three have written their file, run `aeom judge`. It writes `.aeom/reports/judge.json`, prints what fails, and exits with 1 when anything fails.
-5. **Votes refused.** If `aeom judge` says some votes cannot be counted, relaunch only the voters it names with the same brief, then count again. Never edit a vote yourself.
+5. **Votes missing or refused.** If `aeom judge` names missing voters or votes it cannot count, relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
 
 ## The voter brief
 
