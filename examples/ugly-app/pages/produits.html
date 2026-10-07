@@ -3,33 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Produits</title>
-<style>
-  body { margin: 0; font-family: Georgia, serif; background: white; }
-  .top { display: flex; justify-content: space-between; align-items: center; background: #222; color: #0f0; padding: 8px 16px; }
-  .top a { color: #0f0; font-size: 12px; margin-left: 8px; }
-  main { padding: 16px; }
-  table { border-collapse: collapse; }
-  td, th { border: 1px solid #999; padding: 4px 10px; }
-  .note { color: #ccc; font-size: 13px; }
-  button { background: #eee; border: 2px outset #ccc; cursor: default; font-family: Arial; }
-</style>
+<title>Produits · Super Boutique</title>
+<link rel="stylesheet" href="/shared/kit.css">
 </head>
 <body>
-<div class="top">
-  <b>SUPER BOUTIQUE</b>
-  <span><a href="/contact">contact</a><a href="/">home</a><a href="/produits">produits</a></span>
-</div>
-<main>
-  <h1 style="font-size: 18px">Liste des produits</h1>
-  <table>
-    <tr><th>Produit</th><th>Prix</th><th></th></tr>
-    <tr><td>Lampe</td><td>39,90 €</td><td><button>Ajouter</button></td></tr>
-    <tr><td>Chaise</td><td>89,00 €</td><td><button>Ajouter</button></td></tr>
-    <tr><td>Tapis</td><td>129,00 €</td><td><button>Ajouter</button></td></tr>
-  </table>
-  <p class="note">Prix TTC, livraison offerte dès 50 €.</p>
-  <p><a href="/commandes">Voir mes commandes</a></p>
+<!-- include: header -->
+<main id="contenu" class="page">
+  <div class="page-head">
+    <h1>Nos produits</h1>
+    <p class="lead">Une lampe, une chaise, un tapis : trois pièces pour la maison, à ajouter au panier ligne par ligne.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <caption class="sr-only">Produits en vente, avec leur prix TTC</caption>
+      <thead>
+        <tr>
+          <th scope="col">Produit</th>
+          <th scope="col" class="num">Prix TTC</th>
+          <th scope="col" class="action"><span class="sr-only">Ajouter au panier</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Lampe</th>
+          <td class="num"><span class="price">39,90 €</span></td>
+          <td class="action"><button type="button" class="btn-secondary btn-small" data-added="Lampe ajoutée au panier.">Ajouter<span class="sr-only"> la lampe au panier</span></button></td>
+        </tr>
+        <tr>
+          <th scope="row">Chaise</th>
+          <td class="num"><span class="price">89,00 €</span></td>
+          <td class="action"><button type="button" class="btn-secondary btn-small" data-added="Chaise ajoutée au panier.">Ajouter<span class="sr-only"> la chaise au panier</span></button></td>
+        </tr>
+        <tr>
+          <th scope="row">Tapis</th>
+          <td class="num"><span class="price">129,00 €</span></td>
+          <td class="action"><button type="button" class="btn-secondary btn-small" data-added="Tapis ajouté au panier.">Ajouter<span class="sr-only"> le tapis au panier</span></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="stack">
+    <div id="panier-statut" role="status"></div>
+    <p class="note">Prix TTC, livraison offerte dès 50 €.</p>
+    <p><a href="/commandes">Voir mes commandes</a></p>
+  </div>
 </main>
+<!-- include: footer -->
+<script>
+  // Says what happened after each "Ajouter" (a .notice-success in the status region).
+  (function () {
+    var status = document.getElementById("panier-statut");
+    document.querySelectorAll("[data-added]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        status.innerHTML = "";
+        var notice = document.createElement("p");
+        notice.className = "notice notice-success";
+        notice.textContent = button.getAttribute("data-added");
+        status.appendChild(notice);
+      });
+    });
+  })();
+</script>
 </body>
 </html>
