@@ -56,7 +56,7 @@ Create a worktree for the kit worker from the run branch:
 git worktree add .aeom/worktrees/$RUN-kit -b aeom/$RUN-kit aeom/$RUN
 ```
 
-Launch one subagent with the kit brief below. When it is done, check its diff touches only shared files (`git -C .aeom/worktrees/$RUN-kit diff --name-only aeom/$RUN`). Anything else: refuse the worker's work, say why. Otherwise merge it into the run branch.
+Note the commit the worktree started from (`KIT_BASE=$(git rev-parse aeom/$RUN)`), then launch one subagent with the kit brief below. When it is done, check its diff touches only shared files (`git -C .aeom/worktrees/$RUN-kit diff --name-only $KIT_BASE HEAD`). Anything else: refuse the worker's work, say why. Otherwise merge it into the run branch.
 
 **Kit brief.** Give the worker: the worktree path, the shared files it may edit, the kit failures with their reasons, and the base principles (`aeom principles`). Ask it to:
 
@@ -64,13 +64,15 @@ Launch one subagent with the kit brief below. When it is done, check its diff to
 
 ## 4. Screen wave: one worker per page, all at once
 
-For each page, create its worktree from the run branch, which now has the kit:
+Note the commit every page worktree starts from (`WAVE_BASE=$(git rev-parse aeom/$RUN)`), then create each page's worktree from the run branch, which now has the kit:
 
 ```bash
 git worktree add .aeom/worktrees/$RUN-<page> -b aeom/$RUN-<page> aeom/$RUN
 ```
 
-Launch every page worker at the same time, in the background. Each gets the page brief. When they are done, check each diff touches only that page's own files; refuse any worker that strays. Merge the accepted ones into the run branch one after another: their files are disjoint, so they never conflict.
+Launch every page worker at the same time, in the background. Each gets the page brief. When they are done, check each diff against `$WAVE_BASE`, never against the run branch, which moves as pages merge: `git -C .aeom/worktrees/$RUN-<page> diff --name-only $WAVE_BASE HEAD` must list only that page's own files. Refuse any worker that strays. Merge the accepted ones into the run branch one after another: their files are disjoint, so they never conflict.
+
+Collect what each worker calls a kit candidate into `.aeom/runs/$RUN/kit-candidates.md`, with the page it came from. The next run's kit brief includes that file, so the kit wave promotes them.
 
 **Page brief.** Give the worker: its worktree path, the files of its page and nothing else, the page's failing checks and principles with their reasons, and where the kit says how to use it. Ask it to:
 
@@ -92,11 +94,11 @@ aeom snapshot .aeom/runs/$RUN/after
 aeom compare .aeom/runs/$RUN/before .aeom/runs/$RUN/after
 ```
 
-For every page that is not `better`, put its files back as they were before the screen wave (`git checkout <run branch commit before the screen wave> -- <the page's files>`), commit, and say which pages kept their old version and why.
+For every page that is not `better`, put its files back as they were before the screen wave (`git checkout $WAVE_BASE -- <the page's files>`) and commit. Such a page still renders through the new kit, so it is neither the page before the run nor the page after the wave: capture, check and judge again, snapshot to `.aeom/runs/$RUN/after-revert`, and compare that with `before`. Say which pages were put back, why, and how they now compare. If the kit itself made a page worse, say so: putting the page back cannot undo the kit.
 
 ## 6. Show
 
-Show the user, page by page, the capture before and after (from `.aeom/runs/$RUN/before/captures` and `.aeom/runs/$RUN/after/captures`), the comparison table, and what changed in the kit. End with the run branch name, ready to merge, and the commands to look at it. Remove the worker worktrees (`git worktree remove`) and their branches once merged.
+Show the user, page by page, the capture before and after (from `.aeom/runs/$RUN/before/captures` and `.aeom/runs/$RUN/after/captures`), the comparison table, what changed in the kit, and the kit candidates the workers left. End with the run branch name, ready to merge, and the commands to look at it. Remove the worker worktrees (`git worktree remove`) and their branches once merged.
 
 ## Rules
 

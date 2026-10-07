@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import type { CheckReport } from "../checks/index.js";
 import type { JudgeReport } from "../judge/index.js";
-import { comparePages, loadConfig, scorePages, snapshot } from "./index.js";
+import { comparePages, ConfigError, loadConfig, scorePages, snapshot, SnapshotPathError } from "./index.js";
 
 const check = (findings: [string, string][]): CheckReport => ({
   url: "http://x.test/",
@@ -73,6 +73,44 @@ test("a snapshot copies the captures and the reports, so the next run cannot ove
     await writeFile(join(dir, ".aeom", "reports", "check.json"), "changed");
     assert.equal(await readFile(join(dir, ".aeom", "runs", "r1", "before", "reports", "check.json"), "utf8"), "{}");
     assert.equal(await readFile(join(dir, ".aeom", "runs", "r1", "before", "captures", "index@390.png"), "utf8"), "png");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a check failing several times on a page counts once", () => {
+  const scores = scorePages(check([["/", "cursor"], ["/", "cursor"], ["/", "overflow"]]), undefined);
+  assert.equal(scores.find((s) => s.page === "/")!.checks, 2);
+});
+
+test("a page missing after is never better, and a page found only after is new", () => {
+  const before = [{ page: "/", checks: 3, principles: 0, total: 3 }];
+  const after = [{ page: "/new", checks: 0, principles: 0, total: 0 }];
+  assert.deepEqual(comparePages(before, after).map((c) => [c.page, c.verdict]), [["/", "missing"], ["/new", "new"]]);
+});
+
+test("a broken config is an error, not an absent one", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-config-"));
+  try {
+    await mkdir(join(dir, ".aeom"));
+    await writeFile(join(dir, ".aeom", "config.json"), "{ nope");
+    await assert.rejects(loadConfig(dir), ConfigError);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: 123 }));
+    await assert.rejects(loadConfig(dir), /"url" must be a non-empty string/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a snapshot never deletes what it copies", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-snapshot-"));
+  try {
+    await mkdir(join(dir, ".aeom", "captures"), { recursive: true });
+    await writeFile(join(dir, ".aeom", "captures", "keep.png"), "png");
+    await assert.rejects(snapshot(join(dir, ".aeom"), dir), SnapshotPathError);
+    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom")), SnapshotPathError);
+    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "captures", "x")), SnapshotPathError);
+    assert.equal(await readFile(join(dir, ".aeom", "captures", "keep.png"), "utf8"), "png");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
