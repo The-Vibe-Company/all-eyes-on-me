@@ -4,6 +4,7 @@ title: /aeom : la flotte corrige en parallèle et montre l'avant / après
 milestone: null
 depends_on: [02, 03]
 design: null
+status: done
 tracker: { tool: github, id: 4, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/4 }
 ---
 
@@ -14,12 +15,12 @@ Il tape `/aeom` dans Claude Code, dans un projet, et la flotte corrige le front 
 Dans la session : les étapes qui s'enchaînent, les workers lancés, puis l'avant / après de chaque page et la branche à merger.
 
 ## C'est fini quand
-- [ ] `/aeom` lancé sur ugly-app enchaîne capture, check et juge sans autre commande
-- [ ] Ce qui est partagé (header, boutons) est corrigé d'abord, par un seul worker
-- [ ] Ensuite, un worker par page tourne en même temps, chacun dans son worktree, limité aux fichiers de sa page
-- [ ] Après les workers, AEOM recapture, relance check et juge, et montre l'avant / après de chaque page
-- [ ] Une page qui ne s'améliore pas garde son ancienne version
-- [ ] Le résultat finit sur une branche, prête à merger
+- [x] `/aeom` lancé sur ugly-app enchaîne capture, check et juge sans autre commande
+- [x] Ce qui est partagé (header, boutons) est corrigé d'abord, par un seul worker
+- [x] Ensuite, un worker par page tourne en même temps, chacun dans son worktree, limité aux fichiers de sa page
+- [x] Après les workers, AEOM recapture, relance check et juge, et montre l'avant / après de chaque page
+- [x] Une page qui ne s'améliore pas garde son ancienne version
+- [x] Le résultat finit sur une branche, prête à merger
 
 ## Les règles
 - La vague kit a un seul worker ; la vague écrans a un worker par écran, sur des dossiers disjoints (CONTEXT.md).
