@@ -37,6 +37,17 @@ Read `.aeom/reports/check.json` and `.aeom/reports/judge.json`, and the project 
 
 Sort every failure the same way. A failure that shows on several pages, or a principle that compares pages (`one-direction`, `consistent-chrome`, `not-generic`), goes to the kit. Everything else goes to its page.
 
+## Briefing any worker
+
+Every brief, kit or page, also says:
+
+- **Run the CLI from the main checkout.** A fresh worktree has no `node_modules` and no build. The worker runs `node <main checkout>/packages/cli/dist/index.js ...` from inside its worktree, so the app it starts is the worktree's copy.
+- **Its own port.** Give each worker a different port for its checks (`--start "PORT=<port> ..." --url http://localhost:<port>`), so two workers never test each other's app.
+- **Its own report folder.** The worker passes `--out <a temporary folder>` to `aeom check`, so it never touches `.aeom/reports`.
+- **Commit first, check after.** The worker commits as soon as its work is in place, then checks and commits fixes. A worker that stalls during its checks leaves committed work behind.
+
+If a worker stops without committing, look at its worktree: when the work is there and stays inside its files, commit it yourself and say so.
+
 ## 3. Kit wave: one worker
 
 Create a worktree for the kit worker from the run branch:
@@ -49,7 +60,7 @@ Launch one subagent with the kit brief below. When it is done, check its diff to
 
 **Kit brief.** Give the worker: the worktree path, the shared files it may edit, the kit failures with their reasons, and the base principles (`aeom principles`). Ask it to:
 
-> Build one art direction for the whole app, held in the shared files only: colour, type and spacing tokens, the header and navigation every page will use, the buttons, links and the empty, error and loading states. It must be specific to this product, not a generic template. Every clickable thing gets a pointer cursor and a visible hover and focus. Text reaches AA contrast. Do not edit any page. Write at the top of the main shared file, in a comment, how pages use the kit (which file to link, which partial to include, which classes exist). Commit your work in the worktree.
+> Build one art direction for the whole app, held in the shared files only (partials such as a header are inserted into pages, not served on their own): colour, type and spacing tokens, the header and navigation every page will use, the buttons, links and the empty, error and loading states. It must be specific to this product, not a generic template. Every clickable thing gets a pointer cursor and a visible hover and focus. Text reaches AA contrast. Do not edit any page. Write at the top of the main shared file, in a comment, how pages use the kit (which file to link, which partial to include, which classes exist). Commit your work in the worktree.
 
 ## 4. Screen wave: one worker per page, all at once
 
