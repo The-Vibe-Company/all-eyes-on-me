@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import { CHECKS, checkSite, route, type Finding } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp } from "./app.js";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp, withConfig } from "./app.js";
 
 export const CHECK_HELP = `Usage: aeom check --url <url> [--start "<command>"] [options]
 
@@ -14,13 +14,13 @@ ${APP_OPTIONS_HELP}
   --out <dir>          Where to write check.json (default .aeom/reports)`;
 
 export async function runCheck(argv: string[]): Promise<number> {
-  const { values } = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" } } });
+  const values = await withConfig(parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" } } }).values);
   if (values.help) {
     console.log(CHECK_HELP);
     return 0;
   }
   if (!values.url) {
-    console.error(`--url is required.\n\n${CHECK_HELP}`);
+    console.error(`--url is required, here or in .aeom/config.json.\n\n${CHECK_HELP}`);
     return 1;
   }
   const widths = parseWidths(values.widths);

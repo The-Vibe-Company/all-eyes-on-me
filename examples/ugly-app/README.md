@@ -5,3 +5,5 @@ A deliberately bad four-page app to test AEOM on: a different header on every pa
 ```bash
 node examples/ugly-app/server.mjs   # http://localhost:4317, or set PORT
 ```
+
+`pages/` holds one file per page; `shared/` holds what every page shares (`kit.css`, served at `/shared/kit.css`, and partials such as `header.html`, inserted where a page writes `<!-- include: header -->`). The kit starts empty: every page styles itself, which is the problem AEOM fixes.
