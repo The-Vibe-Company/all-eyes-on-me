@@ -48,6 +48,28 @@ describe("capture on the ugly app", () => {
     assert.ok(existsSync(join(outDir, "manifest.json")));
   });
 
+  test("captures only the pages it is given", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "aeom-capture-only-"));
+    try {
+      const manifest = await capture({ url, outDir: dir, paths: ["/produits"], widths: [390] });
+      assert.deepEqual(manifest.pages.map((p) => p.path), ["/produits"]);
+      assert.ok(existsSync(join(dir, "produits@390.png")));
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("given routes that fail or leave the app are reported, not captured", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "aeom-capture-only-"));
+    try {
+      const manifest = await capture({ url, outDir: dir, paths: ["/produits", "/aide", "https://example.com/"], widths: [390] });
+      assert.deepEqual(manifest.pages.map((p) => p.path), ["/produits"]);
+      assert.deepEqual(manifest.errors.map((e) => e.status ?? e.reason), [500, `not on ${new URL(url).origin}`]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   test("refuses to start a second app where one already answers", async () => {
     await assert.rejects(startApp("node -e 0", url), AppStartError);
   });
