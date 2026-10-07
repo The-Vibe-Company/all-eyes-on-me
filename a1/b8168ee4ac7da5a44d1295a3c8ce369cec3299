@@ -1,0 +1,41 @@
+packages/cli/src/commands/capture.ts
+  s_4ce34ec42d9105::t_c83313b4e983d7 1-80
+packages/core/package.json
+  s_4ce34ec42d9105::t_c83313b4e983d7 10-14
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_f87dd084e77181 1
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_f87dd084e77181 1-93
+packages/core/src/capture/start-app.ts
+  s_4ce34ec42d9105::t_f87dd084e77181 1-90
+packages/cli/package.json
+  s_4ce34ec42d9105::t_c83313b4e983d7 7-20,24-26
+packages/core/src/capture/discover.ts
+  s_4ce34ec42d9105::t_f87dd084e77181 1-77
+package.json
+  s_4ce34ec42d9105::t_c83313b4e983d7 6-8,11-12
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_f87dd084e77181 1-3
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_c83313b4e983d7 1-66
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_c83313b4e983d7 3,12-15,18-23,25-26,29
+pnpm-lock.yaml
+  s_4ce34ec42d9105::t_58de01ee3ad749 18-22,24-28,35-44,59-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a1b8168ee4ac7da5a44d1295a3c8ce369cec3299",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
