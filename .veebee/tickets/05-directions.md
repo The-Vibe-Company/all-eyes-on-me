@@ -27,7 +27,7 @@ Les 6 captures de la page d'accueil côte à côte, puis la direction gagnante e
 ## Comment
 - 6 workers en sous-agents, chacun dans son worktree, partent chacun d'une source différente tirée du monde du produit, selon `skills/aeom/directions.md`, qui contient aussi la liste noire des looks IA. (La première version partait d'archétypes de style ; Antoine les a rejetés comme les designs classiques de l'IA.)
 - Chaque direction sert l'app sur son propre port pour être capturée.
-- Avant le tableau, 3 juges écartent les directions qu'un look de la liste noire décrit. Puis le tournoi réutilise le juge de 03 avec une consigne « A ou B ».
+- Avant le tableau, 3 juges écartent les directions qu'un look de la liste noire décrit ; s'il n'en reste qu'une, elle gagne sans tournoi, s'il n'en reste aucune, on en reconstruit six. Puis le tournoi réutilise le juge de 03 avec une consigne « A ou B ».
 - La gagnante devient le kit, et la vague écrans de 04 refait les autres pages dessus.
 
 ## Hors ticket

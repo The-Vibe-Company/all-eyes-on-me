@@ -51,14 +51,18 @@ test("a contact sheet lays the captures side by side, and marks a direction that
   const dir = await mkdtemp(join(tmpdir(), "aeom-sheet-"));
   try {
     const browser = await chromium.launch();
-    const page = await browser.newPage({ viewport: { width: 400, height: 300 } });
-    await page.setContent(`<body style="background:#c33">A</body>`);
-    await page.screenshot({ path: join(dir, "a.png") });
-    await browser.close();
+    try {
+      const page = await browser.newPage({ viewport: { width: 400, height: 300 } });
+      await page.setContent(`<body style="background:#c33">A</body>`);
+      await page.screenshot({ path: join(dir, "a.png") });
+    } finally {
+      await browser.close();
+    }
     const items = [{ label: "1", file: join(dir, "a.png") }, { label: "2", file: join(dir, "missing.png") }];
     const html = await sheetHtml(items, 2, 300);
     assert.match(html, /<figure data-label="1"><figcaption><b>1<\/b><\/figcaption><img src="data:image\/png;base64,/);
     assert.match(html, /<figure data-label="2"><figcaption><b>2<\/b><\/figcaption><div class="missing">No capture: this direction did not build\.<\/div>/);
+    assert.match(await sheetHtml([{ label: 'a" onload="x', file: join(dir, "a.png") }], 1, 300), /data-label="a&quot; onload=&quot;x"/);
     await contactSheet({ out: join(dir, "sheet.png"), columns: 2, cellWidth: 300, items });
     assert.ok((await stat(join(dir, "sheet.png"))).size > 1000);
   } finally {

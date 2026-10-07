@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { champion, contactSheet, createTournament, nextDuel, voteDuel, type Tournament } from "@aeom/core";
@@ -38,7 +38,7 @@ const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status> --dir <
 A knockout between directions, two by two, three votes per duel. The state
 lives in <dir>/tournament.json; each direction's capture is <dir>/<name>.png.
 
-  start <name>...                       Draw the first round
+  start <name>... [--reset]             Draw the first round (--reset replaces a tournament already there)
   next                                  Print the next duel and its two captures
   vote --duel <n> --voter <v> --winner <name> --reason "<why>"
   status                                Print every duel, and the champion when there is one`;
@@ -53,11 +53,12 @@ export async function runTournament(argv: string[]): Promise<number> {
       voter: { type: "string" },
       winner: { type: "string" },
       reason: { type: "string" },
+      reset: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
   const [action, ...names] = positionals;
-  if (values.help || !action || !values.dir) {
+  if (values.help || !action || !values.dir || !["start", "next", "vote", "status"].includes(action)) {
     console.log(TOURNAMENT_HELP);
     return values.help ? 0 : 1;
   }
@@ -69,6 +70,11 @@ export async function runTournament(argv: string[]): Promise<number> {
   try {
     if (action === "start") {
       const t = createTournament(names);
+      const exists = await access(file).then(() => true, () => false);
+      if (exists && !values.reset) {
+        console.error(`${file} already holds a tournament. Pass --reset to replace it and its votes.`);
+        return 1;
+      }
       await mkdir(values.dir, { recursive: true });
       await save(t);
       console.log(`${names.length} directions, first round drawn. Run: aeom tournament next --dir ${values.dir}`);

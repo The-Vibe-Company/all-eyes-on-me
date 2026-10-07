@@ -44,6 +44,10 @@ export async function discoverPages(browser: Browser, startUrl: string, { maxPag
       }
 
       const landed = normalize(page.url()) ?? url;
+      if (new URL(landed).origin !== origin) {
+        errors.push({ url, reason: `redirects off ${origin}, to ${landed}` });
+        continue;
+      }
       if (landed !== url && seen.has(landed)) continue;
       seen.add(landed);
       pages.push(landed);
@@ -88,12 +92,15 @@ export async function visitPages(browser: Browser, baseUrl: string, paths: strin
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await context.newPage();
   try {
+    const visited = new Set<string>();
     for (const path of paths) {
       const url = normalize(new URL(path, baseUrl).toString());
       if (!url || new URL(url).origin !== origin) {
         errors.push({ url: url ?? path, reason: `not on ${origin}` });
         continue;
       }
+      if (visited.has(url)) continue;
+      visited.add(url);
       let response;
       try {
         response = await page.goto(url, { waitUntil: "networkidle", timeout: 15_000 });
@@ -106,7 +113,12 @@ export async function visitPages(browser: Browser, baseUrl: string, paths: strin
         errors.push({ url, status, reason: `${status} ${response?.statusText() ?? ""}`.trim() });
         continue;
       }
-      if (!pages.includes(url)) pages.push(url);
+      const landed = normalize(page.url()) ?? url;
+      if (new URL(landed).origin !== origin) {
+        errors.push({ url, reason: `redirects off ${origin}, to ${landed}` });
+        continue;
+      }
+      if (!pages.includes(landed)) pages.push(landed);
     }
   } finally {
     await context.close();

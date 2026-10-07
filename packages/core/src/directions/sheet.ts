@@ -13,14 +13,23 @@ export interface SheetItem {
  * PNG, so a person or a judge sees every direction at once.
  */
 /** The sheet's HTML: one labelled cell per item, the whole capture shown. */
+function checkLayout(columns: number, cellWidth: number) {
+  if (!Number.isInteger(columns) || columns < 1) throw new Error("columns must be a positive whole number.");
+  if (!Number.isInteger(cellWidth) || cellWidth < 1) throw new Error("cellWidth must be a positive whole number of pixels.");
+}
+
 export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640): Promise<string> {
+  checkLayout(columns, cellWidth);
   const cells = await Promise.all(
     items.map(async ({ label, file, note }) => {
       const image = await readFile(file).then(
         (data) => `<img src="data:image/png;base64,${data.toString("base64")}" alt="">`,
-        () => `<div class="missing">No capture: this direction did not build.</div>`,
+        (error: NodeJS.ErrnoException) => {
+          if (error.code !== "ENOENT") throw error;
+          return `<div class="missing">No capture: this direction did not build.</div>`;
+        },
       );
-      const escape = (text: string) => text.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
+      const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
       return `<figure data-label="${escape(label)}"><figcaption><b>${escape(label)}</b>${note ? ` ${escape(note)}` : ""}</figcaption>${image}</figure>`;
     }),
   );
@@ -38,7 +47,7 @@ export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640
  * sheet as one PNG, so a person or a judge sees every direction at once.
  */
 export async function contactSheet({ out, items, columns = 3, cellWidth = 640 }: { out: string; items: SheetItem[]; columns?: number; cellWidth?: number }): Promise<void> {
-  if (!Number.isInteger(columns) || columns < 1) throw new Error("columns must be a positive whole number.");
+  checkLayout(columns, cellWidth);
   const html = await sheetHtml(items, columns, cellWidth);
   const browser = await chromium.launch();
   try {
