@@ -1,0 +1,46 @@
+packages/core/src/directions/directions.test.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 50,58-62,68-70
+  s_4ce34ec42d9105::t_e360c62e9d0f91 71
+packages/cli/src/commands/capture.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 35-39
+packages/core/src/capture/discover.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 78-115
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 2
+packages/core/src/directions/index.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 1
+packages/core/src/directions/tournament.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 32
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 62-72
+packages/core/src/directions/sheet.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 15-16,24,27,31,34,36-42
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 1,26-31,72
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_9bb0a24265c143 4,41
+.veebee/tickets/05-directions.md
+  s_4ce34ec42d9105::t_10df1cd5c8a627 28,30-31,34
+principles/base.md
+  s_4ce34ec42d9105::t_5d869f1f1efa94 14
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_c485f6a7854260 56,58,60-62
+skills/aeom/directions.md
+  s_4ce34ec42d9105::t_e44056ed7de587 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b6228463aed98670a7b6e212368b720f416e7d7",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
