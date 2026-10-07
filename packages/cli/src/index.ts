@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { runCapture } from "./commands/capture.js";
 import { runCheck } from "./commands/check.js";
 import { runJudge, runPrinciples } from "./commands/judge.js";
+import { runSheet, runTournament } from "./commands/directions.js";
 import { runCompare, runSnapshot } from "./commands/run.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -19,6 +20,8 @@ Commands:
   principles  Print the principles the judge uses
   snapshot    Keep a copy of the captures and reports, such as before a fleet run
   compare     Compare two snapshots page by page
+  sheet       Lay captures side by side in one image
+  tournament  Run a knockout between directions, three votes per duel
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -30,6 +33,8 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   principles: runPrinciples,
   snapshot: runSnapshot,
   compare: runCompare,
+  sheet: runSheet,
+  tournament: runTournament,
 };
 
 const [command, ...rest] = process.argv.slice(2);

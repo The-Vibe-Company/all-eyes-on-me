@@ -1,6 +1,6 @@
 ---
 name: aeom
-description: Run All Eyes On Me on a web project. Captures every page, runs the measurable checks and the judge, fixes the shared kit with one worker then every page with one worker each in parallel, and keeps only the pages that got better, on a run branch with a before and after for each page. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
+description: Run All Eyes On Me on a web project. Captures every page, runs the measurable checks and the judge, fixes the shared kit with one worker then every page with one worker each in parallel, and keeps only the pages that got better, on a run branch with a before and after for each page. With --directions, first builds six contrasting art directions on the home page and lets the judge pick one in a knockout. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
 ---
 
 # /aeom
@@ -47,6 +47,27 @@ Every brief, kit or page, also says:
 - **Commit first, check after.** The worker commits as soon as its work is in place, then checks and commits fixes. A worker that stalls during its checks leaves committed work behind.
 
 If a worker stops without committing, look at its worktree: when the work is there and stays inside its files, commit it yourself and say so.
+
+## 2b. Directions (only with `/aeom --directions`)
+
+Instead of fixing the current look, start from six new ones and keep the best.
+
+1. **Six sources.** Follow [directions.md](directions.md): list twelve sources from the product's own world, pick six far apart, and drop any whose obvious rendering is a banned look. Give each a short slug, such as `nuancier`.
+2. **Six workers, at once.** Note the run checkout's root first (`MAIN=$(git rev-parse --show-toplevel)`): every path below that starts with `$MAIN` must stay absolute, because commands run from inside other worktrees. For each source, create a worktree from the run branch (`.aeom/worktrees/$RUN-dir-<source>`) and launch a worker with the direction brief. Each owns the shared files and the home page's files in its own worktree; they never see each other.
+3. **Capture each one.** For each worktree, from inside it, start its app on its own port and capture the home page only, with the run checkout's CLI, since a fresh worktree has no build:
+   `node $MAIN/packages/cli/dist/index.js capture --start "<start command with PORT=<port>>" --url http://localhost:<port> --pages / --widths 1280 --out $MAIN/.aeom/runs/$RUN/directions/<source>`, then copy `index@1280.png` to `$MAIN/.aeom/runs/$RUN/directions/<source>.png`. A direction that does not start or does not build gets no capture: say so, and leave it out of the tournament.
+4. **Show them.** `aeom sheet --out .aeom/runs/$RUN/directions/sheet.png <source>=<its capture>...` with all six, the failed ones included, and show the sheet to the user.
+5. **Screen out the banned looks.** Before the bracket, launch three screening judges at once, each with the sheet and the banned looks from directions.md, and ask each to name the directions one of the banned looks describes. A direction named by two of the three is out; say which and why. If exactly one remains, it is the champion without a tournament; say so. If none remains, stop and say so: build six new directions rather than crown a banned one.
+6. **Knockout.** `aeom tournament start --dir $MAIN/.aeom/runs/$RUN/directions <the sources still in>`. Then, until there is a champion: `aeom tournament next --dir $MAIN/.aeom/runs/$RUN/directions` names a duel and its two captures; launch three duel judges at once with the duel brief; when all three reply, record their votes one after another with `aeom tournament vote --dir $MAIN/.aeom/runs/$RUN/directions --duel <n> --voter <v> --winner <source> --reason "<why>"`. Never let the judges write the tournament file themselves: three writers at once lose votes. `aeom tournament status --dir $MAIN/.aeom/runs/$RUN/directions` shows the bracket and the reasons. Duels of the same round are independent: run them at once.
+7. **Apply the champion.** Merge the champion's worktree branch into the run branch: its shared files become the kit and its home page is done. Skip the kit wave, and run the screen wave (section 4) on every other page, then measure (section 5) as usual.
+
+**Direction brief.** Give the worker its worktree path, the shared files and the home page files it may edit, the product (what it sells or does, for whom, in which language), its source, the banned looks from directions.md, and the base principles. Ask it to:
+
+> Build one art direction for this product from your source, in real code: the shared kit (tokens, header, buttons, states) and the home page rebuilt on it. Take from the source what makes it recognisable (its colours, type, layout conventions, marks) and turn it into a web kit; do not draw a picture of it, and do not imitate a famous site. Before you commit, say which banned look yours is closest to and what keeps it apart; if one of them describes it, start again. Keep the home page's content and purpose. Commit as soon as it works, then check it with `aeom check` on your own port and fix what fails.
+
+**Duel brief.** Give each duel judge the two capture paths, the two source names, the banned looks from directions.md, and the base principles. Ask it to:
+
+> Look at both screenshots. First: if one of the banned looks describes one page and not the other, the other wins. Then judge against the base principles, and on which is more specific to the product and less like anything an AI would propose. Reply with only a JSON object: `{"winner": "<source>", "reason": "<one sentence naming what you see>"}`.
 
 ## 3. Kit wave: one worker
 
