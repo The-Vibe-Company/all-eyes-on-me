@@ -1,0 +1,45 @@
+{
+  "voter": "3",
+  "pages": {
+    "/": {
+      "pointer": { "pass": true, "reason": "The nav links are white and underlined and the pink filled 'Découvrir' pill stands clearly apart from the body text." },
+      "one-direction": { "pass": false, "reason": "A rounded comic-style font, purple gradient banner and pink pill on cream share nothing with the serif table of /produits, the yellow-and-red banner of /commandes or the dark monospace look of /contact." },
+      "consistent-chrome": { "pass": false, "reason": "This page has a tall centered gradient header with five links (Accueil, Produits, Commandes, Contact, Aide), while every other page shows a different header, different links and a different order." },
+      "not-generic": { "pass": false, "reason": "It shows a purple-to-blue gradient header, three shadowed rounded cards and decorative emoji (sparkles, rockets, lightning, gem, padlock, party popper)." },
+      "hierarchy": { "pass": false, "reason": "The 'Super Boutique' title in the gradient banner is larger and louder than the page heading, and the pink button and three shadowed cards compete with it for the first look." },
+      "grid": { "pass": false, "reason": "At 390px the nav overflows the header, with 'Aide' running past the gradient band and off the screen edge." },
+      "density": { "pass": false, "reason": "At 390px the cards shrink to a narrow column with wide empty margins on both sides, each heavily padded box holding a single three-word line." },
+      "states": { "pass": true, "reason": "All the content shown is filled in, with no blank area waiting for data." }
+    },
+    "/produits": {
+      "pointer": { "pass": true, "reason": "The nav links are lime and underlined, 'Voir mes commandes' is a blue underlined link and the 'Ajouter' controls are visible buttons." },
+      "one-direction": { "pass": false, "reason": "A black bar with a lime uppercase serif wordmark over a plain bordered table on white matches none of the gradient home page, the yellow /commandes or the dark monospace /contact." },
+      "consistent-chrome": { "pass": false, "reason": "The header is a thin black bar with tiny lowercase 'contact home produits' on the right, a different look, set and order from the home page's centered 'Accueil, Produits, Commandes, Contact, Aide'." },
+      "not-generic": { "pass": false, "reason": "The content is an unstyled browser-default bordered table with grey system 'Ajouter' buttons and a default blue link, with no deliberate design." },
+      "hierarchy": { "pass": false, "reason": "The small 'Liste des produits' heading is outshone by the lime wordmark, and the tiny table in the top-left corner gives the eye no clear focal point." },
+      "grid": { "pass": false, "reason": "The 'Produit' and 'Prix' column headers are centered while the names and prices below them are left-aligned, so the column edges do not agree." },
+      "density": { "pass": false, "reason": "At 1280px a small, tight table sits in the top-left corner and roughly four-fifths of the screen is empty white." },
+      "states": { "pass": true, "reason": "The product table is filled with three rows (Lampe, Chaise, Tapis) and no area is left blank." }
+    },
+    "/commandes": {
+      "pointer": { "pass": true, "reason": "The only clickable items, 'Retour' and 'Catalogue', are blue underlined links that stand apart from the text." },
+      "one-direction": { "pass": false, "reason": "A yellow banner with a red italic 'Boutique!!!', a red rule and a lavender background is a style found on no other page." },
+      "consistent-chrome": { "pass": false, "reason": "There is no top nav at all, only 'Retour' and 'Catalogue' stacked in a left sidebar under a yellow banner that renames the site 'Boutique!!!'." },
+      "not-generic": { "pass": true, "reason": "The loud yellow banner with red italic 'Boutique!!!' and the lavender page carry no gradient, shadowed cards, emoji or SaaS-template layout." },
+      "hierarchy": { "pass": false, "reason": "The huge red italic 'Boutique!!!' dominates and 'Mes commandes' sits below it with nothing under it, so the page has no real focal point." },
+      "grid": { "pass": false, "reason": "The sidebar links start at x=10, the wordmark at x=42 and the heading at x=180, and at 390px the heading is pushed to the right edge, out of line with the links." },
+      "density": { "pass": false, "reason": "Apart from a heading and two links, the whole lavender page is empty at both widths." },
+      "states": { "pass": false, "reason": "The area under 'Mes commandes' is completely blank, with no message saying there are no orders yet or what to do next." }
+    },
+    "/contact": {
+      "pointer": { "pass": true, "reason": "The 'ACCUEIL' and 'AIDE' links are underlined and the orange filled 'ENVOYER' bar reads clearly as a button." },
+      "one-direction": { "pass": false, "reason": "A dark background with monospace type and orange accents on '~ super boutique ~' borrows nothing from the other pages, which each use their own style." },
+      "consistent-chrome": { "pass": false, "reason": "The dark grey header shows only uppercase 'ACCUEIL' and 'AIDE', with no Produits or Commandes, and a wordmark styled unlike any other page." },
+      "not-generic": { "pass": true, "reason": "The dark monospace look with an orange wordmark and a flat orange button has no gradient, shadowed cards, emoji or SaaS-template layout." },
+      "hierarchy": { "pass": false, "reason": "There is no heading saying this is the contact page, and the orange wordmark and orange 'ENVOYER' bar compete for attention." },
+      "grid": { "pass": false, "reason": "At 390px the fields and button run flush against both screen edges while the wordmark is inset 25px and the nav wraps under it, and at 1280px the wordmark and nav baselines differ." },
+      "density": { "pass": false, "reason": "At 390px the form is cramped against the screen edges with no gutter, and at 1280px a narrow form floats above a large empty dark area." },
+      "states": { "pass": true, "reason": "The form fields and send button are all present, with no blank area left where content should be." }
+    }
+  }
+}

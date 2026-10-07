@@ -2,6 +2,7 @@
 import { createRequire } from "node:module";
 import { runCapture } from "./commands/capture.js";
 import { runCheck } from "./commands/check.js";
+import { runJudge, runPrinciples } from "./commands/judge.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -11,8 +12,10 @@ All Eyes On Me: a fleet of agents that rebuilds your frontend and judges every s
 Usage: aeom <command>
 
 Commands:
-  capture   Find every page of a web app and screenshot it
-  check     Run the measurable checks on every page
+  capture     Find every page of a web app and screenshot it
+  check       Run the measurable checks on every page
+  judge       Count the judges' votes on the captures
+  principles  Print the principles the judge uses
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -20,6 +23,8 @@ Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
 const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   capture: runCapture,
   check: runCheck,
+  judge: runJudge,
+  principles: runPrinciples,
 };
 
 const [command, ...rest] = process.argv.slice(2);

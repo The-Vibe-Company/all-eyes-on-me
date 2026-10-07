@@ -1,0 +1,97 @@
+{
+  "url": "http://localhost:4317",
+  "checkedAt": "2026-10-07T14:56:51.482Z",
+  "widths": [
+    390,
+    1280
+  ],
+  "checks": [
+    "cursor",
+    "overflow",
+    "contrast",
+    "console"
+  ],
+  "pages": [
+    "http://localhost:4317/",
+    "http://localhost:4317/produits",
+    "http://localhost:4317/commandes",
+    "http://localhost:4317/contact"
+  ],
+  "errors": [
+    {
+      "url": "http://localhost:4317/aide",
+      "status": 500,
+      "reason": "500 Internal Server Error"
+    }
+  ],
+  "findings": [
+    {
+      "check": "overflow",
+      "url": "http://localhost:4317/",
+      "width": 390,
+      "element": "a \"Aide\"",
+      "message": "the page is 444 px wide in a 390 px window, so it scrolls sideways"
+    },
+    {
+      "check": "cursor",
+      "url": "http://localhost:4317/",
+      "width": 1280,
+      "element": "div.btn \"Découvrir 🎉\"",
+      "message": "clickable, but the cursor does not turn into a pointer"
+    },
+    {
+      "check": "contrast",
+      "url": "http://localhost:4317/",
+      "width": 1280,
+      "element": ".btn \"Découvrir 🎉\"",
+      "message": "text contrast is 3.33:1, needs 4.5:1"
+    },
+    {
+      "check": "cursor",
+      "url": "http://localhost:4317/produits",
+      "width": 1280,
+      "element": "button \"Ajouter\"",
+      "message": "clickable, but the cursor does not turn into a pointer"
+    },
+    {
+      "check": "cursor",
+      "url": "http://localhost:4317/produits",
+      "width": 1280,
+      "element": "button \"Ajouter\"",
+      "message": "clickable, but the cursor does not turn into a pointer"
+    },
+    {
+      "check": "cursor",
+      "url": "http://localhost:4317/produits",
+      "width": 1280,
+      "element": "button \"Ajouter\"",
+      "message": "clickable, but the cursor does not turn into a pointer"
+    },
+    {
+      "check": "contrast",
+      "url": "http://localhost:4317/produits",
+      "width": 1280,
+      "element": ".note \"Prix TTC, livraison offerte dès 50 €.\"",
+      "message": "text contrast is 1.6:1, needs 4.5:1"
+    },
+    {
+      "check": "console",
+      "url": "http://localhost:4317/commandes",
+      "width": 1280,
+      "message": "console error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "check": "console",
+      "url": "http://localhost:4317/commandes",
+      "width": 1280,
+      "message": "uncaught exception: Unexpected token 'N', \"Not Found\" is not valid JSON"
+    },
+    {
+      "check": "cursor",
+      "url": "http://localhost:4317/contact",
+      "width": 1280,
+      "element": "div.send \"ENVOYER\"",
+      "message": "clickable, but the cursor does not turn into a pointer"
+    }
+  ]
+}
