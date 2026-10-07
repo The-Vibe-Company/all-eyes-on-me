@@ -4,7 +4,7 @@ title: aeom check : 4 contrôles mesurables
 milestone: null
 depends_on: [01]
 design: null
-tracker: null
+tracker: { tool: github, id: 2, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/2 }
 ---
 
 ## Ce que l'utilisateur fait

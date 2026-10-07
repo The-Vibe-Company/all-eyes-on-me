@@ -4,7 +4,7 @@ title: /aeom : la flotte corrige en parallèle et montre l'avant / après
 milestone: null
 depends_on: [02, 03]
 design: null
-tracker: null
+tracker: { tool: github, id: 4, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/4 }
 ---
 
 ## Ce que l'utilisateur fait

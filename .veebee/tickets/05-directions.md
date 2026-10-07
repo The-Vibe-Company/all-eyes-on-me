@@ -4,7 +4,7 @@ title: /aeom propose 6 directions brutes et le juge en garde une
 milestone: null
 depends_on: [04]
 design: null
-tracker: null
+tracker: { tool: github, id: 5, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/5 }
 ---
 
 ## Ce que l'utilisateur fait
