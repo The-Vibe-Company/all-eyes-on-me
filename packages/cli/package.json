@@ -4,12 +4,25 @@
   "description": "All Eyes On Me: a fleet of agents that rebuilds your frontend and judges every screen against your taste.",
   "license": "MIT",
   "type": "module",
-  "bin": { "aeom": "dist/index.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=22" },
-  "repository": { "type": "git", "url": "git+https://github.com/The-Vibe-Company/all-eyes-on-me.git", "directory": "packages/cli" },
+  "bin": {
+    "aeom": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/The-Vibe-Company/all-eyes-on-me.git",
+    "directory": "packages/cli"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@aeom/core": "workspace:*"
   }
 }
