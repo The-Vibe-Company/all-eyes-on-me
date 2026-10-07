@@ -3,29 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mes commandes</title>
-<style>
-  body { margin: 0; font-family: Helvetica, Arial, sans-serif; background: #eef; }
-  header { background: #ff0; padding: 4px 40px; border-bottom: 6px solid red; }
-  header h1 { margin: 0; font-size: 40px; color: red; font-style: italic; }
-  aside { float: left; width: 140px; padding: 10px; }
-  aside a { display: block; color: #00f; }
-  main { margin-left: 170px; padding: 10px; }
-</style>
+<title>Mes commandes — Super Boutique</title>
+<meta name="description" content="Vos commandes Super Boutique, leurs articles, leurs prix TTC et leur livraison.">
+<link rel="icon" href="/shared/icon.svg">
+<link rel="stylesheet" href="/shared/kit.css">
 </head>
 <body>
-<header><h1>Boutique!!!</h1></header>
-<aside><a href="/">Retour</a><a href="/produits">Catalogue</a></aside>
-<main>
-  <h2>Mes commandes</h2>
-  <ul id="orders"></ul>
+<!-- include: header -->
+<main id="contenu">
+  <!--
+    No request on this page. The orders API (/api/orders) does not exist in
+    this app: it answers 404, and parsing that answer threw in the console.
+    The customer has no order yet, so the page shows the kit's empty state
+    as plain markup, with nothing to fetch. When an orders API exists, the
+    list goes here as a table.nomenclature, and a failed request shows the
+    kit's error state (.state--error) instead of a blank area.
+  -->
+  <section class="wrap grid section" aria-labelledby="titre">
+    <div class="span-4 stack">
+      <p class="label">Votre compte</p>
+      <h1 id="titre" class="titre">Mes commandes</h1>
+      <p>Ce que vous avez commandé sur la boutique, à quel prix, et où en est la livraison.</p>
+    </div>
+
+    <div class="span-8">
+      <div class="state state--empty" role="status">
+        <span class="state__mark repere" aria-hidden="true">0</span>
+        <div class="state__body">
+          <h2 class="state__title">Aucune commande pour l’instant</h2>
+          <p class="state__text">Vos commandes apparaîtront ici dès la première, avec leurs articles et leur suivi de livraison.</p>
+          <p class="state__actions"><a class="btn" href="/produits">Voir les produits <span class="btn__fleche" aria-hidden="true">→</span></a></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="span-8 start-5 stack">
+      <h2 id="notes" class="label">Notes</h2>
+      <ol class="notes" aria-labelledby="notes">
+        <li>Une commande s’inscrit ici dès qu’elle est validée.</li>
+        <li>Prix TTC, en euros. Livraison offerte dès 50&nbsp;€ d’achat.</li>
+        <li>Une question sur une commande&#8239;? <a href="/contact">Écrivez-nous</a>.</li>
+      </ol>
+    </div>
+  </section>
 </main>
-<script>
-  const render = (orders) => {
-    document.getElementById("orders").innerHTML = orders.map((o) => `<li>${o}</li>`).join("");
-  };
-  render([]);
-  fetch("/api/orders").then((r) => r.json()).then(render);
-</script>
+<!-- include: footer -->
 </body>
 </html>
