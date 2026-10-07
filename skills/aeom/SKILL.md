@@ -15,6 +15,19 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so.
 - **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch: `git checkout -b aeom/$RUN`. Everything this run keeps ends up on that branch, never on the user's branch.
 
+## Show as you go
+
+The user follows the run through its captures, not through a report at the end. Send images into the session (as files when the session can, otherwise their paths) every time something visible lands, without waiting to be asked:
+
+- **Before**: the captures of section 1, with the count of what fails.
+- **Each direction** as soon as it is captured, then the sheet of all six.
+- **The screening and the champion**, with the reasons that decided it.
+- **The kit** once merged, on the page that shows it best.
+- **Each page** as it merges, before and after side by side.
+- **The end**: the comparison table and every page before and after.
+
+One message per checkpoint, a line of context with the images, no more. A long wave still sends something at least every few minutes: the latest page that landed. The user reacting to a capture is feedback, not an interruption: take it and keep going.
+
 ## 1. Look
 
 ```bash
