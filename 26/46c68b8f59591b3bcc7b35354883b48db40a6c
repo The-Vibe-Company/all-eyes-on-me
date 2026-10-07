@@ -1,0 +1,21 @@
+packages/cli/package.json
+  s_4ce34ec42d9105::t_78385fe7ab6b69 22
+packages/core/package.json
+  s_4ce34ec42d9105::t_f94d7814b4a545 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2646c68b8f59591b3bcc7b35354883b48db40a6c",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "unknown"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
