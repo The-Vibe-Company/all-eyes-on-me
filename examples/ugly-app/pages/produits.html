@@ -3,33 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Produits</title>
-<style>
-  body { margin: 0; font-family: Georgia, serif; background: white; }
-  .top { display: flex; justify-content: space-between; align-items: center; background: #222; color: #0f0; padding: 8px 16px; }
-  .top a { color: #0f0; font-size: 12px; margin-left: 8px; }
-  main { padding: 16px; }
-  table { border-collapse: collapse; }
-  td, th { border: 1px solid #999; padding: 4px 10px; }
-  .note { color: #ccc; font-size: 13px; }
-  button { background: #eee; border: 2px outset #ccc; cursor: default; font-family: Arial; }
-</style>
+<title>Produits — Super Boutique</title>
+<meta name="description" content="La lampe, la chaise et le tapis, avec leurs cotes en centimètres et leurs prix. Prix TTC, livraison offerte dès 50 €.">
+<link rel="icon" href="/shared/icon.svg">
+<link rel="stylesheet" href="/shared/kit.css">
 </head>
 <body>
-<div class="top">
-  <b>SUPER BOUTIQUE</b>
-  <span><a href="/contact">contact</a><a href="/">home</a><a href="/produits">produits</a></span>
-</div>
-<main>
-  <h1 style="font-size: 18px">Liste des produits</h1>
-  <table>
-    <tr><th>Produit</th><th>Prix</th><th></th></tr>
-    <tr><td>Lampe</td><td>39,90 €</td><td><button>Ajouter</button></td></tr>
-    <tr><td>Chaise</td><td>89,00 €</td><td><button>Ajouter</button></td></tr>
-    <tr><td>Tapis</td><td>129,00 €</td><td><button>Ajouter</button></td></tr>
-  </table>
-  <p class="note">Prix TTC, livraison offerte dès 50 €.</p>
-  <p><a href="/commandes">Voir mes commandes</a></p>
+<!-- include: header -->
+<main id="contenu">
+  <section class="wrap grid section" aria-labelledby="titre">
+    <div class="span-4 stack">
+      <p class="label">Catalogue · 3&nbsp;objets</p>
+      <h1 id="titre" class="titre">Produits</h1>
+      <p class="lead">Chaque objet avec ses cotes et son prix. Vérifiez la place qu’il prend chez vous, puis ajoutez-le.</p>
+      <h2 class="label">Notes</h2>
+      <ol class="notes">
+        <li>Cotes en centimètres&#8239;: largeur × profondeur × hauteur. Ø&nbsp;: diamètre.</li>
+        <li>Prix TTC, livraison offerte dès 50&nbsp;€.</li>
+      </ol>
+    </div>
+
+    <div class="span-8 stack">
+      <div class="table-wrap">
+        <table class="nomenclature">
+          <caption class="vh">Les trois produits, leurs cotes, leurs prix</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="nomenclature__repere">Repère</th>
+              <th scope="col">Désignation</th>
+              <th scope="col">Cotes (cm)</th>
+              <th scope="col" class="num">Prix TTC</th>
+              <th scope="col" class="num"><span class="vh">Panier</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="nomenclature__repere"><span class="repere">L1</span></td>
+              <td>Lampe</td>
+              <td><span class="dim">Ø&nbsp;30 × H&nbsp;45</span></td>
+              <td class="num">39,90&nbsp;€</td>
+              <td class="num"><button class="btn btn--petit" type="button">Ajouter<span class="vh"> la lampe</span></button></td>
+            </tr>
+            <tr>
+              <td class="nomenclature__repere"><span class="repere">C1</span></td>
+              <td>Chaise</td>
+              <td><span class="dim">45 × 52 × H&nbsp;82</span></td>
+              <td class="num">89,00&nbsp;€</td>
+              <td class="num"><button class="btn btn--petit" type="button">Ajouter<span class="vh"> la chaise</span></button></td>
+            </tr>
+            <tr>
+              <td class="nomenclature__repere"><span class="repere">T1</span></td>
+              <td>Tapis</td>
+              <td><span class="dim">230 × 160</span></td>
+              <td class="num">129,00&nbsp;€</td>
+              <td class="num"><button class="btn btn--petit" type="button">Ajouter<span class="vh"> le tapis</span></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="actions">
+        <a class="btn btn--trait" href="/commandes">Voir mes commandes <span class="btn__fleche" aria-hidden="true">→</span></a>
+      </p>
+    </div>
+  </section>
 </main>
+<!-- include: footer -->
 </body>
 </html>
