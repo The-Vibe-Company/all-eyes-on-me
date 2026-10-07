@@ -1,7 +1,7 @@
 import { relative } from "node:path";
 import { parseArgs } from "node:util";
 import { capture, route } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp } from "./app.js";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp, withConfig } from "./app.js";
 
 export const CAPTURE_HELP = `Usage: aeom capture --url <url> [--start "<command>"] [options]
 
@@ -13,13 +13,13 @@ ${APP_OPTIONS_HELP}
   --out <dir>          Where to write the screenshots (default .aeom/captures)`;
 
 export async function runCapture(argv: string[]): Promise<number> {
-  const { values } = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/captures" } } });
+  const values = await withConfig(parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/captures" } } }).values);
   if (values.help) {
     console.log(CAPTURE_HELP);
     return 0;
   }
   if (!values.url) {
-    console.error(`--url is required.\n\n${CAPTURE_HELP}`);
+    console.error(`--url is required, here or in .aeom/config.json.\n\n${CAPTURE_HELP}`);
     return 1;
   }
   const widths = parseWidths(values.widths);

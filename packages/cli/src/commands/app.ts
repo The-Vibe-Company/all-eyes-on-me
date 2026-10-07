@@ -1,4 +1,4 @@
-import { AppStartError, DEFAULT_WIDTHS, startApp, type RunningApp } from "@aeom/core";
+import { AppStartError, DEFAULT_WIDTHS, loadConfig, startApp, type RunningApp } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -10,6 +10,7 @@ export const APP_OPTIONS = {
 
 export const APP_OPTIONS_HELP = `  --url <url>          Where the app answers, such as http://localhost:4317
   --start "<command>"  Start the app with this command first, and stop it after
+                       (both default to url and start in .aeom/config.json)
   --widths <list>      Comma-separated widths in px (default ${DEFAULT_WIDTHS.join(",")})
   --timeout <seconds>  How long to wait for the app to answer (default 30)`;
 
@@ -46,3 +47,9 @@ export async function withApp(values: { url: string; start?: string; timeout?: s
 }
 
 export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
+
+/** Fills --url and --start from .aeom/config.json when they are not given. */
+export async function withConfig<T extends { url?: string; start?: string }>(values: T): Promise<T> {
+  const config = await loadConfig();
+  return { ...values, url: values.url ?? config.url, start: values.start ?? config.start };
+}

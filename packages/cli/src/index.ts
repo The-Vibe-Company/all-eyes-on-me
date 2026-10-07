@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { runCapture } from "./commands/capture.js";
 import { runCheck } from "./commands/check.js";
 import { runJudge, runPrinciples } from "./commands/judge.js";
+import { runCompare, runSnapshot } from "./commands/run.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -16,6 +17,8 @@ Commands:
   check       Run the measurable checks on every page
   judge       Count the judges' votes on the captures
   principles  Print the principles the judge uses
+  snapshot    Keep a copy of the captures and reports, such as before a fleet run
+  compare     Compare two snapshots page by page
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -25,6 +28,8 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   check: runCheck,
   judge: runJudge,
   principles: runPrinciples,
+  snapshot: runSnapshot,
+  compare: runCompare,
 };
 
 const [command, ...rest] = process.argv.slice(2);

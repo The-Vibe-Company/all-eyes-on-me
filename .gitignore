@@ -4,5 +4,6 @@ dist/
 .DS_Store
 .aeom/captures/
 .aeom/reports/
+.aeom/runs/
+.aeom/worktrees/
 .e2e/
-.aeom/reports/
