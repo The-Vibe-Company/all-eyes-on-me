@@ -1,0 +1,39 @@
+site/shared/kit.css
+  s_4ce34ec42d9105::t_bf6bc0493ba20d 1-684,688
+  s_4ce34ec42d9105::t_33e578d6efbdfc 685-687,689-712
+site/pages/index.html
+  s_4ce34ec42d9105::t_619ec63ab50d14 8-10,12,15-22,24-30,32-34,42,44-50,60-63,65-66,68-76,78,80-82,89
+  s_4ce34ec42d9105::t_3ef70111a9c3d6 90,92
+site/shared/chalk-rule.html
+  s_4ce34ec42d9105::t_350ad0c59ee939 1-8
+site/shared/chalk.html
+  s_4ce34ec42d9105::t_3e86c29b7ce8f0 1-15
+site/shared/fitting.html
+  s_4ce34ec42d9105::t_94238895d92aa9 1-30
+site/shared/footer.html
+  s_4ce34ec42d9105::t_be9362895ab2d7 1-6
+site/shared/header.html
+  s_4ce34ec42d9105::t_a6038bfe721a99 1-13
+site/shared/kit.js
+  s_4ce34ec42d9105::t_0ade23b9ac00cb 1-17
+site/shared/safety-pin.html
+  s_4ce34ec42d9105::t_10cdd1909daa97 1-12
+site/shared/tape.html
+  s_4ce34ec42d9105::t_2d45d44b47eed3 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f605c6406793eeff8ac6e2337743df69411f6f37",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
