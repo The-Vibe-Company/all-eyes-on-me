@@ -1,0 +1,45 @@
+.gitignore
+  s_4ce34ec42d9105::t_fff23dc48da2c8 1-6
+LICENSE
+  s_4ce34ec42d9105::t_520873ec8a0ffc 1-21
+package.json
+  s_4ce34ec42d9105::t_4b5995641510c4 1-15
+packages/cli/package.json
+  s_4ce34ec42d9105::t_d8e2639020a393 1-15
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_c267ebbd4eb6e7 1-20
+packages/cli/tsconfig.json
+  s_4ce34ec42d9105::t_9cb3fd058aa19f 1-5
+packages/core/package.json
+  s_4ce34ec42d9105::t_91e8f0b602f085 1-12
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_85532dda84578a 1-2
+packages/core/tsconfig.json
+  s_4ce34ec42d9105::t_ed0ebbc92e060c 1-5
+pnpm-lock.yaml
+  s_4ce34ec42d9105::t_a972b6bb919338 1-43
+pnpm-workspace.yaml
+  s_4ce34ec42d9105::t_5b5b52feed033b 1-2
+tsconfig.base.json
+  s_4ce34ec42d9105::t_d460de8bf4af62 1-13
+CONTEXT.md
+  s_4ce34ec42d9105::t_1fbfa083f55ee7 1-46
+README.md
+  s_4ce34ec42d9105::t_d9602fb835e75f 1-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7bdb5f6084369f9483017b54dee4f3078152801",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
