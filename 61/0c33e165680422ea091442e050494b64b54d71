@@ -1,0 +1,31 @@
+package.json
+  s_4ce34ec42d9105::t_36904535c8532d 12
+site/pages/index.html
+  s_4ce34ec42d9105::t_433b78d229c05f 1-62
+README.md
+  s_4ce34ec42d9105::t_433b78d229c05f 61-62
+site/site.test.mjs
+  s_4ce34ec42d9105::t_f2202859cd9052 1-54
+site/shared/kit.css
+  s_4ce34ec42d9105::t_433b78d229c05f 1-2
+site/server.mjs
+  s_4ce34ec42d9105::t_433b78d229c05f 1-48
+.veebee/milestones/01-landing/tickets/01-landing-v0.md
+  s_4ce34ec42d9105::t_06bcbeb14da6dc 7,18-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "610c33e165680422ea091442e050494b64b54d71",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
