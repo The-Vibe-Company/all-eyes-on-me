@@ -110,7 +110,10 @@ export async function runTournament(argv: string[]): Promise<number> {
     if (action === "status") {
       for (const d of t.duels) {
         if (d.b === null) console.log(`Round ${d.round}: ${d.a} goes through without a duel`);
-        else console.log(`Round ${d.round}, duel ${d.id}: ${d.a} against ${d.b} → ${d.winner ?? `${d.votes.length}/${t.votesPerDuel} votes`}${d.reasons?.length ? `\n    ${d.reasons.join("\n    ")}` : ""}`);
+        else {
+          const reasons = d.reasons ?? d.votes.map((v) => `${v.winner}: ${v.reason}`);
+          console.log(`Round ${d.round}, duel ${d.id}: ${d.a} against ${d.b} → ${d.winner ?? `${d.votes.length}/${t.votesPerDuel} votes`}${reasons.length ? `\n    ${reasons.join("\n    ")}` : ""}`);
+        }
       }
       const won = champion(t);
       console.log(won ? `\nChampion: ${won}` : `\nNo champion yet.`);

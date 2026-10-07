@@ -102,14 +102,14 @@ test("a broken config is an error, not an absent one", async () => {
   }
 });
 
-test("a snapshot never deletes what it copies", async () => {
+test("a snapshot only writes inside .aeom/runs", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-snapshot-"));
   try {
     await mkdir(join(dir, ".aeom", "captures"), { recursive: true });
     await writeFile(join(dir, ".aeom", "captures", "keep.png"), "png");
-    await assert.rejects(snapshot(join(dir, ".aeom"), dir), SnapshotPathError);
-    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom")), SnapshotPathError);
-    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "captures", "x")), SnapshotPathError);
+    for (const dest of [dir, join(dir, ".aeom"), join(dir, ".aeom", "captures", "x"), join(dir, ".aeom", "runs"), join(dir, "elsewhere")]) {
+      await assert.rejects(snapshot(join(dir, ".aeom"), dest), SnapshotPathError, dest);
+    }
     assert.equal(await readFile(join(dir, ".aeom", "captures", "keep.png"), "utf8"), "png");
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -122,15 +122,25 @@ test("a folder whose name starts with two dots is still inside its parent", () =
   assert.equal(isInside("/p/other", "/p/.aeom"), false);
 });
 
-test("a snapshot is refused through a symlink that points into what it copies", async () => {
+test("a snapshot through a symlink never deletes what the link points to", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-snapshot-"));
   try {
     await mkdir(join(dir, ".aeom", "captures"), { recursive: true });
+    await mkdir(join(dir, ".aeom", "runs", "r1"), { recursive: true });
+    await mkdir(join(dir, "precious"));
+    await writeFile(join(dir, "precious", "file.txt"), "keep");
     await writeFile(join(dir, ".aeom", "captures", "keep.png"), "png");
-    await symlink(join(dir, ".aeom", "captures"), join(dir, "alias"));
-    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, "alias", "x")), SnapshotPathError);
-    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "captures", "..snap")), SnapshotPathError);
+    // a link inside runs/ that leads outside it is refused
+    await symlink(join(dir, "precious"), join(dir, ".aeom", "runs", "r1", "out"));
+    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "runs", "r1", "out")), SnapshotPathError);
+    // a link inside runs/ that leads into captures is refused
+    await symlink(join(dir, ".aeom", "captures"), join(dir, ".aeom", "runs", "r1", "cap"));
+    await assert.rejects(snapshot(join(dir, ".aeom"), join(dir, ".aeom", "runs", "r1", "cap", "x")), SnapshotPathError);
+    assert.equal(await readFile(join(dir, "precious", "file.txt"), "utf8"), "keep");
     assert.equal(await readFile(join(dir, ".aeom", "captures", "keep.png"), "utf8"), "png");
+    // a normal snapshot works
+    await snapshot(join(dir, ".aeom"), join(dir, ".aeom", "runs", "r1", "before"));
+    assert.equal(await readFile(join(dir, ".aeom", "runs", "r1", "before", "captures", "keep.png"), "utf8"), "png");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

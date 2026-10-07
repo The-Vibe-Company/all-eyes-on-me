@@ -10,11 +10,11 @@ All Eyes On Me (`aeom`) gives the frontend that oracle. A fleet of agents rebuil
 
 1. **`aeom init`** detects the stack and the screens, starts the app on fake data and sets up capture.
 2. **Audit.** Every screen is captured at every size, checked, and inconsistencies are listed. A finding is kept only once a second pass confirms it.
-3. **Six directions.** Six contrasting art directions, drawn from archetypes that sit far apart on a few axes (dense or airy, sober or expressive, warm or cold, light or dark, serif or sans) and never the ones proposed on recent projects. Each one is built in real code on two or three real screens, in parallel worktrees.
-4. **Tournament.** The judge compares the directions two by two and keeps the winner.
-5. **Kit wave.** One worker turns the winner into tokens and shared components.
-6. **Screen wave.** One worker per screen, each confined to its own folder, so workers never conflict.
-7. **Ratchet.** A screen is merged only if it passes every check and the judge prefers it to the current version.
+3. **Six directions** (with `/aeom --directions`). Six art directions, each taken from a source in the product's own world (an object, a document, a place, a trade its customers know), never from a design movement, and checked against a list of the looks AIs propose by default. Each one is built in real code on the home page, in parallel worktrees.
+4. **Tournament.** Judges first remove any direction that looks like an AI default, then compare the rest two by two and keep the winner. Its shared files become the kit.
+5. **Kit wave.** Without directions, one worker turns the failures shared by several pages into tokens and shared components.
+6. **Screen wave.** One worker per page, each confined to its own files, so workers never conflict.
+7. **Ratchet.** A page is kept only if fewer checks and principles fail on it than before.
 8. **Loop.** Steps 2 to 7 repeat until no new version beats the best one, or the spend cap is reached.
 
 ## The judge
@@ -54,7 +54,7 @@ The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
 
 ## Roadmap
 
-**V0, in progress.** The crudest version that runs end to end, tested on a deliberately ugly demo app in `examples/`. It captures every page with Playwright, runs four measurable checks, judges each page against the base principles inside the Claude Code session, fixes things with parallel workers, and proposes six rough directions. The tickets are in `.veebee/tickets/`.
+**V0, done.** The crudest version that runs end to end, tested on a deliberately ugly demo app in `examples/`. It captures every page with Playwright, runs four measurable checks, judges each page against the base principles inside the Claude Code session, fixes things with parallel workers, and proposes six directions from the product's own world. The tickets are in `.veebee/tickets/`.
 
 **First iteration after V0.** This project's landing page, built with AEOM.
 
