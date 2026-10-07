@@ -29,6 +29,7 @@ export interface Tournament {
  */
 export function createTournament(entrants: string[], { votesPerDuel = 3 } = {}): Tournament {
   if (entrants.length < 2) throw new Error("A tournament needs at least two directions.");
+  if (!Number.isInteger(votesPerDuel) || votesPerDuel < 1 || votesPerDuel % 2 === 0) throw new Error("Votes per duel must be a positive odd number, so every duel has a majority.");
   if (new Set(entrants).size !== entrants.length) throw new Error("Each direction can enter only once.");
   return { entrants, votesPerDuel, duels: pair(entrants, 1, 1) };
 }

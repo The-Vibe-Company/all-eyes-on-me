@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { champion, contactSheet, createTournament, nextDuel, voteDuel, type Tournament } from "@aeom/core";
@@ -23,7 +23,12 @@ Options:
     const at = arg.indexOf("=");
     return at > 0 ? { label: arg.slice(0, at), file: arg.slice(at + 1) } : { label: arg, file: arg };
   });
-  await contactSheet({ out: values.out, items, columns: Number(values.columns) });
+  const columns = Number(values.columns);
+  if (!Number.isInteger(columns) || columns < 1) {
+    console.error(`--columns must be a positive whole number.`);
+    return 1;
+  }
+  await contactSheet({ out: values.out, items, columns });
   console.log(`Sheet of ${items.length} captures: ${values.out}`);
   return 0;
 }
@@ -64,6 +69,7 @@ export async function runTournament(argv: string[]): Promise<number> {
   try {
     if (action === "start") {
       const t = createTournament(names);
+      await mkdir(values.dir, { recursive: true });
       await save(t);
       console.log(`${names.length} directions, first round drawn. Run: aeom tournament next --dir ${values.dir}`);
       return 0;

@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium } from "playwright";
-import { discoverPages, type PageError } from "./discover.js";
+import { discoverPages, visitPages, type PageError } from "./discover.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
 
@@ -38,7 +38,7 @@ export interface CaptureOptions {
 export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, paths }: CaptureOptions): Promise<CaptureManifest> {
   const browser = await chromium.launch();
   try {
-    const { pages, errors } = paths ? { pages: paths.map((p) => new URL(p, url).toString()), errors: [] } : await discoverPages(browser, url, { maxPages });
+    const { pages, errors } = paths ? await visitPages(browser, url, paths) : await discoverPages(browser, url, { maxPages });
     await clearPrevious(outDir);
     await mkdir(outDir, { recursive: true });
 

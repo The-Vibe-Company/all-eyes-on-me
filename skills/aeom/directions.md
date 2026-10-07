@@ -4,7 +4,7 @@ Six directions for one product, and not one of them may look like an AI default.
 
 ## The banned looks
 
-A model asked to "be bold" reaches for these. A direction that one of them describes is out, whatever its quality. The judges eliminate it before comparing anything else.
+A model asked to "be bold" reaches for these. A direction that one of them describes as a whole is out, whatever its quality: screening judges remove it before the bracket, so two banned directions can never meet in a duel. One trait alone does not make a banned look; a cream background or a serif headline can be a real brand choice. It is the combination that gives the default away.
 
 - Cream or newsprint paper, a big serif headline, a red, brick or terracotta accent.
 - A near-black screen with one amber, acid green or phosphor accent, in monospace.

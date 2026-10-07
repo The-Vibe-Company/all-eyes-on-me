@@ -47,7 +47,7 @@ test("a contact sheet lays the captures side by side, and marks a direction that
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const { chromium } = await import("playwright");
-  const { contactSheet } = await import("./index.js");
+  const { contactSheet, sheetHtml } = await import("./index.js");
   const dir = await mkdtemp(join(tmpdir(), "aeom-sheet-"));
   try {
     const browser = await chromium.launch();
@@ -55,9 +55,17 @@ test("a contact sheet lays the captures side by side, and marks a direction that
     await page.setContent(`<body style="background:#c33">A</body>`);
     await page.screenshot({ path: join(dir, "a.png") });
     await browser.close();
-    await contactSheet({ out: join(dir, "sheet.png"), columns: 2, cellWidth: 300, items: [{ label: "1", file: join(dir, "a.png") }, { label: "2", file: join(dir, "missing.png") }] });
+    const items = [{ label: "1", file: join(dir, "a.png") }, { label: "2", file: join(dir, "missing.png") }];
+    const html = await sheetHtml(items, 2, 300);
+    assert.match(html, /<figure data-label="1"><figcaption><b>1<\/b><\/figcaption><img src="data:image\/png;base64,/);
+    assert.match(html, /<figure data-label="2"><figcaption><b>2<\/b><\/figcaption><div class="missing">No capture: this direction did not build\.<\/div>/);
+    await contactSheet({ out: join(dir, "sheet.png"), columns: 2, cellWidth: 300, items });
     assert.ok((await stat(join(dir, "sheet.png"))).size > 1000);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("a tournament needs an odd number of votes per duel", () => {
+  for (const votesPerDuel of [0, 2, -1, 1.5]) assert.throws(() => createTournament(["a", "b"], { votesPerDuel }), /positive odd number/);
 });

@@ -25,12 +25,11 @@ Les 6 captures de la page d'accueil côte à côte, puis la direction gagnante e
 - Le juge compare deux versions, il ne note jamais (CONTEXT.md, comparaison par paires).
 
 ## Comment
-- 6 workers en sous-agents, chacun dans son worktree, partent chacun d'un archétype différent tiré d'une liste courte dans `skills/aeom/archetypes.md` (suisse, brutaliste, éditorial, terminal rétro, luxe à empattements, artisanal).
+- 6 workers en sous-agents, chacun dans son worktree, partent chacun d'une source différente tirée du monde du produit, selon `skills/aeom/directions.md`, qui contient aussi la liste noire des looks IA. (La première version partait d'archétypes de style ; Antoine les a rejetés comme les designs classiques de l'IA.)
 - Chaque direction sert l'app sur son propre port pour être capturée.
-- Le tournoi réutilise le juge de 03 avec une consigne « A ou B ».
-- La gagnante sert de point de départ à la vague kit de 04.
+- Avant le tableau, 3 juges écartent les directions qu'un look de la liste noire décrit. Puis le tournoi réutilise le juge de 03 avec une consigne « A ou B ».
+- La gagnante devient le kit, et la vague écrans de 04 refait les autres pages dessus.
 
 ## Hors ticket
-- Les axes, l'historique et le tirage au sort des archétypes : après la V0.
-- Des directions appliquées à plusieurs écrans : après la V0.
+- Les axes, l'historique des sources et le tirage au sort : après la V0.
 - La landing page d'AEOM, construite avec AEOM : première itération après la V0.

@@ -32,7 +32,11 @@ export async function runCapture(argv: string[]): Promise<number> {
 
   return withApp({ ...values, url }, async () => {
     const paths = values.pages?.split(",").map((p) => p.trim()).filter(Boolean);
-    const { pages, errors } = await capture({ url, outDir: values.out, widths, ...(paths?.length ? { paths } : {}) });
+    if (paths && paths.length === 0) {
+      console.error(`--pages lists no route. Give at least one, such as --pages /.`);
+      return 1;
+    }
+    const { pages, errors } = await capture({ url, outDir: values.out, widths, ...(paths ? { paths } : {}) });
     if (pages.length === 0) {
       console.error(`\nNo page could be captured from ${url}.`);
       for (const error of errors) console.error(`  ✗ ${route(error.url)}  ${error.reason}`);
