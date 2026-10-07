@@ -4,6 +4,7 @@ title: L'app moche de démo et aeom capture : AEOM lance une app web et photogra
 milestone: null
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 1, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/1 }
 ---
 
