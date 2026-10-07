@@ -3,29 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mes commandes</title>
-<style>
-  body { margin: 0; font-family: Helvetica, Arial, sans-serif; background: #eef; }
-  header { background: #ff0; padding: 4px 40px; border-bottom: 6px solid red; }
-  header h1 { margin: 0; font-size: 40px; color: red; font-style: italic; }
-  aside { float: left; width: 140px; padding: 10px; }
-  aside a { display: block; color: #00f; }
-  main { margin-left: 170px; padding: 10px; }
-</style>
+<title>Mes commandes · Super Boutique</title>
+<link rel="stylesheet" href="/shared/kit.css">
 </head>
 <body>
-<header><h1>Boutique!!!</h1></header>
-<aside><a href="/">Retour</a><a href="/produits">Catalogue</a></aside>
-<main>
-  <h2>Mes commandes</h2>
-  <ul id="orders"></ul>
+<!-- include: header -->
+<main id="contenu" class="page">
+  <div class="page-head">
+    <h1>Mes commandes</h1>
+    <p class="lead">Chaque commande passée chez Super Boutique s’affiche ici, avec son statut, du panier jusqu’à votre porte.</p>
+  </div>
+
+  <!-- This app has no orders API yet (/api/orders answers 404), so the page
+       does not call it: the list is empty and the empty state says so. -->
+  <section aria-labelledby="liste-titre">
+    <h2 id="liste-titre" class="sr-only">Liste des commandes</h2>
+    <div class="state state-empty">
+      <p class="state-title">Aucune commande pour l’instant</p>
+      <p class="state-text">Vous n’avez encore rien commandé. Parcourez les produits&nbsp;: votre première commande apparaîtra ici dès sa validation, avec son suivi.</p>
+      <div class="cluster">
+        <a class="btn" href="/produits">Voir les produits</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="statuts-titre">
+    <h2 id="statuts-titre">Suivre une commande</h2>
+    <p class="muted">Une fois passée, chaque commande porte l’un de ces statuts.</p>
+    <ul class="columns">
+      <li>
+        <h3><span class="tag tag-wait">En préparation</span></h3>
+        <p>Nous rassemblons et emballons vos articles à la boutique.</p>
+      </li>
+      <li>
+        <h3><span class="tag tag-wait">Expédiée</span></h3>
+        <p>Le colis a quitté la boutique et il est en route vers vous.</p>
+      </li>
+      <li>
+        <h3><span class="tag tag-ok">Livrée</span></h3>
+        <p>Le colis vous a été remis. Un souci avec un article&nbsp;? <a href="/contact">Contactez la boutique</a>.</p>
+      </li>
+      <li>
+        <h3><span class="tag tag-off">Annulée</span></h3>
+        <p>La commande a été arrêtée et ne sera pas expédiée.</p>
+      </li>
+    </ul>
+  </section>
 </main>
-<script>
-  const render = (orders) => {
-    document.getElementById("orders").innerHTML = orders.map((o) => `<li>${o}</li>`).join("");
-  };
-  render([]);
-  fetch("/api/orders").then((r) => r.json()).then(render);
-</script>
+<!-- include: footer -->
 </body>
 </html>
