@@ -1,0 +1,27 @@
+examples/ugly-app/shared/header.html
+  s_4ce34ec42d9105::t_f02f21537f5573 1-35
+examples/ugly-app/shared/footer.html
+  s_4ce34ec42d9105::t_7e3208434b26af 1-6
+examples/ugly-app/pages/index.html
+  s_4ce34ec42d9105::t_fe77ddfcd3e0cc 6-8,10-59,63-203
+  s_4ce34ec42d9105::t_8c93132f241900 204-209
+examples/ugly-app/shared/kit.css
+  s_4ce34ec42d9105::t_e41c08679fa199 1-431
+  s_4ce34ec42d9105::t_7cd886dc02ab5c 432-445
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2699016f3ba304edbf589d8a5618af78d92eddd5",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
