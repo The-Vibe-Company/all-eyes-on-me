@@ -15,11 +15,11 @@ Il demande au juge ce que valent ses pages, et reçoit un verdict pour chaque pr
 Pour chaque page, la liste des principes de base, chacun marqué passe ou ne passe pas, avec une phrase de raison. Le verdict est aussi écrit dans `.aeom/reports/`.
 
 ## C'est fini quand
-- [ ] `principles/base.md` contient le brouillon des principes de base, en texte seul
-- [ ] Le juge lit les captures et rend, pour chaque page et chaque principe, passe ou ne passe pas, avec la raison
-- [ ] Sur ugly-app, il relève les headers différents et l'état vide absent
-- [ ] Il vote 3 fois par page et garde la majorité
-- [ ] Son verdict est écrit dans `.aeom/reports/`
+- [x] `principles/base.md` contient le brouillon des principes de base, en texte seul
+- [x] Le juge lit les captures et rend, pour chaque page et chaque principe, passe ou ne passe pas, avec la raison
+- [x] Sur ugly-app, il relève les headers différents et l'état vide absent
+- [x] Il vote 3 fois par page et garde la majorité
+- [x] Son verdict est écrit dans `.aeom/reports/`
 
 ## Les règles
 - Les principes de base sont du texte, sans images (CONTEXT.md).

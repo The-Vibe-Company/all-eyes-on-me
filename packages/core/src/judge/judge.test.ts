@@ -5,6 +5,9 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { DEFAULT_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, type Vote } from "./index.js";
 
+const refuses = (fn: () => unknown, pattern: RegExp) =>
+  assert.throws(fn, (error: unknown) => error instanceof JudgeVoteError && pattern.test(error.message));
+
 const principles = [
   { id: "hierarchy", text: "One focal point." },
   { id: "states", text: "Empty states say something." },
@@ -22,9 +25,10 @@ const vote = (voter: string, failing: Record<string, string[]> = {}): Vote => ({
 
 test("the base principles file is plain text with an id per principle", async () => {
   const loaded = await loadPrinciples(DEFAULT_PRINCIPLES_FILE);
-  assert.ok(loaded.length >= 8);
+  assert.ok(loaded.length >= 7);
   assert.ok(loaded.some((p) => p.id === "consistent-chrome"));
   assert.ok(loaded.some((p) => p.id === "states"));
+  assert.ok(!loaded.some((p) => p.id === "pointer"), "the cursor is measured by aeom check, not judged");
   assert.ok(loaded.every((p) => /^[a-z-]+$/.test(p.id) && p.text.length > 10));
 });
 
@@ -43,14 +47,14 @@ test("one dissenting vote does not fail a page", () => {
 });
 
 test("a tie fails, so a split judge never lets a page through", () => {
-  const report = tally([vote("1", { "/": ["hierarchy"] }), vote("2")], pages, principles);
+  const report = tally([vote("1", { "/": ["hierarchy"] }), vote("2")], pages, principles, { voters: 2 });
   assert.equal(report.failures, 1);
 });
 
 test("a vote that skips a page or a principle, or invents one, is refused with every problem listed", () => {
   const broken: Vote = { voter: "2", pages: { "/": { hierarchy: { pass: true, reason: "" }, invented: { pass: false, reason: "" } } } };
   assert.throws(
-    () => tally([vote("1"), broken], pages, principles),
+    () => tally([vote("1"), broken], pages, principles, { voters: 2 }),
     (error: unknown) =>
       error instanceof JudgeVoteError &&
       /voter 2: no verdict for \/commandes/.test(error.message) &&
@@ -68,6 +72,42 @@ test("votes are read from every json file of the votes folder", async () => {
     await writeFile(join(dir, "notes.txt"), "ignored");
     const votes = await readVotes(dir);
     assert.deepEqual(votes.map((v) => v.voter).sort(), ["1", "2"]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("anything but exactly three votes is refused", () => {
+  refuses(() => tally([vote("1"), vote("2")], pages, principles), /expected 3 votes, found 2/);
+});
+
+test("a verdict without a reason is refused", () => {
+  const silent = vote("3");
+  silent.pages["/"]!["states"]!.reason = " ";
+  refuses(() => tally([vote("1"), vote("2"), silent], pages, principles), /voter 3, \/: no reason for states/);
+});
+
+test("judging zero pages is refused", () => {
+  refuses(() => tally([vote("1"), vote("2"), vote("3")], [], principles), /no page to judge/);
+});
+
+test("a principles file that defines an id twice is refused", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-principles-"));
+  try {
+    await writeFile(join(dir, "p.md"), "- `grid` — Line up.\n- `grid` — Line up again.\n");
+    await assert.rejects(loadPrinciples(join(dir, "p.md")), /grid more than once/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a vote file that is not valid JSON is named, not mistaken for no vote", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-votes-"));
+  try {
+    await writeFile(join(dir, "1.json"), JSON.stringify(vote("1")));
+    await writeFile(join(dir, "2.json"), "{ not json");
+    await assert.rejects(readVotes(dir), (error: unknown) => error instanceof JudgeVoteError && /2\.json: not valid JSON/.test(error.message));
+    assert.deepEqual(await readVotes(join(dir, "missing")), []);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

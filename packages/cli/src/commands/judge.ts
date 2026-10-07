@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { DEFAULT_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, type CaptureManifest, type Vote } from "@aeom/core";
+import { DEFAULT_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, VOTERS, type CaptureManifest, type Vote } from "@aeom/core";
 
 export const JUDGE_HELP = `Usage: aeom judge [options]
 
@@ -16,7 +16,8 @@ Options:
   --captures <dir>     The captures to judge (default .aeom/captures)
   --votes <dir>        Where the votes are (default .aeom/reports/judge)
   --out <dir>          Where to write judge.json (default .aeom/reports)
-  --principles <file>  The principles to judge against (default: the base principles)`;
+  --principles <file>  The principles to judge against (default: the base principles)
+  --voters <n>         How many votes to expect (default ${VOTERS})`;
 
 export async function runJudge(argv: string[]): Promise<number> {
   const { values } = parseArgs({
@@ -26,6 +27,7 @@ export async function runJudge(argv: string[]): Promise<number> {
       votes: { type: "string", default: ".aeom/reports/judge" },
       out: { type: "string", default: ".aeom/reports" },
       principles: { type: "string" },
+      voters: { type: "string", default: String(VOTERS) },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -42,21 +44,32 @@ export async function runJudge(argv: string[]): Promise<number> {
     return 1;
   }
   const principles = await loadPrinciples(values.principles ?? DEFAULT_PRINCIPLES_FILE);
+  const voters = Number(values.voters);
+  if (!Number.isInteger(voters) || voters < 1) {
+    console.error(`--voters must be a positive whole number.`);
+    return 1;
+  }
+  const pages = manifest.pages.map((p) => p.path);
+  if (pages.length === 0) {
+    console.error(`The captures in ${values.captures} have no page. Run aeom capture again.`);
+    return 1;
+  }
   let votes: Vote[];
   try {
     votes = await readVotes(values.votes);
-  } catch {
-    votes = [];
+  } catch (error) {
+    if (!(error instanceof JudgeVoteError)) throw error;
+    console.error(`Some vote files cannot be read:\n${error.problems.map((p) => `  ${p}`).join("\n")}`);
+    return 1;
   }
   if (votes.length === 0) {
     console.error(`No vote in ${values.votes}. The judge subagents write one JSON file each there.`);
     return 1;
   }
 
-  const pages = manifest.pages.map((p) => p.path);
   let report;
   try {
-    report = tally(votes, pages, principles);
+    report = tally(votes, pages, principles, { voters });
   } catch (error) {
     if (!(error instanceof JudgeVoteError)) throw error;
     console.error(`Some votes cannot be counted:\n${error.problems.map((p) => `  ${p}`).join("\n")}`);
@@ -69,7 +82,6 @@ export async function runJudge(argv: string[]): Promise<number> {
 
   const s = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
   console.log(`Judged ${s(pages.length, "page")} on ${s(principles.length, "principle")}, ${s(votes.length, "vote")} each\n`);
-  if (votes.length !== 3) console.log(`Note: the judge is meant to vote 3 times; ${s(votes.length, "vote")} counted.\n`);
   if (report.failures === 0) {
     console.log(`All ${s(principles.length, "principle")} pass on ${s(pages.length, "page")}.`);
     return 0;

@@ -38,15 +38,20 @@ export class JudgeVoteError extends Error {
   }
 }
 
+/** The judge votes three times. */
+export const VOTERS = 3;
+
 /**
  * Counts the votes, page by page and principle by principle. A principle
  * passes a page only when strictly more votes pass it than fail it, so a tie
- * fails.
+ * fails. Refuses anything but exactly `voters` complete votes, each verdict
+ * with a reason.
  */
-export function tally(votes: Vote[], pages: string[], principles: Principle[]): JudgeReport {
-  if (votes.length === 0) throw new JudgeVoteError(["no vote to count"]);
+export function tally(votes: Vote[], pages: string[], principles: Principle[], { voters = VOTERS } = {}): JudgeReport {
+  if (pages.length === 0) throw new JudgeVoteError(["no page to judge"]);
   const ids = new Set(principles.map((p) => p.id));
   const problems: string[] = [];
+  if (votes.length !== voters) problems.push(`expected ${voters} votes, found ${votes.length}`);
   for (const vote of votes) {
     for (const page of pages) {
       const verdicts = vote.pages?.[page];
@@ -57,6 +62,7 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[]): 
       for (const id of ids) {
         const verdict = verdicts[id];
         if (!verdict || typeof verdict.pass !== "boolean") problems.push(`voter ${vote.voter}, ${page}: no verdict for ${id}`);
+        else if (typeof verdict.reason !== "string" || !verdict.reason.trim()) problems.push(`voter ${vote.voter}, ${page}: no reason for ${id}`);
       }
       for (const id of Object.keys(verdicts)) if (!ids.has(id)) problems.push(`voter ${vote.voter}, ${page}: unknown principle ${id}`);
     }
@@ -74,7 +80,7 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[]): 
         principle: id,
         pass,
         votes: pass ? `${cast.length - fails.length}/${cast.length} pass` : `${fails.length}/${cast.length} fail`,
-        reasons: winners.map((v) => v.reason).filter(Boolean),
+        reasons: winners.map((v) => v.reason),
       };
     }),
   }));
@@ -87,13 +93,28 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[]): 
   };
 }
 
-/** Reads every `.json` file of `dir` as one vote. */
+/**
+ * Reads every `.json` file of `dir` as one vote. A missing folder means no
+ * vote; a file that is not valid JSON is a JudgeVoteError naming it.
+ */
 export async function readVotes(dir: string): Promise<Vote[]> {
-  const files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
-  return Promise.all(
-    files.map(async (file) => {
+  let files: string[];
+  try {
+    files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+  const problems: string[] = [];
+  const votes: Vote[] = [];
+  for (const file of files) {
+    try {
       const vote = JSON.parse(await readFile(join(dir, file), "utf8")) as Vote;
-      return { ...vote, voter: String(vote.voter ?? file.replace(/\.json$/, "")) };
-    }),
-  );
+      votes.push({ ...vote, voter: String(vote.voter ?? file.replace(/\.json$/, "")) });
+    } catch (error) {
+      problems.push(`${file}: not valid JSON (${error instanceof Error ? error.message : String(error)})`);
+    }
+  }
+  if (problems.length) throw new JudgeVoteError(problems);
+  return votes;
 }

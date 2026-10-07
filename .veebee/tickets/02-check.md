@@ -15,12 +15,12 @@ Il lance `aeom check` et apprend ce qui est objectivement cassé, page par page.
 Pour chaque page, les contrôles en échec avec l'élément en cause, ou une seule ligne si tout passe. Un rapport JSON dans `.aeom/reports/`.
 
 ## C'est fini quand
-- [ ] Sur ugly-app, `aeom check` trouve les boutons sans curseur pointer
-- [ ] Il trouve les pages qui défilent horizontalement à 390 px
-- [ ] Il trouve les textes sous le contraste AA
-- [ ] Il trouve les erreurs dans la console
-- [ ] Il écrit son rapport dans `.aeom/reports/` et sort en erreur dès qu'un contrôle échoue
-- [ ] Tout passe : une ligne, et un code de sortie à 0
+- [x] Sur ugly-app, `aeom check` trouve les boutons sans curseur pointer
+- [x] Il trouve les pages qui défilent horizontalement à 390 px
+- [x] Il trouve les textes sous le contraste AA
+- [x] Il trouve les erreurs dans la console
+- [x] Il écrit son rapport dans `.aeom/reports/` et sort en erreur dès qu'un contrôle échoue
+- [x] Tout passe : une ligne, et un code de sortie à 0
 
 ## Les règles
 - Tout contrôle est bloquant : une page qui en échoue un n'est pas mergée (CONTEXT.md).

@@ -15,11 +15,11 @@ Il lance `aeom capture` sur une app web et récupère une capture de chaque page
 Dans le terminal, la liste des pages trouvées et, pour chacune, le chemin de ses deux captures. Dans `.aeom/captures/`, une image par page et par largeur.
 
 ## C'est fini quand
-- [ ] `examples/ugly-app` démarre avec une seule commande : 4 pages, un header différent sur chacune, des boutons sans curseur pointer, une liste sans état vide
-- [ ] `aeom capture --start "<commande>" --url <url>` démarre l'app, suit les liens internes et trouve les 4 pages
-- [ ] Chaque page est capturée à 390 et 1280 px dans `.aeom/captures/`
-- [ ] L'app ne démarre pas : `aeom capture` s'arrête et donne la raison
-- [ ] Une page qui renvoie une erreur est signalée, et les autres sont capturées quand même
+- [x] `examples/ugly-app` démarre avec une seule commande : 4 pages, un header différent sur chacune, des boutons sans curseur pointer, une liste sans état vide
+- [x] `aeom capture --start "<commande>" --url <url>` démarre l'app, suit les liens internes et trouve les 4 pages
+- [x] Chaque page est capturée à 390 et 1280 px dans `.aeom/captures/`
+- [x] L'app ne démarre pas : `aeom capture` s'arrête et donne la raison
+- [x] Une page qui renvoie une erreur est signalée, et les autres sont capturées quand même
 
 ## Les règles
 - Une capture, c'est un écran, dans un état, à une largeur (CONTEXT.md).
