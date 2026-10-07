@@ -15,8 +15,8 @@ export async function loadPrinciples(file: string = DEFAULT_PRINCIPLES_FILE): Pr
   const ROW = /^- `([a-z0-9-]+)` [—-] (.+)$/;
   const principles: Principle[] = [];
   const malformed: number[] = [];
-  text.split("\n").forEach((line, i) => {
-    if (!line.startsWith("- ")) return;
+  text.split(/\r?\n/).forEach((line, i) => {
+    if (!/^\s*[-*+]\s/.test(line)) return;
     const match = ROW.exec(line);
     if (match) principles.push({ id: match[1]!, text: match[2]!.trim() });
     else malformed.push(i + 1);

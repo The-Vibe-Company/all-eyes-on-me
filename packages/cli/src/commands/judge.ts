@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { DEFAULT_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, VOTERS, type CaptureManifest, type Vote } from "@aeom/core";
@@ -44,7 +44,8 @@ export async function runJudge(argv: string[]): Promise<number> {
     return 1;
   }
   const principles = await loadPrinciples(values.principles ?? DEFAULT_PRINCIPLES_FILE);
-  if (resolve(values.out) === resolve(values.votes)) {
+  const canonical = (dir: string) => realpath(dir).catch(() => resolve(dir));
+  if ((await canonical(values.out)) === (await canonical(values.votes))) {
     console.error(`--out and --votes cannot be the same folder: judge.json would be counted as a vote next time.`);
     return 1;
   }
@@ -71,9 +72,12 @@ export async function runJudge(argv: string[]): Promise<number> {
     return 1;
   }
 
-  const missing = Array.from({ length: voters }, (_, i) => String(i + 1)).filter((n) => !votes.some((v) => v.voter === n));
-  if (missing.length && votes.length < voters) {
-    console.error(`Missing votes from voter ${missing.join(", ")}: expected ${missing.map((n) => join(values.votes, `${n}.json`)).join(", ")}. Relaunch those voters.`);
+  const expected = Array.from({ length: voters }, (_, i) => String(i + 1));
+  const missing = expected.filter((n) => !votes.some((v) => v.voter === n));
+  const unexpected = votes.map((v) => v.voter).filter((n) => !expected.includes(n));
+  if (missing.length || unexpected.length) {
+    if (missing.length) console.error(`Missing votes from voter ${missing.join(", ")}: expected ${missing.map((n) => join(values.votes, `${n}.json`)).join(", ")}. Relaunch those voters.`);
+    if (unexpected.length) console.error(`Unexpected voter ${unexpected.join(", ")}: voters are numbered 1 to ${voters}.`);
     return 1;
   }
   let report;

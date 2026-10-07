@@ -100,8 +100,8 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
 
 /**
  * Reads every `.json` file of `dir` as one vote. A missing folder means no
- * vote; a file that is not valid JSON is a JudgeVoteError naming it, and a
- * file that cannot be read throws its own error.
+ * vote; a file that cannot be read, or is not valid JSON, is a JudgeVoteError
+ * naming it and saying which.
  */
 export async function readVotes(dir: string): Promise<Vote[]> {
   let files: string[];
@@ -114,7 +114,13 @@ export async function readVotes(dir: string): Promise<Vote[]> {
   const problems: string[] = [];
   const votes: Vote[] = [];
   for (const file of files) {
-    const text = await readFile(join(dir, file), "utf8");
+    let text: string;
+    try {
+      text = await readFile(join(dir, file), "utf8");
+    } catch (error) {
+      problems.push(`${file}: cannot be read (${error instanceof Error ? error.message : String(error)})`);
+      continue;
+    }
     try {
       const vote = JSON.parse(text) as Vote;
       votes.push({ ...vote, voter: String(vote.voter ?? file.replace(/\.json$/, "")) });
