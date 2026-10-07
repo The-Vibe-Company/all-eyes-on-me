@@ -1,0 +1,34 @@
+.veebee/milestones/01-landing/tickets/02-aeom-refait-la-landing.md
+  s_4ce34ec42d9105::t_7d18518e7d3d53 1-6,8-27
+  s_4ce34ec42d9105::t_1725c1c1f77592 7
+.veebee/milestones/01-landing/product.md
+  s_4ce34ec42d9105::t_7d18518e7d3d53 1-3
+.veebee/milestones/01-landing/tickets/05-en-ligne.md
+  s_4ce34ec42d9105::t_1725c1c1f77592 7
+  s_4ce34ec42d9105::t_7d18518e7d3d53 1-6,8-26
+.veebee/milestones/01-landing/tickets/01-landing-v0.md
+  s_4ce34ec42d9105::t_1725c1c1f77592 7
+  s_4ce34ec42d9105::t_7d18518e7d3d53 1-6,8-32
+.veebee/milestones/01-landing/tickets/03-la-landing-montre-sa-refonte.md
+  s_4ce34ec42d9105::t_7d18518e7d3d53 1-6,8-26
+  s_4ce34ec42d9105::t_1725c1c1f77592 7
+.veebee/milestones/01-landing/tickets/04-compteur-etoiles.md
+  s_4ce34ec42d9105::t_1725c1c1f77592 7
+  s_4ce34ec42d9105::t_7d18518e7d3d53 1-6,8-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8fa026d61834763bd7f2c2be1dd510b7b1babda5",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
