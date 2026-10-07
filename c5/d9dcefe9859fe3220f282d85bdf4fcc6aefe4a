@@ -1,0 +1,27 @@
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_07585e0e5c19c7 2,47-50,74-78
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_07585e0e5c19c7 55-59,103-104,117,119
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_07585e0e5c19c7 12-13,16
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_07585e0e5c19c7 115-138
+packages/core/src/judge/principles.ts
+  s_4ce34ec42d9105::t_07585e0e5c19c7 15-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c5d9dcefe9859fe3220f282d85bdf4fcc6aefe4a",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
