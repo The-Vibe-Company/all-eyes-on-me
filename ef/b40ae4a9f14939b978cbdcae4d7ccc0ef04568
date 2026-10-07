@@ -1,0 +1,27 @@
+site/render.mjs
+  s_4ce34ec42d9105::t_a25fc9743a5a92 1-16
+site/vercel.json
+  s_4ce34ec42d9105::t_a25fc9743a5a92 1-6
+site/site.test.mjs
+  s_4ce34ec42d9105::t_186576ab6bb7ba 5-7,83-104
+site/server.mjs
+  s_4ce34ec42d9105::t_a25fc9743a5a92 8,36
+site/build.mjs
+  s_4ce34ec42d9105::t_a25fc9743a5a92 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "efb40ae4a9f14939b978cbdcae4d7ccc0ef04568",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
