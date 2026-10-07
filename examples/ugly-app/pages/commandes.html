@@ -21,8 +21,11 @@
   <ul id="orders"></ul>
 </main>
 <script>
-  const orders = [];
-  document.getElementById("orders").innerHTML = orders.map((o) => `<li>${o}</li>`).join("");
+  const render = (orders) => {
+    document.getElementById("orders").innerHTML = orders.map((o) => `<li>${o}</li>`).join("");
+  };
+  render([]);
+  fetch("/api/orders").then((r) => r.json()).then(render);
 </script>
 </body>
 </html>
