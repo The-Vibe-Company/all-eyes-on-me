@@ -1,0 +1,19 @@
+{
+  "url": "http://localhost:4471",
+  "checkedAt": "2026-10-07T22:17:15.641Z",
+  "widths": [
+    390,
+    1280
+  ],
+  "checks": [
+    "cursor",
+    "overflow",
+    "contrast",
+    "console"
+  ],
+  "pages": [
+    "http://localhost:4471/"
+  ],
+  "errors": [],
+  "findings": []
+}

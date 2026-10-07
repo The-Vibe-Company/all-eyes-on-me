@@ -1,0 +1,166 @@
+{
+  "entrants": [
+    "eye-chart",
+    "press-proof",
+    "light-table",
+    "tailor-fitting",
+    "judges-board",
+    "reflectography"
+  ],
+  "votesPerDuel": 3,
+  "duels": [
+    {
+      "id": 1,
+      "round": 1,
+      "a": "eye-chart",
+      "b": "press-proof",
+      "votes": [
+        {
+          "voter": "j1",
+          "winner": "press-proof",
+          "reason": "Print-proof frame with CMYK bar, crop marks and a BAT approval box; proofreader circles act out judging screens. Eye-chart shrinking type makes later steps hard to read and repeats 4/10."
+        },
+        {
+          "voter": "j2",
+          "winner": "press-proof",
+          "reason": "Crop marks line up with each card, CMYK colors tag every step and command, problems circled like proofreader marks; eye-chart section counters all read 4/10 and its Now row sticks out of the column."
+        },
+        {
+          "voter": "j3",
+          "winner": "press-proof",
+          "reason": "BAT sign-off box, proofreader circles on the faults, crop marks around aligned cards; eye-chart shrinking headings make WAVES and RATCHET hard to read and its red and green blocks take over the title."
+        }
+      ],
+      "winner": "press-proof",
+      "reasons": [
+        "Print-proof frame with CMYK bar, crop marks and a BAT approval box; proofreader circles act out judging screens. Eye-chart shrinking type makes later steps hard to read and repeats 4/10.",
+        "Crop marks line up with each card, CMYK colors tag every step and command, problems circled like proofreader marks; eye-chart section counters all read 4/10 and its Now row sticks out of the column.",
+        "BAT sign-off box, proofreader circles on the faults, crop marks around aligned cards; eye-chart shrinking headings make WAVES and RATCHET hard to read and its red and green blocks take over the title."
+      ]
+    },
+    {
+      "id": 2,
+      "round": 1,
+      "a": "light-table",
+      "b": "tailor-fitting",
+      "votes": [
+        {
+          "voter": "j1",
+          "winner": "light-table",
+          "reason": "Contact sheet of wireframe screens crossed out in red except the one circled in grease pencil shows the judge-and-keep loop; tailor-fitting charcoal with yellow tape accents drifts toward near-black plus amber."
+        },
+        {
+          "voter": "j2",
+          "winner": "light-table",
+          "reason": "Film strip of thumbnails crossed out except the circled keeper, same circle marks Now on the roadmap, one filled Star button; tailor-fitting only says measuring, two equal dashed buttons, dark plus yellow palette."
+        },
+        {
+          "voter": "j3",
+          "winner": "light-table",
+          "reason": "Hero contact sheet where every rejected take is crossed out and the kept frame circled, one focal point under the dot-matrix title; tailor-fitting leans toward dark screen with one amber accent."
+        }
+      ],
+      "winner": "light-table",
+      "reasons": [
+        "Contact sheet of wireframe screens crossed out in red except the one circled in grease pencil shows the judge-and-keep loop; tailor-fitting charcoal with yellow tape accents drifts toward near-black plus amber.",
+        "Film strip of thumbnails crossed out except the circled keeper, same circle marks Now on the roadmap, one filled Star button; tailor-fitting only says measuring, two equal dashed buttons, dark plus yellow palette.",
+        "Hero contact sheet where every rejected take is crossed out and the kept frame circled, one focal point under the dot-matrix title; tailor-fitting leans toward dark screen with one amber accent."
+      ]
+    },
+    {
+      "id": 3,
+      "round": 1,
+      "a": "judges-board",
+      "b": "reflectography",
+      "votes": [
+        {
+          "voter": "j1",
+          "winner": "reflectography",
+          "reason": "Hero splits one screen into visible and infrared and circles three real agent mistakes on a lettered grid; judges-board pool metaphor needs explaining and its six boxed step cards look like a template."
+        },
+        {
+          "voter": "j2",
+          "winner": "reflectography",
+          "reason": "Annotated figure with A-D grid and a visible-to-infrared slider, magenta callouts mark what AEOM catches; judges-board pool tiles and lane ropes are mostly decoration apart from its judge card."
+        },
+        {
+          "voter": "j3",
+          "winner": "reflectography",
+          "reason": "Visible and infrared views with mistakes at grid coordinates explain the product at a glance; judges-board six bordered cards and slanted yellow tags on a navy-and-yellow grid look like a template."
+        }
+      ],
+      "winner": "reflectography",
+      "reasons": [
+        "Hero splits one screen into visible and infrared and circles three real agent mistakes on a lettered grid; judges-board pool metaphor needs explaining and its six boxed step cards look like a template.",
+        "Annotated figure with A-D grid and a visible-to-infrared slider, magenta callouts mark what AEOM catches; judges-board pool tiles and lane ropes are mostly decoration apart from its judge card.",
+        "Visible and infrared views with mistakes at grid coordinates explain the product at a glance; judges-board six bordered cards and slanted yellow tags on a navy-and-yellow grid look like a template."
+      ]
+    },
+    {
+      "id": 4,
+      "round": 2,
+      "a": "press-proof",
+      "b": "light-table",
+      "votes": [
+        {
+          "voter": "j1",
+          "winner": "light-table",
+          "reason": "Contact-sheet hero with five captures crossed out and one circled shows the product at work, carried by film strips, slide mounts and the circled Now; press-proof is cleaner but a stock print-proof look over six white cards and a table."
+        },
+        {
+          "voter": "j2",
+          "winner": "light-table",
+          "reason": "Contact sheet of app screens crossed out with one circled in grease pencil, carried through How it works, Commands and Roadmap; press-proof CMYK bars, crop marks and BAT box with a heavy wide grotesk are a stock print-shop look."
+        },
+        {
+          "voter": "j3",
+          "winner": "light-table",
+          "reason": "Film strip where every frame is crossed out except one circled keeper makes the judge-and-keep loop clear before reading; press-proof wraps a plain big-grotesque text hero that shows nothing of the product in CMYK bars and crop marks."
+        }
+      ],
+      "winner": "light-table",
+      "reasons": [
+        "Contact-sheet hero with five captures crossed out and one circled shows the product at work, carried by film strips, slide mounts and the circled Now; press-proof is cleaner but a stock print-proof look over six white cards and a table.",
+        "Contact sheet of app screens crossed out with one circled in grease pencil, carried through How it works, Commands and Roadmap; press-proof CMYK bars, crop marks and BAT box with a heavy wide grotesk are a stock print-shop look.",
+        "Film strip where every frame is crossed out except one circled keeper makes the judge-and-keep loop clear before reading; press-proof wraps a plain big-grotesque text hero that shows nothing of the product in CMYK bars and crop marks."
+      ]
+    },
+    {
+      "id": 5,
+      "round": 2,
+      "a": "reflectography",
+      "b": null,
+      "votes": [],
+      "winner": "reflectography"
+    },
+    {
+      "id": 6,
+      "round": 3,
+      "a": "light-table",
+      "b": "reflectography",
+      "votes": [
+        {
+          "voter": "j1",
+          "winner": "reflectography",
+          "reason": "Split visible and infrared screen with numbered marks on the three things AEOM catches and a lettered column ruler keeps a clear hierarchy; light-table dot-matrix title and heavy film-strip frames crowd the copy and put the metaphor ahead of the product."
+        },
+        {
+          "voter": "j2",
+          "winner": "reflectography",
+          "reason": "Annotated visible/infrared figure on an A-L grid marks the exact failures AEOM catches, held by a ruled method list, hatched legend and layered roadmap; light-table wraps every section, even the install code, in film perforations and tells a developer less."
+        },
+        {
+          "voter": "j3",
+          "winner": "reflectography",
+          "reason": "Numbered magenta marks show the exact failures AEOM catches and the conservation-lab language holds throughout with one focal point and calm density; light-table dot-matrix title, abstract thumbnails, CTA below the strip and heavy perforations make it louder and harder to read."
+        }
+      ],
+      "winner": "reflectography",
+      "reasons": [
+        "Split visible and infrared screen with numbered marks on the three things AEOM catches and a lettered column ruler keeps a clear hierarchy; light-table dot-matrix title and heavy film-strip frames crowd the copy and put the metaphor ahead of the product.",
+        "Annotated visible/infrared figure on an A-L grid marks the exact failures AEOM catches, held by a ruled method list, hatched legend and layered roadmap; light-table wraps every section, even the install code, in film perforations and tells a developer less.",
+        "Numbered magenta marks show the exact failures AEOM catches and the conservation-lab language holds throughout with one focal point and calm density; light-table dot-matrix title, abstract thumbnails, CTA below the strip and heavy perforations make it louder and harder to read."
+      ]
+    }
+  ]
+}

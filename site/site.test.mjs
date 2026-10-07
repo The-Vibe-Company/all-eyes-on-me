@@ -2,7 +2,7 @@
 // the code drift apart.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { test } from "node:test";
 
@@ -33,7 +33,7 @@ test("the page links to the repository to star it", () => {
   assert.match(page, /<a [^>]*href="https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me"[^>]*>Star on GitHub<\/a>/);
 });
 
-test("the site starts with one command and serves the page", async () => {
+async function withSite(run) {
   const port = await new Promise((resolve) => {
     const s = createServer().listen(0, () => {
       const { port } = s.address();
@@ -46,9 +46,35 @@ test("the site starts with one command and serves the page", async () => {
     for (let i = 0; i < 40 && !response; i++) {
       response = await fetch(`http://localhost:${port}/`).catch(() => new Promise((r) => setTimeout(r, 100)));
     }
-    assert.equal(response.status, 200);
-    assert.match(await response.text(), /All Eyes On Me/);
+    await run(`http://localhost:${port}`, response);
   } finally {
     server.kill();
   }
+}
+
+test("the site starts with one command and serves the page", async () => {
+  await withSite(async (_, response) => {
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /All Eyes On Me/);
+  });
+});
+
+test("the run that rebuilt the page is kept: six directions, a tournament, before and after", async () => {
+  const run = new URL("site/run/", root);
+  const tournament = JSON.parse(readFileSync(new URL("directions/tournament.json", run), "utf8"));
+  assert.equal(tournament.entrants.length, 6);
+  for (const name of tournament.entrants) assert.ok(existsSync(new URL(`directions/${name}.webp`, run)), `${name} has no capture`);
+  assert.ok(existsSync(new URL("directions/sheet.webp", run)));
+  for (const duel of tournament.duels.filter((d) => d.b)) {
+    assert.equal(duel.votes.length, tournament.votesPerDuel, `duel ${duel.id} is not finished`);
+    for (const vote of duel.votes) assert.ok(vote.reason.trim(), `a vote on duel ${duel.id} has no reason`);
+  }
+  for (const side of ["before", "after"]) {
+    for (const width of [390, 1280]) assert.ok(existsSync(new URL(`${side}/index@${width}.webp`, run)), `${side} at ${width} px is missing`);
+  }
+  await withSite(async (url) => {
+    const sheet = await fetch(`${url}/run/directions/sheet.webp`);
+    assert.equal(sheet.status, 200);
+    assert.equal(sheet.headers.get("content-type"), "image/webp");
+  });
 });

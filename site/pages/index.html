@@ -5,27 +5,198 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>All Eyes On Me</title>
 <meta name="description" content="A fleet of agents that rebuilds your frontend in parallel, judges every screen, and keeps only what got better. Open source.">
-<link rel="stylesheet" href="/shared/kit.css">
+<!-- include: head -->
 </head>
 <body>
-<main>
-<h1>All Eyes On Me</h1>
-<p>Coding agents can build a backend on their own, because tests tell them when they got it right. The frontend has no such oracle, so agents improvise: generic screens, a different header on every page, buttons that do not look clickable.</p>
-<p>All Eyes On Me gives the frontend that oracle. A fleet of agents rebuilds your app's frontend in parallel, judges every screen, and keeps only what got better.</p>
-<p><a href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub</a></p>
+<!-- include: header -->
+<main id="main">
 
-<h2>How it works</h2>
-<ol>
-<li><strong>Capture.</strong> It starts your app, follows every link and screenshots each page at phone and desktop width.</li>
-<li><strong>Check.</strong> It measures what a machine can measure: pointer cursors, sideways scrolling, contrast, console errors.</li>
-<li><strong>Judge.</strong> Three independent judges look at every page against a short list of principles, and the majority decides.</li>
-<li><strong>Directions.</strong> On demand, it builds six art directions from things your users know, never from the looks AIs propose by default, and keeps one in a knockout.</li>
-<li><strong>Waves.</strong> One worker writes the shared kit, then one worker per page rebuilds every page at once, each in its own files.</li>
-<li><strong>Ratchet.</strong> A page is kept only if fewer things fail on it than before.</li>
-</ol>
+<section class="wrap grid hero" aria-labelledby="title">
+  <div class="hero__text">
+    <p class="kicker"><span class="kicker__ref">01</span> Open-source CLI and Claude Code skills</p>
+    <h1 id="title">All Eyes On Me</h1>
+    <p class="lede">A fleet of agents rebuilds your app's frontend in parallel, judges every screen, and keeps only what got better.</p>
+    <p>Coding agents can build a backend on their own, because tests tell them when they got it right. The frontend has no such oracle, so agents improvise: generic screens, a different header on every page, buttons that do not look clickable.</p>
+    <p>All Eyes On Me gives the frontend that oracle.</p>
+    <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub</a> <a class="btn" href="#try">Try it from source</a></p>
+  </div>
 
-<h2>Commands</h2>
-<ul>
+  <figure class="plate" data-compare aria-labelledby="fig-1">
+    <div class="plate__head">
+      <span><b>Fig. 1</b> One screen, two views</span>
+      <span class="plate__bands">VIS / IRR</span>
+    </div>
+    <div class="plate__frame">
+      <div class="scale scale--x" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+      <div class="scale scale--y" aria-hidden="true"><span>1</span><span>2</span><span>3</span></div>
+      <div class="plate__view">
+        <svg class="view view--vis" viewBox="0 0 400 300" aria-hidden="true" focusable="false">
+          <rect class="v-bg" width="400" height="300"/>
+          <rect class="v-head" width="400" height="36"/>
+          <circle class="v-accent" cx="22" cy="18" r="7"/>
+          <rect class="v-head-ink" x="34" y="15" width="40" height="6"/>
+          <rect class="v-head-ink" x="244" y="15" width="26" height="6"/>
+          <rect class="v-head-ink" x="280" y="15" width="26" height="6"/>
+          <rect class="v-head-ink" x="316" y="15" width="26" height="6"/>
+          <rect class="v-accent" x="352" y="10" width="36" height="16"/>
+          <rect class="v-title" x="28" y="60" width="200" height="15"/>
+          <rect class="v-title" x="28" y="81" width="150" height="15"/>
+          <rect class="v-line" x="28" y="110" width="210" height="5"/>
+          <rect class="v-line" x="28" y="121" width="196" height="5"/>
+          <rect class="v-line" x="28" y="132" width="168" height="5"/>
+          <rect class="v-button" x="28" y="152" width="88" height="24"/>
+          <rect class="v-button-ink" x="44" y="162" width="56" height="5"/>
+          <rect class="v-image" x="262" y="56" width="112" height="120"/>
+          <path class="v-image-2" d="M262 176 L300 122 L328 150 L350 130 L374 154 L374 176 Z"/>
+          <rect class="v-card" x="28" y="200" width="104" height="80"/>
+          <rect class="v-card-a" x="28" y="200" width="104" height="34"/>
+          <rect class="v-line" x="38" y="244" width="70" height="5"/>
+          <rect class="v-line" x="38" y="255" width="52" height="5"/>
+          <rect class="v-card" x="150" y="205" width="104" height="80"/>
+          <rect class="v-card-b" x="150" y="205" width="104" height="34"/>
+          <rect class="v-line" x="160" y="249" width="74" height="5"/>
+          <rect class="v-line" x="160" y="260" width="48" height="5"/>
+          <rect class="v-card" x="270" y="200" width="104" height="80"/>
+          <rect class="v-card-c" x="270" y="200" width="104" height="34"/>
+          <rect class="v-line" x="280" y="244" width="66" height="5"/>
+          <rect class="v-line" x="280" y="255" width="56" height="5"/>
+          <path class="v-cursor" d="M100 165 v15 l3.6 -3.4 l3 6.2 l2.6 -1.2 l-3 -6 h5 Z"/>
+        </svg>
+        <svg class="view view--irr" viewBox="0 0 400 300" aria-hidden="true" focusable="false">
+          <defs>
+            <filter id="irr-grain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
+              <feColorMatrix type="saturate" values="0"/>
+            </filter>
+          </defs>
+          <rect class="i-bg" width="400" height="300"/>
+          <g class="i-tiles">
+            <rect x="80" y="0" width="80" height="75"/><rect x="240" y="0" width="80" height="75"/>
+            <rect x="0" y="75" width="80" height="75"/><rect x="160" y="75" width="80" height="75"/><rect x="320" y="75" width="80" height="75"/>
+            <rect x="80" y="150" width="80" height="75"/><rect x="240" y="150" width="80" height="75"/>
+            <rect x="0" y="225" width="80" height="75"/><rect x="160" y="225" width="80" height="75"/><rect x="320" y="225" width="80" height="75"/>
+          </g>
+          <rect class="i-head" width="400" height="36"/>
+          <circle class="i-mid" cx="22" cy="18" r="7"/>
+          <rect class="i-head-ink" x="34" y="15" width="40" height="6"/>
+          <rect class="i-head-ink" x="244" y="15" width="26" height="6"/>
+          <rect class="i-head-ink" x="280" y="15" width="26" height="6"/>
+          <rect class="i-head-ink" x="316" y="15" width="26" height="6"/>
+          <rect class="i-mid" x="352" y="10" width="36" height="16"/>
+          <g class="i-ghost">
+            <line x1="0" y1="52" x2="400" y2="52"/>
+            <rect x="214" y="41" width="30" height="6"/>
+            <rect x="254" y="41" width="30" height="6"/>
+            <rect x="294" y="41" width="30" height="6"/>
+            <rect x="334" y="41" width="30" height="6"/>
+            <rect class="i-ghost-outline" x="28" y="60" width="268" height="15"/>
+          </g>
+          <rect class="i-title" x="28" y="60" width="200" height="15"/>
+          <rect class="i-title" x="28" y="81" width="150" height="15"/>
+          <rect class="i-line" x="28" y="110" width="210" height="5"/>
+          <rect class="i-line" x="28" y="121" width="196" height="5"/>
+          <rect class="i-line" x="28" y="132" width="168" height="5"/>
+          <rect class="i-button" x="28" y="152" width="88" height="24"/>
+          <rect class="i-button-ink" x="44" y="162" width="56" height="5"/>
+          <rect class="i-image" x="262" y="56" width="112" height="120"/>
+          <path class="i-image-2" d="M262 176 L300 122 L328 150 L350 130 L374 154 L374 176 Z"/>
+          <rect class="i-card" x="28" y="200" width="104" height="80"/>
+          <rect class="i-card-a" x="28" y="200" width="104" height="34"/>
+          <rect class="i-line" x="38" y="244" width="70" height="5"/>
+          <rect class="i-line" x="38" y="255" width="52" height="5"/>
+          <rect class="i-card" x="150" y="205" width="104" height="80"/>
+          <rect class="i-card-b" x="150" y="205" width="104" height="34"/>
+          <rect class="i-line" x="160" y="249" width="74" height="5"/>
+          <rect class="i-line" x="160" y="260" width="48" height="5"/>
+          <rect class="i-card" x="270" y="200" width="104" height="80"/>
+          <rect class="i-card-c" x="270" y="200" width="104" height="34"/>
+          <rect class="i-line" x="280" y="244" width="66" height="5"/>
+          <rect class="i-line" x="280" y="255" width="56" height="5"/>
+          <g class="i-under">
+            <line x1="28" y1="44" x2="28" y2="292"/>
+            <line x1="374" y1="44" x2="374" y2="292"/>
+            <line x1="16" y1="200" x2="386" y2="200"/>
+            <line x1="262" y1="56" x2="374" y2="176"/>
+            <line x1="374" y1="56" x2="262" y2="176"/>
+            <line x1="141" y1="190" x2="141" y2="292"/>
+            <line x1="261" y1="190" x2="261" y2="292"/>
+          </g>
+          <path class="i-cursor" d="M100 165 v15 l3.6 -3.4 l3 6.2 l2.6 -1.2 l-3 -6 h5 Z"/>
+          <rect class="i-grain" width="400" height="300" filter="url(#irr-grain)"/>
+        </svg>
+        <svg class="view view--marks" viewBox="0 0 400 300" aria-hidden="true" focusable="false">
+          <g class="m-grid">
+            <line x1="100" y1="0" x2="100" y2="300"/><line x1="200" y1="0" x2="200" y2="300"/><line x1="300" y1="0" x2="300" y2="300"/>
+            <line x1="0" y1="100" x2="400" y2="100"/><line x1="0" y1="200" x2="400" y2="200"/>
+          </g>
+          <g class="m-area">
+            <rect x="206" y="3" width="190" height="54"/>
+            <rect x="22" y="146" width="100" height="40"/>
+            <rect x="144" y="196" width="116" height="94"/>
+          </g>
+          <g class="m-tag">
+            <circle cx="300" cy="57" r="10"/><text x="300" y="61">1</text>
+            <circle cx="122" cy="166" r="10"/><text x="122" y="170">2</text>
+            <circle cx="260" cy="196" r="10"/><text x="260" y="200">3</text>
+          </g>
+        </svg>
+        <span class="plate__label plate__label--vis" aria-hidden="true">VIS</span>
+        <span class="plate__label plate__label--irr" aria-hidden="true">IRR</span>
+        <span class="plate__divider" aria-hidden="true"></span>
+      </div>
+    </div>
+    <div class="plate__under">
+      <label class="compare">
+        <span class="compare__end" aria-hidden="true">Visible</span>
+        <input class="compare__input" type="range" min="0" max="100" value="50" step="1" aria-label="Move the line between the visible-light view and the infrared view">
+        <span class="compare__end" aria-hidden="true">Infrared</span>
+      </label>
+      <div class="target" aria-hidden="true">
+        <div class="target__grey"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="target__colour"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="target__scale"><span>0</span><span>640</span><span>1280 px</span></div>
+      </div>
+      <figcaption id="fig-1">One screen in visible light and in infrared. The surface looks finished; underneath, the marks show what an agent improvised.</figcaption>
+      <ol class="notes">
+        <li><span class="notes__ref">C1&ndash;D1</span> A different header on every page.</li>
+        <li><span class="notes__ref">A2</span> A button that does not look clickable.</li>
+        <li><span class="notes__ref">B3&ndash;C3</span> A generic screen, off its own grid.</li>
+      </ol>
+    </div>
+  </figure>
+
+  <dl class="record">
+    <div><dt>Object</dt><dd>A web app's frontend</dd></div>
+    <div><dt>Examined</dt><dd>Every page, at phone and desktop width</dd></div>
+    <div><dt>Judged by</dt><dd>Three independent judges; the majority decides</dd></div>
+    <div><dt>Licence</dt><dd>MIT, open source</dd></div>
+  </dl>
+</section>
+
+<section id="how" class="wrap grid section" aria-labelledby="how-title">
+  <div class="section__head">
+    <p class="kicker"><span class="kicker__ref">02</span> Method</p>
+    <h2 id="how-title">How it works</h2>
+  </div>
+  <div class="section__body">
+    <ol class="steps">
+      <li><strong>Capture.</strong> It starts your app, follows every link and screenshots each page at phone and desktop width.</li>
+      <li><strong>Check.</strong> It measures what a machine can measure: pointer cursors, sideways scrolling, contrast, console errors.</li>
+      <li><strong>Judge.</strong> Three independent judges look at every page against a short list of principles, and the majority decides.</li>
+      <li><strong>Directions.</strong> On demand, it builds six art directions from things your users know, never from the looks AIs propose by default, and keeps one in a knockout.</li>
+      <li><strong>Waves.</strong> One worker writes the shared kit, then one worker per page rebuilds every page at once, each in its own files.</li>
+      <li><strong>Ratchet.</strong> A page is kept only if fewer things fail on it than before.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="commands" class="wrap grid section" aria-labelledby="commands-title">
+  <div class="section__head">
+    <p class="kicker"><span class="kicker__ref">03</span> Legend</p>
+    <h2 id="commands-title">Commands</h2>
+  </div>
+  <div class="section__body">
+    <ul class="legend">
 <li data-command="capture"><code>aeom capture</code> Find every page of a web app and screenshot it</li>
 <li data-command="check"><code>aeom check</code> Run the measurable checks on every page</li>
 <li data-command="judge"><code>aeom judge</code> Count the judges' votes on the captures</li>
@@ -34,29 +205,42 @@
 <li data-command="compare"><code>aeom compare</code> Compare two snapshots page by page</li>
 <li data-command="sheet"><code>aeom sheet</code> Lay captures side by side in one image</li>
 <li data-command="tournament"><code>aeom tournament</code> Run a knockout between directions, three votes per duel</li>
-</ul>
+    </ul>
+  </div>
+</section>
 
-<h2>Try it</h2>
-<p>AEOM is not on npm yet. From the source, with Node 22 and pnpm:</p>
-<pre><code>git clone https://github.com/The-Vibe-Company/all-eyes-on-me
-cd all-eyes-on-me
-pnpm install
-pnpm build
-pnpm --filter @aeom/core exec playwright install chromium
-node packages/cli/dist/index.js --help</code></pre>
-<p>Then copy <code>skills/aeom</code> and <code>skills/aeom-judge</code> into your project's <code>.claude/skills/</code> and type <code>/aeom</code> in Claude Code.</p>
+<section id="try" class="wrap grid section" aria-labelledby="try-title">
+  <div class="section__head">
+    <p class="kicker"><span class="kicker__ref">04</span> Procedure</p>
+    <h2 id="try-title">Try it</h2>
+  </div>
+  <div class="section__body">
+    <p>AEOM is not on npm yet. From the source, with Node 22 and pnpm:</p>
+    <div class="film" data-copy>
+      <div class="film__head"><span><b class="film__tag">XR</b> From the source</span></div>
+      <pre><code><span class="ln">git clone \</span><span class="ln ln--more">  https://github.com/The-Vibe-Company/all-eyes-on-me</span><span class="ln">cd all-eyes-on-me</span><span class="ln">pnpm install</span><span class="ln">pnpm build</span><span class="ln">pnpm <span class="nw">--filter</span> @aeom/core exec \</span><span class="ln ln--more">  playwright install chromium</span><span class="ln">node packages/cli/dist/index.js <span class="nw">--help</span></span></code></pre>
+    </div>
+    <p>Then copy <code>skills/aeom</code> and <code>skills/aeom-judge</code> into your project's <code>.claude/skills/</code> and type <code>/aeom</code> in Claude Code.</p>
+  </div>
+</section>
 
-<h2>Roadmap</h2>
-<ol>
-<li data-stage="v0"><strong>V0, done.</strong> The crudest loop that runs end to end, on a deliberately ugly demo app.</li>
-<li data-stage="landing"><strong>Now.</strong> This page, rebuilt by AEOM itself.</li>
-<li data-stage="ux"><strong>Next, the UX layer.</strong> AEOM understands what an app is for, maps its key journeys, and critiques the existing experience journey by journey. It may reorder steps and navigation, never build features.</li>
-<li data-stage="v1"><strong>Then.</strong> Feedback that turns into principles, a spend cap, the npm package.</li>
-<li data-stage="v2"><strong>Later.</strong> Codex, mobile, new projects from scratch.</li>
-</ol>
+<section id="roadmap" class="wrap grid section" aria-labelledby="roadmap-title">
+  <div class="section__head">
+    <p class="kicker"><span class="kicker__ref">05</span> Layers, first to last</p>
+    <h2 id="roadmap-title">Roadmap</h2>
+  </div>
+  <div class="section__body">
+    <ol class="strata">
+      <li data-stage="v0"><strong>V0, done.</strong> The crudest loop that runs end to end, on a deliberately ugly demo app.</li>
+      <li data-stage="landing"><strong>Now.</strong> This page, rebuilt by AEOM itself.</li>
+      <li data-stage="ux"><strong>Next, the UX layer.</strong> AEOM understands what an app is for, maps its key journeys, and critiques the existing experience journey by journey. It may reorder steps and navigation, never build features.</li>
+      <li data-stage="v1"><strong>Then.</strong> Feedback that turns into principles, a spend cap, the npm package.</li>
+      <li data-stage="v2"><strong>Later.</strong> Codex, mobile, new projects from scratch.</li>
+    </ol>
+  </div>
+</section>
+
 </main>
-<footer>
-<p>MIT licence. Made by <a href="https://thevibecompany.co">The Vibe Company</a>.</p>
-</footer>
+<!-- include: footer -->
 </body>
 </html>

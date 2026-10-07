@@ -1,0 +1,27 @@
+{
+  "url": "http://localhost:4471",
+  "checkedAt": "2026-10-07T21:44:44.587Z",
+  "widths": [
+    390,
+    1280
+  ],
+  "checks": [
+    "cursor",
+    "overflow",
+    "contrast",
+    "console"
+  ],
+  "pages": [
+    "http://localhost:4471/"
+  ],
+  "errors": [],
+  "findings": [
+    {
+      "check": "overflow",
+      "url": "http://localhost:4471/",
+      "width": 390,
+      "element": "code \"git clone https://github.com/The-Vibe-Co\"",
+      "message": "the page is 476 px wide in a 390 px window, so it scrolls sideways"
+    }
+  ]
+}
