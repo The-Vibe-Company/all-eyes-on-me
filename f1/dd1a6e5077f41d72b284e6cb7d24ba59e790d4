@@ -1,0 +1,27 @@
+.veebee/tickets/05-directions.md
+  s_4ce34ec42d9105::t_a7401bd644bfd0 7
+.veebee/tickets/02-check.md
+  s_4ce34ec42d9105::t_a7401bd644bfd0 7
+.veebee/tickets/01-capture.md
+  s_4ce34ec42d9105::t_a7401bd644bfd0 7
+.veebee/tickets/04-flotte.md
+  s_4ce34ec42d9105::t_a7401bd644bfd0 7
+.veebee/tickets/03-juge.md
+  s_4ce34ec42d9105::t_a7401bd644bfd0 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f1dd1a6e5077f41d72b284e6cb7d24ba59e790d4",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
