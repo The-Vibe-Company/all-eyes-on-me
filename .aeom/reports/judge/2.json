@@ -1,0 +1,45 @@
+{
+  "voter": "2",
+  "pages": {
+    "/": {
+      "pointer": { "pass": true, "reason": "The nav links are underlined in white and the pink pill \"Découvrir\" button stands out clearly from the body text." },
+      "one-direction": { "pass": false, "reason": "This page uses a purple gradient header, a rounded comic-style font and a cream background, a style no other page shares." },
+      "consistent-chrome": { "pass": false, "reason": "The centered \"✨ Super Boutique ✨\" title with five centered links (Accueil to Aide) appears on no other page, which each have a different header and nav." },
+      "not-generic": { "pass": false, "reason": "It has a purple-to-blue gradient header, decorative emoji everywhere (✨ 🚀 🎉 ⚡ 💎 🔒) and a stock hero plus three shadowed feature cards." },
+      "hierarchy": { "pass": false, "reason": "The oversized white brand on the saturated gradient band competes with the emoji-framed hero title and the hot-pink button for the first look." },
+      "grid": { "pass": false, "reason": "At 390px the nav row runs past the header edge, with \"Aide\" clipped off-screen and the page wider than the viewport." },
+      "density": { "pass": false, "reason": "At 390px the nav links are squeezed into one row that overflows the screen, and each card holds one short line inside a large padded box." },
+      "states": { "pass": true, "reason": "Every area on the page shows its content, with no blank region waiting for data." }
+    },
+    "/produits": {
+      "pointer": { "pass": true, "reason": "The nav links are underlined in green, \"Voir mes commandes\" is a blue underlined link and \"Ajouter\" uses raised buttons." },
+      "one-direction": { "pass": false, "reason": "A black bar with a neon green serif brand above an unstyled serif table is a style unrelated to the other pages." },
+      "consistent-chrome": { "pass": false, "reason": "The header is a thin black bar with \"SUPER BOUTIQUE\" on the left and tiny lowercase \"contact home produits\" on the right, in a different order and look from every other page." },
+      "not-generic": { "pass": false, "reason": "The content is bare browser defaults: a bordered table, grey system buttons and a default blue link." },
+      "hierarchy": { "pass": false, "reason": "\"Liste des produits\" is barely larger than the table text and the neon green brand pulls the eye, so nothing reads as the focal point." },
+      "grid": { "pass": false, "reason": "The \"Prix\" header is centered above left-aligned prices, so the decimal commas of 39,90, 89,00 and 129,00 do not line up." },
+      "density": { "pass": false, "reason": "A small table sits in the top-left corner while most of the screen is empty, and the nav links at 1280px are tiny and crowded together." },
+      "states": { "pass": true, "reason": "The product table is filled with three rows, each with a price and an \"Ajouter\" button." }
+    },
+    "/commandes": {
+      "pointer": { "pass": true, "reason": "\"Retour\" and \"Catalogue\" are blue underlined links that look different from the heading text." },
+      "one-direction": { "pass": false, "reason": "A yellow banner with a red italic \"Boutique!!!\" over a lavender page is a style that appears on no other page." },
+      "consistent-chrome": { "pass": false, "reason": "The nav here is a left sidebar with \"Retour\" and \"Catalogue\" under a yellow and red banner, which matches no other page's header or nav." },
+      "not-generic": { "pass": false, "reason": "Apart from the banner, the page is browser defaults: default blue underlined links and a stock sidebar-plus-content layout." },
+      "hierarchy": { "pass": false, "reason": "The loud yellow and red \"Boutique!!!\" banner dominates and below \"Mes commandes\" there is no content to look at." },
+      "grid": { "pass": false, "reason": "The logo, the sidebar links and the heading start at three different left edges, and the heading's top does not align with the sidebar." },
+      "density": { "pass": false, "reason": "One heading and two links float in an otherwise empty lavender page at both widths." },
+      "states": { "pass": false, "reason": "The area under \"Mes commandes\" is blank, with no message saying there are no orders yet or what to do next." }
+    },
+    "/contact": {
+      "pointer": { "pass": true, "reason": "\"ACCUEIL\" and \"AIDE\" are underlined, and \"ENVOYER\" is a solid amber block that reads as a button." },
+      "one-direction": { "pass": false, "reason": "A dark theme with monospace type and amber accents is a style none of the other pages use." },
+      "consistent-chrome": { "pass": false, "reason": "The header shows a lowercase monospace \"~ super boutique ~\" with only \"ACCUEIL AIDE\" on the right, which differs from every other page's header and nav." },
+      "not-generic": { "pass": true, "reason": "The monospace type, the tilde-wrapped lowercase brand and the amber button give the page a specific look, with no gradient, emoji or shadowed cards." },
+      "hierarchy": { "pass": false, "reason": "The page has no heading saying what it is, and the amber logo and the amber \"ENVOYER\" button compete for attention." },
+      "grid": { "pass": false, "reason": "At 390px the labels and fields sit flush against the screen edges while the logo is inset, and at 1280px the nav baseline does not match the logo's." },
+      "density": { "pass": false, "reason": "The form occupies the top third with the rest of the screen empty, and at 390px the fields touch both screen edges with no gutter." },
+      "states": { "pass": true, "reason": "The form is fully rendered with its labels, fields and send button, and no area is left blank in place of content." }
+    }
+  }
+}
