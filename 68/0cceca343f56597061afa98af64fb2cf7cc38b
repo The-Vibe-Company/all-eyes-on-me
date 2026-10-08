@@ -1,0 +1,37 @@
+packages/cli/src/commands/guard.test.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 42-43,82-88
+packages/core/src/journey/guard.test.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 29-36,62-64
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_d636d9425697a7 46-47,104,159-172
+  s_4ce34ec42d9105::t_a09e0c51fa9493 173
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_d636d9425697a7 18
+packages/core/src/journey/journey.test.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 25-28,47,52,174-194
+  s_4ce34ec42d9105::t_6aa74d73582829 195-196
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 200-202,206-220
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 64-65
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 78-80
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_d636d9425697a7 46-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "680cceca343f56597061afa98af64fb2cf7cc38b",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
