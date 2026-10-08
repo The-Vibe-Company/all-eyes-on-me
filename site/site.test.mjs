@@ -2,9 +2,9 @@
 // the code drift apart.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { createServer } from "node:net";
 import { test } from "node:test";
 
@@ -55,9 +55,12 @@ async function withSite(run) {
 }
 
 test("the site starts with one command and serves the page", async () => {
-  await withSite(async (_, response) => {
+  await withSite(async (url, response) => {
     assert.equal(response.status, 200);
     assert.match(await response.text(), /All Eyes On Me/);
+    const post = await fetch(`${url}/api/stars`, { method: "POST" });
+    assert.equal(post.status, 405, "/api/stars only answers GET, like the Vercel function");
+    assert.equal(post.headers.get("allow"), "GET");
   });
 });
 
@@ -122,9 +125,21 @@ test("a partial is inserted as written, even with $ patterns in it", async () =>
   assert.equal(html, "<p>costs $& and $' stay</p>");
 });
 
-test("the build refuses to empty the site or a folder that holds it", () => {
-  for (const out of [new URL("site/", root).pathname, root.pathname]) {
-    assert.throws(() => execFileSync("node", [new URL("site/build.mjs", root).pathname, out], { stdio: "pipe" }), /Refusing to build/);
+test("the build refuses any folder whose emptying would delete the site", () => {
+  // On a copy of the site, so a broken guard can only delete the copy.
+  const repo = mkdtempSync(join(tmpdir(), "aeom-guard-"));
+  try {
+    const site = join(repo, "site");
+    cpSync(new URL("site/", root), site, { recursive: true, filter: (src) => !src.includes(`${sep}dist`) });
+    symlinkSync(site, join(repo, "alias"));
+    const build = (out) => execFileSync("node", [join(site, "build.mjs"), out], { stdio: "pipe" });
+    for (const out of [site, repo, join(site, "run"), join(site, "pages"), join(repo, "alias"), join(repo, "alias", "run")]) {
+      assert.throws(() => build(out), /Refusing to build/, `${out} is refused`);
+    }
+    assert.ok(existsSync(join(site, "run/directions/tournament.json")) && existsSync(join(site, "pages/index.html")), "nothing was deleted");
+    build(join(site, "dist"));
+    assert.ok(existsSync(join(site, "dist/index.html")), "site/dist is still where the site builds");
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
   }
-  assert.ok(existsSync(new URL("site/pages/index.html", root)), "nothing was deleted");
 });

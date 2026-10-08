@@ -3,20 +3,36 @@
 // plus the published files of shared/ and run/, to out (default site/dist).
 // Vercel runs it with the project's Root Directory set to site, where
 // site/vercel.json lives; without that setting Vercel never reads the file.
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { cp, mkdir, rm, stat, writeFile } from "node:fs/promises";
-import { basename, extname, relative, resolve } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAGES, TYPES, renderPage } from "./render.mjs";
 
-const here = fileURLToPath(new URL(".", import.meta.url));
-const out = resolve(process.argv[2] ?? resolve(here, "dist"));
+/** The path with every link resolved, for the part of it that exists. */
+function real(path) {
+  let existing = path;
+  const rest = [];
+  while (!existsSync(existing) && dirname(existing) !== existing) {
+    rest.unshift(basename(existing));
+    existing = dirname(existing);
+  }
+  return join(realpathSync(existing), ...rest);
+}
 
-// out is emptied first, so it must be a folder of its own: never site/ or a
-// folder that holds it, such as the repository.
-const fromOut = relative(out, here);
-if (fromOut === "" || !fromOut.startsWith("..")) {
-  console.error(`Refusing to build into ${out}: it holds the site itself. Pick an empty folder of its own.`);
+/** Whether `path` is `folder` or inside it. */
+const within = (path, folder) => {
+  const from = relative(folder, path);
+  return from === "" || (!from.startsWith(`..${sep}`) && from !== ".." && !isAbsolute(from));
+};
+
+const here = real(fileURLToPath(new URL(".", import.meta.url)));
+const out = real(resolve(process.argv[2] ?? resolve(here, "dist")));
+
+// out is emptied first, so it must be a folder of its own: never a folder that
+// holds the site, such as the repository, and inside the site only dist/.
+if (within(here, out) || (within(out, here) && !within(out, join(here, "dist")))) {
+  console.error(`Refusing to build into ${out}: emptying it would delete the site. Use site/dist or a folder outside the site.`);
   process.exit(1);
 }
 
