@@ -1,0 +1,40 @@
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_56be34707aa6de 4-5,35-53,55-59,61,64,92-131
+  s_4ce34ec42d9105::t_fa2c191b4b5926 132-133
+CONTEXT.md
+  s_4ce34ec42d9105::t_cb9bff36abe2fb 22
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_56be34707aa6de 22
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_cb9bff36abe2fb 104,110-115
+packages/core/src/journey/ratchet.test.ts
+  s_4ce34ec42d9105::t_ff2e9dec9ac786 1-71
+packages/core/src/journey/ratchet.ts
+  s_4ce34ec42d9105::t_31fe4dd95b6e27 1-123
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_cb9bff36abe2fb 75-93
+packages/core/src/journey/index.ts
+  s_4ce34ec42d9105::t_8b045f6272af35 5
+packages/cli/src/commands/ratchet.test.ts
+  s_4ce34ec42d9105::t_5327d76ce1694e 1-57
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_29215c30b9dd0a 34-38,40
+.veebee/milestones/02-couche-ux/tickets/07-le-cliquet-des-parcours.md
+  s_4ce34ec42d9105::t_9f9c7ad699c4a0 7,18-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4129dfe04816333d91e3604d5e766918b307f441",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
