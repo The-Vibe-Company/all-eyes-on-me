@@ -1,0 +1,23 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_db2acf7896ff40 123
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_db2acf7896ff40 36,52-53,60,95-99,116-121,175-177
+packages/cli/src/commands/ratchet.test.ts
+  s_4ce34ec42d9105::t_db2acf7896ff40 102-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "35ccc584f53c411ff0f39054c9ebf526b9707290",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
