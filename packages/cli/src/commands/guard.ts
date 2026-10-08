@@ -68,6 +68,11 @@ export async function runGuard(argv: string[]): Promise<number> {
     console.log(GUARD_HELP);
     return values.help ? 0 : 1;
   }
+  // An empty base would compare no file at all, and the guard would pass without saying so.
+  if (values.base !== undefined && !values.base.trim()) {
+    console.error(`--base cannot be empty: give the commit the change started from, or leave the option out to compare the calls only.`);
+    return 1;
+  }
   const allow = values.allow ?? [];
   if (allow.length && !values.feature?.trim()) {
     console.error(`--allow needs --feature: what the user asked for, in their words. AEOM builds no feature it was not asked for explicitly.`);
