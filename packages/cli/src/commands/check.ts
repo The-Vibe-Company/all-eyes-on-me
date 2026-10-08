@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import { CHECKS, checkSite, route, type Finding } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp, withConfig } from "./app.js";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const CHECK_HELP = `Usage: aeom check [--url <url>] [--start "<command>"] [options]
 
@@ -36,7 +36,9 @@ export async function runCheck(argv: string[]): Promise<number> {
   const url = values.url;
 
   return withApp({ ...values, url }, async () => {
-    const report = await checkSite({ url, widths });
+    const session = await signInFromConfig(url);
+    if (session === "failed") return 1;
+    const report = await checkSite({ url, widths, ...(session ? { signedIn: session.signedIn } : {}) });
     await mkdir(values.out, { recursive: true });
     const reportFile = join(values.out, "check.json");
     await writeFile(reportFile, JSON.stringify(report, null, 2) + "\n");

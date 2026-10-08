@@ -7,9 +7,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { AppStartError, capture, normalize, slug, startApp, type RunningApp } from "./index.js";
+import { chromium } from "playwright";
+import { readFileSync } from "node:fs";
+import { AppStartError, capture, normalize, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
+const ACCOUNT: Record<string, string> = JSON.parse(readFileSync(new URL("../../../../examples/ugly-app/fixtures/compte.json", import.meta.url), "utf8"));
+const SIGN_IN = { path: "/connexion", account: ACCOUNT, submit: "Se connecter" };
 
 function freePort(): Promise<number> {
   return new Promise((resolve) => {
@@ -38,7 +42,9 @@ describe("capture on the ugly app", () => {
   });
 
   test("finds the four pages, reports the broken link, writes two screenshots per page", async () => {
-    const manifest = await capture({ url, outDir });
+    const browser = await chromium.launch();
+    const signedIn = await signIn(browser, url, SIGN_IN).finally(() => browser.close());
+    const manifest = await capture({ url, outDir, signedIn });
     assert.deepEqual(manifest.pages.map((p) => p.path).sort(), ["/", "/commandes", "/contact", "/produits"]);
     assert.equal(manifest.errors.length, 1);
     assert.equal(manifest.errors[0]!.status, 500);
@@ -47,6 +53,32 @@ describe("capture on the ugly app", () => {
       for (const { file } of page.files) assert.ok(existsSync(join(outDir, file)), `${file} exists`);
     }
     assert.ok(existsSync(join(outDir, "manifest.json")));
+  });
+
+  test("signed out, the orders page leads to signing in, and that is what gets captured", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "aeom-capture-out-"));
+    try {
+      const manifest = await capture({ url, outDir: dir, widths: [390] });
+      assert.deepEqual(manifest.pages.map((p) => p.path).sort(), ["/", "/connexion", "/contact", "/produits"]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a refused account stops the sign-in with a message that holds no value", async () => {
+    const browser = await chromium.launch();
+    try {
+      const wrong = { ...SIGN_IN, account: { ...ACCOUNT, "Mot de passe": "not-the-password-xyz" } };
+      await assert.rejects(signIn(browser, url, wrong), (error: unknown) => {
+        assert.ok(error instanceof SignInError);
+        assert.match(error.message, /stayed on \/connexion after "Se connecter"/);
+        assert.doesNotMatch(error.message, /not-the-password-xyz|client@example\.test/);
+        return true;
+      });
+      await assert.rejects(signIn(browser, url, { ...SIGN_IN, account: { Identifiant: "x" } }), /no single field labelled "Identifiant"/);
+    } finally {
+      await browser.close();
+    }
   });
 
   test("captures only the pages it is given", async () => {

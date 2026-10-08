@@ -1,6 +1,7 @@
 import { chromium, type Browser } from "playwright";
 import { DEFAULT_WIDTHS } from "../capture/capture.js";
 import { discoverPages, type PageError } from "../capture/discover.js";
+import type { SignedIn } from "../capture/sign-in.js";
 import { checkContrast } from "./contrast.js";
 import { watchConsole } from "./console.js";
 import { checkCursor } from "./cursor.js";
@@ -23,12 +24,12 @@ export interface CheckReport {
  * Runs every check on every page. Overflow is checked at each width; cursor,
  * contrast and console once per page, at the widest width.
  */
-export async function checkPages(browser: Browser, urls: string[], widths: number[] = DEFAULT_WIDTHS): Promise<Finding[]> {
+export async function checkPages(browser: Browser, urls: string[], widths: number[] = DEFAULT_WIDTHS, signedIn?: SignedIn): Promise<Finding[]> {
   const widest = Math.max(...widths);
   const findings: Finding[] = [];
   for (const url of urls) {
     for (const width of widths) {
-      const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 } });
+      const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
       try {
         const page = await context.newPage();
         const consoleIssues = watchConsole(page);
@@ -48,12 +49,12 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
   return findings;
 }
 
-/** Finds every page reachable from `url`, then checks each one. */
-export async function checkSite({ url, widths = DEFAULT_WIDTHS }: { url: string; widths?: number[] }): Promise<CheckReport> {
+/** Finds every page reachable from `url`, then checks each one, signed in when given what a signed-in browser keeps. */
+export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn }: { url: string; widths?: number[]; signedIn?: SignedIn }): Promise<CheckReport> {
   const browser = await chromium.launch();
   try {
-    const { pages, errors } = await discoverPages(browser, url);
-    const findings = await checkPages(browser, pages, widths);
+    const { pages, errors } = await discoverPages(browser, url, { signedIn });
+    const findings = await checkPages(browser, pages, widths, signedIn);
     return { url, checkedAt: new Date().toISOString(), widths, checks: CHECKS, pages, errors, findings };
   } finally {
     await browser.close();

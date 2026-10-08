@@ -12,7 +12,7 @@ export type Target = ({ role: string; name: string } | { text: string }) & { wit
 export type Step =
   | { do: "open"; path: string }
   | { do: "click"; target: Target; lands?: string }
-  | { do: "fill"; target: Target; value: string }
+  | { do: "fill"; target: Target; value: string | { account: string } }
   | { do: "press"; key: string; lands?: string }
   | { do: "see"; text: string };
 
@@ -22,6 +22,8 @@ export interface Journey {
   slug: string;
   /** The user's goal, as in the product sheet: "See my orders". */
   name: string;
+  /** True for a journey that starts signed out, such as signing in itself. */
+  signedOut?: boolean;
   steps: Step[];
 }
 
@@ -56,6 +58,7 @@ function problemsOf(file: string, data: unknown): string[] {
   if (typeof j.name !== "string" || !j.name.trim()) problems.push(`${file}: no name`);
   if (!Array.isArray(j.steps) || j.steps.length === 0) return [...problems, `${file}: no steps`];
   if ((j.steps[0] as { do?: unknown })?.do !== "open") problems.push(`${file}: the journey does not start with an open step`);
+  if (j.signedOut !== undefined && typeof j.signedOut !== "boolean") problems.push(`${file}: signedOut must be true or false`);
   j.steps.forEach((raw, i) => {
     const step = (raw ?? {}) as Record<string, unknown>;
     const at = `${file}, step ${i + 1}`;
@@ -65,7 +68,8 @@ function problemsOf(file: string, data: unknown): string[] {
       const problem = targetProblem(step.target);
       if (problem) problems.push(`${at}: ${problem === "needs a target" ? `${step.do} needs a target` : problem}`);
     }
-    if (step.do === "fill" && typeof step.value !== "string") problems.push(`${at}: fill needs a value`);
+    const fromAccount = typeof step.value === "object" && step.value !== null && typeof (step.value as { account?: unknown }).account === "string";
+    if (step.do === "fill" && typeof step.value !== "string" && !fromAccount) problems.push(`${at}: fill needs a value, or { "account": "<field>" } for a value from the sign-in account`);
     if (step.do === "press" && (typeof step.key !== "string" || !step.key)) problems.push(`${at}: press needs a key`);
     if ((step.do === "click" || step.do === "press") && step.lands !== undefined && (typeof step.lands !== "string" || !step.lands.startsWith("/"))) problems.push(`${at}: lands needs a route starting with /`);
     if (step.do === "see" && (typeof step.text !== "string" || !step.text)) problems.push(`${at}: see needs a text`);

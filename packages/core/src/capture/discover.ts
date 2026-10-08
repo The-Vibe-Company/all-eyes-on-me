@@ -1,4 +1,5 @@
 import type { Browser, Response } from "playwright";
+import type { SignedIn } from "./sign-in.js";
 
 export interface PageError {
   url: string;
@@ -26,7 +27,7 @@ function notAPage(response: Response | null): string | null {
  * reported as errors instead of pages. Links to files, such as an image or a
  * PDF, are not pages and are left out.
  */
-export async function discoverPages(browser: Browser, startUrl: string, { maxPages = 50 } = {}): Promise<Discovery> {
+export async function discoverPages(browser: Browser, startUrl: string, { maxPages = 50, signedIn }: { maxPages?: number; signedIn?: SignedIn } = {}): Promise<Discovery> {
   const first = normalize(startUrl);
   if (!first) throw new Error(`Not an http(s) URL: ${startUrl}`);
   const origin = new URL(first).origin;
@@ -35,7 +36,7 @@ export async function discoverPages(browser: Browser, startUrl: string, { maxPag
   const pages: string[] = [];
   const errors: PageError[] = [];
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
   const page = await context.newPage();
   try {
     while (queue.length > 0 && pages.length + errors.length < maxPages) {
@@ -98,11 +99,11 @@ export function normalize(href: string): string | null {
  * load, and routes that answer with a file instead of a page are reported as
  * errors.
  */
-export async function visitPages(browser: Browser, baseUrl: string, paths: string[]): Promise<Discovery> {
+export async function visitPages(browser: Browser, baseUrl: string, paths: string[], { signedIn }: { signedIn?: SignedIn } = {}): Promise<Discovery> {
   const origin = new URL(baseUrl).origin;
   const pages: string[] = [];
   const errors: PageError[] = [];
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
   const page = await context.newPage();
   try {
     const visited = new Set<string>();

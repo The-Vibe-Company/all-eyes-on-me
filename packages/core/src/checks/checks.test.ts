@@ -3,7 +3,8 @@ import { createServer } from "node:net";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
-import { startApp, type RunningApp } from "../capture/index.js";
+import { readFileSync } from "node:fs";
+import { signIn, startApp, type RunningApp } from "../capture/index.js";
 import { checkContrast, checkCursor, checkOverflow, checkSite, watchConsole } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
@@ -92,7 +93,9 @@ describe("on the ugly app", () => {
   });
 
   test("finds each kind of problem where the app has it", async () => {
-    const report = await checkSite({ url });
+    const account = JSON.parse(readFileSync(new URL("../../../../examples/ugly-app/fixtures/compte.json", import.meta.url), "utf8"));
+    const signedIn = await signIn(browser, url, { path: "/connexion", account, submit: "Se connecter" });
+    const report = await checkSite({ url, signedIn });
     const where = (check: string) => [...new Set(report.findings.filter((f) => f.check === check).map((f) => new URL(f.url).pathname))].sort();
     assert.deepEqual(where("cursor"), ["/", "/contact", "/produits"]);
     assert.ok(where("overflow").includes("/"), "the home page scrolls sideways at 390 px");

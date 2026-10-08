@@ -2,6 +2,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type Page } from "playwright";
 import { discoverPages, visitPages, type PageError } from "./discover.js";
+import type { SignedIn } from "./sign-in.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
 
@@ -28,6 +29,8 @@ export interface CaptureOptions {
   maxPages?: number;
   /** Capture only these routes, such as `["/"]`, instead of following links. */
   paths?: string[];
+  /** What a signed-in browser keeps: every page is visited signed in. */
+  signedIn?: SignedIn;
 }
 
 /**
@@ -35,10 +38,10 @@ export interface CaptureOptions {
  * at every width. Writes the screenshots and `manifest.json` to `outDir`,
  * replacing the files of the previous capture.
  */
-export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, paths }: CaptureOptions): Promise<CaptureManifest> {
+export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, paths, signedIn }: CaptureOptions): Promise<CaptureManifest> {
   const browser = await chromium.launch();
   try {
-    const { pages, errors } = paths ? await visitPages(browser, url, paths) : await discoverPages(browser, url, { maxPages });
+    const { pages, errors } = paths ? await visitPages(browser, url, paths, { signedIn }) : await discoverPages(browser, url, { maxPages, signedIn });
     await clearPrevious(outDir);
     await mkdir(outDir, { recursive: true });
 
@@ -46,7 +49,7 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
     for (const pageUrl of pages) {
       const files: CapturedPage["files"] = [];
       for (const width of widths) {
-        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 } });
+        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
         try {
           const page = await context.newPage();
           await page.goto(pageUrl, { waitUntil: "networkidle" });
