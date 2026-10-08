@@ -26,6 +26,14 @@ test("a call the app never made is refused, naming the journey that made it", ()
   assert.deepEqual(result.refused, [{ kind: "call", what: "POST /api/panier", why: "a call the app did not make before", journey: "add" }]);
 });
 
+test("the same new call or the same new fields, in several journeys and widths, are refused once", () => {
+  const before = replay({ add: [call("POST", "/add", ["item"])], orders: [] });
+  const after = replay({ add: [call("POST", "/api/panier"), call("POST", "/add", ["item", "quantity"])], orders: [call("POST", "/api/panier"), call("POST", "/add", ["item", "quantity"])] });
+  after.journeys[0]!.runs.push({ ...after.journeys[0]!.runs[0]!, width: 390 });
+  const result = guardJourneys({ before, after });
+  assert.deepEqual(result.refused.map((v) => [v.kind, v.what, v.journey]), [["call", "POST /api/panier", "add"], ["fields", "POST /add", "add"]]);
+});
+
 test("new fields sent to a call the app already made are refused too, by name only", () => {
   const result = guardJourneys({ before: replay({ add: [call("POST", "/add", ["item"])] }), after: replay({ add: [call("POST", "/add", ["item", "quantity"], ["coupon"])] }) });
   assert.deepEqual(result.refused.map((v) => [v.kind, v.what, v.why]), [["fields", "POST /add", "sends new fields: quantity, coupon"]]);
@@ -51,4 +59,7 @@ test("globs cross folders with ** and stay in one with *", () => {
   assert.ok(globToRegExp("src/**/route.ts").test("src/route.ts"));
   assert.ok(!globToRegExp("src/*.ts").test("src/lib/x.ts"));
   assert.ok(globToRegExp("scripts/add-*.ts").test("scripts/add-guardian.ts"));
+  assert.ok(globToRegExp("db/v?.sql").test("db/v2.sql"));
+  assert.ok(!globToRegExp("db/v?.sql").test("db/v10.sql"), "? is one character");
+  assert.ok(!globToRegExp("a?b").test("a/b"), "? stays in one folder");
 });

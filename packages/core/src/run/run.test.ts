@@ -61,6 +61,8 @@ test("the project config gives the defaults for url and start, and is optional",
     assert.deepEqual(await loadConfig(dir), { url: "http://localhost:4317", start: "node app.js", reset: "node reset.js" });
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ reset: "" }));
     await assert.rejects(loadConfig(dir), /"reset" must be a non-empty string/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ protected: [" src/lib/db/** ", "server.mjs"] }));
+    assert.deepEqual((await loadConfig(dir)).protected, ["src/lib/db/**", "server.mjs"], "each glob without its stray spaces");
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ login: { path: "connexion", account: "compte.json", submit: "Se connecter" } }));
     await assert.rejects(loadConfig(dir), /"login\.path" is the sign-in route from the app's root/);
   } finally {
