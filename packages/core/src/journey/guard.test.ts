@@ -35,6 +35,11 @@ test("the same new call or the same new fields, in several journeys and widths, 
   assert.deepEqual(result.refused.map((v) => v.journeys), [["add", "orders"], ["add", "orders"]], "each names every journey that makes it");
 });
 
+test("different new fields that several journeys send to one call are all in its reason", () => {
+  const result = guardJourneys({ before: replay({ add: [call("POST", "/add", ["item"])] }), after: replay({ add: [call("POST", "/add", ["item", "quantity"])], gift: [call("POST", "/add", ["item", "message"])] }) });
+  assert.deepEqual(result.refused.map((v) => [v.what, v.why, v.journeys]), [["POST /add", "sends new fields: quantity, message", ["add", "gift"]]]);
+});
+
 test("new fields sent to a call the app already made are refused too, by name only", () => {
   const result = guardJourneys({ before: replay({ add: [call("POST", "/add", ["item"])] }), after: replay({ add: [call("POST", "/add", ["item", "quantity"], ["coupon"])] }) });
   assert.deepEqual(result.refused.map((v) => [v.kind, v.what, v.why]), [["fields", "POST /add", "sends new fields: quantity, coupon"]]);

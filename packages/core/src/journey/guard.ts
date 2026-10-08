@@ -65,6 +65,7 @@ export function guardJourneys({ before, after, changed = [], protectedFiles = []
   }
 
   const found = new Map<string, Violation>();
+  const newFields = new Map<string, Set<string>>();
   const note = (key: string, violation: Violation, journey: string) => {
     const seen = found.get(key) ?? violation;
     if (!seen.journeys!.includes(journey)) seen.journeys!.push(journey);
@@ -79,7 +80,13 @@ export function guardJourneys({ before, after, changed = [], protectedFiles = []
         continue;
       }
       const added = [...call.fields, ...call.query].filter((name) => !names.has(name));
-      if (added.length) note(`fields ${what}`, { kind: "fields", what, why: `sends new fields: ${[...new Set(added)].join(", ")}`, journey: journey.name, journeys: [] }, journey.name);
+      if (!added.length) continue;
+      // Every journey's new fields to the same call go in one reason, whichever journey sent which.
+      const fields = newFields.get(what) ?? new Set<string>();
+      for (const name of added) fields.add(name);
+      newFields.set(what, fields);
+      note(`fields ${what}`, { kind: "fields", what, why: "", journey: journey.name, journeys: [] }, journey.name);
+      found.get(`fields ${what}`)!.why = `sends new fields: ${[...fields].join(", ")}`;
     }
   }
   const patterns = protectedFiles.map(globToRegExp);

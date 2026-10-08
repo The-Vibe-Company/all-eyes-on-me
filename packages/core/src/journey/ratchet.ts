@@ -119,7 +119,11 @@ const passing = (verdict: JudgeReport | undefined, slug: string) => verdict?.pag
  */
 export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard }: { before: JourneyReport; after: JourneyReport; beforeVerdict?: JudgeReport; afterVerdict?: JudgeReport; duels: Map<string, JourneyDuel>; guard?: GuardResult }): RatchetVerdict[] {
   const runRefused = guard?.refused.filter((v) => !v.journey) ?? [];
-  return after.journeys
+  // A journey only the new version has cannot be compared: it is named, never kept, never left out.
+  const unmatched = after.journeys
+    .filter((j) => !before.journeys.some((b) => b.slug === j.slug))
+    .map((j): RatchetVerdict => ({ slug: j.slug, name: j.name, kept: false, why: "the old replay has no such journey: a rebuilt journey keeps its file name", steps: { before: 0, after: widest(j.runs).counts.steps }, cleared: [], remaining: [] }));
+  return [...after.journeys
     .filter((j) => before.journeys.some((b) => b.slug === j.slug))
     .map((journey) => {
       const old = before.journeys.find((b) => b.slug === journey.slug)!;
@@ -136,5 +140,5 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
       if (!duel) return verdict(false, "no judge compared the two versions");
       if (duel.winner === "before") return verdict(false, `the judges prefer the old one (${duel.votes}): ${duel.reasons[0]}`);
       return verdict(true, `${duel.votes}: ${duel.reasons[0]}`);
-    });
+    }), ...unmatched];
 }

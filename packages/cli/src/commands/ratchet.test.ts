@@ -135,3 +135,17 @@ test("without the duel votes, the default three judges are missing and nothing i
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("an after replay with a journey the before does not have is refused, not skipped", async () => {
+  const dir = await ratchetDir();
+  try {
+    const after = replay({ orders: 3, contact: 5 });
+    after.journeys.push({ ...after.journeys[0]!, slug: "orders-new", name: "See my orders, new" });
+    await writeFile(join(dir, "after", "report.json"), JSON.stringify(after));
+    const { code, out } = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(code, 1);
+    assert.match(out, /has journeys the before does not: orders-new/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

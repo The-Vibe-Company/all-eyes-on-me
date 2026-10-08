@@ -78,6 +78,17 @@ test("the old version comes back when the new one breaks, the guard refuses it, 
   assert.match(verdicts[2]!.why, /the judges prefer the old one \(2\/3 prefer the old one\)/);
 });
 
+test("a journey only the new replay has is named and never kept", () => {
+  const verdicts = ratchetJourneys({
+    before: replay({ a: run(3) }),
+    after: replay({ a: run(2), renamed: run(2) }),
+    duels: tallyDuels([duel("1", { a: "after" }), duel("2", { a: "after" }), duel("3", { a: "after" })], ["a"]),
+    guard: { refused: [], allowed: [] },
+  });
+  assert.deepEqual(verdicts.map((v) => [v.slug, v.kept]), [["a", true], ["renamed", false]]);
+  assert.match(verdicts[1]!.why, /the old replay has no such journey/);
+});
+
 test("a refused call two journeys make sends both back", () => {
   const verdicts = ratchetJourneys({
     before: replay({ a: run(3), b: run(3) }),

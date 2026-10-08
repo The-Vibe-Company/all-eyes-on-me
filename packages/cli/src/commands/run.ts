@@ -135,6 +135,9 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     return 1;
   }
   const slugs = after.journeys.filter((j) => before.journeys.some((b) => b.slug === j.slug)).map((j) => j.slug);
+  // A rebuilt journey keeps its file name: one the before never had cannot be judged against anything.
+  const unmatched = after.journeys.filter((j) => !slugs.includes(j.slug)).map((j) => j.slug);
+  if (unmatched.length) problems.push(`${join(afterDir, "report.json")} has journeys the before does not: ${unmatched.join(", ")}. A rebuilt journey keeps its file name; replay the before with the same files`);
   // A journey or a principle the critique left out would count its old findings as cleared: each verdict covers them all.
   const judgedOn = (verdict: JudgeReport | null | undefined, slug: string) => {
     const page = Array.isArray(verdict?.pages) ? verdict.pages.find((p) => p.page === slug) : undefined;
