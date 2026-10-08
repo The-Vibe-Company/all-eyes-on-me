@@ -39,7 +39,10 @@ export async function readDuelVotes(dir: string): Promise<JourneyDuelVote[]> {
   const problems: string[] = [];
   for (const file of files) {
     try {
-      votes.push(JSON.parse(await readFile(join(dir, file), "utf8")) as JourneyDuelVote);
+      const vote: unknown = JSON.parse(await readFile(join(dir, file), "utf8"));
+      // `null`, a list or a number parse fine but are no vote.
+      if (!vote || typeof vote !== "object" || Array.isArray(vote)) problems.push(`${file}: not a vote, which is an object with a voter and its journeys`);
+      else votes.push(vote as JourneyDuelVote);
     } catch (error) {
       problems.push(`${file}: ${error instanceof SyntaxError ? "not valid JSON" : String(error)}`);
     }
@@ -57,6 +60,13 @@ export async function readDuelVotes(dir: string): Promise<JourneyDuelVote[]> {
 export function tallyDuels(votes: JourneyDuelVote[], journeys: string[], { voters = 3 } = {}): Map<string, JourneyDuel> {
   const problems: string[] = [];
   if (votes.length !== voters) problems.push(`expected ${voters} votes, found ${votes.length}`);
+  // A majority needs that many different judges: one judge voting twice is one vote.
+  const seen = new Set<string>();
+  for (const vote of votes) {
+    if (typeof vote.voter !== "string" || !vote.voter.trim()) problems.push("a vote has no voter");
+    else if (seen.has(vote.voter)) problems.push(`voter ${vote.voter} voted more than once`);
+    else seen.add(vote.voter);
+  }
   for (const vote of votes) {
     for (const slug of journeys) {
       const choice = vote.journeys?.[slug];

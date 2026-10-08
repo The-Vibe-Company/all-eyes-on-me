@@ -55,3 +55,47 @@ test("aeom compare --journeys keeps the journeys the judges prefer, sends the ot
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+async function ratchetDir() {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-ratchet-"));
+  for (const [name, steps, failing] of [["before", { orders: 4, contact: 5 }, { orders: ["clear-start"], contact: [] }], ["after", { orders: 3, contact: 5 }, { orders: [], contact: [] }]] as const) {
+    await mkdir(join(dir, name, "duels"), { recursive: true });
+    await writeFile(join(dir, name, "report.json"), JSON.stringify(replay(steps)));
+    await writeFile(join(dir, name, "judge-journeys.json"), JSON.stringify(verdict(failing as unknown as Record<string, string[]>)));
+  }
+  for (const voter of ["1", "2", "3"]) {
+    await writeFile(join(dir, "after", "duels", `${voter}.json`), JSON.stringify({ voter, journeys: { orders: { winner: "after", reason: "Shorter." }, contact: { winner: "after", reason: "Clearer." } } }));
+  }
+  return dir;
+}
+
+test("aeom compare --journeys refuses no judges, a base git does not know, and a critique that leaves a journey out", async () => {
+  const dir = await ratchetDir();
+  try {
+    const none = await run(dir, ["compare", "--journeys", "before", "after", "--voters", "0"]);
+    assert.equal(none.code, 1);
+    assert.match(none.out, /--voters must be a whole number of judges, 1 or more/);
+    const base = await run(dir, ["compare", "--journeys", "before", "after", "--base", "no-such-ref"]);
+    assert.equal(base.code, 1);
+    assert.match(base.out, /Cannot list the files changed since no-such-ref/);
+    assert.doesNotMatch(base.out, /\n\s+at /, "an error message, not a stack trace");
+    await writeFile(join(dir, "after", "judge-journeys.json"), JSON.stringify(verdict({ contact: [] })));
+    const partial = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(partial.code, 1);
+    assert.match(partial.out, /after\/judge-journeys\.json does not judge orders/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a duel vote file that is not a vote is refused, not counted", async () => {
+  const dir = await ratchetDir();
+  try {
+    await writeFile(join(dir, "after", "duels", "3.json"), "null");
+    const { code, out } = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(code, 1);
+    assert.match(out, /3\.json: not a vote/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

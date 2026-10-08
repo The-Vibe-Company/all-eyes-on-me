@@ -28,6 +28,8 @@ test("the new version wins only with more votes for it; a tie keeps the old one"
   const tie = tallyDuels([duel("1", { orders: "after" }), duel("2", { orders: "before" })], ["orders"], { voters: 2 });
   assert.equal(tie.get("orders")!.winner, "before");
   assert.throws(() => tallyDuels([duel("1", {})], ["orders"], { voters: 1 }), DuelVoteError);
+  assert.throws(() => tallyDuels([duel("1", { orders: "after" }), duel("1", { orders: "after" }), duel("3", { orders: "before" })], ["orders"]), /voter 1 voted more than once/);
+  assert.throws(() => tallyDuels([duel("", { orders: "after" }), duel("2", { orders: "after" }), duel("3", { orders: "after" })], ["orders"]), /a vote has no voter/);
 });
 
 test("a journey the judges prefer, that goes to its end and that the guard lets through, stays; its findings are cleared only by the critique redone", () => {
@@ -61,11 +63,11 @@ test("the old version comes back when the new one breaks, the guard refuses it, 
 
 test("a changed protected file sends every journey back", () => {
   const verdicts = ratchetJourneys({
-    before: replay({ a: run(3) }),
-    after: replay({ a: run(2) }),
-    duels: tallyDuels([duel("1", { a: "after" }), duel("2", { a: "after" }), duel("3", { a: "after" })], ["a"]),
+    before: replay({ a: run(3), b: run(4) }),
+    after: replay({ a: run(2), b: run(3) }),
+    duels: tallyDuels([duel("1", { a: "after", b: "after" }), duel("2", { a: "after", b: "after" }), duel("3", { a: "after", b: "after" })], ["a", "b"]),
     guard: { refused: [{ kind: "file", what: "server.mjs", why: "a file that holds the app's data or logic" }], allowed: [] },
   });
-  assert.equal(verdicts[0]!.kept, false);
-  assert.match(verdicts[0]!.why, /server\.mjs/);
+  assert.deepEqual(verdicts.map((v) => [v.slug, v.kept]), [["a", false], ["b", false]], "every journey, not only the first");
+  for (const v of verdicts) assert.match(v.why, /server\.mjs/);
 });

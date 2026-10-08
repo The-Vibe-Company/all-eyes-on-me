@@ -91,6 +91,12 @@ export async function runCompare(argv: string[]): Promise<number> {
 }
 
 async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; base?: string; voters: string }): Promise<number> {
+  // No judge cannot prefer anything: every journey would come back for a reason nobody gave.
+  const voters = Number(values.voters);
+  if (!Number.isInteger(voters) || voters < 1) {
+    console.error(`--voters must be a whole number of judges, 1 or more.`);
+    return 1;
+  }
   // An empty base would compare no file at all, and the guard would pass without saying so.
   if (values.base !== undefined && !values.base.trim()) {
     console.error(`--base cannot be empty: give the commit the change started from, or leave the option out.`);
@@ -117,9 +123,19 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     return 1;
   }
   const slugs = after.journeys.filter((j) => before.journeys.some((b) => b.slug === j.slug)).map((j) => j.slug);
+  // A journey the critique left out would count its old findings as cleared: each verdict covers every journey.
+  for (const [dir, verdict] of [[beforeDir, beforeVerdict], [afterDir, afterVerdict]] as const) {
+    const judged = Array.isArray(verdict?.pages) ? verdict.pages.map((p) => p.page) : [];
+    const unjudged = slugs.filter((slug) => !judged.includes(slug));
+    if (unjudged.length) problems.push(`${join(dir, "judge-journeys.json")} does not judge ${unjudged.join(", ")}: run the journey judge on that replay again`);
+  }
+  if (problems.length) {
+    console.error(`Both folders need report.json (aeom journey) and judge-journeys.json (aeom judge --journeys --out):\n${problems.map((p) => `  ${p}`).join("\n")}`);
+    return 1;
+  }
   let duels;
   try {
-    duels = tallyDuels(await readDuelVotes(values.duels ?? join(afterDir, "duels")), slugs, { voters: Number(values.voters) });
+    duels = tallyDuels(await readDuelVotes(values.duels ?? join(afterDir, "duels")), slugs, { voters });
   } catch (error) {
     if (!(error instanceof DuelVoteError)) throw error;
     console.error(`The duel votes cannot be counted:\n${error.problems.map((p) => `  ${p}`).join("\n")}`);
@@ -134,8 +150,16 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     return 1;
   }
   // A file protected at the base stays protected, even if the change took it off the list.
-  if (values.base) protectedFiles = [...new Set([...(await protectedAt(values.base)), ...protectedFiles])];
-  const changed = values.base ? await changedSince(values.base) : [];
+  let changed: string[] = [];
+  if (values.base) {
+    try {
+      changed = await changedSince(values.base);
+      protectedFiles = [...new Set([...(await protectedAt(values.base)), ...protectedFiles])];
+    } catch (error) {
+      console.error(`Cannot list the files changed since ${values.base}: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
+      return 1;
+    }
+  }
   const guard = guardJourneys({ before, after, changed, protectedFiles });
   const verdicts = ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard });
   await writeFile(join(afterDir, "ratchet.json"), JSON.stringify(verdicts, null, 2) + "\n");
