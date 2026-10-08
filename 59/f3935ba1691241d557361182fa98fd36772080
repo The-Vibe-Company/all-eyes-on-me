@@ -1,0 +1,43 @@
+.veebee/milestones/03-la-commande-unique/product.md
+  s_4ce34ec42d9105::t_86eb8c8b345355 1-11
+.veebee/milestones/03-la-commande-unique/tickets/01-aeom-sans-option.md
+  s_4ce34ec42d9105::t_ef5c3fce686a87 1-33
+.veebee/milestones/03-la-commande-unique/tickets/02-la-da-vient-du-produit.md
+  s_4ce34ec42d9105::t_3dc09f92d2e8da 1-29
+.veebee/milestones/03-la-commande-unique/tickets/03-les-parcours-sur-la-nouvelle-da.md
+  s_4ce34ec42d9105::t_f46a89501a5c36 1-28
+.veebee/milestones/03-la-commande-unique/tickets/04-garder-le-style.md
+  s_4ce34ec42d9105::t_444c4984c4c200 1-29
+.veebee/milestones/03-la-commande-unique/tickets/05-la-page-de-resultat.md
+  s_4ce34ec42d9105::t_1484ce6247309b 1-32
+.veebee/milestones/03-la-commande-unique/tickets/06-les-features-manquantes.md
+  s_4ce34ec42d9105::t_a48141bd5cceb8 1-28
+.veebee/milestones/03-la-commande-unique/tickets/07-d-accord-pas-d-accord.md
+  s_4ce34ec42d9105::t_417ac5d972b3d0 1-29
+.veebee/milestones/03-la-commande-unique/tickets/08-le-banc.md
+  s_4ce34ec42d9105::t_020bc41cb07284 1-29
+.veebee/milestones/03-la-commande-unique/tickets/09-le-banc-se-repete.md
+  s_4ce34ec42d9105::t_8612aba886119f 1-24
+.veebee/milestones/03-la-commande-unique/tickets/10-la-pr.md
+  s_4ce34ec42d9105::t_972b9b60d39faa 1-25
+.veebee/milestones/03-la-commande-unique/tickets/11-le-readme-dit-ce-que-fait-aeom.md
+  s_4ce34ec42d9105::t_120a821d323746 1-27
+README.md
+  s_4ce34ec42d9105::t_c3fbd1167aaec4 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59f3935ba1691241d557361182fa98fd36772080",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
