@@ -19,7 +19,7 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 - **Judge** (juge): the model that decides judged checks and compares versions. It votes three times; the majority wins.
 - **Pairwise comparison** (comparaison par paires): the judge picks the better of two versions. AEOM never asks it for a score.
 - **Tournament** (tournoi): a knockout between directions, two by two, three votes per duel, until one wins. Its shared files become the kit.
-- **Ratchet** (cliquet): a new version of a screen is merged only if the judge prefers it to the current one, so quality never goes down.
+- **Ratchet** (cliquet): a new version of a screen, or of a journey, is merged only if the judge prefers it to the current one, so quality never goes down. A journey also has to go to its end and pass the feature guard.
 - **Finding** (constat): something wrong that the audit reports. A finding is shown only once a second pass confirms it.
 - **Audit** (état des lieux): capturing and checking every screen to list findings before or between waves.
 

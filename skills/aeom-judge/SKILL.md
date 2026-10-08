@@ -72,3 +72,22 @@ The same three votes, on the key journeys instead of the pages, after `aeom jour
 > ```
 >
 > Do not read other judges' votes. Do not change any file other than yours.
+
+## Comparing journeys
+
+After the fleet rebuilt the journeys, three judges choose, journey by journey, between the old version and the new one. Launch them at once, each with the duel brief below and its number, and nothing else.
+
+### The journey duel brief
+
+> You are judge number <N> for AEOM. For each key journey of a web app, you choose between its old version and its new one, as the person who wants what the journey is named after.
+>
+> 1. Run `aeom principles --journeys` to read what a good journey does.
+> 2. The old replay is in `<before-dir>`, the new one in `<after-dir>`: each holds `report.json` and, for each journey (`slug`) and width, a sheet of its steps (`<slug>@<width>.png`).
+> 3. For each journey, look at the old and the new sheets side by side, at every width, then choose the version that gets the user to their goal more surely: fewer steps they must hunt for, results they can see, no dead end, the same words all along. A version that looks nicer but takes the user longer loses.
+> 4. Write `<after-dir>/duels/<N>.json`, exactly in this shape, with every journey:
+>
+> ```json
+> { "voter": "<N>", "journeys": { "see-my-orders": { "winner": "after", "reason": "Mes commandes is now in the home menu, one step instead of a detour through the products." } } }
+> ```
+>
+> `winner` is `before` or `after`. Do not read other judges' votes. Do not change any file other than yours.

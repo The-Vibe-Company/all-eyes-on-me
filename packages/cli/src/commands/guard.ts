@@ -19,7 +19,7 @@ Options:
   --allow <what>       A call, such as "POST /api/orders", or a file that the
                        request needs; repeat it; needs --feature`;
 
-async function changedSince(base: string): Promise<string[]> {
+export async function changedSince(base: string): Promise<string[]> {
   const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout }) => stdout.split("\n").filter(Boolean));
   return [...new Set([...(await git(["diff", "--name-only", base])), ...(await git(["ls-files", "--others", "--exclude-standard"]))])];
 }
