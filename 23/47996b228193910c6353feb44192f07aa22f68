@@ -1,0 +1,20 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_edf5421b89b9c7 106-107,111-113
+  s_4ce34ec42d9105::t_ead5a0da618aed 115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2347996b228193910c6353feb44192f07aa22f68",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
