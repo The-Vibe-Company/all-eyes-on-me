@@ -102,3 +102,16 @@ test("Vercel builds the site from site/ with that same script", () => {
   assert.equal(vercel.buildCommand, "node build.mjs");
   assert.equal(vercel.outputDirectory, "dist");
 });
+
+test("a partial is inserted as written, even with $ patterns in it", async () => {
+  const { insertPartials } = await import(new URL("site/render.mjs", root));
+  const html = await insertPartials("<p><!-- include: x --></p>", async () => "costs $& and $' stay");
+  assert.equal(html, "<p>costs $& and $' stay</p>");
+});
+
+test("the build refuses to empty the site or a folder that holds it", () => {
+  for (const out of [new URL("site/", root).pathname, root.pathname]) {
+    assert.throws(() => execFileSync("node", [new URL("site/build.mjs", root).pathname, out], { stdio: "pipe" }), /Refusing to build/);
+  }
+  assert.ok(existsSync(new URL("site/pages/index.html", root)), "nothing was deleted");
+});
