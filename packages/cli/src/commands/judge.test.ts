@@ -157,3 +157,19 @@ test("a journey vote that fails without naming its step is refused", async () =>
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a journey that breaks differently at two widths is reported once per way it broke", async () => {
+  const dir = await journeys();
+  try {
+    const report = JSON.parse(await readFile(join(dir, "captures", "report.json"), "utf8"));
+    const narrow = report.journeys[1].runs[0];
+    narrow.broken = { step: 1, reason: "the menu covers the link" };
+    narrow.steps = narrow.steps.slice(0, 1);
+    await writeFile(join(dir, "captures", "report.json"), JSON.stringify(report));
+    const { out } = await run(["judge", "--journeys", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out")]);
+    assert.match(out, /✗ Get help\s+breaks at step 1 at 390 px: the menu covers the link\n\s+\S*get-help@390-01\.png/);
+    assert.match(out, /✗ Get help\s+breaks at step 2 at 1280 px: the page answered 500\n\s+\S*get-help@1280-02\.png/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
