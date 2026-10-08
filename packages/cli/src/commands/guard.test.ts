@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
-let dir: string;
+let dir = "";
 const run = async (args: string[], cwd = dir) => {
   try {
     const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd });
@@ -48,7 +48,8 @@ before(async () => {
 });
 
 after(async () => {
-  await rm(dir, { recursive: true, force: true });
+  // A setup that failed before making the folder must show its own error, not this one's.
+  if (dir) await rm(dir, { recursive: true, force: true });
 });
 
 test("moving a link changes no call and no protected file: it passes", async () => {
@@ -101,6 +102,17 @@ test("a report that is not a replay with its calls is refused before any compari
   const stale = await run(["guard", "old", "same"]);
   assert.equal(stale.code, 1);
   assert.match(stale.out, /old\/report\.json cannot be compared: "Add a product" has no list of calls/);
+});
+
+test("an after replay that leaves out a journey or a width is refused", async () => {
+  const two = report([]);
+  two.journeys.push({ ...two.journeys[0]!, slug: "orders", name: "See my orders" });
+  two.journeys[0]!.runs.push({ ...two.journeys[0]!.runs[0]!, width: 390 });
+  await mkdir(join(dir, "two"), { recursive: true });
+  await writeFile(join(dir, "two", "report.json"), JSON.stringify(two));
+  const { code, out } = await run(["guard", "two", "same"]);
+  assert.equal(code, 1);
+  assert.match(out, /The after replay leaves out "Add a product" at 390 px, "See my orders": replay every journey/);
 });
 
 test("without a protected list, the guard says it compared the calls only", async () => {
