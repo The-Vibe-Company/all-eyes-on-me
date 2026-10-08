@@ -106,7 +106,7 @@ async function journeys() {
   await writeFile(join(dir, "captures", "report.json"), JSON.stringify(report));
   for (const voter of ["1", "2", "3"]) {
     const verdicts = (failing: Record<string, number>) => Object.fromEntries(JOURNEY_PRINCIPLES.map((id) => [id, failing[id] ? { pass: false, reason: `The list under "Mes commandes" is blank (voter ${voter}).`, step: failing[id] } : { pass: true, reason: "fine", step: 1 }]));
-    await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages: { "see-my-orders": verdicts(voter === "3" ? {} : { "result-shown": 3 }), "get-help": verdicts({}) } }));
+    await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages: { "see-my-orders": verdicts(voter === "3" ? {} : { "result-shown": voter === "1" ? 3 : 2 }), "get-help": verdicts({}) } }));
   }
   return dir;
 }
@@ -117,9 +117,9 @@ test("aeom judge --journeys counts the votes per journey, and names the step and
     const { code, out } = await run(["judge", "--journeys", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out")]);
     assert.equal(code, 1);
     assert.match(out, /Judged 2 journeys on 6 principles, 3 votes each/);
-    assert.match(out, /See my orders\n\s+✗ result-shown\s+step 3: The list under "Mes commandes" is blank \(voter 1\)\. \(2\/3 fail\)/);
-    assert.match(out, /see-my-orders@1280-03\.png/);
-    assert.match(await readFile(join(dir, "out", "judge-journeys.json"), "utf8"), /"steps": \[\s*3\s*\]/);
+    assert.match(out, /See my orders\n\s+✗ result-shown\s+step 2, 3: The list under "Mes commandes" is blank \(voter 1\)\. \(2\/3 fail\)/);
+    assert.match(out, /see-my-orders@1280-02\.png\n\s+\S*see-my-orders@1280-03\.png/, "a capture for each step the failure names");
+    assert.match(await readFile(join(dir, "out", "judge-journeys.json"), "utf8"), /"steps": \[\s*2,\s*3\s*\]/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -142,4 +142,18 @@ test("aeom principles --journeys prints the journey principles", async () => {
   const { code, out } = await run(["principles", "--journeys"]);
   assert.equal(code, 0);
   for (const id of JOURNEY_PRINCIPLES) assert.match(out, new RegExp(`^${id}  `, "m"));
+});
+
+test("a journey vote that fails without naming its step is refused", async () => {
+  const dir = await journeys();
+  try {
+    const vote = JSON.parse(await readFile(join(dir, "votes", "1.json"), "utf8"));
+    delete vote.pages["see-my-orders"]["result-shown"].step;
+    await writeFile(join(dir, "votes", "1.json"), JSON.stringify(vote));
+    const { code, out } = await run(["judge", "--journeys", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out")]);
+    assert.equal(code, 1);
+    assert.match(out, /voter 1, see-my-orders: no step for result-shown, where the failure shows/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });

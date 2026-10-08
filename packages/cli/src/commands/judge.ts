@@ -101,7 +101,7 @@ export async function runPrinciples(argv: string[]): Promise<number> {
  * Reads the votes, checks that every expected voter voted and nobody else,
  * and counts them. Prints what is wrong and returns null when it cannot.
  */
-async function countVotes({ votesDir, out, voters: votersText, keys, principles }: { votesDir: string; out: string; voters: string; keys: string[]; principles: Principle[] }): Promise<JudgeReport | null> {
+async function countVotes({ votesDir, out, voters: votersText, keys, principles, steps = false }: { votesDir: string; out: string; voters: string; keys: string[]; principles: Principle[]; steps?: boolean }): Promise<JudgeReport | null> {
   const canonical = (dir: string) => realpath(dir).catch(() => resolve(dir));
   if ((await canonical(out)) === (await canonical(votesDir))) {
     console.error(`--out and --votes cannot be the same folder: the verdict would be counted as a vote next time.`);
@@ -133,7 +133,7 @@ async function countVotes({ votesDir, out, voters: votersText, keys, principles 
     return null;
   }
   try {
-    return tally(votes, keys, principles, { voters });
+    return tally(votes, keys, principles, { voters, steps });
   } catch (error) {
     if (!(error instanceof JudgeVoteError)) throw error;
     console.error(`Some votes cannot be counted:\n${error.problems.map((p) => `  ${p}`).join("\n")}`);
@@ -165,11 +165,16 @@ async function judgeJourneys(values: { captures: string; votes: string; out: str
     return 1;
   }
   const principles = await loadPrinciples(values.principles ?? JOURNEY_PRINCIPLES_FILE);
-  const votes = await countVotes({ votesDir: values.votes, out: values.out, voters: values.voters, keys, principles });
+  // A journey's failure names the step where it shows.
+  const votes = await countVotes({ votesDir: values.votes, out: values.out, voters: values.voters, keys, principles, steps: true });
   if (votes === null) return 1;
 
-  // The widest replay shows a step best; a journey that broke is named once, with every width it broke at.
-  const widest = (slug: string) => replay.journeys.find((j) => j.slug === slug)!.runs.reduce((a, b) => (b.width > a.width ? b : a));
+  // The widest replay that reached a step shows it best; a journey that broke is named once, with every width it broke at.
+  const shotOf = (slug: string, step: number) =>
+    replay.journeys
+      .find((j) => j.slug === slug)!
+      .runs.filter((r) => r.steps.length >= step)
+      .reduce<JourneyReport["journeys"][number]["runs"][number] | null>((a, b) => (!a || b.width > a.width ? b : a), null)?.steps[step - 1]?.capture;
   const broken: BrokenJourney[] = replay.journeys.flatMap((j) => {
     const runs = j.runs.filter((r) => r.broken);
     if (!runs.length) return [];
@@ -202,8 +207,10 @@ async function judgeJourneys(values: { captures: string; votes: string; out: str
     for (const v of failing) {
       const at = v.steps.length ? `step ${v.steps.join(", ")}: ` : "";
       console.log(`  ✗ ${v.principle.padEnd(column)}${at}${v.reasons[0] ?? ""} (${v.votes})`);
-      const shot = v.steps.length ? widest(slug).steps[v.steps[0]! - 1]?.capture : null;
-      if (shot) console.log(`    ${" ".repeat(column)}${capture(shot)}`);
+      for (const step of v.steps) {
+        const shot = shotOf(slug, step);
+        if (shot) console.log(`    ${" ".repeat(column)}${capture(shot)}`);
+      }
     }
     console.log("");
   }
