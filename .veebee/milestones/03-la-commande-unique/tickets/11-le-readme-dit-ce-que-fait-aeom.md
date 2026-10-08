@@ -17,6 +17,7 @@ Un visiteur du repo ou de la landing comprend en une phrase ce que fait `aeom`, 
 - [ ] Les premières lignes du README disent en une phrase ce qu'est AEOM, puis ce que fait `aeom` aujourd'hui
 - [ ] Ce qui existe et ce qui vient sont séparés ; rien n'est donné pour fait s'il ne l'est pas (le plafond, l'apprentissage du goût, le check en CI, npm restent dans « ce qui vient »)
 - [ ] La landing dit la même chose, avec le run de l'app de démo comme preuve
+- [ ] Tant qu'aucun vrai projet n'est passé par AEOM, le README et la landing le disent : le premier niveau n'a tourné que sur l'app de démo
 - [ ] Les commandes que listent le README et la landing sont celles de `aeom --help` (le test du site l'exige déjà)
 - [ ] Rien de visuel d'un projet client n'y apparaît
 

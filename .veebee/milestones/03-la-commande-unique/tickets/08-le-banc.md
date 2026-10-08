@@ -17,7 +17,7 @@ Un tableau par app : défauts connus trouvés sur le total, corrigés sur le tot
 - [ ] Le repo contient trois apps de banc : l'app de démo et deux apps faites par un agent sans AEOM, chacune avec ses défauts notés à la main (écran ou parcours, ce qui ne va pas)
 - [ ] Chaque app de banc a ses parcours clés enregistrés (`.aeom/journeys/`) et, si elle garde des données, sa commande de remise à zéro : le garde-fou et le cliquet des parcours peuvent mesurer sur les trois
 - [ ] Le banc lance `/aeom` sans option sur chacune, avec des données fictives, et compare le résultat aux défauts notés
-- [ ] Le tableau compte, par app : défauts trouvés, défauts corrigés, régressions (un contrôle ou un principe qui passait et échoue après), features en douce (le garde-fou) et coût en tokens
+- [ ] Le tableau compte, par app : défauts trouvés, défauts corrigés, régressions (un contrôle ou un principe qui passait et échoue après), features en douce (le garde-fou) et coût en tokens. Pour ce coût, chaque run note dans `.aeom/runs/<run>/` les tokens de chaque appel de modèle, sous-agents compris (juges, workers), et le banc en fait la somme
 - [ ] Un défaut trouvé est apparié à un défaut noté par son écran ou son parcours et le contrôle ou le principe en cause ; chaque appariement cite sa preuve
 - [ ] Ce qu'AEOM trouve en plus des défauts notés est listé à part, pour qu'on l'ajoute à la liste ou qu'on le rejette
 - [ ] Une app de banc qui ne démarre pas : le banc le dit et continue avec les autres

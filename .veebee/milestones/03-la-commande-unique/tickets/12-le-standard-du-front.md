@@ -2,7 +2,7 @@
 id: 12
 title: Le run écrit le standard du front
 milestone: 03-la-commande-unique
-depends_on: [01]
+depends_on: [01, 02]
 design: null
 tracker: { tool: github, id: 59, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/59 }
 ---
@@ -17,7 +17,7 @@ Un fichier `.aeom/standard.md`, en mots : la DA retenue (sa source, ce qu'elle t
 - [ ] À la fin d'un run qui garde quelque chose, AEOM écrit `.aeom/standard.md` et le commite sur `aeom/<run>` avec le reste
 - [ ] Le standard nomme la DA retenue, sa source et ce qu'elle tire de la fiche produit
 - [ ] Chaque token et chaque composant du kit y figure avec le fichier du code où il vit ; une valeur absente du code n'y est pas
-- [ ] Après un run « rien à refaire », AEOM écrit aussi le standard, tiré du front tel qu'il est
+- [ ] Après un run « rien à refaire », AEOM écrit aussi le standard, tiré du front tel qu'il est, sans le commiter ni créer de branche ; comme la fiche produit, il ne compte pas dans le contrôle d'arbre propre du run suivant
 - [ ] Un run suivant part du standard existant : ce que l'utilisateur y a corrigé à la main reste tel quel, et AEOM dit ce qu'il a changé
 - [ ] Le standard est du texte seulement : aucune capture, aucune image
 
