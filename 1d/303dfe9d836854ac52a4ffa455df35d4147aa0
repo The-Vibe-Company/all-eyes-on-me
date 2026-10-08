@@ -1,0 +1,55 @@
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_7ee33f8531cb74 1-86
+packages/core/src/journey/journey.ts
+  s_4ce34ec42d9105::t_fdb14d8008aca7 1-7,9-121
+  s_4ce34ec42d9105::t_92602e9e247461 8
+packages/core/src/journey/index.ts
+  s_4ce34ec42d9105::t_9d6f54a09c5a08 1-2
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_2f9757dc7d1ac7 1-70,73-212
+  s_4ce34ec42d9105::t_92602e9e247461 71-72
+packages/cli/src/commands/journey.test.ts
+  s_4ce34ec42d9105::t_1272e57aedcb6b 1-75
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_817923d0e09e2e 77
+site/shared/kit.css
+  s_4ce34ec42d9105::t_c266b340e8c58d 1075-1076
+  s_4ce34ec42d9105::t_fb7594cf4c1e0f 1073-1074,1077-1078
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_fb7594cf4c1e0f 7,28,43
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_c3d1a36432c172 17-18,20
+.veebee/milestones/02-couche-ux/tickets/02-rejouer-les-parcours.md
+  s_4ce34ec42d9105::t_c3d1a36432c172 7,18-24
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_9d6f54a09c5a08 7
+site/pages/index.html
+  s_4ce34ec42d9105::t_fb7594cf4c1e0f 211
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_817923d0e09e2e 8-9,33
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_c266b340e8c58d 98-99
+skills/aeom/journeys.md
+  s_4ce34ec42d9105::t_c266b340e8c58d 1-34
+packages/core/src/journey/journey.test.ts
+  s_4ce34ec42d9105::t_8a26e95aaf946b 14
+  s_4ce34ec42d9105::t_9eaf10eeb2244e 1-13,15-164
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_817923d0e09e2e 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1d303dfe9d836854ac52a4ffa455df35d4147aa0",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
