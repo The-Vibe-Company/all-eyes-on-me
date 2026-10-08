@@ -16,7 +16,7 @@ Pour chaque parcours, l'avant et l'après en deux bandes de captures, le nombre 
 ## C'est fini quand
 - [ ] Pour chaque parcours, trois juges comparent l'ancien et le nouveau côte à côte et choisissent ; la majorité décide
 - [ ] Un parcours n'est gardé que si le juge préfère le nouveau, s'il se rejoue sans casser et s'il passe le garde-fou ; sinon l'ancien revient, et le run dit pourquoi
-- [ ] La fin du run montre chaque parcours avant et après, avec le nombre d'étapes et les constats levés
+- [ ] La fin du run montre chaque parcours avant et après, avec le nombre d'étapes ; un constat n'y est dit levé que si la critique (04), refaite sur le nouveau parcours, ne le trouve plus, et ceux qui restent sont listés
 - [ ] Tout ce que le run garde est sur une branche `aeom/<run>`, jamais sur la branche de l'utilisateur
 - [ ] Un run sans constat ne change rien et le dit
 

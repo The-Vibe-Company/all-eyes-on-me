@@ -19,7 +19,7 @@ Des captures de l'app connectée, pas de la page de connexion. Si le compte ne m
 - [ ] `aeom capture`, `aeom check` et `aeom journey` se connectent avant de commencer, et les captures montrent l'app connectée
 - [ ] Compte refusé : AEOM s'arrête et dit que la connexion a échoué, au lieu de capturer la page de connexion comme si c'était l'app
 - [ ] Le mot de passe n'apparaît dans aucun rapport, aucune capture de champ, aucun log
-- [ ] La page de connexion elle-même peut être un parcours, jugé comme les autres
+- [ ] La page de connexion elle-même peut être un parcours, jugé comme les autres : un parcours marqué comme partant sans session démarre déconnecté, tous les autres se connectent d'abord
 
 ## Comment
 - `examples/ugly-app/server.mjs` gagne une page `/connexion` et un cookie de session ; le compte fictif vit à côté de l'app (une fixture), pas dans le code d'AEOM.
