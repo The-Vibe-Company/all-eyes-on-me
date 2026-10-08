@@ -17,7 +17,7 @@ Pour chaque app, les trois passages, ce sur quoi ils divergent, et la différenc
 - [ ] Le banc passe trois fois sur chaque app ; le tableau donne, pour chaque mesure, la moyenne, le minimum et le maximum des trois passages
 - [ ] Les verdicts qui changent d'un passage à l'autre sont listés (un défaut trouvé une fois sur trois, un principe qui change de camp)
 - [ ] Chaque passage est gardé avec sa date et la version d'AEOM ; le tableau montre la différence de chaque moyenne avec le passage précédent
-- [ ] À la fin d'un jalon, les chiffres du banc sont dans le journal de l'autopilot
+- [ ] À la fin de chaque jalon, l'autopilot lance le banc, puis inscrit ses chiffres du jour dans son journal
 - [ ] La première fois, sans passage précédent, le banc le dit au lieu d'une différence vide
 
 ## Comment

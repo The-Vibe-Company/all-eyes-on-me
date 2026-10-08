@@ -2,7 +2,7 @@
 id: 08
 title: Le banc : trois apps aux défauts notés à la main, et ce qu'AEOM en trouve et en corrige
 milestone: 03-la-commande-unique
-depends_on: [01]
+depends_on: [01, 03]
 design: null
 tracker: { tool: github, id: 54, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/54 }
 ---

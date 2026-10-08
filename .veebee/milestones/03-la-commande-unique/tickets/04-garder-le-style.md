@@ -15,7 +15,7 @@ Ni directions ni tournoi : la vague kit corrige le style existant, puis les page
 
 ## C'est fini quand
 - [ ] `/aeom --garder-le-style` ne lance ni directions ni tournoi
-- [ ] Les couleurs, les polices et le logo de la page d'accueil sont les mêmes avant et après, sauf là où un contraste échouait
+- [ ] Sur chaque écran, les couleurs, les polices et le logo sont les mêmes avant et après, sauf là où un contraste échouait
 - [ ] La vague kit corrige ce qui échoue sur le style existant (contraste, curseurs, états vides et d'erreur) sans le remplacer
 - [ ] Les pages puis les parcours sont refaits comme sans option (01 et 03)
 - [ ] `"style": "keep"` dans `.aeom/config.json` vaut l'option à chaque run, sans la redire
