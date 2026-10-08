@@ -1,0 +1,31 @@
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_82a57c04cc9da0 94-99,126-135,138,153-162
+CONTEXT.md
+  s_4ce34ec42d9105::t_996386d950628c 22
+packages/core/src/journey/ratchet.ts
+  s_4ce34ec42d9105::t_82a57c04cc9da0 42-45,63-69
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_996386d950628c 32
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_996386d950628c 106,117,119-121
+packages/core/src/journey/ratchet.test.ts
+  s_4ce34ec42d9105::t_82a57c04cc9da0 31-32,66-68,71-72
+packages/cli/src/commands/ratchet.test.ts
+  s_4ce34ec42d9105::t_82a57c04cc9da0 58-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6d3040183ce5640776dec84a2abefeb0962ecf9e",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
