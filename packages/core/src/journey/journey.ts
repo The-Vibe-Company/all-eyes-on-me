@@ -43,6 +43,7 @@ function targetProblem(target: unknown): string | null {
   const named = typeof t.role === "string" && t.role && typeof t.name === "string" && t.name;
   const text = typeof t.text === "string" && t.text;
   if (!named && !text) return "a target needs a role and a name, or a text";
+  if (text && (t.role !== undefined || t.name !== undefined)) return "a target is either a role and a name, or a text, not both";
   if (t.within !== undefined) {
     const w = t.within as Record<string, unknown> | null;
     if (!w || typeof w.role !== "string" || typeof w.name !== "string" || !w.role || !w.name) return "within needs a role and a name";
@@ -69,6 +70,7 @@ function problemsOf(file: string, data: unknown): string[] {
     const fromAccount = typeof step.value === "object" && step.value !== null && typeof (step.value as { account?: unknown }).account === "string";
     if (step.do === "fill" && typeof step.value !== "string" && !fromAccount) problems.push(`${at}: fill needs a value, or { "account": "<field>" } for a value from the sign-in account`);
     if (step.do === "press" && (typeof step.key !== "string" || !step.key)) problems.push(`${at}: press needs a key`);
+    if ((step.do === "click" || step.do === "press") && step.lands !== undefined && (typeof step.lands !== "string" || !step.lands.startsWith("/"))) problems.push(`${at}: lands needs a route starting with /`);
     if (step.do === "see" && (typeof step.text !== "string" || !step.text)) problems.push(`${at}: see needs a text`);
     return undefined;
   });
@@ -85,7 +87,7 @@ export async function loadJourneys(dir: string): Promise<Journey[]> {
     files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new JourneyError([`No journeys: ${dir} does not exist. /aeom --ux writes them.`]);
-    throw error;
+    throw new JourneyError([`Cannot read the journeys in ${dir}: ${error instanceof Error ? error.message : String(error)}`]);
   }
   const journeys: Journey[] = [];
   const problems: string[] = [];

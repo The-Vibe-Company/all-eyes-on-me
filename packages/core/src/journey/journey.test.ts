@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { chromium } from "playwright";
 import { signIn } from "../capture/index.js";
-import { JourneyError, loadJourneys, replayJourneys, type Journey } from "./index.js";
+import { JourneyError, loadJourneys, ReplayError, replayJourneys, type Journey } from "./index.js";
 
 /** A small shop that remembers its basket until /__reset. */
 function shop(): Server {
@@ -188,6 +188,7 @@ describe("journey files", () => {
       await mkdir(dir, { recursive: true });
       await writeFile(join(dir, "bad.json"), JSON.stringify({ steps: [{ do: "click" }, { do: "fly" }, { do: "click", target: { role: "link" } }] }));
       await writeFile(join(dir, "broken.json"), "{ not json");
+      await writeFile(join(dir, "mixed.json"), JSON.stringify({ name: "Mixed", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "A", text: "A" }, lands: "commandes" }] }));
       await assert.rejects(loadJourneys(dir), (error: unknown) => {
         assert.ok(error instanceof JourneyError);
         assert.match(error.message, /bad\.json: no name/);
@@ -196,10 +197,26 @@ describe("journey files", () => {
         assert.match(error.message, /bad\.json, step 2: unknown action "fly"/);
         assert.match(error.message, /bad\.json, step 3: a target needs a role and a name, or a text/);
         assert.match(error.message, /broken\.json: not valid JSON/);
+        assert.match(error.message, /mixed\.json, step 2: a target is either a role and a name, or a text, not both/);
+        assert.match(error.message, /mixed\.json, step 2: lands needs a route starting with \//);
         return true;
       });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
   });
+});
+
+test("a reset command that fails stops the replay with a message that says so", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-reset-"));
+  try {
+    const journey: Journey = { slug: "a", name: "A", steps: [{ do: "open", path: "/" }] };
+    await assert.rejects(replayJourneys({ url: "http://localhost:1", journeys: [journey], outDir: dir, widths: [390], reset: "node -e \"process.exit(3)\"" }), (error: unknown) => {
+      assert.ok(error instanceof ReplayError);
+      assert.match((error as Error).message, /The reset command failed before "A"/);
+      return true;
+    });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });

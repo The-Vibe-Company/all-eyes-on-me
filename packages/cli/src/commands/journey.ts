@@ -67,7 +67,14 @@ export async function runJourney(argv: string[]): Promise<number> {
   return withApp({ ...values, url }, async () => {
     const session = await signInFromConfig(url);
     if (session === "failed") return 1;
-    const report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}) });
+    let report: JourneyReport;
+    try {
+      report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}) });
+    } catch (error) {
+      if (!(error instanceof ReplayError)) throw error;
+      console.error(error.message);
+      return 1;
+    }
     const out = relative(process.cwd(), values.out) || ".";
     const column = Math.max(...report.journeys.map((j) => j.name.length)) + 2;
     let broken = 0;
