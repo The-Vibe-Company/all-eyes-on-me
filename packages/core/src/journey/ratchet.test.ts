@@ -47,6 +47,21 @@ test("a journey the judges prefer, that goes to its end and that the guard lets 
   assert.deepEqual(orders!.remaining, ["result-shown"]);
 });
 
+test("a finding the critique of the new version leaves out is not cleared", () => {
+  const partial = verdict({ orders: [] });
+  partial.pages[0]!.verdicts = partial.pages[0]!.verdicts.filter((v) => v.principle !== "short");
+  const [orders] = ratchetJourneys({
+    before: replay({ orders: run(4) }),
+    after: replay({ orders: run(3) }),
+    beforeVerdict: verdict({ orders: ["clear-start", "short"] }),
+    afterVerdict: partial,
+    duels: tallyDuels([duel("1", { orders: "after" }), duel("2", { orders: "after" }), duel("3", { orders: "after" })], ["orders"]),
+    guard: { refused: [], allowed: [] },
+  });
+  assert.deepEqual(orders!.cleared, ["clear-start"]);
+  assert.deepEqual(orders!.remaining, ["short"]);
+});
+
 test("the old version comes back when the new one breaks, the guard refuses it, or the judges prefer the old one, and the run says why", () => {
   const duels = tallyDuels([duel("1", { a: "after", b: "after", c: "before" }), duel("2", { a: "after", b: "after", c: "before" }), duel("3", { a: "after", b: "after", c: "after" })], ["a", "b", "c"]);
   const verdicts = ratchetJourneys({

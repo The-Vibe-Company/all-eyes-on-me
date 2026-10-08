@@ -135,11 +135,20 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     return 1;
   }
   const slugs = after.journeys.filter((j) => before.journeys.some((b) => b.slug === j.slug)).map((j) => j.slug);
-  // A journey the critique left out would count its old findings as cleared: each verdict covers every journey.
+  // A journey or a principle the critique left out would count its old findings as cleared: each verdict covers them all.
+  const judgedOn = (verdict: JudgeReport | null | undefined, slug: string) => {
+    const page = Array.isArray(verdict?.pages) ? verdict.pages.find((p) => p.page === slug) : undefined;
+    return page && Array.isArray(page.verdicts) ? page.verdicts.map((v) => v.principle) : null;
+  };
   for (const [dir, verdict] of [[beforeDir, beforeVerdict], [afterDir, afterVerdict]] as const) {
-    const judged = Array.isArray(verdict?.pages) ? verdict.pages.map((p) => p.page) : [];
-    const unjudged = slugs.filter((slug) => !judged.includes(slug));
+    const unjudged = slugs.filter((slug) => !judgedOn(verdict, slug));
     if (unjudged.length) problems.push(`${join(dir, "judge-journeys.json")} does not judge ${unjudged.join(", ")}: run the journey judge on that replay again`);
+  }
+  for (const slug of slugs) {
+    const then = judgedOn(beforeVerdict, slug);
+    const now = judgedOn(afterVerdict, slug);
+    const left = then && now ? then.filter((principle) => !now.includes(principle)) : [];
+    if (left.length) problems.push(`${join(afterDir, "judge-journeys.json")} judges ${slug} without ${left.join(", ")}: the critique of the new version answers every principle the old one did`);
   }
   if (problems.length) {
     console.error(`Both folders need report.json (aeom journey) and judge-journeys.json (aeom judge --journeys --out):\n${problems.map((p) => `  ${p}`).join("\n")}`);

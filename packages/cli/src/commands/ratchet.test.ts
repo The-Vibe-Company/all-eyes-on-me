@@ -83,6 +83,12 @@ test("aeom compare --journeys refuses no judges, a base git does not know, and a
     const partial = await run(dir, ["compare", "--journeys", "before", "after"]);
     assert.equal(partial.code, 1);
     assert.match(partial.out, /after\/judge-journeys\.json does not judge orders/);
+    const fewer = verdict({ orders: [], contact: [] });
+    fewer.pages[0]!.verdicts = fewer.pages[0]!.verdicts.filter((v) => v.principle !== "clear-start");
+    await writeFile(join(dir, "after", "judge-journeys.json"), JSON.stringify(fewer));
+    const omitted = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(omitted.code, 1);
+    assert.match(omitted.out, /judges orders without clear-start/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

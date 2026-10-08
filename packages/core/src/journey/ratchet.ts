@@ -103,6 +103,8 @@ export interface RatchetVerdict {
 
 const widest = (runs: JourneyRun[]) => runs.reduce((a, b) => (b.width > a.width ? b : a));
 const failing = (verdict: JudgeReport | undefined, slug: string) => verdict?.pages.find((p) => p.page === slug)?.verdicts.filter((v) => !v.pass).map((v) => v.principle) ?? [];
+/** Principles the critique of a journey passes, said out loud: one it left out is not one it passes. */
+const passing = (verdict: JudgeReport | undefined, slug: string) => verdict?.pages.find((p) => p.page === slug)?.verdicts.filter((v) => v.pass).map((v) => v.principle) ?? [];
 
 /**
  * Decides, journey by journey, whether the new version stays. It stays only
@@ -117,8 +119,8 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
     .map((journey) => {
       const old = before.journeys.find((b) => b.slug === journey.slug)!;
       const steps = { before: widest(old.runs).counts.steps, after: widest(journey.runs).counts.steps };
-      const cleared = failing(beforeVerdict, journey.slug).filter((p) => !failing(afterVerdict, journey.slug).includes(p));
-      const remaining = failing(afterVerdict, journey.slug);
+      const cleared = failing(beforeVerdict, journey.slug).filter((p) => passing(afterVerdict, journey.slug).includes(p));
+      const remaining = [...new Set([...failing(afterVerdict, journey.slug), ...failing(beforeVerdict, journey.slug).filter((p) => !cleared.includes(p))])];
       const verdict = (kept: boolean, why: string): RatchetVerdict => ({ slug: journey.slug, name: journey.name, kept, why, steps, ...(kept ? { cleared, remaining } : { cleared: [], remaining: failing(beforeVerdict, journey.slug) }) });
 
       const breaks = journey.runs.find((r) => r.broken && !old.runs.find((o) => o.width === r.width)?.broken);
