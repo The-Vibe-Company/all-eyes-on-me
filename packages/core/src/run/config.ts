@@ -45,6 +45,7 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
     if (typeof login !== "object" || missing.length) {
       throw new ConfigError(`${file}: "login" needs "path" (the sign-in route), "account" (a JSON file of the fake account's fields by label) and "submit" (the button's name); missing ${missing.join(", ")}.`);
     }
+    if (!(l.path as string).startsWith("/")) throw new ConfigError(`${file}: "login.path" is the sign-in route from the app's root, such as "/connexion".`);
     config.login = { path: l.path as string, account: l.account as string, submit: l.submit as string };
   }
   return config;

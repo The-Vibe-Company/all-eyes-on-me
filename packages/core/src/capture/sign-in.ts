@@ -12,6 +12,9 @@ export interface SignIn {
   submit: string;
 }
 
+/** How long a sign-in may take before AEOM says it did not work. */
+const SIGN_IN_TIMEOUT = 15_000;
+
 /** Signing in did not work. The message names the route and the button, never a value. */
 export class SignInError extends Error {}
 
@@ -26,7 +29,10 @@ export async function signIn(browser: Browser, url: string, { path, account, sub
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    const response = await page.goto(origin + path, { waitUntil: "networkidle" });
+    const target = new URL(path, origin);
+    // The sign-in route by its path alone, so a route given with a query still compares.
+    const route = target.pathname;
+    const response = await page.goto(target.href, { waitUntil: "networkidle" });
     if (!response || response.status() >= 400) throw new SignInError(`Cannot sign in: ${path} answered ${response?.status() ?? "nothing"}.`);
     for (const label of Object.keys(account)) {
       const field = page.getByLabel(label, { exact: true });
@@ -35,10 +41,14 @@ export async function signIn(browser: Browser, url: string, { path, account, sub
     }
     const button = page.getByRole("button", { name: submit, exact: true });
     if ((await button.count()) !== 1) throw new SignInError(`Cannot sign in: ${path} has no single button "${submit}".`);
-    await Promise.all([page.waitForLoadState("networkidle"), button.click()]);
-    // The sign-in route by its path alone, so a route given with a query still compares.
-    const route = new URL(path, origin).pathname;
-    await page.waitForURL((u) => u.pathname !== route, { timeout: 5_000 }).catch(() => {});
+    // The app either leaves the sign-in route, or loads it again to say no. A slow sign-in gets the whole timeout.
+    const left = page.waitForURL((u) => u.pathname !== route, { timeout: SIGN_IN_TIMEOUT });
+    const refused = page.waitForEvent("framenavigated", { predicate: (frame) => frame === page.mainFrame() && new URL(frame.url()).pathname === route, timeout: SIGN_IN_TIMEOUT });
+    await button.click();
+    await Promise.race([left, refused]).catch(() => {});
+    left.catch(() => {});
+    refused.catch(() => {});
+    await page.waitForLoadState("networkidle").catch(() => {});
     if (new URL(page.url()).pathname === route) throw new SignInError(`Signing in did not work: the app stayed on ${path} after "${submit}". Check the account AEOM was given.`);
     return await context.storageState();
   } finally {
