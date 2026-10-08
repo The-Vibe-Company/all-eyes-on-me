@@ -169,17 +169,23 @@ async function judgeJourneys(values: { captures: string; votes: string; out: str
   const votes = await countVotes({ votesDir: values.votes, out: values.out, voters: values.voters, keys, principles, steps: true });
   if (votes === null) return 1;
 
-  // The widest replay that reached a step shows it best; a journey that broke is named once, with every width it broke at.
+  // The widest replay that reached a step shows it best.
   const shotOf = (slug: string, step: number) =>
     replay.journeys
       .find((j) => j.slug === slug)!
       .runs.filter((r) => r.steps.length >= step)
       .reduce<JourneyReport["journeys"][number]["runs"][number] | null>((a, b) => (!a || b.width > a.width ? b : a), null)?.steps[step - 1]?.capture;
+  // A journey that broke is named once per way it broke: the widths that broke at the same step for the same reason go together.
   const broken: BrokenJourney[] = replay.journeys.flatMap((j) => {
-    const runs = j.runs.filter((r) => r.broken);
-    if (!runs.length) return [];
-    const last = runs.reduce((a, b) => (b.width > a.width ? b : a));
-    return [{ journey: j.slug, name: j.name, widths: runs.map((r) => r.width), step: last.broken!.step, reason: last.broken!.reason, capture: last.steps[last.broken!.step - 1]?.capture ?? null }];
+    const ways = new Map<string, typeof j.runs>();
+    for (const run of j.runs.filter((r) => r.broken)) {
+      const key = `${run.broken!.step}\n${run.broken!.reason}`;
+      ways.set(key, [...(ways.get(key) ?? []), run]);
+    }
+    return [...ways.values()].map((runs) => {
+      const last = runs.reduce((a, b) => (b.width > a.width ? b : a));
+      return { journey: j.slug, name: j.name, widths: runs.map((r) => r.width), step: last.broken!.step, reason: last.broken!.reason, capture: last.steps[last.broken!.step - 1]?.capture ?? null };
+    });
   });
   const report = { ...votes, broken, failures: votes.failures + broken.length };
   await mkdir(values.out, { recursive: true });
