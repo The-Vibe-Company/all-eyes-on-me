@@ -14,7 +14,7 @@ Il lit sur la PR, en mots, si les nouveaux écrans ont l'air du même produit qu
 Un commentaire sur la PR : pour chaque écran touché, si les juges le trouvent cohérent avec le reste, et sinon ce qui détonne, avec l'écran existant auquel ils l'ont comparé.
 
 ## C'est fini quand
-- [ ] Trois juges comparent chaque écran touché à deux écrans existants de l'app, sur les principes de cohérence (`one-direction`, `consistent-chrome`, `not-generic`) et le standard ; la majorité décide
+- [ ] Trois juges comparent chaque écran touché à des écrans que la PR ne touche pas, pris sur la base (jusqu'à deux ; un seul s'il n'y en a qu'un, et la relecture dit que la comparaison est impossible s'il n'y en a aucun), sur les principes de cohérence (`one-direction`, `consistent-chrome`, `not-generic`) et le standard ; la majorité décide
 - [ ] Le verdict est posté en commentaire sur la PR, en mots, sans capture ni image
 - [ ] Ce commentaire ne bloque jamais le merge
 - [ ] Une nouvelle relecture met à jour le même commentaire au lieu d'en ajouter un

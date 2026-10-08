@@ -19,3 +19,4 @@ La liste des données que chaque écran attend, celles que l'API fournit, et cel
 - [ ] Les parcours clés se rejouent jusqu'au bout sur l'API, avec ses propres données fictives
 - [ ] Une donnée que l'API ne fournit pas est listée, et l'écran garde sa donnée fictive en le disant
 - [ ] Aucune logique métier n'est écrite côté front pour combler un manque de l'API
+- [ ] Le garde-fou laisse passer les appels à l'API donnée, et seulement ceux-là : il les liste, et refuse tout autre appel nouveau

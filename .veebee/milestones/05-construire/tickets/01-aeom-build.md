@@ -18,7 +18,7 @@ AEOM dit ce qu'il va construire, sur quels écrans et avec quels composants du k
 - [ ] Avant de construire, AEOM dit ce qu'il va faire et sur quels fichiers, sans attendre de réponse
 - [ ] Le résultat passe `aeom review` avant d'être rendu ; sinon AEOM corrige, puis dit ce qui reste
 - [ ] Une demande qui exige du back (une nouvelle donnée, un appel serveur, de la logique métier) est refusée, avec ce qu'il faudrait côté back
-- [ ] Le garde-fou ne voit aucun appel serveur nouveau à la fin
+- [ ] Le garde-fou ne voit aucun appel serveur nouveau à la fin ; seule une API donnée explicitement (03 et 04) en ajoute, et seulement les siens
 - [ ] La page de résultat montre ce qui a été construit
 - [ ] Sans standard, AEOM le dit et propose d'abord un run de `/aeom`
 

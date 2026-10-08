@@ -25,4 +25,4 @@ Les six directions et le tournoi, la DA retenue, le standard écrit, puis chaque
 - Les directions et le tournoi existent (`skills/aeom/SKILL.md` 2b) ; la fiche produit suit le format de `skills/aeom/product.md`.
 
 ## Hors ticket
-- Brancher la vraie API plus tard : 04.
+- Remplacer les données fictives quand l'API arrive après un run qui n'en avait pas : 04.

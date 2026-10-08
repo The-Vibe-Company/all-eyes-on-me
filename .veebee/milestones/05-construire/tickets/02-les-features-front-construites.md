@@ -15,7 +15,7 @@ Dans la section des features manquantes : pour chacune, si elle ne demande que d
 
 ## C'est fini quand
 - [ ] Chaque feature manquante dit si elle ne demande que du front (un état, un écran de résultat, un message) ou aussi du back
-- [ ] Pour une feature front, la page donne la commande `/aeom build` qui la construit
+- [ ] Pour une feature front, la page donne la commande `/aeom build "<la feature>"`, la feature déjà écrite dedans, prête à copier
 - [ ] Une feature qui demande du back n'a pas de commande, et dit ce qu'il faudrait côté back
 - [ ] Construite, la feature fait aboutir au rejeu le parcours qui bloquait
 - [ ] Rien n'est construit sans qu'on le demande

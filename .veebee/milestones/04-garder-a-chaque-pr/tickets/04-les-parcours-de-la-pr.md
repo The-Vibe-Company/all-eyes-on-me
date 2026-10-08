@@ -16,7 +16,7 @@ Dans la relecture : les parcours que la PR traverse, rejoués sur la base et sur
 ## C'est fini quand
 - [ ] `aeom review` trouve les parcours clés qui traversent les écrans touchés et les rejoue sur la base et sur la branche
 - [ ] Un parcours qui allait au bout sur la base et casse sur la branche fait échouer la relecture, avec l'étape et sa capture locale
-- [ ] Un appel serveur nouveau ou un champ nouveau est signalé comme feature, sans bloquer : une PR a le droit d'en apporter une
+- [ ] Un appel serveur nouveau ou un champ nouveau est signalé comme feature, sans faire échouer la relecture : `aeom review` reprend ce que le garde-fou refuse comme un simple avertissement, car une PR a le droit d'apporter une feature
 - [ ] Aucun parcours ne traverse les écrans touchés : la relecture le dit et passe
 - [ ] Sans parcours enregistrés dans le dépôt, la relecture le dit
 
