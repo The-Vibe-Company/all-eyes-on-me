@@ -21,9 +21,24 @@ export interface StepResult {
   dialog?: string;
 }
 
+/**
+ * A call the app made to its own server during a journey: its method, its
+ * route, and the names, never the values, of what it sent.
+ */
+export interface ServerCall {
+  method: string;
+  path: string;
+  /** The names of the query parameters. */
+  query: string[];
+  /** The names of the fields in the body: form fields, or a JSON object's keys. */
+  fields: string[];
+}
+
 export interface JourneyRun {
   width: number;
   steps: StepResult[];
+  /** Every call the app made to its own server, each once: fetches, and forms it sent. */
+  calls: ServerCall[];
   /** The routes the journey went through, in the order it first reached them. */
   screens: string[];
   counts: { steps: number; screens: number; back: number };
@@ -156,6 +171,20 @@ async function act(page: Page, app: App, step: Step, account: Record<string, str
   }
 }
 
+/** The names of the fields a request sends, from a JSON object, a form, or a multipart body; never their values. */
+function fieldNames(body: string | null): string[] {
+  if (!body) return [];
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return Object.keys(parsed).sort();
+    return [];
+  } catch {
+    const multipart = [...body.matchAll(/name="([^"]+)"/g)].map((m) => m[1]!);
+    if (multipart.length) return [...new Set(multipart)].sort();
+    return [...new Set(new URLSearchParams(body).keys())].filter(Boolean).sort();
+  }
+}
+
 async function replayOne(page: Page, app: App, journey: Journey, width: number, outDir: string, account: Record<string, string>): Promise<Omit<JourneyRun, "sheet">> {
   const { origin } = app;
   let status: number | null = null;
@@ -166,6 +195,29 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   const hide = (text: string) => values.reduce((t, v) => t.split(v).join("•••"), text);
   page.on("response", (response) => {
     if (response.request().isNavigationRequest() && response.frame() === page.mainFrame()) status = response.status();
+  });
+  const calls = new Map<string, ServerCall>();
+  const record = (call: ServerCall) => calls.set(JSON.stringify(call), call);
+  // Every page of the context, so a tab the journey opens counts too.
+  page.context().on("request", (request) => {
+    const target = new URL(request.url());
+    const sent = ["fetch", "xhr"].includes(request.resourceType()) || (request.isNavigationRequest() && request.method() !== "GET");
+    if (target.origin !== origin || !sent) return;
+    record({ method: request.method(), path: target.pathname, query: [...new Set(target.searchParams.keys())].sort(), fields: fieldNames(request.postData()) });
+  });
+  // A form sent with GET is a navigation like any link: the page says when one leaves, with its fields' names, never their values.
+  await page.context().exposeBinding("__aeomFormSent", (_source, sent: { action: string; fields: string[] }) => {
+    const target = new URL(sent.action);
+    if (target.origin === origin) record({ method: "GET", path: target.pathname, query: [...new Set([...target.searchParams.keys(), ...sent.fields])].sort(), fields: [] });
+  });
+  await page.context().addInitScript(() => {
+    // On the window, after the page's own handlers: a form the page sends itself is a fetch, already seen.
+    window.addEventListener("submit", (event) => {
+      const form = event.target as HTMLFormElement;
+      if (event.defaultPrevented || form.method.toLowerCase() !== "get") return;
+      const fields = [...new FormData(form, (event as SubmitEvent).submitter).keys()];
+      (window as unknown as { __aeomFormSent: (sent: { action: string; fields: string[] }) => void }).__aeomFormSent({ action: form.action, fields });
+    });
   });
   page.on("dialog", (dialog) => {
     dialogs.push(hide(dialog.message()));
@@ -225,7 +277,8 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   const visited = steps.map((s) => s.path).filter(Boolean);
   const screens = [...new Set(visited)];
   const back = visited.filter((path, i) => i > 0 && path !== visited[i - 1] && visited.slice(0, i - 1).includes(path)).length;
-  return { width, steps, screens, counts: { steps: steps.length, screens: screens.length, back }, broken };
+  const made = [...calls.values()].sort((a, b) => `${a.path} ${a.method}`.localeCompare(`${b.path} ${b.method}`));
+  return { width, steps, calls: made, screens, counts: { steps: steps.length, screens: screens.length, back }, broken };
 }
 
 /**

@@ -13,6 +13,7 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 
 - **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README), check that the app starts with that command (`aeom capture --start "<command>" --url <url> --pages / --out .aeom/runs/start-check`, which starts the app and stops it after), and only then write the file; ask the user once only if nothing says it.
 - **A sign-in, when the app needs one.** AEOM signs in only with a fake account, never a real one: the project's own test account, or one the user gives. Give the config a `login`: `{ "path": "/connexion", "account": "<a JSON file of the account's fields by label>", "submit": "<the button's name>" }`. Capture, check and journeys then sign in once, before they start, and never print or report the account's values. No fake account and no way to make one: stop and ask the user for one.
+- **What only a feature touches.** Give the config a `protected` list of the files that hold the app's data or logic, as globs: the database schema and migrations, the API routes, the server code, such as `["src/lib/db/**", "src/app/api/**"]`. `aeom guard` refuses any change to them.
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so.
 - **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch: `git checkout -b aeom/$RUN`. Everything this run keeps ends up on that branch, never on the user's branch.
 
@@ -41,6 +42,8 @@ Then run the judge with the `aeom-judge` skill: three independent votes, then `a
 ```bash
 aeom snapshot .aeom/runs/$RUN/before
 ```
+
+If the project has key journeys (`.aeom/journeys/`), replay them now, before anything changes: `aeom journey --out .aeom/runs/$RUN/journeys-before`. It is what `aeom guard` compares with in section 5.
 
 ## 2. Plan
 
@@ -98,7 +101,8 @@ Set `RUN` as in section 0, but create no run branch. The clean-tree rule of sect
 5. **Write it**: `aeom product .aeom/runs/$RUN/product.md`. It refuses a draft that misses a part, a journey's steps or a source, and says what to fix: fix the draft and run it again. It keeps what the user corrected since the last run. Tell the user what it printed (what was kept, updated, added), and show the sheet.
 6. **Record each journey as you walk it.** For each key journey of the sheet, write `.aeom/journeys/<slug>.json`, the same steps as a browser can replay them; [journeys.md](journeys.md) gives the format. Name each target by its role and name as the page exposes them, by its text when it has no role, inside its container when several match.
 7. **Replay them**: `aeom journey`. Every journey runs in a fresh browser at both widths, with a capture after each step and a sheet per journey and width. A step that does not exist in the app is a mistake, not a finding. A mistake in the journey file: fix the file and replay. A mistake in the sheet (a journey the app never offered): fix the draft, run `aeom product` again, record the journey again, then replay. A journey that breaks where the sheet says the app breaks it is right: keep it, it is the first finding. Show the user each journey's sheets, one per width. If the app keeps data (accounts, orders, sessions), give `.aeom/config.json` a `reset` command that puts it back, so every replay starts from the same state; AEOM warns when there is none.
-8. **Critique each journey**: run the journey judge of the `aeom-judge` skill (three votes, then `aeom judge --journeys`). It says, journey by journey, which principles fail, at which step, with the step's capture, and which journeys break. Show the user each journey's sheet with its findings, one journey per message, worst first.
+8. **No feature, ever, unless asked.** AEOM changes navigation, the order of steps, how screens group, shortcuts to actions that already exist, copy and states; never data, business logic or a call to the server. This mode changes nothing in the app, so nothing here can add one: the guard runs wherever AEOM does change the app, after the waves (section 5). Once every journey replays as the sheet says, keep that replay as the one to compare with: `aeom journey --out .aeom/runs/$RUN/journeys-before`.
+9. **Critique each journey**: run the journey judge of the `aeom-judge` skill (three votes, then `aeom judge --journeys`). It says, journey by journey, which principles fail, at which step, with the step's capture, and which journeys break. Show the user each journey's sheet with its findings, one journey per message, worst first.
 
 ## 3. Kit wave: one worker
 
@@ -145,6 +149,24 @@ Run the judge again with the `aeom-judge` skill, then:
 aeom snapshot .aeom/runs/$RUN/after
 aeom compare .aeom/runs/$RUN/before .aeom/runs/$RUN/after
 ```
+
+If the project has key journeys, check that no worker added a feature:
+
+```bash
+aeom journey --out .aeom/runs/$RUN/journeys-after
+aeom guard .aeom/runs/$RUN/journeys-before .aeom/runs/$RUN/journeys-after --base $KIT_BASE
+```
+
+It refuses a call the app never made, new fields sent to a call it made, and a change to a file `protected` at `$KIT_BASE` or now. If it says there is no `protected` list, it compared the calls only: give the config one (section 0) and guard again before trusting it. Whatever it refuses, find the worker whose diff brought it and put that worker's files back (`git checkout $KIT_BASE -- <its files>` for the kit, `$WAVE_BASE` for a page), commit, and say so. Only when the user asked for a feature in so many words, pass their words with `--feature "<what they asked>"` and each call or file the request needs with `--allow`; say in the run what was let through. Both replays must walk the same journey files. If a file changed in between (a label a worker renamed), a refused call may be one the app always made on a screen the old file never reached: replay the before again with the new files, on the app as it was at `$KIT_BASE`, then guard again.
+
+```bash
+MAIN="$(git rev-parse --show-toplevel)"
+git worktree add --detach "$MAIN/.aeom/worktrees/$RUN-base" $KIT_BASE
+(cd "$MAIN/.aeom/worktrees/$RUN-base" && aeom journey --journeys "$MAIN/.aeom/journeys" --out "$MAIN/.aeom/runs/$RUN/journeys-before")
+git worktree remove "$MAIN/.aeom/worktrees/$RUN-base"
+```
+
+The app starts from that worktree with its own start command; install its dependencies there first if it needs any.
 
 For every page that is not `better`, put its files back as they were before the screen wave (`git checkout $WAVE_BASE -- <the page's files>`) and commit. Such a page still renders through the new kit, so it is neither the page before the run nor the page after the wave: capture, check and judge again, snapshot to `.aeom/runs/$RUN/after-revert`, and compare that with `before`. Say which pages were put back, why, and how they now compare. If the kit itself made a page worse, say so: putting the page back cannot undo the kit.
 

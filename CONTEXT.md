@@ -10,6 +10,7 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 - **Fake data** (données fictives): the data AEOM runs the project on. AEOM never reads or writes production data.
 - **Capture** (capture): a screenshot of one screen, in one state, at one width.
 - **Product sheet** (fiche produit): `.aeom/product.md`, what AEOM understood of the project on its own: what it is for, who uses it, its main loop and three to five key journeys. The user corrects it; AEOM keeps their corrections.
+- **Feature guard** (garde-fou): `aeom guard`, which refuses a change that adds a feature instead of fixing a journey: a server call the app never made, new fields sent to one, or a change to a file listed as `protected`. Only the user's explicit request lets one through.
 - **Journey** (parcours): what a user does to reach one goal, as numbered steps across screens, such as "see my orders". Named by the goal, never by a screen.
 
 ## Judging

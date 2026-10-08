@@ -9,6 +9,8 @@ export interface ProjectConfig {
   reset?: string;
   /** How to sign in with a fake account: the sign-in route, a JSON file of the account's fields by label, the button's name. */
   login?: { path: string; account: string; submit: string };
+  /** The files that hold the app's data or logic, as globs: a change to one is a feature, refused by aeom guard. */
+  protected?: string[];
 }
 
 /** `.aeom/config.json` exists but cannot be used. */
@@ -37,6 +39,12 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
     if (value === undefined) continue;
     if (typeof value !== "string" || !value.trim()) throw new ConfigError(`${file}: "${key}" must be a non-empty string.`);
     config[key] = value;
+  }
+  const guarded = (parsed as Record<string, unknown>).protected;
+  if (guarded !== undefined) {
+    if (!Array.isArray(guarded) || guarded.some((g) => typeof g !== "string" || !g.trim())) throw new ConfigError(`${file}: "protected" must list globs, such as ["src/lib/db/**", "src/app/api/**"].`);
+    // A glob is matched against whole paths: stray spaces around it would make it match nothing.
+    config.protected = (guarded as string[]).map((g) => g.trim());
   }
   const login = (parsed as Record<string, unknown>).login;
   if (login !== undefined) {
