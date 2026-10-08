@@ -197,12 +197,27 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     if (response.request().isNavigationRequest() && response.frame() === page.mainFrame()) status = response.status();
   });
   const calls = new Map<string, ServerCall>();
-  page.on("request", (request) => {
+  const record = (call: ServerCall) => calls.set(JSON.stringify(call), call);
+  // Every page of the context, so a tab the journey opens counts too.
+  page.context().on("request", (request) => {
     const target = new URL(request.url());
     const sent = ["fetch", "xhr"].includes(request.resourceType()) || (request.isNavigationRequest() && request.method() !== "GET");
     if (target.origin !== origin || !sent) return;
-    const call: ServerCall = { method: request.method(), path: target.pathname, query: [...new Set(target.searchParams.keys())].sort(), fields: fieldNames(request.postData()) };
-    calls.set(JSON.stringify(call), call);
+    record({ method: request.method(), path: target.pathname, query: [...new Set(target.searchParams.keys())].sort(), fields: fieldNames(request.postData()) });
+  });
+  // A form sent with GET is a navigation like any link: the page says when one leaves, with its fields' names, never their values.
+  await page.context().exposeBinding("__aeomFormSent", (_source, sent: { action: string; fields: string[] }) => {
+    const target = new URL(sent.action);
+    if (target.origin === origin) record({ method: "GET", path: target.pathname, query: [...new Set([...target.searchParams.keys(), ...sent.fields])].sort(), fields: [] });
+  });
+  await page.context().addInitScript(() => {
+    // On the window, after the page's own handlers: a form the page sends itself is a fetch, already seen.
+    window.addEventListener("submit", (event) => {
+      const form = event.target as HTMLFormElement;
+      if (event.defaultPrevented || form.method.toLowerCase() !== "get") return;
+      const fields = [...new FormData(form, (event as SubmitEvent).submitter).keys()];
+      (window as unknown as { __aeomFormSent: (sent: { action: string; fields: string[] }) => void }).__aeomFormSent({ action: form.action, fields });
+    });
   });
   page.on("dialog", (dialog) => {
     dialogs.push(hide(dialog.message()));

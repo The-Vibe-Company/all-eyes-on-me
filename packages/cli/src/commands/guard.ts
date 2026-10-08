@@ -75,6 +75,8 @@ export async function runGuard(argv: string[]): Promise<number> {
     console.log(`\nRefused: ${refused.length === 1 ? "this is" : "these are"} a feature, and AEOM changes navigation, copy and states only. Undo it, or, if the user asked for it explicitly, run again with --feature and --allow.`);
     return 1;
   }
-  console.log(`${allowed.length ? "\n" : ""}No feature added${allowed.length ? " beyond what was asked" : ""}: every call was made before${values.base ? ", and no protected file changed" : ""}.`);
+  // What was let through is a call or a file that changed: say only what holds for everything else.
+  if (allowed.length) console.log(`\nNothing else: every other call was made before${values.base ? ", and no other protected file changed" : ""}.`);
+  else console.log(`No feature added: every call was made before${values.base ? ", and no protected file changed" : ""}.`);
   return 0;
 }

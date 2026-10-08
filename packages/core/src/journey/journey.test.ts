@@ -22,6 +22,10 @@ function shop(): Server {
     "/contact": () => page(`<label>Email <input name="email"></label><button onclick="alert('Envoyé')">Envoyer</button>`),
     "/login": () => page(`<form method="post" action="/login"><label>Email <input name="email"></label><label>Password <input name="password" type="password"></label><button>Sign in</button></form>`),
     "/account": () => page(`<h1>My account</h1>`),
+    "/search": () =>
+      page(`<button onclick="window.open('/pop')">Open the stock</button><form action="/results" method="get"><label>Query <input name="q"></label><button>Search</button></form><a href="/results?page=2">Next</a>`),
+    "/results": () => page(`<p>Results</p>`),
+    "/pop": () => page(`<p>Stock</p><script>fetch('/stock?item=1')</script>`),
     "/check": () => page(`<label>Email <input name="email"></label><button onclick="alert('No account for ' + document.querySelector('input').value)">Check</button>`),
     "/slow-login": () =>
       page(`<label>Email <input name="email"></label><button onclick="setTimeout(() => { document.cookie = 'session=ok; path=/'; location.href = '/account'; }, 6000)">Sign in</button>`),
@@ -40,12 +44,12 @@ function shop(): Server {
     }
     if (req.url === "/add" && req.method === "POST") basket++;
     if (req.url === "/__reset") basket = 0;
-    if (req.url === "/add" || req.url === "/__reset") return res.end("ok");
+    if (req.url === "/add" || req.url === "/__reset" || req.url?.startsWith("/stock")) return res.end("ok");
     if (req.url === "/help") {
       res.writeHead(500, { "content-type": "text/plain" });
       return res.end("Internal Server Error");
     }
-    const render = pages[req.url ?? "/"];
+    const render = pages[(req.url ?? "/").split("?")[0]!];
     res.writeHead(render ? 200 : 404, { "content-type": "text/html; charset=utf-8" });
     res.end(render ? render() : "Not Found");
   });
@@ -165,6 +169,29 @@ describe("replaying journeys", () => {
     assert.equal(signing!.broken, null, "and signs in with the account's values");
     assert.deepEqual(signing!.calls, [{ method: "POST", path: "/login", query: [], fields: ["email", "password"] }], "the form sent is recorded by its fields' names");
     assert.doesNotMatch(readFileSync(join(out("signed-in"), "report.json"), "utf8"), /fake-secret-123|ana@example\.test/);
+  });
+
+  test("a form sent with GET is a call, by its fields' names; a link with a query is not; a tab the journey opens counts too", async () => {
+    const search: Journey = {
+      slug: "search",
+      name: "Search",
+      steps: [
+        { do: "open", path: "/search" },
+        { do: "click", target: { role: "button", name: "Open the stock" } },
+        { do: "fill", target: { text: "Query" }, value: "lampe" },
+        { do: "click", target: { role: "button", name: "Search" }, lands: "/results" },
+        { do: "open", path: "/search" },
+        { do: "click", target: { role: "link", name: "Next" }, lands: "/results?page=2" },
+      ],
+    };
+    const run = (await replayJourneys({ url, journeys: [search], outDir: out("calls"), widths: [1280] })).journeys[0]!.runs[0]!;
+    assert.equal(run.broken, null);
+    const calls = [...run.calls].sort((a, b) => a.path.localeCompare(b.path));
+    assert.deepEqual(calls, [
+      { method: "GET", path: "/results", query: ["q"], fields: [] },
+      { method: "GET", path: "/stock", query: ["item"], fields: [] },
+    ]);
+    assert.doesNotMatch(readFileSync(join(out("calls"), "report.json"), "utf8"), /lampe/);
   });
 
   test("a dialog that quotes a value of the account is recorded with the value hidden", async () => {

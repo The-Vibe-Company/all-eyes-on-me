@@ -39,7 +39,8 @@ before(async () => {
   await writeFile(join(dir, "page.html"), "<a href='/orders'>Voir mes commandes</a>\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
-  const replays: [string, { method: string; path: string; fields?: string[] }[]][] = [["before", []], ["same", []], ["feature", [{ method: "POST", path: "/api/panier", fields: ["item"] }]]];
+  const panier = { method: "POST", path: "/api/panier", fields: ["item"] };
+  const replays: [string, { method: string; path: string; fields?: string[] }[]][] = [["before", []], ["same", []], ["feature", [panier]], ["feature-and-more", [panier, { method: "DELETE", path: "/api/compte" }]]];
   for (const [name, calls] of replays) {
     await mkdir(join(dir, name));
     await writeFile(join(dir, name, "report.json"), JSON.stringify(report(calls)));
@@ -78,6 +79,13 @@ test("an explicit request lets through what it needs, and only with the user's w
     const asked = await run(["guard", "before", "feature", "--base", "HEAD", "--feature", "Un vrai panier, quand on clique Ajouter", "--allow", "POST /api/panier", "--allow", "server.mjs"]);
     assert.equal(asked.code, 0, asked.out);
     assert.match(asked.out, /✓ POST \/api\/panier\s+let through for the feature asked: "Un vrai panier, quand on clique Ajouter"/);
+    assert.match(asked.out, /Nothing else: every other call was made before, and no other protected file changed/);
+    assert.doesNotMatch(asked.out, /No feature added/, "a feature was added: the one asked");
+    // The request lets through what it names, and only that.
+    const more = await run(["guard", "before", "feature-and-more", "--base", "HEAD", "--feature", "Un vrai panier, quand on clique Ajouter", "--allow", "POST /api/panier", "--allow", "server.mjs"]);
+    assert.equal(more.code, 1);
+    assert.match(more.out, /✓ POST \/api\/panier/);
+    assert.match(more.out, /✗ DELETE \/api\/compte\s+a call the app did not make before/);
   } finally {
     execFileSync("git", ["checkout", "--", "server.mjs"], { cwd: dir });
   }
