@@ -33,7 +33,7 @@ async function readReport<T>(file: string, problems: string[]): Promise<T | unde
 }
 
 const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir>
-       aeom compare --journeys <before-dir> <after-dir> [--duels <dir>] [--base <ref>]
+       aeom compare --journeys <before-dir> <after-dir> [--duels <dir>] [--base <ref>] [--known <dir>]
 
 Compares two snapshots page by page: what fails before and after (checks + principles).
 Writes compare.json in <after-dir>.
@@ -49,13 +49,15 @@ Options:
   --journeys           Compare journeys, not pages
   --duels <dir>        The judges' duel votes (default <after-dir>/duels)
   --base <ref>         The commit the change started from, for the guard
+  --known <dir>        A replay of the new journey files on the app at --base:
+                       the calls it made count as made before, for the guard
   --voters <n>         How many duel votes to expect (default 3)`;
 
 export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || positionals.length !== 2) {
     console.log(COMPARE_HELP);
@@ -90,7 +92,11 @@ export async function runCompare(argv: string[]): Promise<number> {
   return 0;
 }
 
-async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; base?: string; voters: string }): Promise<number> {
+async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; base?: string; known?: string; voters: string }): Promise<number> {
+  if (values.known !== undefined && !values.known.trim()) {
+    console.error(`--known cannot be empty: give the folder of a replay of the new journey files on the app at --base.`);
+    return 1;
+  }
   // No judge cannot prefer anything: every journey would come back for a reason nobody gave.
   const voters = Number(values.voters);
   if (!Number.isInteger(voters) || voters < 1) {
@@ -107,6 +113,12 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
   const after = await readReport<JourneyReport>(join(afterDir, "report.json"), problems);
   const beforeVerdict = await readReport<JudgeReport>(join(beforeDir, "judge-journeys.json"), problems);
   const afterVerdict = await readReport<JudgeReport>(join(afterDir, "judge-journeys.json"), problems);
+  // The new path can reach a screen whose call the app always made: a replay of the new files on the old app says which.
+  const known = values.known === undefined ? null : await readReport<JourneyReport>(join(values.known, "report.json"), problems);
+  if (known) {
+    const problem = problemWith(known);
+    if (problem) problems.push(`${join(values.known!, "report.json")}: ${problem}`);
+  }
   // The guard's own check: each replay lists its journeys and the calls each made.
   for (const [dir, report] of [[beforeDir, before], [afterDir, after]] as const) {
     const problem = report && problemWith(report);
@@ -160,7 +172,9 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
       return 1;
     }
   }
-  const guard = guardJourneys({ before, after, changed, protectedFiles });
+  // Only the guard reads the known calls: the duels and the steps still compare the old journey with the new one.
+  const callsBefore = known ? { ...before, journeys: [...before.journeys, ...known.journeys] } : before;
+  const guard = guardJourneys({ before: callsBefore, after, changed, protectedFiles });
   const verdicts = ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard });
   await writeFile(join(afterDir, "ratchet.json"), JSON.stringify(verdicts, null, 2) + "\n");
 

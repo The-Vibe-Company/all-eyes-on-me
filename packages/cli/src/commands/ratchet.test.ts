@@ -99,3 +99,21 @@ test("a duel vote file that is not a vote is refused, not counted", async () => 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a call the new path makes is known when a replay of the new files on the old app made it too", async () => {
+  const dir = await ratchetDir();
+  try {
+    const after = replay({ orders: 3, contact: 5 });
+    after.journeys[0]!.runs[0]!.calls = [{ method: "GET", path: "/api/orders", query: [], fields: [] }] as never;
+    await writeFile(join(dir, "after", "report.json"), JSON.stringify(after));
+    const refused = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.match(refused.out, /✗ See my orders\s+back\s+.*the guard refuses GET \/api\/orders/);
+    await mkdir(join(dir, "known"));
+    await writeFile(join(dir, "known", "report.json"), JSON.stringify(after));
+    const known = await run(dir, ["compare", "--journeys", "before", "after", "--known", "known"]);
+    assert.equal(known.code, 0, known.out);
+    assert.match(known.out, /✓ See my orders\s+kept/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
