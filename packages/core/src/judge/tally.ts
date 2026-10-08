@@ -20,6 +20,8 @@ export interface PrincipleVerdict {
   votes: string;
   /** The reasons given by the voters on the winning side. */
   reasons: string[];
+  /** The reasons given by the voters on the losing side, so a split call keeps its dissent. */
+  dissent: string[];
 }
 
 export interface JudgeReport {
@@ -80,12 +82,12 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
       const cast = votes.map((vote) => vote.pages[page]![id]!);
       const fails = cast.filter((v) => !v.pass);
       const pass = cast.length - fails.length > fails.length;
-      const winners = pass ? cast.filter((v) => v.pass) : fails;
       return {
         principle: id,
         pass,
         votes: pass ? `${cast.length - fails.length}/${cast.length} pass` : `${fails.length}/${cast.length} fail`,
-        reasons: winners.map((v) => v.reason),
+        reasons: cast.filter((v) => v.pass === pass).map((v) => v.reason),
+        dissent: cast.filter((v) => v.pass !== pass).map((v) => v.reason),
       };
     }),
   }));

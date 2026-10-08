@@ -13,6 +13,29 @@ for (const plate of document.querySelectorAll("[data-compare]")) {
   move();
 }
 
+// Copies text with the Clipboard API, which needs a secure page and the
+// permission, or else with the older copy command. Says whether it worked.
+async function copy(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.cssText = "position: fixed; top: 0; left: 0; opacity: 0;";
+    document.body.append(area);
+    area.select();
+    try {
+      return document.execCommand("copy");
+    } catch {
+      return false;
+    } finally {
+      area.remove();
+    }
+  }
+}
+
 // A code block that can be copied in one click, its lines joined as typed.
 for (const block of document.querySelectorAll("[data-copy]")) {
   const head = block.querySelector(".film__head");
@@ -23,14 +46,30 @@ for (const block of document.querySelectorAll("[data-copy]")) {
   button.className = "copy";
   button.textContent = "Copy";
   button.addEventListener("click", async () => {
-    const lines = [...pre.querySelectorAll(".ln")].map((line) => line.textContent);
-    try {
-      await navigator.clipboard.writeText(lines.join("\n"));
+    const text = [...pre.querySelectorAll(".ln")].map((line) => line.textContent).join("\n");
+    if (await copy(text)) {
       button.textContent = "Copied";
-    } catch {
+      setTimeout(() => (button.textContent = "Copy"), 1800);
+    } else {
+      // Nothing was copied: say so until the next click, with the code selected.
+      getSelection()?.selectAllChildren(pre);
       button.textContent = "Select to copy";
     }
-    setTimeout(() => (button.textContent = "Copy"), 1800);
   });
   head.append(button);
+}
+
+// The star count next to "Star on GitHub", when the site knows it.
+// /api/stars always answers; without a number the button stays as it is.
+for (const count of document.querySelectorAll("[data-stars]")) {
+  fetch("/api/stars")
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => {
+      if (!Number.isInteger(data?.stars)) return;
+      count.textContent = data.stars.toLocaleString("en");
+      count.hidden = false;
+      const link = count.closest("a");
+      if (link) link.setAttribute("aria-label", `${link.firstChild.textContent.trim()}, ${count.textContent} ${data.stars === 1 ? "star" : "stars"}`);
+    })
+    .catch(() => {});
 }

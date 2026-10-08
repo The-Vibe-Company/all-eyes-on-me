@@ -32,7 +32,7 @@ test("the roadmap, on the page and in the README, puts the UX layer right after 
 });
 
 test("the page links to the repository to star it", () => {
-  assert.match(page, /<a [^>]*href="https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me"[^>]*>Star on GitHub<\/a>/);
+  assert.match(page, /<a [^>]*href="https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me"[^>]*>Star on GitHub(?:<span [^>]*data-stars[^>]*><\/span>)?<\/a>/);
 });
 
 async function withSite(run) {

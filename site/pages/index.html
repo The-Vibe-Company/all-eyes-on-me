@@ -18,7 +18,7 @@
     <p class="lede">A fleet of agents rebuilds your app's frontend in parallel, judges every screen, and keeps only what got better.</p>
     <p>Coding agents can build a backend on their own, because tests tell them when they got it right. The frontend has no such oracle, so agents improvise: generic screens, a different header on every page, buttons that do not look clickable.</p>
     <p>All Eyes On Me gives the frontend that oracle.</p>
-    <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub</a> <a class="btn" href="#try">Try it from source</a></p>
+    <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it from source</a></p>
   </div>
 
   <figure class="plate" data-compare aria-labelledby="fig-1">
@@ -145,7 +145,7 @@
         <span class="plate__divider" aria-hidden="true"></span>
       </div>
     </div>
-    <div class="plate__under">
+    <figcaption class="plate__under">
       <label class="compare">
         <span class="compare__end" aria-hidden="true">Visible</span>
         <input class="compare__input" type="range" min="0" max="100" value="50" step="1" aria-label="Move the line between the visible-light view and the infrared view">
@@ -156,13 +156,13 @@
         <div class="target__colour"><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="target__scale"><span>0</span><span>640</span><span>1280 px</span></div>
       </div>
-      <figcaption id="fig-1">One screen in visible light and in infrared. The surface looks finished; underneath, the marks show what an agent improvised.</figcaption>
+      <p id="fig-1" class="plate__caption">One screen in visible light and in infrared. The surface looks finished; underneath, the marks show what an agent improvised.</p>
       <ol class="notes">
         <li><span class="notes__ref">C1&ndash;D1</span> A different header on every page.</li>
         <li><span class="notes__ref">A2</span> A button that does not look clickable.</li>
         <li><span class="notes__ref">B3&ndash;C3</span> A generic screen, off its own grid.</li>
       </ol>
-    </div>
+    </figcaption>
   </figure>
 
   <dl class="record">

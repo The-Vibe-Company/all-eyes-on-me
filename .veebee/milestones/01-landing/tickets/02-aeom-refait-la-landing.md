@@ -15,10 +15,10 @@ Il ouvre la landing et voit une page conçue par AEOM, pas par un humain.
 La landing refaite dans la direction gagnante du tournoi, avec le même contenu que la V0.
 
 ## C'est fini quand
-- [ ] 6 directions construites en vrai code sur la landing, à partir de sources du monde de ceux qui font du front, aucune dans la liste noire
-- [ ] La planche des 6 et le tableau du tournoi (votes et raisons) sont gardés dans le repo
-- [ ] La gagnante devient la landing : les 4 contrôles passent à 390 et 1280 px
-- [ ] La page avant et après est capturée et gardée
+- [x] 6 directions construites en vrai code sur la landing, à partir de sources du monde de ceux qui font du front, aucune dans la liste noire
+- [x] La planche des 6 et le tableau du tournoi (votes et raisons) sont gardés dans le repo
+- [x] La gagnante devient la landing : les 4 contrôles passent à 390 et 1280 px
+- [x] La page avant et après est capturée et gardée
 
 ## Comment
 - `/aeom --directions` sur `site/`, en suivant `skills/aeom/SKILL.md` et `skills/aeom/directions.md`.

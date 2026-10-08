@@ -370,6 +370,17 @@ h2 {
   color: #fff;
 }
 
+/* A count inside a button, set off by a hairline: the repository's stars */
+.btn__count {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  font: 500 0.875rem/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn__count[hidden] { display: none; }
+
 /* Hero */
 
 .hero {
@@ -562,7 +573,8 @@ h2 {
   text-anchor: middle;
 }
 
-/* Under the plate: the comparison control, the target, the caption, the notes */
+/* Under the plate, all in its figcaption: the comparison control, the target,
+   the caption, the notes */
 
 .plate__under { padding-left: 22px; }
 
@@ -580,7 +592,7 @@ h2 {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 32px;
+  height: 44px;
   margin: 0;
   background: transparent;
   cursor: pointer;
@@ -667,7 +679,7 @@ h2 {
   padding-bottom: 10px;
 }
 
-.plate figcaption {
+.plate__caption {
   margin-top: 16px;
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -1128,15 +1140,15 @@ h2 {
 /* The rest of a command, after its line continuation: no prompt */
 .film .ln--more::before { content: none; }
 
+/* The kit's outlined button, on the code plate's dark ground */
 .copy {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--xr-dim);
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--xr-ink);
   border-radius: 2px;
   background: transparent;
   color: var(--xr-ink);
-  font: 600 0.75rem/1 var(--mono);
-  letter-spacing: 0.04em;
+  font: 600 0.875rem/1 var(--sans);
   cursor: pointer;
 }
 
