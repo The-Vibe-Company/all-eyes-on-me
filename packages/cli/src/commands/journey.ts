@@ -1,6 +1,7 @@
-import { relative } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, JourneyError, loadConfig, loadJourneys, replayJourneys } from "@aeom/core";
+import { ConfigError, JourneyError, loadConfig, loadJourneys, planJourneyWave, replayJourneys, type JourneyReport } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
@@ -14,17 +15,21 @@ ${APP_OPTIONS_HELP}
   --out <dir>          Where to write the captures, sheets and report.json
                        (default .aeom/captures/journeys)
   --reset "<command>"  Put the app's data back as it was before each journey
-                       (default: reset in .aeom/config.json)`;
+                       (default: reset in .aeom/config.json)
+  --plan               Replay nothing: from the last replay in --out, say which
+                       screens several journeys cross (one worker, first) and
+                       which belong to one journey (its own worker)`;
 
 export async function runJourney(argv: string[]): Promise<number> {
   const parsed = parseArgs({
     args: argv,
-    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" } },
+    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" }, plan: { type: "boolean" } },
   }).values;
   if (parsed.help) {
     console.log(JOURNEY_HELP);
     return 0;
   }
+  if (parsed.plan) return printPlan(parsed.out);
   if (parsed.url !== undefined && !parsed.url.trim()) {
     console.error(`--url cannot be empty.`);
     return 1;
@@ -85,4 +90,19 @@ export async function runJourney(argv: string[]): Promise<number> {
     if (broken) console.log(`${plural(broken, "replay")} broke.`);
     return broken ? 1 : 0;
   });
+}
+
+/** Prints who rebuilds which screens, from the last replay. */
+async function printPlan(out: string): Promise<number> {
+  let report: JourneyReport;
+  try {
+    report = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
+  } catch {
+    console.error(`No replayed journeys in ${out}. Run aeom journey first.`);
+    return 1;
+  }
+  const wave = planJourneyWave(report);
+  console.log(`Shared, one worker first, with the navigation: ${wave.shared.join(", ") || "no screen"}`);
+  for (const journey of report.journeys) console.log(`${journey.name}: ${wave.own[journey.slug]!.join(", ") || "no screen of its own"}`);
+  return 0;
 }

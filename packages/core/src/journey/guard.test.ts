@@ -52,3 +52,21 @@ test("globs cross folders with ** and stay in one with *", () => {
   assert.ok(!globToRegExp("src/*.ts").test("src/lib/x.ts"));
   assert.ok(globToRegExp("scripts/add-*.ts").test("scripts/add-guardian.ts"));
 });
+
+test("screens several journeys cross go to one worker, the rest to their own journey", async () => {
+  const { planJourneyWave } = await import("./index.js");
+  const run = (screens: string[]) => ({ width: 1280, steps: [], calls: [], screens, counts: { steps: 0, screens: 0, back: 0 }, broken: null, sheet: "" });
+  const wave = planJourneyWave({
+    url: "http://x",
+    replayedAt: "",
+    widths: [390, 1280],
+    warnings: [],
+    journeys: [
+      { slug: "orders", name: "See my orders", runs: [run(["/", "/produits", "/commandes"]), run(["/", "/commandes"])] },
+      { slug: "contact", name: "Contact", runs: [run(["/", "/contact"])] },
+      { slug: "sign-in", name: "Sign in", runs: [run(["/", "/connexion", "/commandes"])] },
+    ],
+  });
+  assert.deepEqual(wave.shared, ["/", "/commandes"]);
+  assert.deepEqual(wave.own, { orders: ["/produits"], contact: ["/contact"], "sign-in": ["/connexion"] });
+});

@@ -50,6 +50,9 @@ test("aeom journey replays the journeys in .aeom/journeys and names each one's s
   assert.match(out, /✓ See my orders\s+390 px\s+2 steps, 2 screens, 0 back/);
   assert.match(out, /\.aeom\/captures\/journeys\/see-my-orders@390\.png/);
   assert.match(out, /No reset command/);
+  const plan = await run(dir, ["journey", "--plan"]);
+  assert.equal(plan.code, 0, plan.out);
+  assert.match(plan.out, /Shared, one worker first, with the navigation: no screen\nSee my orders: \/, \/orders/);
 });
 
 test("a journey that breaks makes aeom journey fail, and says at which step and why", async () => {
