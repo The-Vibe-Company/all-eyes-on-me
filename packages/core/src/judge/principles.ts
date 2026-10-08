@@ -9,6 +9,9 @@ export interface Principle {
 /** `principles/base.md` at the root of the AEOM repository. */
 export const DEFAULT_PRINCIPLES_FILE = fileURLToPath(new URL("../../../../principles/base.md", import.meta.url));
 
+/** `principles/journeys.md`: what the judge asks of each key journey. */
+export const JOURNEY_PRINCIPLES_FILE = fileURLToPath(new URL("../../../../principles/journeys.md", import.meta.url));
+
 /** Reads the principles of a file: every line shaped `- \`id\` — what it asks for`. */
 export async function loadPrinciples(file: string = DEFAULT_PRINCIPLES_FILE): Promise<Principle[]> {
   const text = await readFile(file, "utf8");

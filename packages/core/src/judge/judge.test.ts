@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { DEFAULT_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, type Vote } from "./index.js";
+import { DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, type Vote } from "./index.js";
 
 const refuses = (fn: () => unknown, pattern: RegExp) =>
   assert.throws(fn, (error: unknown) => error instanceof JudgeVoteError && pattern.test(error.message));
@@ -151,4 +151,23 @@ test("principles files with Windows line endings load, and indented list items a
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("the journey principles are plain text too, one id per principle", async () => {
+  const loaded = await loadPrinciples(JOURNEY_PRINCIPLES_FILE);
+  assert.ok(loaded.length >= 6);
+  for (const id of ["clear-start", "next-step", "result-shown", "no-dead-end", "short", "same-words"]) assert.ok(loaded.some((p) => p.id === id), id);
+});
+
+test("a journey's verdict keeps the steps the winning side pointed at", () => {
+  const journeys = ["see-my-orders"];
+  const ps = [{ id: "result-shown", text: "The outcome is shown." }];
+  const v = (voter: string, pass: boolean, step?: number): Vote => ({ voter, pages: { "see-my-orders": { "result-shown": { pass, reason: `${voter} says`, ...(step !== undefined ? { step } : {}) } } } });
+  const verdict = tally([v("1", false, 3), v("2", false, 2), v("3", true, 1)], journeys, ps).pages[0]!.verdicts[0]!;
+  assert.equal(verdict.pass, false);
+  assert.deepEqual(verdict.steps, [2, 3]);
+  refuses(() => tally([v("1", false, 0), v("2", false, 2), v("3", true)], journeys, ps), /the step for result-shown must be a step number/);
+  // A journey's failure points at a step, or nobody can see where it shows; a page vote has no step.
+  refuses(() => tally([v("1", false), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }), /voter 1, see-my-orders: no step for result-shown/);
+  assert.equal(tally([v("1", false, 3), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }).pages[0]!.verdicts[0]!.pass, false, "a passing verdict needs no step");
 });
