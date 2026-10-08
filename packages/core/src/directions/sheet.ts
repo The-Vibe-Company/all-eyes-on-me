@@ -51,12 +51,15 @@ export async function contactSheet({ out, items, columns = 3, cellWidth = 640, b
   const html = await sheetHtml(items, columns, cellWidth);
   // A browser already open renders the sheet in a page of its own; otherwise one is launched and closed.
   const browser = open ?? (await chromium.launch());
-  const page = await browser.newPage({ viewport: { width: columns * cellWidth + (columns - 1) * 24 + 48, height: 600 } });
   try {
-    await page.setContent(html);
-    await page.screenshot({ path: out, fullPage: true });
+    const page = await browser.newPage({ viewport: { width: columns * cellWidth + (columns - 1) * 24 + 48, height: 600 } });
+    try {
+      await page.setContent(html);
+      await page.screenshot({ path: out, fullPage: true });
+    } finally {
+      await page.close();
+    }
   } finally {
-    await page.close();
     if (!open) await browser.close();
   }
 }
