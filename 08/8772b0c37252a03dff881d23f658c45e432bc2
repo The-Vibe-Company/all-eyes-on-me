@@ -1,0 +1,29 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_64fb7ca66c2ed1 91,99
+packages/core/src/journey/journey.test.ts
+  s_4ce34ec42d9105::t_64fb7ca66c2ed1 49,182-200
+  s_4ce34ec42d9105::t_cfd390d0736872 201-203
+packages/core/src/directions/sheet.ts
+  s_4ce34ec42d9105::t_64fb7ca66c2ed1 55-61
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_64fb7ca66c2ed1 32-39
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_64fb7ca66c2ed1 81-82,90-103,114-117,120,134,143-144,155-156,177-178,184-185,189,215-216,234
+  s_4ce34ec42d9105::t_13a7196673db82 5,104-113,158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "088772b0c37252a03dff881d23f658c45e432bc2",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
