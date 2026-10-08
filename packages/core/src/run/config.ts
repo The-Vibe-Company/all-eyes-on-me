@@ -43,7 +43,8 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
   const guarded = (parsed as Record<string, unknown>).protected;
   if (guarded !== undefined) {
     if (!Array.isArray(guarded) || guarded.some((g) => typeof g !== "string" || !g.trim())) throw new ConfigError(`${file}: "protected" must list globs, such as ["src/lib/db/**", "src/app/api/**"].`);
-    config.protected = guarded as string[];
+    // A glob is matched against whole paths: stray spaces around it would make it match nothing.
+    config.protected = (guarded as string[]).map((g) => g.trim());
   }
   const login = (parsed as Record<string, unknown>).login;
   if (login !== undefined) {
