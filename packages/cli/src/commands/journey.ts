@@ -1,6 +1,6 @@
 import { relative } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, JourneyError, loadConfig, loadJourneys, replayJourneys } from "@aeom/core";
+import { ConfigError, JourneyError, loadConfig, loadJourneys, ReplayError, replayJourneys, type JourneyReport } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
@@ -62,7 +62,14 @@ export async function runJourney(argv: string[]): Promise<number> {
   return withApp({ ...values, url }, async () => {
     const session = await signInFromConfig(url);
     if (session === "failed") return 1;
-    const report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}) });
+    let report: JourneyReport;
+    try {
+      report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}) });
+    } catch (error) {
+      if (!(error instanceof ReplayError)) throw error;
+      console.error(error.message);
+      return 1;
+    }
     const out = relative(process.cwd(), values.out) || ".";
     const column = Math.max(...report.journeys.map((j) => j.name.length)) + 2;
     let broken = 0;
