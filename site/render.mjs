@@ -7,10 +7,26 @@ export const TYPES = { ".css": "text/css; charset=utf-8", ".js": "text/javascrip
 
 export const read = (path) => readFile(new URL(path, import.meta.url));
 
-export async function renderPage(file) {
-  let html = String(await read(`./pages/${file}`));
+/** A partial's HTML; a partial that does not exist leaves a comment saying so. */
+async function partial(name) {
+  try {
+    return String(await read(`./shared/${name}.html`));
+  } catch (error) {
+    if (error?.code === "ENOENT") return `<!-- missing partial: ${name} -->`;
+    throw error;
+  }
+}
+
+/** Puts each partial where the HTML writes <!-- include: <name> -->. */
+export async function insertPartials(html, partialFor = partial) {
   for (const [marker, name] of [...html.matchAll(/<!-- include: ([a-z0-9-]+) -->/g)]) {
-    html = html.replace(marker, await read(`./shared/${name}.html`).then(String, () => `<!-- missing partial: ${name} -->`));
+    const text = await partialFor(name);
+    // A function, so a "$&" or "$'" in the partial is kept as written.
+    html = html.replace(marker, () => text);
   }
   return html;
+}
+
+export async function renderPage(file) {
+  return insertPartials(String(await read(`./pages/${file}`)));
 }
