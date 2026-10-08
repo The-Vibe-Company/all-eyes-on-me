@@ -1,0 +1,21 @@
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_df762b9d69cdcd 26-27
+packages/cli/src/commands/guard.test.ts
+  s_4ce34ec42d9105::t_df762b9d69cdcd 89-99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "57e0cd6deefaf1f20e408419960e74c13d7444e3",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
