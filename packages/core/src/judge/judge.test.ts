@@ -155,8 +155,8 @@ test("principles files with Windows line endings load, and indented list items a
 
 test("the journey principles are plain text too, one id per principle", async () => {
   const loaded = await loadPrinciples(JOURNEY_PRINCIPLES_FILE);
-  assert.ok(loaded.length >= 5);
-  for (const id of ["clear-start", "next-step", "result-shown", "no-dead-end", "short"]) assert.ok(loaded.some((p) => p.id === id), id);
+  assert.ok(loaded.length >= 6);
+  for (const id of ["clear-start", "next-step", "result-shown", "no-dead-end", "short", "same-words"]) assert.ok(loaded.some((p) => p.id === id), id);
 });
 
 test("a journey's verdict keeps the steps the winning side pointed at", () => {
@@ -167,4 +167,7 @@ test("a journey's verdict keeps the steps the winning side pointed at", () => {
   assert.equal(verdict.pass, false);
   assert.deepEqual(verdict.steps, [2, 3]);
   refuses(() => tally([v("1", false, 0), v("2", false, 2), v("3", true)], journeys, ps), /the step for result-shown must be a step number/);
+  // A journey's failure points at a step, or nobody can see where it shows; a page vote has no step.
+  refuses(() => tally([v("1", false), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }), /voter 1, see-my-orders: no step for result-shown/);
+  assert.equal(tally([v("1", false, 3), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }).pages[0]!.verdicts[0]!.pass, false, "a passing verdict needs no step");
 });
