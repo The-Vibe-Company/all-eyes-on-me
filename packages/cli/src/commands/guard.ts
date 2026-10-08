@@ -23,7 +23,8 @@ const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout 
 
 export async function changedSince(base: string): Promise<string[]> {
   const lines = async (args: string[]) => (await git(args)).split("\n").filter(Boolean);
-  return [...new Set([...(await lines(["diff", "--name-only", base])), ...(await lines(["ls-files", "--others", "--exclude-standard"]))])];
+  // Without rename detection, a moved file shows as its old path deleted and its new path added: both are checked.
+  return [...new Set([...(await lines(["diff", "--name-only", "--no-renames", base])), ...(await lines(["ls-files", "--others", "--exclude-standard"]))])];
 }
 
 /** The protected globs of the config as it was at the base: a change cannot unprotect a file and then change it. */
