@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
+import { chromium } from "playwright";
+import { signIn } from "../capture/index.js";
 import { JourneyError, loadJourneys, replayJourneys, type Journey } from "./index.js";
 
 /** A small shop that remembers its basket until /__reset. */
@@ -18,8 +20,21 @@ function shop(): Server {
         <tr><td>Chaise</td><td><button>Ajouter</button></td></tr></table><a href="/">Accueil</a>`),
     "/basket": () => page(`<p>${basket} article${basket > 1 ? "s" : ""}</p><a href="/products">Produits</a>`),
     "/contact": () => page(`<label>Email <input name="email"></label><button onclick="alert('Envoyé')">Envoyer</button>`),
+    "/login": () => page(`<form method="post" action="/login"><label>Email <input name="email"></label><label>Password <input name="password" type="password"></label><button>Sign in</button></form>`),
+    "/account": () => page(`<h1>My account</h1>`),
   };
-  return createServer((req, res) => {
+  return createServer(async (req, res) => {
+    if (req.url === "/login" && req.method === "POST") {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      const ok = body === "email=ana%40example.test&password=fake-secret-123";
+      res.writeHead(303, ok ? { location: "/account", "set-cookie": "session=ok; Path=/" } : { location: "/login" });
+      return res.end();
+    }
+    if (req.url === "/account" && !(req.headers.cookie ?? "").includes("session=ok")) {
+      res.writeHead(303, { location: "/login" });
+      return res.end();
+    }
     if (req.url === "/add" && req.method === "POST") basket++;
     if (req.url === "/__reset") basket = 0;
     if (req.url === "/add" || req.url === "/__reset") return res.end("ok");
@@ -121,6 +136,30 @@ describe("replaying journeys", () => {
       assert.equal(report.journeys[0]!.runs[0]!.broken, null, `replay ${i + 1} sees "1 article"`);
       assert.equal(report.warnings.length, 0);
     }
+  });
+
+  test("journeys start signed in, except one marked signedOut, which can sign in with the account's values", async () => {
+    const account = { Email: "ana@example.test", Password: "fake-secret-123" };
+    const browser = await chromium.launch();
+    const signedIn = await signIn(browser, url, { path: "/login", account, submit: "Sign in" }).finally(() => browser.close());
+    const mine: Journey = { slug: "my-account", name: "My account", steps: [{ do: "open", path: "/account" }, { do: "see", text: "My account" }] };
+    const signingIn: Journey = {
+      slug: "sign-in",
+      name: "Sign in",
+      signedOut: true,
+      steps: [
+        { do: "open", path: "/account" },
+        { do: "fill", target: { role: "textbox", name: "Email" }, value: { account: "Email" } },
+        { do: "fill", target: { text: "Password" }, value: { account: "Password" } },
+        { do: "click", target: { role: "button", name: "Sign in" }, lands: "/account" },
+      ],
+    };
+    const report = await replayJourneys({ url, journeys: [mine, signingIn], outDir: out("signed-in"), widths: [1280], reset: reset(), signedIn, account });
+    const [account1, signing] = report.journeys.map((j) => j.runs[0]!);
+    assert.equal(account1!.broken, null, "the signed-in journey reaches the account");
+    assert.equal(signing!.steps[0]!.path, "/login", "the signed-out journey starts on the sign-in page");
+    assert.equal(signing!.broken, null, "and signs in with the account's values");
+    assert.doesNotMatch(readFileSync(join(out("signed-in"), "report.json"), "utf8"), /fake-secret-123|ana@example\.test/);
   });
 
   test("without a reset, AEOM warns that journeys changing data can differ", async () => {

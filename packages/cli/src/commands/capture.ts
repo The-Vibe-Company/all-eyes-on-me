@@ -1,7 +1,7 @@
 import { relative } from "node:path";
 import { parseArgs } from "node:util";
 import { capture, route } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, withApp, withConfig } from "./app.js";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const CAPTURE_HELP = `Usage: aeom capture [--url <url>] [--start "<command>"] [options]
 
@@ -41,7 +41,9 @@ export async function runCapture(argv: string[]): Promise<number> {
       console.error(`--pages lists no route. Give at least one, such as --pages /.`);
       return 1;
     }
-    const { pages, errors } = await capture({ url, outDir: values.out, widths, ...(paths ? { paths } : {}) });
+    const session = await signInFromConfig(url);
+    if (session === "failed") return 1;
+    const { pages, errors } = await capture({ url, outDir: values.out, widths, ...(paths ? { paths } : {}), ...(session ? { signedIn: session.signedIn } : {}) });
     if (pages.length === 0) {
       console.error(`\nNo page could be captured from ${url}.`);
       for (const error of errors) console.error(`  ✗ ${route(error.url)}  ${error.reason}`);

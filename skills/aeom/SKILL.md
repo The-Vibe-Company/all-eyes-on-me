@@ -12,6 +12,7 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 ## 0. Before you start
 
 - **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README) and write the file; ask the user once only if nothing says it.
+- **A sign-in, when the app needs one.** AEOM signs in only with a fake account, never a real one: the project's own test account, or one the user gives. Give the config a `login`: `{ "path": "/connexion", "account": "<a JSON file of the account's fields by label>", "submit": "<the button's name>" }`. Capture, check and journeys then sign in once, before they start, and never print or report the account's values. No fake account and no way to make one: stop and ask the user for one.
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so.
 - **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch: `git checkout -b aeom/$RUN`. Everything this run keeps ends up on that branch, never on the user's branch.
 

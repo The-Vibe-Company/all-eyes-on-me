@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { chromium, type Locator, type Page } from "playwright";
 import { DEFAULT_WIDTHS, scrollThrough } from "../capture/capture.js";
+import type { SignedIn } from "../capture/sign-in.js";
 import { contactSheet } from "../directions/sheet.js";
 import { describeStep, type Journey, type Step, type Target } from "./journey.js";
 
@@ -53,6 +54,10 @@ export interface ReplayOptions {
   widths?: number[];
   /** A shell command that puts the app's data back as it was, run before each journey at each width. */
   reset?: string;
+  /** What a signed-in browser keeps: every journey but those marked signedOut starts signed in. */
+  signedIn?: SignedIn;
+  /** The sign-in account's values by field label, for fill steps that take theirs from it. Never reported. */
+  account?: Record<string, string>;
 }
 
 /** A step the app does not let the user take. The message says why, in the user's terms. */
@@ -82,7 +87,7 @@ async function resolve(page: Page, target: Target): Promise<Locator> {
   return found;
 }
 
-async function act(page: Page, origin: string, step: Step): Promise<void> {
+async function act(page: Page, origin: string, step: Step, account: Record<string, string>): Promise<void> {
   switch (step.do) {
     case "open":
       await page.goto(origin + step.path, { waitUntil: "networkidle", timeout: 15_000 });
@@ -90,9 +95,12 @@ async function act(page: Page, origin: string, step: Step): Promise<void> {
     case "click":
       await (await resolve(page, step.target)).click({ timeout: STEP_TIMEOUT });
       return;
-    case "fill":
-      await (await resolve(page, step.target)).fill(step.value, { timeout: STEP_TIMEOUT });
+    case "fill": {
+      const value = typeof step.value === "string" ? step.value : account[step.value.account];
+      if (value === undefined) throw new StepFailure(`the sign-in account has no field "${(step.value as { account: string }).account}"`);
+      await (await resolve(page, step.target)).fill(value, { timeout: STEP_TIMEOUT });
       return;
+    }
     case "press":
       await page.keyboard.press(step.key);
       return;
@@ -109,7 +117,7 @@ async function act(page: Page, origin: string, step: Step): Promise<void> {
 
 const pathOf = (url: string) => (url.startsWith("http") ? new URL(url).pathname : "");
 
-async function replayOne(page: Page, origin: string, journey: Journey, width: number, outDir: string): Promise<Omit<JourneyRun, "sheet">> {
+async function replayOne(page: Page, origin: string, journey: Journey, width: number, outDir: string, account: Record<string, string>): Promise<Omit<JourneyRun, "sheet">> {
   let status: number | null = null;
   let leftFor: string | null = null;
   const dialogs: string[] = [];
@@ -139,7 +147,7 @@ async function replayOne(page: Page, origin: string, journey: Journey, width: nu
     const navigated = page.waitForEvent("framenavigated", { predicate: (frame) => frame === page.mainFrame(), timeout: lands ? STEP_TIMEOUT : 1_000 }).catch(() => null);
     let reason: string | null = null;
     try {
-      await act(page, origin, step);
+      await act(page, origin, step, account);
       if (lands) await page.waitForURL((u) => u.pathname === lands, { timeout: STEP_TIMEOUT }).catch(() => {});
       else if (step.do !== "open") await navigated;
       await page.waitForLoadState("networkidle", { timeout: STEP_TIMEOUT }).catch(() => {});
@@ -174,7 +182,7 @@ async function replayOne(page: Page, origin: string, journey: Journey, width: nu
  * after every step, and stops a journey at the step it cannot take. Writes the
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
  */
-export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset }: ReplayOptions): Promise<JourneyReport> {
+export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, account = {} }: ReplayOptions): Promise<JourneyReport> {
   const origin = new URL(url).origin;
   await mkdir(outDir, { recursive: true });
   const warnings = reset ? [] : ["No reset command in .aeom/config.json: journeys that change the app's data can differ from one replay to the next."];
@@ -185,10 +193,11 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
       const runs: JourneyRun[] = [];
       for (const width of widths) {
         if (reset) await promisify(exec)(reset, { timeout: 60_000 });
-        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 } });
+        const state = signedIn && !journey.signedOut ? { storageState: signedIn } : {};
+        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...state });
         let run: Omit<JourneyRun, "sheet">;
         try {
-          run = await replayOne(await context.newPage(), origin, journey, width, outDir);
+          run = await replayOne(await context.newPage(), origin, journey, width, outDir, account);
         } finally {
           await context.close();
         }

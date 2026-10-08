@@ -22,6 +22,9 @@ A key journey of the product sheet, written so a browser can replay it: `.aeom/j
   - an element by its accessible role and name, `{ "role": "button", "name": "Ajouter" }`;
   - or by its text when it has no role, `{ "text": "Découvrir 🎉" }`, which is often a finding of its own.
   - When several elements match, add the container that holds the right one: `"within": { "role": "row", "name": "Lampe" }`. Its name needs only to appear in the container's.
+- **A field without a role**, such as a password, is targeted by its label's text: `{ "text": "Mot de passe" }`.
+- **A value from the sign-in account**: `"value": { "account": "Mot de passe" }` takes the field from the fake account of the config's `login`, so the journey file holds no secret.
+- **`"signedOut": true`** marks a journey that starts without a session, such as signing in itself. Every other journey starts signed in when the config has a `login`.
 - **`lands`** on a `click` or `press` gives the route the step must end on. Use it whenever the user expects to land somewhere: a click that leaves them in place is then caught.
 
 A journey stops at the first step it cannot take, and the report says which and why:

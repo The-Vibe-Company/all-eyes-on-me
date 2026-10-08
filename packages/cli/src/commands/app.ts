@@ -1,4 +1,5 @@
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, startApp, type RunningApp } from "@aeom/core";
+import { readFile } from "node:fs/promises";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, signInOnce, SignInError, startApp, type RunningApp, type SignedIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -66,4 +67,40 @@ export async function withConfig<T extends { url?: string; start?: string }>(val
   }
   if (values.url !== undefined) return values;
   return { ...values, url: config.url, start: values.start ?? config.start };
+}
+
+/**
+ * Signs in with the fake account of .aeom/config.json's "login", when there is
+ * one, and returns what the signed-in browser keeps with the account's values;
+ * null when the app needs no sign-in. Prints why and returns "failed" when it
+ * cannot sign in. No value of the account is ever printed.
+ */
+export async function signInFromConfig(url: string): Promise<{ signedIn: SignedIn; account: Record<string, string> } | null | "failed"> {
+  let login;
+  try {
+    login = (await loadConfig()).login;
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    console.error(error.message);
+    return "failed";
+  }
+  if (!login) return null;
+  let account: Record<string, string>;
+  try {
+    const parsed = JSON.parse(await readFile(login.account, "utf8")) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || Object.values(parsed).some((v) => typeof v !== "string")) throw new Error("it must hold the account's fields by label, each a string");
+    account = parsed as Record<string, string>;
+  } catch (error) {
+    console.error(`Cannot read the sign-in account ${login.account}: ${error instanceof Error ? error.message : String(error)}`);
+    return "failed";
+  }
+  try {
+    const signedIn = await signInOnce(url, { path: login.path, account, submit: login.submit });
+    console.log(`Signed in on ${login.path} with the account in ${login.account}`);
+    return { signedIn, account };
+  } catch (error) {
+    if (!(error instanceof SignInError)) throw error;
+    console.error(error.message);
+    return "failed";
+  }
 }
