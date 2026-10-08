@@ -1,0 +1,21 @@
+packages/core/src/directions/sheet.ts
+  s_4ce34ec42d9105::t_606ce304d38553 58-63
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_606ce304d38553 115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "32b1dbb7efc732ba2ffd4c566e7757d4b0b24d7a",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
