@@ -37,10 +37,19 @@ before(async () => {
   await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ protected: ["server.mjs", "db/**"] }));
   await writeFile(join(dir, "server.mjs"), "// routes\n");
   await writeFile(join(dir, "page.html"), "<a href='/orders'>Voir mes commandes</a>\n");
+  // The replays the tests write are not changes to the app.
+  await writeFile(join(dir, ".gitignore"), "report.json\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
   const panier = { method: "POST", path: "/api/panier", fields: ["item"] };
-  const replays: [string, { method: string; path: string; fields?: string[] }[]][] = [["before", []], ["same", []], ["feature", [panier]], ["feature-and-more", [panier, { method: "DELETE", path: "/api/compte" }]]];
+  const replays: [string, { method: string; path: string; fields?: string[] }[]][] = [
+    ["before", []],
+    ["same", []],
+    ["feature", [panier]],
+    ["feature-and-more", [panier, { method: "DELETE", path: "/api/compte" }]],
+    ["basket", [panier]],
+    ["basket-more", [{ ...panier, fields: ["item", "quantity"] }]],
+  ];
   for (const [name, calls] of replays) {
     await mkdir(join(dir, name));
     await writeFile(join(dir, name, "report.json"), JSON.stringify(report(calls)));
@@ -102,6 +111,23 @@ test("a report that is not a replay with its calls is refused before any compari
   const stale = await run(["guard", "old", "same"]);
   assert.equal(stale.code, 1);
   assert.match(stale.out, /old\/report\.json cannot be compared: "Add a product" has no list of calls/);
+});
+
+test("new fields sent to a call the app already made are refused, by their names", async () => {
+  const { code, out } = await run(["guard", "basket", "basket-more", "--base", "HEAD"]);
+  assert.equal(code, 1);
+  assert.match(out, /✗ POST \/api\/panier\s+sends new fields: quantity, in "Add a product"/);
+  assert.doesNotMatch(out, /report\.json\s+a file/, "the replays are not changes to the app");
+});
+
+test("an after replay that broke where the before went to its end is refused", async () => {
+  const broke = report([]);
+  broke.journeys[0]!.runs[0]!.broken = { step: 1, reason: "the page answered 500" } as never;
+  await mkdir(join(dir, "broke"), { recursive: true });
+  await writeFile(join(dir, "broke", "report.json"), JSON.stringify(broke));
+  const { code, out } = await run(["guard", "before", "broke"]);
+  assert.equal(code, 1);
+  assert.match(out, /leaves out "Add a product" at 1280 px, which broke at step 1/);
 });
 
 test("an after replay that leaves out a journey or a width is refused", async () => {
