@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { comparePages, ConfigError, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
-import { changedSince } from "./guard.js";
+import { changedSince, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { help: { type: "boolean", short: "h" } } });
@@ -96,6 +96,11 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
   const after = await readReport<JourneyReport>(join(afterDir, "report.json"), problems);
   const beforeVerdict = await readReport<JudgeReport>(join(beforeDir, "judge-journeys.json"), problems);
   const afterVerdict = await readReport<JudgeReport>(join(afterDir, "judge-journeys.json"), problems);
+  // The guard's own check: each replay lists its journeys and the calls each made.
+  for (const [dir, report] of [[beforeDir, before], [afterDir, after]] as const) {
+    const problem = report && problemWith(report);
+    if (problem) problems.push(`${join(dir, "report.json")}: ${problem}`);
+  }
   if (problems.length || !before || !after) {
     console.error(`Both folders need report.json (aeom journey) and judge-journeys.json (aeom judge --journeys --out):\n${problems.map((p) => `  ${p}`).join("\n")}`);
     return 1;
@@ -117,6 +122,8 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     console.error(error.message);
     return 1;
   }
+  // A file protected at the base stays protected, even if the change took it off the list.
+  if (values.base) protectedFiles = [...new Set([...(await protectedAt(values.base)), ...protectedFiles])];
   const changed = values.base ? await changedSince(values.base) : [];
   const guard = guardJourneys({ before, after, changed, protectedFiles });
   const verdicts = ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard });

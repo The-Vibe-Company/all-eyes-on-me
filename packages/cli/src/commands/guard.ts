@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { ConfigError, guardJourneys, loadConfig, type JourneyReport } from "@aeom/core";
+import { ConfigError, guardJourneys, loadConfig, type JourneyReport, type ServerCall } from "@aeom/core";
 
 export const GUARD_HELP = `Usage: aeom guard <before-dir> <after-dir> [options]
 
@@ -19,9 +19,43 @@ Options:
   --allow <what>       A call, such as "POST /api/orders", or a file that the
                        request needs; repeat it; needs --feature`;
 
+const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout }) => stdout);
+
 export async function changedSince(base: string): Promise<string[]> {
-  const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout }) => stdout.split("\n").filter(Boolean));
-  return [...new Set([...(await git(["diff", "--name-only", base])), ...(await git(["ls-files", "--others", "--exclude-standard"]))])];
+  const lines = async (args: string[]) => (await git(args)).split("\n").filter(Boolean);
+  return [...new Set([...(await lines(["diff", "--name-only", base])), ...(await lines(["ls-files", "--others", "--exclude-standard"]))])];
+}
+
+/** The protected globs of the config as it was at the base: a change cannot unprotect a file and then change it. */
+export async function protectedAt(base: string): Promise<string[]> {
+  let text: string;
+  try {
+    text = await git(["show", `${base}:./.aeom/config.json`]);
+  } catch {
+    return [];
+  }
+  try {
+    const globs = (JSON.parse(text) as { protected?: unknown }).protected;
+    return Array.isArray(globs) ? globs.filter((g): g is string => typeof g === "string" && !!g.trim()).map((g) => g.trim()) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** A report of aeom journey with the calls of each run, or what is wrong with it. */
+export function problemWith(report: unknown): string | null {
+  const r = report as Partial<JourneyReport> | null;
+  if (!r || !Array.isArray(r.journeys)) return "it is not a report of aeom journey";
+  if (r.journeys.length === 0) return "it has no journey";
+  for (const j of r.journeys) {
+    if (typeof j?.name !== "string" || !Array.isArray(j.runs) || j.runs.length === 0) return "a journey in it has no replay";
+    for (const run of j.runs) {
+      const calls = (run as { calls?: unknown }).calls;
+      if (!Array.isArray(calls)) return `"${j.name}" has no list of calls: replay it again with this version of aeom journey`;
+      if (!calls.every((c: Partial<ServerCall>) => typeof c?.method === "string" && typeof c.path === "string" && Array.isArray(c.query) && Array.isArray(c.fields))) return `a call of "${j.name}" is not a method, a path and names`;
+    }
+  }
+  return null;
 }
 
 export async function runGuard(argv: string[]): Promise<number> {
@@ -40,12 +74,19 @@ export async function runGuard(argv: string[]): Promise<number> {
     return 1;
   }
   const read = async (dir: string): Promise<JourneyReport | null> => {
+    let report: unknown;
     try {
-      return JSON.parse(await readFile(join(dir, "report.json"), "utf8")) as JourneyReport;
+      report = JSON.parse(await readFile(join(dir, "report.json"), "utf8"));
     } catch {
       console.error(`No replayed journeys in ${dir}. Run aeom journey --out ${dir} first.`);
       return null;
     }
+    const problem = problemWith(report);
+    if (problem) {
+      console.error(`${join(dir, "report.json")} cannot be compared: ${problem}.`);
+      return null;
+    }
+    return report as JourneyReport;
   };
   const before = await read(positionals[0]!);
   const after = await read(positionals[1]!);
@@ -62,12 +103,14 @@ export async function runGuard(argv: string[]): Promise<number> {
   if (values.base) {
     try {
       changed = await changedSince(values.base);
+      protectedFiles = [...new Set([...(await protectedAt(values.base)), ...protectedFiles])];
     } catch (error) {
       console.error(`Cannot list the files changed since ${values.base}: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
       return 1;
     }
   }
 
+  if (protectedFiles.length === 0) console.log(`No "protected" list in .aeom/config.json: AEOM compared the calls only, and no file is protected.\n`);
   const { refused, allowed } = guardJourneys({ before, after, changed, protectedFiles, allow });
   for (const v of allowed) console.log(`✓ ${v.what}  let through for the feature asked: "${values.feature}"`);
   for (const v of refused) console.log(`✗ ${v.what}  ${v.why}${v.journey ? `, in "${v.journey}"` : ""}`);

@@ -169,13 +169,16 @@ aeom journey --out .aeom/runs/$RUN/journeys-after
 aeom guard .aeom/runs/$RUN/journeys-before .aeom/runs/$RUN/journeys-after --base $KIT_BASE
 ```
 
-It refuses a call the app never made, new fields sent to a call it made, and a change to a `protected` file. Whatever it refuses, find the worker whose diff brought it and put that worker's files back (`git checkout $KIT_BASE -- <its files>` for the kit, `$WAVE_BASE` for a page), commit, and say so. Only when the user asked for a feature in so many words, pass their words with `--feature "<what they asked>"` and each call or file the request needs with `--allow`; say in the run what was let through. Both replays must walk the same journey files. If a file changed in between (a label a worker renamed), a refused call may be one the app always made on a screen the old file never reached: replay the before again with the new files, on the app as it was at `$KIT_BASE`, then guard again.
+It refuses a call the app never made, new fields sent to a call it made, and a change to a file `protected` at `$KIT_BASE` or now. If it says there is no `protected` list, it compared the calls only: give the config one (section 0) and guard again before trusting it. Whatever it refuses, find the worker whose diff brought it and put that worker's files back (`git checkout $KIT_BASE -- <its files>` for the kit, `$WAVE_BASE` for a page), commit, and say so. Only when the user asked for a feature in so many words, pass their words with `--feature "<what they asked>"` and each call or file the request needs with `--allow`; say in the run what was let through. Both replays must walk the same journey files. If a file changed in between (a label a worker renamed), a refused call may be one the app always made on a screen the old file never reached: replay the before again with the new files, on the app as it was at `$KIT_BASE`, then guard again.
 
 ```bash
-git worktree add --detach .aeom/worktrees/$RUN-base $KIT_BASE
-(cd .aeom/worktrees/$RUN-base && aeom journey --journeys "$OLDPWD/.aeom/journeys" --out "$OLDPWD/.aeom/runs/$RUN/journeys-before")
-git worktree remove .aeom/worktrees/$RUN-base
+MAIN="$(git rev-parse --show-toplevel)"
+git worktree add --detach "$MAIN/.aeom/worktrees/$RUN-base" $KIT_BASE
+(cd "$MAIN/.aeom/worktrees/$RUN-base" && aeom journey --journeys "$MAIN/.aeom/journeys" --out "$MAIN/.aeom/runs/$RUN/journeys-before")
+git worktree remove "$MAIN/.aeom/worktrees/$RUN-base"
 ```
+
+The app starts from that worktree with its own start command; install its dependencies there first if it needs any.
 
 For every page that is not `better`, put its files back as they were before the screen wave (`git checkout $WAVE_BASE -- <the page's files>`) and commit. Such a page still renders through the new kit, so it is neither the page before the run nor the page after the wave: capture, check and judge again, snapshot to `.aeom/runs/$RUN/after-revert`, and compare that with `before`. Say which pages were put back, why, and how they now compare. If the kit itself made a page worse, say so: putting the page back cannot undo the kit.
 
