@@ -107,6 +107,7 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     if (problem) problems.push(`${join(dir, "report.json")}: ${problem}`);
   }
   // A journey the new version was not replayed on would be neither kept nor sent back: it must be replayed.
+  // One that broke is replayed: the ratchet sends it back, so its unchecked calls never stay.
   if (before && after && !problems.length) {
     const missing = missingReplays(before, after);
     if (missing.length) problems.push(`${join(afterDir, "report.json")} leaves out ${missing.join(", ")}: replay every journey of the before, at every width`);
