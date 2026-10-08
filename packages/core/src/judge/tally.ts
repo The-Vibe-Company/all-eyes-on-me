@@ -53,7 +53,7 @@ export const VOTERS = 3;
  * fails. Refuses anything but exactly `voters` complete votes, each verdict
  * with a reason.
  */
-export function tally(votes: Vote[], pages: string[], principles: Principle[], { voters = VOTERS } = {}): JudgeReport {
+export function tally(votes: Vote[], pages: string[], principles: Principle[], { voters = VOTERS, steps = false } = {}): JudgeReport {
   if (pages.length === 0) throw new JudgeVoteError(["no page to judge"]);
   const ids = new Set(principles.map((p) => p.id));
   const problems: string[] = [];
@@ -75,6 +75,7 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
         if (!verdict || typeof verdict.pass !== "boolean") problems.push(`voter ${vote.voter}, ${page}: no verdict for ${id}`);
         else if (typeof verdict.reason !== "string" || !verdict.reason.trim()) problems.push(`voter ${vote.voter}, ${page}: no reason for ${id}`);
         else if (verdict.step !== undefined && (!Number.isInteger(verdict.step) || verdict.step < 1)) problems.push(`voter ${vote.voter}, ${page}: the step for ${id} must be a step number, 1 or more`);
+        else if (steps && !verdict.pass && verdict.step === undefined) problems.push(`voter ${vote.voter}, ${page}: no step for ${id}, where the failure shows`);
       }
       for (const id of Object.keys(verdicts)) if (!ids.has(id)) problems.push(`voter ${vote.voter}, ${page}: unknown principle ${id}`);
     }
