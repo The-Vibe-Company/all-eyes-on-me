@@ -91,6 +91,11 @@ export async function runCompare(argv: string[]): Promise<number> {
 }
 
 async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; base?: string; voters: string }): Promise<number> {
+  // An empty base would compare no file at all, and the guard would pass without saying so.
+  if (values.base !== undefined && !values.base.trim()) {
+    console.error(`--base cannot be empty: give the commit the change started from, or leave the option out.`);
+    return 1;
+  }
   const problems: string[] = [];
   const before = await readReport<JourneyReport>(join(beforeDir, "report.json"), problems);
   const after = await readReport<JourneyReport>(join(afterDir, "report.json"), problems);
