@@ -3,12 +3,13 @@
  * its own, for the user to correct. It has four parts (what the app is for,
  * who uses it, its main loop, its key journeys), and each journey is a list of
  * numbered steps. Every part and journey says where it comes from, `(seen: …)`,
- * or that it is a guess, `(to confirm)`.
+ * or that it is a guess, `(to confirm)`. Every `###` heading under the key
+ * journeys is a journey.
  */
 
 export const PARTS = ["What it is for", "Who uses it", "The main loop", "Key journeys"] as const;
 const JOURNEYS = "Key journeys";
-const SOURCED = /\(seen: [^)]+\)|\(to confirm\)/;
+const SOURCED = /\(seen: *[^)\s][^)]*\)|\(to confirm\)/;
 
 /** One piece of the sheet the user can correct on its own: the title, a part, or a journey. */
 interface Unit {
@@ -67,42 +68,48 @@ export function validateProduct(text: string): string[] {
 
 export interface ProductMerge {
   text: string;
-  /** Kept as the user wrote it, though AEOM proposed something else. */
+  /** Kept as the user wrote it, though AEOM proposed something else or nothing. */
   kept: string[];
   /** Replaced by what AEOM learned, since the user had not touched it. */
   updated: string[];
   /** New in this proposal. */
   added: string[];
+  /** AEOM's own, untouched by the user, and no longer in its proposal. */
+  removed: string[];
 }
 
 /**
  * Merges AEOM's new proposal into the sheet the user may have corrected.
- * `base` is AEOM's previous proposal: a part or journey that differs from it
- * was corrected by the user and stays as they wrote it, one they removed stays
- * removed, one they added stays. Without `base`, everything already in the
- * sheet counts as the user's. What the user left alone takes the new proposal,
- * and what is new in the proposal is added.
+ * `base` is AEOM's previous proposal: a part or journey that differs from it,
+ * or that it did not hold, is the user's and stays as they wrote it; one the
+ * user removed stays removed. What the user left alone takes the new proposal,
+ * or goes when the proposal no longer holds it, and what is new in the
+ * proposal is added. Without `base`, everything already in the sheet counts as
+ * the user's.
  */
 export function mergeProduct({ base, current, proposed }: { base?: string; current?: string; proposed: string }): ProductMerge {
   const next = units(proposed);
-  if (current === undefined) return { text: proposed, kept: [], updated: [], added: next.map((u) => u.key) };
+  if (current === undefined) return { text: proposed, kept: [], updated: [], added: next.map((u) => u.key), removed: [] };
 
   const before = base === undefined ? null : new Map(units(base).map((u) => [u.key, u.text]));
   const now = units(current);
   const proposedText = new Map(next.map((u) => [u.key, u.text]));
-  const result = { kept: [] as string[], updated: [] as string[], added: [] as string[] };
+  const result = { kept: [] as string[], updated: [] as string[], added: [] as string[], removed: [] as string[] };
 
-  const merged: Unit[] = now.map((unit) => {
+  const merged: Unit[] = [];
+  for (const unit of now) {
     const offered = proposedText.get(unit.key);
     const untouched = before !== null && before.get(unit.key) === unit.text;
-    if (offered === undefined || offered === unit.text) return unit;
-    if (untouched) {
+    if (offered === unit.text) merged.push(unit);
+    else if (untouched && offered === undefined) result.removed.push(unit.key);
+    else if (untouched) {
       result.updated.push(unit.key);
-      return { ...unit, text: offered };
+      merged.push({ ...unit, text: offered! });
+    } else {
+      merged.push(unit);
+      if (before !== null || offered !== undefined) result.kept.push(unit.key);
     }
-    result.kept.push(unit.key);
-    return unit;
-  });
+  }
 
   const present = new Set(now.map((u) => u.key));
   for (const unit of next) {
@@ -115,9 +122,6 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
     merged.splice(at === -1 ? merged.length : at, 0, unit);
     result.added.push(unit.key);
   }
-
-  // A journey corrected by the user under a new name is theirs too.
-  for (const unit of now) if (unit.journey && before && !before.has(unit.key) && !proposedText.has(unit.key)) result.kept.push(unit.key);
 
   return { text: merged.map((u) => u.text).join("\n\n") + "\n", ...result };
 }

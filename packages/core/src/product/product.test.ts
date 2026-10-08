@@ -26,6 +26,9 @@ test("every journey is a list of numbered steps", () => {
 
 test("every part and every journey says where it comes from, or that it is to confirm", () => {
   assert.match(validateProduct(product({ purpose: "A shop that sells mugs." })).join("\n"), /"What it is for" does not say where it comes from/);
+  assert.match(validateProduct(product({ purpose: "A shop that sells mugs. (seen: )" })).join("\n"), /"What it is for" does not say where it comes from/, "an empty source is no source");
+  assert.match(validateProduct(product({ who: "People buying a gift." })).join("\n"), /"Who uses it" does not say where it comes from/);
+  assert.match(validateProduct(product().replace("check the order. (seen: /produits, /commandes)", "check the order.")).join("\n"), /"The main loop" does not say where it comes from/);
   const unsourced = product().replace(/### See my orders\nWhy: a visitor wants it\. \(seen: \/\)/, "### See my orders\nWhy: a visitor wants it.");
   assert.match(validateProduct(unsourced).join("\n"), /journey "See my orders" does not say where it comes from/);
 });
@@ -48,6 +51,14 @@ test("what the user corrected stays as they wrote it; the rest takes what AEOM l
   assert.deepEqual(result.kept, ["Who uses it"]);
   assert.deepEqual(result.updated, ["What it is for"]);
   assert.deepEqual(result.added, ['journey "Find help"']);
+});
+
+test("what AEOM wrote and no longer proposes goes, so a refreshed sheet keeps three to five journeys", () => {
+  const base = product({ journeys: ["A", "B", "C", "D", "E"] });
+  const result = mergeProduct({ base, current: base, proposed: product({ journeys: ["A", "B", "C", "F", "G"] }) });
+  assert.deepEqual(validateProduct(result.text), []);
+  assert.deepEqual(result.removed, ['journey "D"', 'journey "E"']);
+  assert.deepEqual(result.added, ['journey "F"', 'journey "G"']);
 });
 
 test("a journey the user removed stays removed, and one the user added stays", () => {
