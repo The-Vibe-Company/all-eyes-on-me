@@ -45,7 +45,7 @@ export async function starsResponse(count = stars) {
   return new Response(JSON.stringify({ stars: value }), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": value === null ? `public, s-maxage=${KEEP.none / 1000}` : `public, s-maxage=${KEEP.count / 1000}, stale-while-revalidate=86400`,
+      "cache-control": value === null ? `public, s-maxage=${KEEP.none / 1000}` : `public, s-maxage=${KEEP.count / 1000}, stale-while-revalidate=${KEEP.count / 1000}`,
     },
   });
 }

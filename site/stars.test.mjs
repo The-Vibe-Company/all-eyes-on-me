@@ -66,6 +66,7 @@ test("/api/stars answers 200 either way, so the browser never logs an error", as
   assert.equal(down.status, 200);
   assert.deepEqual(await down.json(), { stars: null });
   assert.match(down.headers.get("cache-control"), /s-maxage=60\b/);
+  assert.doesNotMatch(up.headers.get("cache-control"), /stale-while-revalidate=(?!600\b)\d+/, "a stale count is served for 10 minutes at most");
 });
 
 test("the Star on GitHub button has a place for the count, hidden until there is one", () => {

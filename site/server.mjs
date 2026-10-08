@@ -27,6 +27,12 @@ async function serveFile(res, folder, name) {
 createServer(async (req, res) => {
   const path = new URL(req.url ?? "/", "http://localhost").pathname;
   if (path === "/api/stars") {
+    // Like the Vercel function, which only exports GET.
+    if (req.method !== "GET") {
+      res.writeHead(405, { allow: "GET", "content-type": "text/plain; charset=utf-8" });
+      res.end("Method Not Allowed");
+      return;
+    }
     const answer = await starsResponse();
     res.writeHead(answer.status, Object.fromEntries(answer.headers));
     res.end(await answer.text());

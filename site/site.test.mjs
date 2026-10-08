@@ -55,9 +55,12 @@ async function withSite(run) {
 }
 
 test("the site starts with one command and serves the page", async () => {
-  await withSite(async (_, response) => {
+  await withSite(async (url, response) => {
     assert.equal(response.status, 200);
     assert.match(await response.text(), /All Eyes On Me/);
+    const post = await fetch(`${url}/api/stars`, { method: "POST" });
+    assert.equal(post.status, 405, "/api/stars only answers GET, like the Vercel function");
+    assert.equal(post.headers.get("allow"), "GET");
   });
 });
 
