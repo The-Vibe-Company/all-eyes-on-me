@@ -21,14 +21,14 @@ Options:
 
 const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout }) => stdout);
 
-async function changedSince(base: string): Promise<string[]> {
+export async function changedSince(base: string): Promise<string[]> {
   const lines = async (args: string[]) => (await git(args)).split("\n").filter(Boolean);
   // Without rename detection, a moved file shows as its old path deleted and its new path added: both are checked.
   return [...new Set([...(await lines(["diff", "--name-only", "--no-renames", base])), ...(await lines(["ls-files", "--others", "--exclude-standard"]))])];
 }
 
 /** The protected globs of the config as it was at the base: a change cannot unprotect a file and then change it. */
-async function protectedAt(base: string): Promise<string[]> {
+export async function protectedAt(base: string): Promise<string[]> {
   let text: string;
   try {
     text = await git(["show", `${base}:./.aeom/config.json`]);
@@ -62,7 +62,7 @@ export function missingReplays(before: JourneyReport, after: JourneyReport, { fi
 }
 
 /** A report of aeom journey with the calls of each run, or what is wrong with it. */
-function problemWith(report: unknown): string | null {
+export function problemWith(report: unknown): string | null {
   const r = report as Partial<JourneyReport> | null;
   if (!r || !Array.isArray(r.journeys)) return "it is not a report of aeom journey";
   if (r.journeys.length === 0) return "it has no journey";
@@ -142,7 +142,10 @@ export async function runGuard(argv: string[]): Promise<number> {
   if (protectedFiles.length === 0) console.log(`No "protected" list in .aeom/config.json: AEOM compared the calls only, and no file is protected.\n`);
   const { refused, allowed } = guardJourneys({ before, after, changed, protectedFiles, allow });
   for (const v of allowed) console.log(`✓ ${v.what}  let through for the feature asked: "${values.feature}"`);
-  for (const v of refused) console.log(`✗ ${v.what}  ${v.why}${v.journey ? `, in "${v.journey}"` : ""}`);
+  for (const v of refused) {
+    const journeys = v.journeys ?? (v.journey ? [v.journey] : []);
+    console.log(`✗ ${v.what}  ${v.why}${journeys.length ? `, in ${journeys.map((name) => `"${name}"`).join(", ")}` : ""}`);
+  }
   if (refused.length) {
     console.log(`\nRefused: ${refused.length === 1 ? "this is" : "these are"} a feature, and AEOM changes navigation, copy and states only. Undo it, or, if the user asked for it explicitly, run again with --feature and --allow.`);
     return 1;
