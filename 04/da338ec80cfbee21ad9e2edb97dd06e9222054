@@ -1,0 +1,28 @@
+site/site.test.mjs
+  s_4ce34ec42d9105::t_08f57234f36352 105-117
+site/shared/kit.js
+  s_4ce34ec42d9105::t_5a9864a3b4090d 23,49,51,55
+site/render.mjs
+  s_4ce34ec42d9105::t_08f57234f36352 20-21,23,29-31
+  s_4ce34ec42d9105::t_5a9864a3b4090d 10-19,24-25,32
+site/build.mjs
+  s_4ce34ec42d9105::t_5a9864a3b4090d 4-5,7-8,15-22,32-34
+.veebee/autopilot/2026-10-07.md
+  s_4ce34ec42d9105::t_5a9864a3b4090d 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04da338ec80cfbee21ad9e2edb97dd06e9222054",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
