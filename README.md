@@ -4,7 +4,7 @@ Coding agents can now build a backend on their own, because tests tell them when
 
 All Eyes On Me (`aeom`) gives the frontend that oracle. A fleet of agents rebuilds your app's frontend in parallel. Every screen is checked against measurable rules and a taste judge. The fleet learns from your feedback until it stops needing you.
 
-> **Status: pre-alpha.** Nothing works yet. V1 is being built in the open, see the [roadmap](#roadmap).
+> **Status: pre-alpha.** It runs end to end on the demo app in `examples/`: capture, checks, the judge, the fleet, six directions and a tournament, and the journeys. It has not run on a real project yet. V1 is being built in the open, see the [roadmap](#roadmap).
 
 ## How it works
 
