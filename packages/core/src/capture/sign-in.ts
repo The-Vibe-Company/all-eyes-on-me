@@ -36,8 +36,10 @@ export async function signIn(browser: Browser, url: string, { path, account, sub
     const button = page.getByRole("button", { name: submit, exact: true });
     if ((await button.count()) !== 1) throw new SignInError(`Cannot sign in: ${path} has no single button "${submit}".`);
     await Promise.all([page.waitForLoadState("networkidle"), button.click()]);
-    await page.waitForURL((u) => u.pathname !== path, { timeout: 5_000 }).catch(() => {});
-    if (new URL(page.url()).pathname === path) throw new SignInError(`Signing in did not work: the app stayed on ${path} after "${submit}". Check the account AEOM was given.`);
+    // The sign-in route by its path alone, so a route given with a query still compares.
+    const route = new URL(path, origin).pathname;
+    await page.waitForURL((u) => u.pathname !== route, { timeout: 5_000 }).catch(() => {});
+    if (new URL(page.url()).pathname === route) throw new SignInError(`Signing in did not work: the app stayed on ${path} after "${submit}". Check the account AEOM was given.`);
     return await context.storageState();
   } finally {
     await context.close();
