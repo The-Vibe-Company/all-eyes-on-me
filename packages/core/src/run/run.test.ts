@@ -28,6 +28,7 @@ const judge = (failing: [string, string][]): JudgeReport => ({
       votes: "",
       reasons: [],
       dissent: [],
+      steps: [],
     })),
   })),
   failures: failing.length,

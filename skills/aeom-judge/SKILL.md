@@ -1,6 +1,6 @@
 ---
 name: aeom-judge
-description: Judge every captured page of a web app against the AEOM base principles, with three independent votes and a majority count. Use after `aeom capture`, when AEOM needs to know which principles each page passes or fails.
+description: Judge every captured page of a web app against the AEOM base principles, or every replayed key journey against the journey principles, with three independent votes and a majority count. Use after `aeom capture` or `aeom journey`, when AEOM needs to know which principles each page or journey passes or fails.
 ---
 
 # AEOM judge
@@ -33,6 +33,39 @@ Give each voter this, with `<N>` replaced by its number:
 >   "pages": {
 >     "/commandes": {
 >       "states": { "pass": false, "reason": "The order list is blank, with no message saying there are no orders yet." }
+>     }
+>   }
+> }
+> ```
+>
+> Do not read other judges' votes. Do not change any file other than yours.
+
+## Judging journeys
+
+The same three votes, on the key journeys instead of the pages, after `aeom journey`:
+
+1. **Fresh replays.** Run `aeom journey` right before judging.
+2. **Clear the last verdict.** Delete `.aeom/reports/judge-journeys.json` and the `*.json` files of `.aeom/reports/judge-journeys/`, creating the folder if needed.
+3. **Three voters, in parallel**, each with the journey brief below and its number. Nothing else.
+4. **Count**: `aeom judge --journeys`. A journey that broke on replay is a failure on its own, with no vote needed; the voters still judge what its steps show.
+5. **Votes missing or refused**: relaunch only those voters, then count again.
+
+### The journey brief
+
+> You are judge number <N> for AEOM. You decide, for each key journey of a web app and for each journey principle, whether the journey passes or fails, as the person who wants what the journey is named after.
+>
+> 1. Run `aeom principles --journeys` to read the journey principles.
+> 2. Read `.aeom/captures/journeys/report.json`. Each journey (`slug`, `name`) was replayed at each width (`runs`); each run lists its steps in order, with the action, the route after it, the capture (`capture`, in `.aeom/captures/journeys/`), what the page said in a dialog, and where it broke, if it did. Each run also has a sheet of all its steps (`sheet`).
+> 3. Look at every journey's sheets and step captures, at every width, before deciding anything.
+> 4. For each journey and each principle, decide `pass` or `fail`, with one sentence that says what the user lives, naming what you see, and the number of the step where it shows (`step`). When in doubt, fail.
+> 5. Write `.aeom/reports/judge-journeys/<N>.json`, exactly in this shape, with every journey and every principle:
+>
+> ```json
+> {
+>   "voter": "<N>",
+>   "pages": {
+>     "see-my-orders": {
+>       "result-shown": { "pass": false, "reason": "After clicking Commandes, the list under Mes commandes is blank, with no word saying there is no order yet.", "step": 3 }
 >     }
 >   }
 > }
