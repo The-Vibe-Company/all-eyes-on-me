@@ -103,6 +103,19 @@ test("Vercel builds the site from site/ with that same script", () => {
   assert.equal(vercel.outputDirectory, "dist");
 });
 
+test("the condition report is written from the kept run, not by hand", async () => {
+  const { runSection } = await import(new URL("site/run.mjs", root));
+  const written = readFileSync(new URL("site/shared/run.html", root), "utf8");
+  assert.equal(written, await runSection(), "site/shared/run.html is out of date: run node site/run.mjs");
+  assert.match(page, /<!-- include: run -->/);
+  const tournament = JSON.parse(readFileSync(new URL("site/run/directions/tournament.json", root), "utf8"));
+  for (const slug of tournament.entrants) assert.match(written, new RegExp(`src="/run/directions/${slug}\\.webp"`));
+  for (const duel of tournament.duels.filter((d) => d.b)) {
+    for (const vote of duel.votes) assert.ok(written.includes(vote.reason.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")), `a reason of duel ${duel.id} is missing`);
+  }
+  for (const [, src] of written.matchAll(/src="\/(run\/[^"]+)"/g)) assert.ok(existsSync(new URL(`site/${src}`, root)), `${src} does not exist`);
+});
+
 test("a partial is inserted as written, even with $ patterns in it", async () => {
   const { insertPartials } = await import(new URL("site/render.mjs", root));
   const html = await insertPartials("<p><!-- include: x --></p>", async () => "costs $& and $' stay");

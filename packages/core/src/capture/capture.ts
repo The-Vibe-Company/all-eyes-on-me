@@ -1,6 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 import { discoverPages, visitPages, type PageError } from "./discover.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
@@ -50,6 +50,7 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
         try {
           const page = await context.newPage();
           await page.goto(pageUrl, { waitUntil: "networkidle" });
+          await scrollThrough(page);
           const file = `${slug(pageUrl)}@${width}.png`;
           await page.screenshot({ path: join(outDir, file), fullPage: true });
           files.push({ width, file });
@@ -66,6 +67,33 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
   } finally {
     await browser.close();
   }
+}
+
+/**
+ * Scrolls to the end of the page a screen at a time, as a visitor would, so
+ * what loads on scroll, such as lazy images, is in the full-page screenshot;
+ * waits up to 5 s for those images to load and decode, then goes back to the top.
+ */
+async function scrollThrough(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const pause = () => new Promise((resolve) => setTimeout(resolve, 60));
+    for (let y = 0; y < document.documentElement.scrollHeight; y += window.innerHeight) {
+      window.scrollTo(0, y);
+      await pause();
+    }
+    const loading = [...document.images].filter((img) => !img.complete);
+    const loaded = Promise.all(
+      loading.map((img) => new Promise((resolve) => {
+        img.addEventListener("load", resolve);
+        img.addEventListener("error", resolve);
+      })),
+    );
+    // Decoded too: an image decoded asynchronously can still paint blank.
+    const decoded = loaded.then(() => Promise.all([...document.images].map((img) => img.decode().catch(() => {}))));
+    await Promise.race([decoded, new Promise((resolve) => setTimeout(resolve, 5000))]);
+    window.scrollTo(0, 0);
+    await pause();
+  });
 }
 
 /** Removes only the files the previous manifest says AEOM wrote. */

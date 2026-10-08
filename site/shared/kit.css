@@ -851,6 +851,144 @@ h2 {
   .steps li { grid-template-columns: var(--col) calc(2 * var(--step) - var(--gutter)) minmax(0, 1fr); }
 }
 
+/* Condition report: the page before and after, the directions, the knockout.
+   Written from the run by site/run.mjs; every column starts on a ruler tick. */
+
+.section__body h3 {
+  margin-top: 44px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-stretch: 108%;
+  line-height: 1.2;
+}
+
+.treatment {
+  display: grid;
+  gap: 24px var(--gutter);
+}
+
+.treatment__state { min-width: 0; }
+
+.treatment__plate,
+.specimen__plate {
+  display: block;
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+}
+
+.treatment__plate img,
+.specimen__plate img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.treatment__plate img { aspect-ratio: 4 / 3; }
+.specimen__plate img { aspect-ratio: 3 / 4; }
+
+.treatment__plate:hover,
+.specimen__plate:hover { border-color: var(--ink); }
+
+.treatment figcaption {
+  margin-top: 10px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.treatment figcaption b { color: var(--ink); }
+
+.treatment__arrow { display: none; }
+
+@media (min-width: 720px) {
+  .treatment { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@media (min-width: 1080px) {
+  .treatment { grid-template-columns: minmax(0, 1fr) var(--col) minmax(0, 1fr); }
+  .treatment__arrow {
+    display: block;
+    padding-top: calc(var(--col) * 1.2);
+    font: 500 1.5rem/1 var(--mono);
+    color: var(--mark);
+    text-align: center;
+  }
+}
+
+.specimens {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px var(--gutter);
+}
+
+@media (min-width: 720px) {
+  .specimens { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.specimen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.specimen__plate { flex: 1 0 100%; margin-bottom: 4px; }
+
+.specimen__name {
+  font: 500 0.8125rem/1.4 var(--mono);
+  color: var(--ink-2);
+}
+
+.specimen__kept {
+  padding: 2px 5px;
+  border: 1px solid var(--mark);
+  font: 600 0.6875rem/1.4 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mark);
+}
+
+.specimen--kept .specimen__plate { border: 2px solid var(--mark); }
+.specimen--kept .specimen__name { color: var(--ink); font-weight: 600; }
+
+.bouts {
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.bout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 6px;
+  padding: 14px 0 16px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+
+.bout__round {
+  font: 600 0.75rem/1.6 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mark);
+}
+
+.bout__pair { color: var(--ink); }
+.bout__pair b { font-weight: 700; }
+.bout__why { font-size: 0.9375rem; line-height: 1.5; max-width: var(--measure); }
+
+.bout__all { font-size: 0.875rem; line-height: 1.5; }
+.bout__all summary { font: 500 0.75rem/2 var(--mono); color: var(--ink-3); }
+.bout__all summary:hover { color: var(--mark); }
+.bout__all ul { margin-top: 6px; padding-left: 1.1em; display: grid; gap: 6px; max-width: var(--measure); }
+
+@media (min-width: 720px) {
+  .bout { grid-template-columns: calc(2 * var(--step) - var(--gutter)) minmax(0, 1fr); column-gap: var(--gutter); }
+  .bout > :not(.bout__round) { grid-column: 2; }
+  .bout__round { grid-row: 1 / span 3; }
+}
+
 /* Commands: the legend, one swatch per command */
 
 .legend {

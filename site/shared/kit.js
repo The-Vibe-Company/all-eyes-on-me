@@ -68,7 +68,8 @@ for (const count of document.querySelectorAll("[data-stars]")) {
   fetch("/api/stars")
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
-      if (!Number.isInteger(data?.stars)) return;
+      // No count, or none yet: a bare "0" reads as a counter that did not load.
+      if (!Number.isInteger(data?.stars) || data.stars < 1) return;
       count.textContent = data.stars.toLocaleString("en");
       count.hidden = false;
       const link = count.closest("a");
