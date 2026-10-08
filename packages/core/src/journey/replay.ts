@@ -190,6 +190,9 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   let status: number | null = null;
   let leftFor: string | null = null;
   const dialogs: string[] = [];
+  // What the page writes can echo what was filled from the sign-in account, such as an alert quoting the email: hide every value.
+  const values = Object.values(account).filter(Boolean).flatMap((v) => [v, encodeURIComponent(v)]);
+  const hide = (text: string) => values.reduce((t, v) => t.split(v).join("•••"), text);
   page.on("response", (response) => {
     if (response.request().isNavigationRequest() && response.frame() === page.mainFrame()) status = response.status();
   });
@@ -202,7 +205,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     calls.set(JSON.stringify(call), call);
   });
   page.on("dialog", (dialog) => {
-    dialogs.push(dialog.message());
+    dialogs.push(hide(dialog.message()));
     void dialog.accept().catch(() => {});
   });
   // Every page of the context, so a link that opens a new tab outside the app is caught too.
@@ -251,7 +254,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     if (dialogs.length > heard) result.dialog = dialogs.slice(heard).join(" / ");
     steps.push(result);
     if (reason) {
-      broken = { step: i + 1, reason };
+      broken = { step: i + 1, reason: hide(reason) };
       break;
     }
   }
