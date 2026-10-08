@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { comparePages, ConfigError, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
-import { changedSince, problemWith, protectedAt } from "./guard.js";
+import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { help: { type: "boolean", short: "h" } } });
@@ -105,6 +105,11 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
   for (const [dir, report] of [[beforeDir, before], [afterDir, after]] as const) {
     const problem = report && problemWith(report);
     if (problem) problems.push(`${join(dir, "report.json")}: ${problem}`);
+  }
+  // A journey the new version was not replayed on would be neither kept nor sent back: it must be replayed.
+  if (before && after && !problems.length) {
+    const missing = missingReplays(before, after);
+    if (missing.length) problems.push(`${join(afterDir, "report.json")} leaves out ${missing.join(", ")}: replay every journey of the before, at every width`);
   }
   if (problems.length || !before || !after) {
     console.error(`Both folders need report.json (aeom journey) and judge-journeys.json (aeom judge --journeys --out):\n${problems.map((p) => `  ${p}`).join("\n")}`);
