@@ -1,0 +1,54 @@
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_738d26ae53319b 30
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_738d26ae53319b 23-24,89-90
+site/shared/kit.css
+  s_4ce34ec42d9105::t_738d26ae53319b 576-577,595,682,1005,1007-1009,1013
+site/shared/kit.js
+  s_4ce34ec42d9105::t_738d26ae53319b 16-38,49-50,52-55
+site/run/after/judge.json
+  s_4ce34ec42d9105::t_738d26ae53319b 2,54-55,64-66,77-78,88-89,99-100,110-111,121-122,132-133
+site/site.test.mjs
+  s_4ce34ec42d9105::t_738d26ae53319b 5-7,83-104
+.veebee/milestones/01-landing/tickets/04-compteur-etoiles.md
+  s_4ce34ec42d9105::t_eb4c9993d81ba7 22
+site/pages/index.html
+  s_4ce34ec42d9105::t_738d26ae53319b 148,159,165
+.veebee/milestones/01-landing/tickets/02-aeom-refait-la-landing.md
+  s_4ce34ec42d9105::t_738d26ae53319b 18-21
+site/run/before/judge.json
+  s_4ce34ec42d9105::t_738d26ae53319b 2,54-55,65-66,76-77,87-88,98-99,109-110,120-121,131-132
+site/vercel.json
+  s_4ce34ec42d9105::t_738d26ae53319b 1-6
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_738d26ae53319b 41,48-50
+site/server.mjs
+  s_4ce34ec42d9105::t_738d26ae53319b 9,44
+site/render.mjs
+  s_4ce34ec42d9105::t_738d26ae53319b 1-16
+site/stars.mjs
+  s_4ce34ec42d9105::t_eb4c9993d81ba7 6-9,13,23-45,48
+site/build.mjs
+  s_4ce34ec42d9105::t_738d26ae53319b 1-25
+site/stars.test.mjs
+  s_4ce34ec42d9105::t_eb4c9993d81ba7 5,24-25,28,35-60,62,65
+  s_4ce34ec42d9105::t_95b9892ec2cb6a 26-27,29-34
+.veebee/autopilot/2026-10-07.md
+  s_4ce34ec42d9105::t_738d26ae53319b 5-6,24-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6bd64d0aead5787e0a0735880a2b0a79d6378503",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
