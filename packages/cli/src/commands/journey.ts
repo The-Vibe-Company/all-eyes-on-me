@@ -1,6 +1,7 @@
-import { relative } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, JourneyError, loadConfig, loadJourneys, ReplayError, replayJourneys, type JourneyReport } from "@aeom/core";
+import { ConfigError, JourneyError, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
@@ -14,12 +15,15 @@ ${APP_OPTIONS_HELP}
   --out <dir>          Where to write the captures, sheets and report.json
                        (default .aeom/captures/journeys)
   --reset "<command>"  Put the app's data back as it was before each journey
-                       (default: reset in .aeom/config.json)`;
+                       (default: reset in .aeom/config.json)
+  --plan               Replay nothing: from the last replay in --out, say which
+                       screens several journeys cross (one worker, first) and
+                       which belong to one journey (its own worker)`;
 
 export async function runJourney(argv: string[]): Promise<number> {
   const parsed = parseArgs({
     args: argv,
-    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" } },
+    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" }, plan: { type: "boolean" } },
   }).values;
   if (parsed.help) {
     console.log(JOURNEY_HELP);
@@ -33,6 +37,7 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.error(`--out cannot be empty.`);
     return 1;
   }
+  if (parsed.plan) return printPlan(parsed.out);
   if (parsed.reset !== undefined && !parsed.reset.trim()) {
     console.error(`--reset cannot be empty: give the command that puts the app's data back, or leave the option out.`);
     return 1;
@@ -100,4 +105,30 @@ export async function runJourney(argv: string[]): Promise<number> {
     if (broken) console.log(`${plural(broken, "replay")} broke.`);
     return broken ? 1 : 0;
   });
+}
+
+/** Prints who rebuilds which screens, from the last replay. */
+async function printPlan(out: string): Promise<number> {
+  let report: JourneyReport;
+  try {
+    report = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
+  } catch {
+    console.error(`No replayed journeys in ${out}. Run aeom journey first.`);
+    return 1;
+  }
+  // The plan reads each journey's slug, name and the screens of each replay: anything else is not a replay to plan from.
+  const r = report as Partial<JourneyReport> | null;
+  const planned =
+    Array.isArray(r?.journeys) &&
+    r.journeys.length > 0 &&
+    r.journeys.every((j) => typeof j?.slug === "string" && typeof j.name === "string" && Array.isArray(j.runs) && j.runs.every((run) => Array.isArray(run?.screens) && run.screens.every((s) => typeof s === "string")));
+  if (!planned) {
+    console.error(`${join(out, "report.json")} is not a replay of aeom journey to plan from. Run aeom journey again.`);
+    return 1;
+  }
+  const wave = planJourneyWave(report);
+  console.log(`Shared, one worker first, with the navigation: ${wave.shared.join(", ") || "no screen"}`);
+  // The slug names the journey's file: two journeys can share a name, never a file.
+  for (const journey of report.journeys) console.log(`${journey.name} (${journey.slug}): ${wave.own[journey.slug]!.join(", ") || "no screen of its own"}`);
+  return 0;
 }

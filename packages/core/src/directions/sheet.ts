@@ -55,7 +55,12 @@ export async function contactSheet({ out, items, columns = 3, cellWidth = 640, b
     const page = await browser.newPage({ viewport: { width: columns * cellWidth + (columns - 1) * 24 + 48, height: 600 } });
     try {
       await page.setContent(html);
-      await page.screenshot({ path: out, fullPage: true });
+      // Every image decoded before the shot; Chromium can still refuse a shot now and then, so try once more.
+      await page.evaluate(() => Promise.all([...document.images].map((image) => image.decode().catch(() => {}))));
+      await page.screenshot({ path: out, fullPage: true }).catch(async () => {
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: out, fullPage: true });
+      });
     } finally {
       await page.close();
     }

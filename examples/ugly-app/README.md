@@ -2,7 +2,7 @@
 
 A deliberately bad four-page app to test AEOM on: a different header on every page, buttons that do not look clickable, an order list with no empty state that calls a missing API, faint text below AA contrast, a home page that scrolls sideways on a phone, and a broken "Aide" link that returns a 500.
 
-The orders page is for signed-in customers only: without a session, `/commandes` leads to `/connexion`. The fake account is in `fixtures/compte.json`, a test value only this app accepts. To let AEOM in, give `.aeom/config.json` a `login`:
+Orders are hard to reach on purpose: the home menu has no link to them, so a customer goes through the products and finds "Voir mes commandes" at the bottom. The orders page is for signed-in customers only: without a session, `/commandes` leads to `/connexion`. The fake account is in `fixtures/compte.json`, a test value only this app accepts. To let AEOM in, give `.aeom/config.json` a `login`:
 
 ```json
 { "login": { "path": "/connexion", "account": "examples/ugly-app/fixtures/compte.json", "submit": "Se connecter" } }
