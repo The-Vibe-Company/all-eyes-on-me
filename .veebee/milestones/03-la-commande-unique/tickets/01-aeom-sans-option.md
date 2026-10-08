@@ -22,7 +22,7 @@ AEOM dit ce qu'il fait à chaque étape : la fiche produit, les parcours rejoué
 - [ ] La branche de l'utilisateur ne change pas : tout ce que le run garde est sur `aeom/<run>`
 
 ## Comment
-- Les étapes existent déjà dans `skills/aeom/SKILL.md` : regarder (section 1), les directions (2b), comprendre le produit (2c, étapes 1 à 9), la vague des pages (4), mesurer et garder ce qui est meilleur (5). Le ticket ajoute en tête une section « Sans option » qui les enchaîne et décide : rien n'échoue, on s'arrête ; sinon directions, puis pages.
+- Les étapes existent déjà dans `skills/aeom/SKILL.md`. Le ticket ajoute en tête une section « Sans option » qui les enchaîne dans cet ordre et décide : d'abord comprendre le produit (2c, étapes 1 à 9), puisque les directions en partent ; puis regarder (section 1) ; rien n'échoue, on s'arrête ; sinon les directions (2b), la vague des pages (4), et mesurer pour garder ce qui est meilleur (5).
 - Une app où rien n'échoue pour le vérifier : la landing d'AEOM (`site/`) si elle passe tout, sinon une petite app propre dans les fixtures des tests.
 
 ## Hors ticket

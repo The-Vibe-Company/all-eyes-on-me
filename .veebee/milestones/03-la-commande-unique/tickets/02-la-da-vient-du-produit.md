@@ -19,7 +19,7 @@ La planche des six directions, chacune avec sa source et, sous sa capture, la ph
 - [ ] Les juges du tournoi pèsent aussi l'accord avec le propos du produit, et leur raison le dit quand c'est ce qui a départagé
 - [ ] Ce que la fiche produit marque « à confirmer » ne sert de base à aucune direction
 - [ ] La liste noire des looks s'applique toujours, avant le tournoi
-- [ ] Sur l'app de démo, deux runs de suite proposent des sources différentes
+- [ ] Deux runs lancés chacun sur une copie neuve de l'app de démo proposent des sources différentes
 
 ## Comment
 - Les sources se choisissent dans `skills/aeom/directions.md` (douze sources, six retenues) ; le brief et le duel sont dans `skills/aeom/SKILL.md` (2b) et `skills/aeom-judge/SKILL.md`.
