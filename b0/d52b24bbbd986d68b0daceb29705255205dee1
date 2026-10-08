@@ -1,0 +1,21 @@
+.veebee/milestones/03-la-commande-unique/product.md
+  s_4ce34ec42d9105::t_bc2cbe965ac0cb 9-10
+.veebee/milestones/03-la-commande-unique/tickets/12-le-standard-du-front.md
+  s_4ce34ec42d9105::t_5e319f84924dfb 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0d52b24bbbd986d68b0daceb29705255205dee1",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
