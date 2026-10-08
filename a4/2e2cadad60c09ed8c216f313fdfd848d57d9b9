@@ -1,0 +1,33 @@
+.veebee/milestones/04-garder-a-chaque-pr/tickets/03-le-meme-produit.md
+  s_4ce34ec42d9105::t_8ccfadc207af68 17
+.veebee/milestones/04-garder-a-chaque-pr/tickets/04-les-parcours-de-la-pr.md
+  s_4ce34ec42d9105::t_98949295969f4a 19
+.veebee/milestones/04-garder-a-chaque-pr/tickets/05-le-standard-suit.md
+  s_4ce34ec42d9105::t_0e36560f734ffa 17
+.veebee/milestones/05-construire/product.md
+  s_4ce34ec42d9105::t_d1bf18ad62f747 3,5
+.veebee/milestones/05-construire/tickets/01-aeom-build.md
+  s_4ce34ec42d9105::t_75483a80300e6d 21
+.veebee/milestones/05-construire/tickets/02-les-features-front-construites.md
+  s_4ce34ec42d9105::t_1ecdbdaa8a48e5 18
+.veebee/milestones/05-construire/tickets/03-from-scratch.md
+  s_4ce34ec42d9105::t_df7275fea6a229 28
+.veebee/milestones/05-construire/tickets/04-la-vraie-api.md
+  s_4ce34ec42d9105::t_92410794e5c998 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a42e2cadad60c09ed8c216f313fdfd848d57d9b9",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
