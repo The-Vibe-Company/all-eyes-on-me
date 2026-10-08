@@ -58,6 +58,7 @@ function problemsOf(file: string, data: unknown): string[] {
   if (typeof j.name !== "string" || !j.name.trim()) problems.push(`${file}: no name`);
   if (!Array.isArray(j.steps) || j.steps.length === 0) return [...problems, `${file}: no steps`];
   if ((j.steps[0] as { do?: unknown })?.do !== "open") problems.push(`${file}: the journey does not start with an open step`);
+  if (j.signedOut !== undefined && typeof j.signedOut !== "boolean") problems.push(`${file}: signedOut must be true or false`);
   j.steps.forEach((raw, i) => {
     const step = (raw ?? {}) as Record<string, unknown>;
     const at = `${file}, step ${i + 1}`;

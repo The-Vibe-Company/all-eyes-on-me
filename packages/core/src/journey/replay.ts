@@ -73,7 +73,7 @@ function describeTarget(target: Target): string {
 }
 
 /** The one element a target names, or a StepFailure saying there is none or several. */
-async function resolve(page: Page, target: Target): Promise<Locator> {
+async function resolve(page: Page, target: Target, { field = false } = {}): Promise<Locator> {
   let scope: Page | Locator = page;
   if (target.within) {
     // A container's name holds all its text, such as "Lampe Ajouter" for a row: match a part of it.
@@ -82,6 +82,11 @@ async function resolve(page: Page, target: Target): Promise<Locator> {
     const n = await container.count();
     if (n !== 1) throw new StepFailure(n === 0 ? `no ${target.within.role} "${target.within.name}" to look in` : `${n} elements match ${target.within.role} "${target.within.name}"`);
     scope = container;
+  }
+  // A field is named by its label's text: take the field that label names when there is exactly one.
+  if (field && "text" in target) {
+    const labelled = scope.getByLabel(target.text, { exact: true }).filter({ visible: true });
+    if ((await labelled.count()) === 1) return labelled;
   }
   // Text can match hidden copies, such as a menu kept for another width: only what is visible counts.
   const found = "text" in target ? scope.getByText(target.text, { exact: true }).filter({ visible: true }) : scope.getByRole(target.role as Parameters<Page["getByRole"]>[0], { name: target.name, exact: true });
@@ -119,23 +124,25 @@ function topLevel(request: Request): boolean {
 /** A route as `lands` compares it: with its query only when `lands` gives one. */
 const sameRoute = (route: string, lands: string) => (lands.includes("?") ? route : route.split("?")[0]) === lands;
 
-async function act(page: Page, app: App, step: Step, account: Record<string, string>): Promise<void> {
+/** Takes one step. Returns the field it filled from the sign-in account, so captures can hide its value. */
+async function act(page: Page, app: App, step: Step, account: Record<string, string>): Promise<Locator | null> {
   switch (step.do) {
     case "open":
       await page.goto(app.origin + app.base + step.path, { waitUntil: "networkidle", timeout: 15_000 });
-      return;
+      return null;
     case "click":
       await (await resolve(page, step.target)).click({ timeout: STEP_TIMEOUT });
-      return;
+      return null;
     case "fill": {
       const value = typeof step.value === "string" ? step.value : account[step.value.account];
       if (value === undefined) throw new StepFailure(`the sign-in account has no field "${(step.value as { account: string }).account}"`);
-      await (await resolve(page, step.target)).fill(value, { timeout: STEP_TIMEOUT });
-      return;
+      const field = await resolve(page, step.target, { field: true });
+      await field.fill(value, { timeout: STEP_TIMEOUT });
+      return typeof step.value === "string" ? null : field;
     }
     case "press":
       await page.keyboard.press(step.key);
-      return;
+      return null;
     case "see":
       await page
         .getByText(step.text)
@@ -145,6 +152,7 @@ async function act(page: Page, app: App, step: Step, account: Record<string, str
         .catch(() => {
           throw new StepFailure(`"${step.text}" is not on the screen`);
         });
+      return null;
   }
 }
 
@@ -171,6 +179,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   });
 
   const steps: StepResult[] = [];
+  const secret: Locator[] = [];
   let broken: JourneyRun["broken"] = null;
   for (const [i, step] of journey.steps.entries()) {
     status = null;
@@ -182,7 +191,8 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     const navigated = mayNavigate ? page.waitForEvent("framenavigated", { predicate: (frame) => frame === page.mainFrame(), timeout: lands ? STEP_TIMEOUT : 1_000 }).catch(() => null) : null;
     let reason: string | null = null;
     try {
-      await act(page, app, step, account);
+      const filled = await act(page, app, step, account);
+      if (filled) secret.push(filled);
       if (lands) await page.waitForURL((u) => sameRoute(routeOf(app, u.href), lands), { timeout: STEP_TIMEOUT }).catch(() => {});
       else if (navigated) await navigated;
       await page.waitForLoadState("networkidle", { timeout: STEP_TIMEOUT }).catch(() => {});
@@ -198,7 +208,8 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
 
     const capture = `${journey.slug}@${width}-${String(i + 1).padStart(2, "0")}.png`;
     await scrollThrough(page).catch(() => {});
-    const shot = await page.screenshot({ path: join(outDir, capture), fullPage: true }).then(() => capture, () => null);
+    // A field filled from the sign-in account shows as a block, never its value.
+    const shot = await page.screenshot({ path: join(outDir, capture), fullPage: true, mask: secret }).then(() => capture, () => null);
     const result: StepResult = { index: i + 1, action: describeStep(step), path, capture: shot };
     if (dialogs.length > heard) result.dialog = dialogs.slice(heard).join(" / ");
     steps.push(result);
