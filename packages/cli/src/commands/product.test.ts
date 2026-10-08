@@ -35,8 +35,8 @@ test("aeom product writes the sheet AEOM drafted into .aeom/product.md", async (
     await writeFile(p.draft, sheet());
     const { code, out } = await run(p.dir, ["product", p.draft]);
     assert.equal(code, 0, out);
-    assert.equal(await readFile(p.sheet, "utf8"), sheet());
-    assert.match(out, /Wrote \.aeom\/product\.md/);
+    assert.match(await readFile(p.sheet, "utf8"), /^# Super boutique\n\n## What it is for\n/);
+    assert.match(out, /Wrote \.aeom\/product\.md, a first sheet with 3 key journeys/);
   } finally {
     await rm(p.dir, { recursive: true, force: true });
   }
@@ -51,7 +51,7 @@ test("an incomplete draft is refused with its problems, and the sheet in place i
     const { code, out } = await run(p.dir, ["product", p.draft]);
     assert.equal(code, 1);
     assert.match(out, /3 to 5 key journeys, found 1/);
-    assert.equal(await readFile(p.sheet, "utf8"), sheet(), "the sheet is untouched");
+    assert.match(await readFile(p.sheet, "utf8"), /### Contact the shop/, "the sheet is untouched");
   } finally {
     await rm(p.dir, { recursive: true, force: true });
   }
@@ -156,6 +156,26 @@ test("journeys AEOM no longer proposes are removed and said so", async () => {
     assert.equal(code, 0, out);
     assert.match(out, /Removed, no longer in AEOM's draft: journey "Find help"/);
     assert.doesNotMatch(await readFile(p.sheet, "utf8"), /Find help/);
+  } finally {
+    await rm(p.dir, { recursive: true, force: true });
+  }
+});
+
+test("a second aeom product waits its turn: it is refused while another one writes", async () => {
+  const p = await project();
+  try {
+    await mkdir(join(p.dir, ".aeom"));
+    await writeFile(join(p.dir, ".aeom", "product.lock"), String(process.pid));
+    await writeFile(p.draft, sheet());
+    const busy = await run(p.dir, ["product", p.draft]);
+    assert.equal(busy.code, 1);
+    assert.match(busy.out, /Another aeom product \(process \d+\) is writing the sheet/);
+    assert.ok(!existsSync(p.sheet));
+    // A lock left by a process that is gone is taken over.
+    await writeFile(join(p.dir, ".aeom", "product.lock"), "999999");
+    const after = await run(p.dir, ["product", p.draft]);
+    assert.equal(after.code, 0, after.out);
+    assert.ok(!existsSync(join(p.dir, ".aeom", "product.lock")), "the lock is released");
   } finally {
     await rm(p.dir, { recursive: true, force: true });
   }

@@ -9,7 +9,7 @@
 
 export const PARTS = ["What it is for", "Who uses it", "The main loop", "Key journeys"] as const;
 const JOURNEYS = "Key journeys";
-const SOURCED = /\(seen: *[^)\s][^)]*\)|\(to confirm\)/;
+const SOURCED = /\(seen: *[^)\s<][^)]*\)|\(to confirm\)/;
 
 /** One piece of the sheet the user can correct on its own: the title, a part, or a journey. */
 interface Unit {
@@ -17,6 +17,8 @@ interface Unit {
   /** Its text, heading included, without the blank lines around it. */
   text: string;
   journey: boolean;
+  /** The app's name, the sheet's `#` heading: it always comes first. */
+  title?: boolean;
 }
 
 function units(text: string): Unit[] {
@@ -31,7 +33,7 @@ function units(text: string): Unit[] {
     if (heading) {
       if (part) inJourneys = part[1] === JOURNEYS;
       const name: string = heading[1]!;
-      current = { key: journey ? `journey "${name}"` : name, text: line, journey: Boolean(journey) };
+      current = { key: journey ? `journey "${name}"` : name, text: line, journey: Boolean(journey), ...(title ? { title: true } : {}) };
       result.push(current);
     } else if (current) {
       current.text += `\n${line}`;
@@ -47,6 +49,11 @@ const body = (unit: Unit) => unit.text.split("\n").slice(1).join("\n").trim();
 export function validateProduct(text: string): string[] {
   const all = units(text);
   const problems: string[] = [];
+  const seen = new Set<string>();
+  for (const unit of all) {
+    if (seen.has(unit.key)) problems.push(`${unit.journey ? unit.key : `"${unit.key}"`} appears more than once`);
+    seen.add(unit.key);
+  }
   for (const name of PARTS) {
     const part = all.find((u) => !u.journey && u.key === name);
     if (!part) {
@@ -89,7 +96,8 @@ export interface ProductMerge {
  */
 export function mergeProduct({ base, current, proposed }: { base?: string; current?: string; proposed: string }): ProductMerge {
   const next = units(proposed);
-  if (current === undefined) return { text: proposed, kept: [], updated: [], added: next.map((u) => u.key), removed: [] };
+  const join = (list: Unit[]) => list.map((u) => u.text).join("\n\n") + "\n";
+  if (current === undefined) return { text: join(next), kept: [], updated: [], added: next.map((u) => u.key), removed: [] };
 
   const before = base === undefined ? null : new Map(units(base).map((u) => [u.key, u.text]));
   const now = units(current);
@@ -116,12 +124,12 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
     if (present.has(unit.key)) continue;
     // In AEOM's last proposal but gone from the sheet: the user removed it.
     if (before?.has(unit.key)) continue;
-    // A new part goes before the journeys; a new journey after the last one.
-    let at = merged.findIndex((u) => u.key === JOURNEYS);
+    // A new title goes first, a new part before the journeys, a new journey after the last one.
+    let at = unit.title ? 0 : merged.findIndex((u) => u.key === JOURNEYS);
     if (unit.journey) merged.forEach((u, i) => (u.journey || u.key === JOURNEYS) && (at = i + 1));
     merged.splice(at === -1 ? merged.length : at, 0, unit);
     result.added.push(unit.key);
   }
 
-  return { text: merged.map((u) => u.text).join("\n\n") + "\n", ...result };
+  return { text: join(merged), ...result };
 }

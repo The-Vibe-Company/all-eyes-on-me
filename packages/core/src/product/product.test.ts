@@ -33,9 +33,10 @@ test("every part and every journey says where it comes from, or that it is to co
   assert.match(validateProduct(unsourced).join("\n"), /journey "See my orders" does not say where it comes from/);
 });
 
-test("a first run writes the proposal as it is", () => {
+test("a first run writes the proposal, spaced as every later run will write it", () => {
   const result = mergeProduct({ proposed: product() });
-  assert.equal(result.text, product());
+  assert.equal(mergeProduct({ base: product(), current: result.text, proposed: product() }).text, result.text, "a second run over an untouched sheet changes nothing");
+  assert.match(result.text, /\(seen: \/\)\n1\. Open/);
   assert.deepEqual(result.added, ["Super boutique", "What it is for", "Who uses it", "The main loop", "Key journeys", 'journey "See the products"', 'journey "See my orders"', 'journey "Contact the shop"']);
 });
 
@@ -78,4 +79,27 @@ test("without AEOM's last proposal, everything already in the sheet counts as th
   assert.match(result.text, /### Find help/);
   assert.deepEqual(result.updated, []);
   assert.deepEqual(result.added, ['journey "Find help"']);
+});
+
+test("a journey may be to confirm, and placeholder or repeated headings are refused", () => {
+  const toConfirm = product().replace("### Contact the shop\nWhy: a visitor wants it. (seen: /)", "### Contact the shop\nWhy: a visitor wants it. (to confirm)");
+  assert.deepEqual(validateProduct(toConfirm), []);
+  assert.match(validateProduct(product({ purpose: "A shop. (seen: <screen or file>)" })).join("\n"), /"What it is for" does not say where it comes from/);
+  assert.match(validateProduct(product().replace("## The main loop", "## Who uses it\nAgain. (seen: /)\n\n## The main loop")).join("\n"), /"Who uses it" appears more than once/);
+  assert.match(validateProduct(product({ journeys: ["A", "B", "A"] })).join("\n"), /journey "A" appears more than once/);
+});
+
+test("a journey whose steps the user edited keeps their steps", () => {
+  const base = product();
+  const current = base.replace('2. Click "See my orders".', '2. Click "Commandes" in the menu.');
+  const result = mergeProduct({ base, current, proposed: product() });
+  assert.match(result.text, /2\. Click "Commandes" in the menu\./);
+  assert.deepEqual(result.kept, ['journey "See my orders"']);
+});
+
+test("a renamed app gets its new name at the top of the sheet", () => {
+  const base = product();
+  const result = mergeProduct({ base, current: base, proposed: product().replace("# Super boutique", "# Super Boutique en ligne") });
+  assert.ok(result.text.startsWith("# Super Boutique en ligne\n"));
+  assert.deepEqual(validateProduct(result.text), []);
 });
