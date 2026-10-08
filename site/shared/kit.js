@@ -61,3 +61,18 @@ for (const block of document.querySelectorAll("[data-copy]")) {
   });
   head.append(button);
 }
+
+// The star count next to "Star on GitHub", when the site knows it.
+// /api/stars always answers; without a number the button stays as it is.
+for (const count of document.querySelectorAll("[data-stars]")) {
+  fetch("/api/stars")
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => {
+      if (!Number.isInteger(data?.stars)) return;
+      count.textContent = data.stars.toLocaleString("en");
+      count.hidden = false;
+      const link = count.closest("a");
+      if (link) link.setAttribute("aria-label", `${link.firstChild.textContent.trim()}, ${count.textContent} ${data.stars === 1 ? "star" : "stars"}`);
+    })
+    .catch(() => {});
+}

@@ -4,8 +4,10 @@
 // shared/  what pages share: CSS and JS served at /shared/<file>, and HTML
 //          partials inserted where a page writes <!-- include: <name> -->
 // run/     what AEOM's own run on this page produced, served as is
+// api/     the functions Vercel runs; this server answers the same routes
 import { createServer } from "node:http";
 import { PAGES, TYPES, read, renderPage } from "./render.mjs";
+import { starsResponse } from "./stars.mjs";
 
 const PORT = Number(process.env.PORT ?? 4400);
 
@@ -24,6 +26,12 @@ async function serveFile(res, folder, name) {
 
 createServer(async (req, res) => {
   const path = new URL(req.url ?? "/", "http://localhost").pathname;
+  if (path === "/api/stars") {
+    const answer = await starsResponse();
+    res.writeHead(answer.status, Object.fromEntries(answer.headers));
+    res.end(await answer.text());
+    return;
+  }
   const asset = path.match(/^\/(shared|run)\/((?:[a-z0-9-]+\/)*[a-z0-9@._-]+)$/);
   if (asset && !asset[2].includes("..") && (await serveFile(res, asset[1], asset[2]))) return;
   const file = PAGES[path.replace(/\/+$/, "") || "/"];
