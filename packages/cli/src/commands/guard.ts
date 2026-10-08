@@ -42,13 +42,21 @@ export async function protectedAt(base: string): Promise<string[]> {
   }
 }
 
-/** The journeys and widths replayed before that the after replay leaves out: their calls would go unchecked. */
-export function missingReplays(before: JourneyReport, after: JourneyReport): string[] {
+/**
+ * The journeys and widths replayed before that the after replay leaves out: their calls would go unchecked.
+ * With `finished`, a replay that broke where the before went to its end is left out too: what it would
+ * have called after the break is unknown.
+ */
+export function missingReplays(before: JourneyReport, after: JourneyReport, { finished = false } = {}): string[] {
   return before.journeys.flatMap((j) => {
     const again = after.journeys.find((a) => a.slug === j.slug);
     if (!again) return [`"${j.name}"`];
-    const widths = j.runs.map((r) => r.width).filter((w) => !again.runs.some((r) => r.width === w));
-    return widths.length ? [`"${j.name}" at ${widths.join(", ")} px`] : [];
+    return j.runs.flatMap((run) => {
+      const now = again.runs.find((r) => r.width === run.width);
+      if (!now) return [`"${j.name}" at ${run.width} px`];
+      if (finished && now.broken && !run.broken) return [`"${j.name}" at ${run.width} px, which broke at step ${now.broken.step}`];
+      return [];
+    });
   });
 }
 
@@ -106,9 +114,9 @@ export async function runGuard(argv: string[]): Promise<number> {
   const before = await read(positionals[0]!);
   const after = await read(positionals[1]!);
   if (!before || !after) return 1;
-  const missing = missingReplays(before, after);
+  const missing = missingReplays(before, after, { finished: true });
   if (missing.length) {
-    console.error(`The after replay leaves out ${missing.join(", ")}: replay every journey of the before, at every width, or what they call goes unchecked.`);
+    console.error(`The after replay leaves out ${missing.join(", ")}: replay every journey of the before to its end, at every width, or what they call goes unchecked.`);
     return 1;
   }
   let protectedFiles: string[] = [];
