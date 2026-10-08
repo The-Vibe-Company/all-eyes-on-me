@@ -4,6 +4,7 @@ import { runCapture } from "./commands/capture.js";
 import { runCheck } from "./commands/check.js";
 import { runJudge, runPrinciples } from "./commands/judge.js";
 import { runSheet, runTournament } from "./commands/directions.js";
+import { runJourney } from "./commands/journey.js";
 import { runProduct } from "./commands/product.js";
 import { runCompare, runSnapshot } from "./commands/run.js";
 
@@ -24,6 +25,7 @@ Commands:
   sheet       Lay captures side by side in one image
   tournament  Run a knockout between directions, three votes per duel
   product     Write the product sheet AEOM drafted, keeping the user's edits
+  journey     Replay each key journey and capture every step
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -38,6 +40,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   sheet: runSheet,
   tournament: runTournament,
   product: runProduct,
+  journey: runJourney,
 };
 
 const [command, ...rest] = process.argv.slice(2);

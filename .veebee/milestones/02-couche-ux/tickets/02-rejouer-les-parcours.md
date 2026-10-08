@@ -4,6 +4,7 @@ title: aeom journey rejoue chaque parcours et en capture chaque étape
 milestone: 02-couche-ux
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 31, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/31 }
 ---
 
@@ -14,13 +15,13 @@ Il lance `aeom journey` et voit chacun de ses parcours clés refait dans un navi
 Pour chaque parcours, une planche : ses étapes dans l'ordre, à 390 et à 1280 px. Un rapport qui dit, par parcours, combien d'étapes, quels écrans traversés, combien de retours en arrière, et où il casse s'il casse.
 
 ## C'est fini quand
-- [ ] `/aeom --ux` enregistre chaque parcours de `product.md` pendant qu'il le fait, sous une forme que la machine rejoue (`.aeom/journeys/`)
-- [ ] `aeom journey` rejoue chaque parcours dans un navigateur neuf et capture chaque étape à 390 et 1280 px
-- [ ] Une planche par parcours montre ses étapes dans l'ordre
-- [ ] Le rapport compte, par parcours, les étapes, les écrans traversés et les retours en arrière
-- [ ] Un parcours qui casse (élément introuvable, page en erreur, sortie de l'app) s'arrête à cette étape ; le rapport dit laquelle et pourquoi, avec sa capture
-- [ ] Chaque parcours part du même état : quand l'app garde des données, une commande de remise à zéro donnée dans la config tourne avant chaque parcours, et rejouer deux fois de suite donne alors le même résultat ; sans elle, AEOM prévient que les parcours qui changent des données peuvent varier
-- [ ] La landing liste `aeom journey` avec les mots de `aeom --help` (le test du site l'exige)
+- [x] `/aeom --ux` enregistre chaque parcours de `product.md` pendant qu'il le fait, sous une forme que la machine rejoue (`.aeom/journeys/`)
+- [x] `aeom journey` rejoue chaque parcours dans un navigateur neuf et capture chaque étape à 390 et 1280 px
+- [x] Une planche par parcours montre ses étapes dans l'ordre
+- [x] Le rapport compte, par parcours, les étapes, les écrans traversés et les retours en arrière
+- [x] Un parcours qui casse (élément introuvable, page en erreur, sortie de l'app) s'arrête à cette étape ; le rapport dit laquelle et pourquoi, avec sa capture
+- [x] Chaque parcours part du même état : quand l'app garde des données, une commande de remise à zéro donnée dans la config tourne avant chaque parcours, et rejouer deux fois de suite donne alors le même résultat ; sans elle, AEOM prévient que les parcours qui changent des données peuvent varier
+- [x] La landing liste `aeom journey` avec les mots de `aeom --help` (le test du site l'exige)
 
 ## Comment
 - Le moteur de capture est déjà là : `packages/core/src/capture/` (Playwright, défilement, attente des images). Un parcours ajoute des actions entre les captures : aller à, cliquer, remplir, appuyer.

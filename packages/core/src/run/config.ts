@@ -5,6 +5,8 @@ import { join } from "node:path";
 export interface ProjectConfig {
   url?: string;
   start?: string;
+  /** A command that puts the app's data back as it was, run before each journey. */
+  reset?: string;
 }
 
 /** `.aeom/config.json` exists but cannot be used. */
@@ -28,7 +30,7 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new ConfigError(`${file} must hold an object, such as {"url": "...", "start": "..."}.`);
   const config: ProjectConfig = {};
-  for (const key of ["url", "start"] as const) {
+  for (const key of ["url", "start", "reset"] as const) {
     const value = (parsed as Record<string, unknown>)[key];
     if (value === undefined) continue;
     if (typeof value !== "string" || !value.trim()) throw new ConfigError(`${file}: "${key}" must be a non-empty string.`);

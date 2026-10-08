@@ -56,8 +56,10 @@ test("the project config gives the defaults for url and start, and is optional",
   try {
     assert.deepEqual(await loadConfig(dir), {});
     await mkdir(join(dir, ".aeom"));
-    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:4317", start: "node app.js" }));
-    assert.deepEqual(await loadConfig(dir), { url: "http://localhost:4317", start: "node app.js" });
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:4317", start: "node app.js", reset: "node reset.js" }));
+    assert.deepEqual(await loadConfig(dir), { url: "http://localhost:4317", start: "node app.js", reset: "node reset.js" });
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ reset: "" }));
+    await assert.rejects(loadConfig(dir), /"reset" must be a non-empty string/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

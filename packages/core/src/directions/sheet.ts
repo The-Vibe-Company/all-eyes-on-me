@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { chromium } from "playwright";
+import { chromium, type Browser } from "playwright";
 
 export interface SheetItem {
   label: string;
@@ -46,15 +46,20 @@ export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640
  * Lays screenshots side by side, labelled, each shown whole, and saves the
  * sheet as one PNG, so a person or a judge sees every direction at once.
  */
-export async function contactSheet({ out, items, columns = 3, cellWidth = 640 }: { out: string; items: SheetItem[]; columns?: number; cellWidth?: number }): Promise<void> {
+export async function contactSheet({ out, items, columns = 3, cellWidth = 640, browser: open }: { out: string; items: SheetItem[]; columns?: number; cellWidth?: number; browser?: Browser }): Promise<void> {
   checkLayout(columns, cellWidth);
   const html = await sheetHtml(items, columns, cellWidth);
-  const browser = await chromium.launch();
+  // A browser already open renders the sheet in a page of its own; otherwise one is launched and closed.
+  const browser = open ?? (await chromium.launch());
   try {
     const page = await browser.newPage({ viewport: { width: columns * cellWidth + (columns - 1) * 24 + 48, height: 600 } });
-    await page.setContent(html);
-    await page.screenshot({ path: out, fullPage: true });
+    try {
+      await page.setContent(html);
+      await page.screenshot({ path: out, fullPage: true });
+    } finally {
+      await page.close();
+    }
   } finally {
-    await browser.close();
+    if (!open) await browser.close();
   }
 }

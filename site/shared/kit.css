@@ -1070,6 +1070,12 @@ h2 {
 .legend [data-command="product"]::before {
   background-image: repeating-linear-gradient(0deg, var(--mark) 0 1.5px, transparent 1.5px 6px);
 }
+.legend [data-command="journey"]::before {
+  background-image: repeating-linear-gradient(90deg, var(--ink) 0 6px, transparent 6px 9px);
+  background-size: 100% 3px;
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+}
 
 /* Try it: the install, as an X-ray film on the light box */
 
