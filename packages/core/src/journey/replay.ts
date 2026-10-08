@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { chromium, type Locator, type Page } from "playwright";
+import { chromium, type Locator, type Page, type Request } from "playwright";
 import { DEFAULT_WIDTHS, scrollThrough } from "../capture/capture.js";
 import { contactSheet } from "../directions/sheet.js";
 import { describeStep, type Journey, type Step, type Target } from "./journey.js";
@@ -78,7 +78,8 @@ async function resolve(page: Page, target: Target): Promise<Locator> {
     if (n !== 1) throw new StepFailure(n === 0 ? `no ${target.within.role} "${target.within.name}" to look in` : `${n} elements match ${target.within.role} "${target.within.name}"`);
     scope = container;
   }
-  const found = "text" in target ? scope.getByText(target.text, { exact: true }) : scope.getByRole(target.role as Parameters<Page["getByRole"]>[0], { name: target.name, exact: true });
+  // Text can match hidden copies, such as a menu kept for another width: only what is visible counts.
+  const found = "text" in target ? scope.getByText(target.text, { exact: true }).filter({ visible: true }) : scope.getByRole(target.role as Parameters<Page["getByRole"]>[0], { name: target.name, exact: true });
   await found.first().waitFor({ state: "attached", timeout: STEP_TIMEOUT }).catch(() => {});
   const n = await found.count();
   if (n === 0) throw new StepFailure(`no ${describeTarget(target)} on the screen`);
@@ -86,10 +87,37 @@ async function resolve(page: Page, target: Target): Promise<Locator> {
   return found;
 }
 
-async function act(page: Page, origin: string, step: Step): Promise<void> {
+/** Where the app lives: its origin and the path it is served under, empty at the root. */
+interface App {
+  origin: string;
+  base: string;
+}
+
+/** The route of a URL inside the app, as journeys write it: the app's base path left out, its query kept. */
+function routeOf(app: App, url: string): string {
+  if (!url.startsWith("http")) return "";
+  const { pathname, search } = new URL(url);
+  const path = app.base && pathname.startsWith(app.base) ? pathname.slice(app.base.length) || "/" : pathname;
+  return path + search;
+}
+
+/** Whether a navigation loads a whole page, in this tab or a new one, rather than a frame inside a page. */
+function topLevel(request: Request): boolean {
+  try {
+    return request.frame().parentFrame() === null;
+  } catch {
+    // A new tab has no frame yet when its first request leaves: it is a page of its own.
+    return true;
+  }
+}
+
+/** A route as `lands` compares it: with its query only when `lands` gives one. */
+const sameRoute = (route: string, lands: string) => (lands.includes("?") ? route : route.split("?")[0]) === lands;
+
+async function act(page: Page, app: App, step: Step): Promise<void> {
   switch (step.do) {
     case "open":
-      await page.goto(origin + step.path, { waitUntil: "networkidle", timeout: 15_000 });
+      await page.goto(app.origin + app.base + step.path, { waitUntil: "networkidle", timeout: 15_000 });
       return;
     case "click":
       await (await resolve(page, step.target)).click({ timeout: STEP_TIMEOUT });
@@ -103,6 +131,7 @@ async function act(page: Page, origin: string, step: Step): Promise<void> {
     case "see":
       await page
         .getByText(step.text)
+        .filter({ visible: true })
         .first()
         .waitFor({ state: "visible", timeout: STEP_TIMEOUT })
         .catch(() => {
@@ -111,9 +140,8 @@ async function act(page: Page, origin: string, step: Step): Promise<void> {
   }
 }
 
-const pathOf = (url: string) => (url.startsWith("http") ? new URL(url).pathname : "");
-
-async function replayOne(page: Page, origin: string, journey: Journey, width: number, outDir: string): Promise<Omit<JourneyRun, "sheet">> {
+async function replayOne(page: Page, app: App, journey: Journey, width: number, outDir: string): Promise<Omit<JourneyRun, "sheet">> {
+  const { origin } = app;
   let status: number | null = null;
   let leftFor: string | null = null;
   const dialogs: string[] = [];
@@ -124,9 +152,10 @@ async function replayOne(page: Page, origin: string, journey: Journey, width: nu
     dialogs.push(dialog.message());
     void dialog.accept().catch(() => {});
   });
-  await page.route("**/*", (route) => {
+  // Every page of the context, so a link that opens a new tab outside the app is caught too.
+  await page.context().route("**/*", (route) => {
     const request = route.request();
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && new URL(request.url()).origin !== origin) {
+    if (request.isNavigationRequest() && topLevel(request) && new URL(request.url()).origin !== origin) {
       leftFor = request.url();
       return route.abort();
     }
@@ -145,18 +174,19 @@ async function replayOne(page: Page, origin: string, journey: Journey, width: nu
     const navigated = mayNavigate ? page.waitForEvent("framenavigated", { predicate: (frame) => frame === page.mainFrame(), timeout: lands ? STEP_TIMEOUT : 1_000 }).catch(() => null) : null;
     let reason: string | null = null;
     try {
-      await act(page, origin, step);
-      if (lands) await page.waitForURL((u) => u.pathname === lands, { timeout: STEP_TIMEOUT }).catch(() => {});
+      await act(page, app, step);
+      if (lands) await page.waitForURL((u) => sameRoute(routeOf(app, u.href), lands), { timeout: STEP_TIMEOUT }).catch(() => {});
       else if (navigated) await navigated;
       await page.waitForLoadState("networkidle", { timeout: STEP_TIMEOUT }).catch(() => {});
     } catch (error) {
       reason = error instanceof StepFailure ? error.message : (error instanceof Error ? error.message : String(error)).split("\n")[0]!;
     }
-    const path = pathOf(page.url());
+    const route = routeOf(app, page.url());
+    const path = route.split("?")[0]!;
     // Leaving the app aborts the navigation, which can surface as an error: say where it went instead.
     if (leftFor) reason = `left the app for ${leftFor}`;
     if (!reason && status !== null && status >= 400) reason = `the page answered ${status}`;
-    if (!reason && lands && path !== lands) reason = `landed on ${path || "nothing"}, not ${lands}`;
+    if (!reason && lands && !sameRoute(route, lands)) reason = `landed on ${(lands.includes("?") ? route : path) || "nothing"}, not ${lands}`;
 
     const capture = `${journey.slug}@${width}-${String(i + 1).padStart(2, "0")}.png`;
     await scrollThrough(page).catch(() => {});
@@ -182,7 +212,8 @@ async function replayOne(page: Page, origin: string, journey: Journey, width: nu
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
  */
 export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset }: ReplayOptions): Promise<JourneyReport> {
-  const origin = new URL(url).origin;
+  const root = new URL(url);
+  const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
   const warnings = reset ? [] : ["No reset command in .aeom/config.json: journeys that change the app's data can differ from one replay to the next."];
   const replays: JourneyReplay[] = [];
@@ -200,7 +231,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 } });
         let run: Omit<JourneyRun, "sheet">;
         try {
-          run = await replayOne(await context.newPage(), origin, journey, width, outDir);
+          run = await replayOne(await context.newPage(), app, journey, width, outDir);
         } finally {
           await context.close();
         }
