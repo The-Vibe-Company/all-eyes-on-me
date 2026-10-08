@@ -1,6 +1,6 @@
 ---
 name: aeom
-description: Run All Eyes On Me on a web project. Captures every page, runs the measurable checks and the judge, fixes the shared kit with one worker then every page with one worker each in parallel, and keeps only the pages that got better, on a run branch with a before and after for each page. With --directions, first builds six contrasting art directions on the home page and lets the judge pick one in a knockout. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
+description: Run All Eyes On Me on a web project. Captures every page, runs the measurable checks and the judge, fixes the shared kit with one worker then every page with one worker each in parallel, and keeps only the pages that got better, on a run branch with a before and after for each page. With --directions, first builds six contrasting art directions on the home page and lets the judge pick one in a knockout. With --ux, first understands the product on its own and writes .aeom/product.md: what the app is for, who uses it, its main loop and its key journeys. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
 ---
 
 # /aeom
@@ -83,6 +83,19 @@ Instead of fixing the current look, start from six new ones and keep the best.
 **Duel brief.** Give each duel judge the two capture paths, the two source names, the banned looks from directions.md, and the base principles. Ask it to:
 
 > Look at both screenshots. First: if one of the banned looks describes one page and not the other, the other wins. Then judge against the base principles, and on which is more specific to the product and less like anything an AI would propose. Reply with only a JSON object: `{"winner": "<source>", "reason": "<one sentence naming what you see>"}`.
+
+## 2c. Understand the product (only with `/aeom --ux`)
+
+Before judging journeys, AEOM finds out on its own what the app is for and writes it down in `.aeom/product.md`, the product sheet. The user corrects it later, whenever they like: never ask them, never wait for them. [product.md](product.md) gives the sheet's shape and what AEOM may write in it.
+
+Set `RUN` as in section 0, but create no run branch: in this mode AEOM changes nothing in the project but `.aeom/`, and launches no worker.
+
+1. **Start from what is there.** If `.aeom/product.md` exists, read it first: what the user wrote in it is the best source there is.
+2. **Read the code.** The routes and screens, what each one shows (lists, forms, empty and error states), the actions a user can take and where they lead, the words the app uses. Note the files you read: they become sources.
+3. **Use the app.** `aeom capture --out .aeom/runs/$RUN/look` visits every screen reachable from the start page at both widths. Look at every capture, then follow what a user would do: which screen they land on, what they click next, where they get stuck. Send the captures to the user as you go, a few at a time, with one line on what you are looking at. If the app does not start, stop: say why, with the start command's output, and write nothing.
+4. **Draft the sheet** in `.aeom/runs/$RUN/product.md`, following [product.md](product.md): what the app is for, who uses it, the main loop, three to five key journeys in numbered steps. Every part and every journey names its source, `(seen: <route or file>)`, or says `(to confirm)`. Write only what you saw or read.
+5. **Write it**: `aeom product .aeom/runs/$RUN/product.md`. It refuses a draft that misses a part, a journey's steps or a source, and says what to fix: fix the draft and run it again. It keeps what the user corrected since the last run. Tell the user what it printed (what was kept, updated, added), and show the sheet.
+6. **Check the journeys by hand.** Walk each journey of the sheet in the browser from its first step; a step that does not exist in the app is a mistake in the sheet, not a finding: fix the draft and write it again.
 
 ## 3. Kit wave: one worker
 

@@ -1,0 +1,12 @@
+{
+  "01-landing/05": {
+    "kind": "waiting-human",
+    "reason": "Le projet Vercel est prêt ; il reste à ajouter le domaine aeom.thevibecompany.co au projet et l'enregistrement DNS chez Cloudflare.",
+    "pr": ""
+  },
+  "02-couche-ux/08": {
+    "kind": "waiting-human",
+    "reason": "Le pilote attend la base et le compte fictifs de Road-To-Mastock, qu'Antoine prépare lui-même.",
+    "pr": ""
+  }
+}
