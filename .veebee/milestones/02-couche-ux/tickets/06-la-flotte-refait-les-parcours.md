@@ -14,8 +14,8 @@ Il laisse `/aeom --ux` corriger ce que la critique a trouvé, et ses parcours de
 Chaque parcours refait dès qu'il est fusionné, avant et après côte à côte, avec ce qui a changé : une étape en moins, un raccourci, un texte, un état.
 
 ## C'est fini quand
-- [ ] `/aeom --ux` répartit les constats : la navigation commune à un seul worker d'abord, puis un worker par parcours sur ses propres écrans, en parallèle
-- [ ] Chaque changement est l'un de ceux-ci : ordre des étapes, regroupement d'écrans, raccourci vers une action qui existe, texte, état ; tout le reste est refusé par le garde-fou (05)
+- [ ] `/aeom --ux` répartit les constats : d'abord un seul worker pour la navigation commune et pour tout écran que plusieurs parcours traversent, puis un worker par parcours, en parallèle, sur les écrans que seul ce parcours traverse ; deux workers n'écrivent jamais le même fichier
+- [ ] Le brief de chaque worker ne lui permet que ces changements : ordre des étapes, regroupement d'écrans, raccourci vers une action qui existe, texte, état ; avant de fusionner, le garde-fou (05) refuse ce qu'il sait voir, un nouvel appel serveur ou un fichier de données ou de logique touché
 - [ ] Chaque parcours refait est rejoué (02) avant d'être fusionné ; un parcours qui casse ne l'est pas
 - [ ] Sur l'app de démo, « voir mes commandes » prend moins d'étapes après qu'avant
 - [ ] Les pages touchées ne perdent aucun contrôle ni principe de base

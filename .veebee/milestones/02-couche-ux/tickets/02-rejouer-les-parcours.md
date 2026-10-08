@@ -19,12 +19,12 @@ Pour chaque parcours, une planche : ses étapes dans l'ordre, à 390 et à 1280 
 - [ ] Une planche par parcours montre ses étapes dans l'ordre
 - [ ] Le rapport compte, par parcours, les étapes, les écrans traversés et les retours en arrière
 - [ ] Un parcours qui casse (élément introuvable, page en erreur, sortie de l'app) s'arrête à cette étape ; le rapport dit laquelle et pourquoi, avec sa capture
-- [ ] Rejouer deux fois de suite donne le même résultat
+- [ ] Chaque parcours part du même état : quand l'app garde des données, une commande de remise à zéro donnée dans la config tourne avant chaque parcours, et rejouer deux fois de suite donne alors le même résultat ; sans elle, AEOM prévient que les parcours qui changent des données peuvent varier
 - [ ] La landing liste `aeom journey` avec les mots de `aeom --help` (le test du site l'exige)
 
 ## Comment
 - Le moteur de capture est déjà là : `packages/core/src/capture/` (Playwright, défilement, attente des images). Un parcours ajoute des actions entre les captures : aller à, cliquer, remplir, appuyer.
-- Une étape vise un élément par son rôle et son nom accessibles plutôt que par un sélecteur CSS, pour survivre aux refontes des tickets 06 et 07.
+- Une étape vise un élément par son rôle et son nom accessibles plutôt que par un sélecteur CSS, pour survivre aux refontes des tickets 06 et 07. Quand ce couple n'est pas unique (les trois « Ajouter » de l'app de démo), l'étape le cherche dans son conteneur, nommé de la même façon (la ligne « Lampe »).
 - La planche réutilise `sheetHtml` / `contactSheet` de `packages/core/src/directions/sheet.ts`.
 
 ## Hors ticket
