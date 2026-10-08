@@ -74,7 +74,7 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
  * what loads on scroll, such as lazy images, is in the full-page screenshot;
  * waits up to 5 s for those images to load and decode, then goes back to the top.
  */
-async function scrollThrough(page: Page): Promise<void> {
+export async function scrollThrough(page: Page): Promise<void> {
   await page.evaluate(async () => {
     const pause = () => new Promise((resolve) => setTimeout(resolve, 60));
     for (let y = 0; y < document.documentElement.scrollHeight; y += window.innerHeight) {
