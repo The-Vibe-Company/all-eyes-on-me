@@ -1,0 +1,45 @@
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_fdfd9c32b8cc8c 4,90-109,111,113-116
+  s_4ce34ec42d9105::t_a540e16e784e61 117-141
+  s_4ce34ec42d9105::t_bec37d859a4b17 110,112
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_a540e16e784e61 3,85-90
+  s_4ce34ec42d9105::t_13f87b87ba8e1f 75,91-93
+  s_4ce34ec42d9105::t_b77b249fddfefa 53,72-74,76-84,94-96
+  s_4ce34ec42d9105::t_d4e35d07166ed9 97-98
+packages/core/src/capture/discover.ts
+  s_4ce34ec42d9105::t_bec37d859a4b17 14-16,47,121
+  s_4ce34ec42d9105::t_fdfd9c32b8cc8c 1,17-22,26-27,56,97-99,129-131
+  s_4ce34ec42d9105::t_744ac89e13984e 132-133
+site/shared/kit.js
+  s_4ce34ec42d9105::t_85c7f368f0f255 71-72
+  s_4ce34ec42d9105::t_7525eb7078d86b 23,49,51,55
+site/build.mjs
+  s_4ce34ec42d9105::t_7525eb7078d86b 4-5,7-8,15-22,32-34
+.veebee/autopilot/2026-10-07.md
+  s_4ce34ec42d9105::t_7525eb7078d86b 26-27
+  s_4ce34ec42d9105::t_0856d2af129eee 25
+site/render.mjs
+  s_4ce34ec42d9105::t_7525eb7078d86b 10-21,23-25,29-32
+site/site.test.mjs
+  s_4ce34ec42d9105::t_85c7f368f0f255 118
+  s_4ce34ec42d9105::t_7525eb7078d86b 119-130
+.veebee/milestones/01-landing/tickets/03-la-landing-montre-sa-refonte.md
+  s_4ce34ec42d9105::t_6b92ae9c63aff6 7,18-21,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a4720585a981435171866b5116b2fab0cebc136a",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
