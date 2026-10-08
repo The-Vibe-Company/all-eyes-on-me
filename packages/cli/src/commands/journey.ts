@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, JourneyError, loadConfig, loadJourneys, planJourneyWave, replayJourneys, type JourneyReport } from "@aeom/core";
+import { ConfigError, JourneyError, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
