@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
+import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -85,4 +86,56 @@ test("one page has one URL", () => {
   assert.equal(normalize("mailto:a@b.c"), null);
   assert.equal(slug("http://x.test/"), "index");
   assert.equal(slug("http://x.test/a/b?x=1"), "a-b-x-1");
+});
+
+test("links to files, such as an image or a PDF, are not pages", async () => {
+  const files: Record<string, [string, string]> = {
+    "/": ["text/html; charset=utf-8", `<a href="/shot.webp">shot</a> <a href="/guide.pdf">guide</a> <a href="/about">about</a>`],
+    "/about": ["text/html", "<p>About</p>"],
+    "/shot.webp": ["image/webp", "RIFF"],
+    "/guide.pdf": ["application/pdf", "%PDF"],
+  };
+  const server = createHttpServer((req, res) => {
+    const [type, body] = files[req.url ?? "/"] ?? ["text/plain", "Not Found"];
+    res.writeHead(files[req.url ?? "/"] ? 200 : 404, { "content-type": type });
+    res.end(body);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}`;
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-files-"));
+  try {
+    const found = await capture({ url, outDir: dir, widths: [390] });
+    assert.deepEqual(found.pages.map((p) => p.path).sort(), ["/", "/about"]);
+    assert.deepEqual(found.errors, []);
+    const given = await capture({ url, outDir: dir, widths: [390], paths: ["/", "/shot.webp", "/guide.pdf"] });
+    assert.deepEqual(given.pages.map((p) => p.path), ["/"]);
+    assert.deepEqual(given.errors.map((e) => e.reason), ["not a page: image/webp", "not a page: a download"]);
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("what loads on scroll, such as a lazy image far down, is loaded before the screenshot", async () => {
+  const asked: string[] = [];
+  const server = createHttpServer((req, res) => {
+    asked.push(req.url ?? "");
+    if (req.url === "/far.svg") {
+      res.writeHead(200, { "content-type": "image/svg+xml" });
+      res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>`);
+      return;
+    }
+    res.writeHead(200, { "content-type": "text/html" });
+    res.end(`<div style="height: 4000px">Top</div><img loading="lazy" src="/far.svg" alt="" width="10" height="10">`);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}`;
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-lazy-"));
+  try {
+    await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
+    assert.ok(asked.includes("/far.svg"), "the lazy image was requested");
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
 });

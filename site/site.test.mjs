@@ -115,3 +115,16 @@ test("the condition report is written from the kept run, not by hand", async () 
   }
   for (const [, src] of written.matchAll(/src="\/(run\/[^"]+)"/g)) assert.ok(existsSync(new URL(`site/${src}`, root)), `${src} does not exist`);
 });
+
+test("a partial is inserted as written, even with $ patterns in it", async () => {
+  const { insertPartials } = await import(new URL("site/render.mjs", root));
+  const html = await insertPartials("<p><!-- include: x --></p>", async () => "costs $& and $' stay");
+  assert.equal(html, "<p>costs $& and $' stay</p>");
+});
+
+test("the build refuses to empty the site or a folder that holds it", () => {
+  for (const out of [new URL("site/", root).pathname, root.pathname]) {
+    assert.throws(() => execFileSync("node", [new URL("site/build.mjs", root).pathname, out], { stdio: "pipe" }), /Refusing to build/);
+  }
+  assert.ok(existsSync(new URL("site/pages/index.html", root)), "nothing was deleted");
+});

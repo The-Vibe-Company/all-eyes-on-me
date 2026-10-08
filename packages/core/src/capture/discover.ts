@@ -1,4 +1,4 @@
-import type { Browser } from "playwright";
+import type { Browser, Response } from "playwright";
 
 export interface PageError {
   url: string;
@@ -11,10 +11,20 @@ export interface Discovery {
   errors: PageError[];
 }
 
+/** A browser that downloads a link instead of showing it, such as a PDF, was not sent a page. */
+const isDownload = (error: unknown) => error instanceof Error && error.message.includes("Download is starting");
+
+/** What a response holds when it is not a page a visitor reads, such as `image/webp`; null for a page. */
+function notAPage(response: Response | null): string | null {
+  const type = (response?.headers()["content-type"] ?? "").split(";")[0]!.trim();
+  return !type || type === "text/html" || type === "application/xhtml+xml" ? null : type;
+}
+
 /**
  * Visits `startUrl` and follows every link on the same origin, like a visitor
  * clicking everywhere. Pages answering 400 or more, or failing to load, are
- * reported as errors instead of pages.
+ * reported as errors instead of pages. Links to files, such as an image or a
+ * PDF, are not pages and are left out.
  */
 export async function discoverPages(browser: Browser, startUrl: string, { maxPages = 50 } = {}): Promise<Discovery> {
   const first = normalize(startUrl);
@@ -34,6 +44,7 @@ export async function discoverPages(browser: Browser, startUrl: string, { maxPag
       try {
         response = await page.goto(url, { waitUntil: "networkidle", timeout: 15_000 });
       } catch (error) {
+        if (isDownload(error)) continue;
         errors.push({ url, reason: error instanceof Error ? error.message.split("\n")[0]! : String(error) });
         continue;
       }
@@ -42,6 +53,7 @@ export async function discoverPages(browser: Browser, startUrl: string, { maxPag
         errors.push({ url, status, reason: `${status} ${response?.statusText() ?? ""}`.trim() });
         continue;
       }
+      if (notAPage(response)) continue;
 
       const landed = normalize(page.url()) ?? url;
       if (new URL(landed).origin !== origin) {
@@ -82,8 +94,9 @@ export function normalize(href: string): string | null {
 
 /**
  * Visits each of `paths`, relative to `baseUrl`, without following links.
- * Routes on another origin, routes answering 400 or more, and routes that
- * fail to load are reported as errors, like during discovery.
+ * Routes on another origin, routes answering 400 or more, routes that fail to
+ * load, and routes that answer with a file instead of a page are reported as
+ * errors.
  */
 export async function visitPages(browser: Browser, baseUrl: string, paths: string[]): Promise<Discovery> {
   const origin = new URL(baseUrl).origin;
@@ -105,12 +118,17 @@ export async function visitPages(browser: Browser, baseUrl: string, paths: strin
       try {
         response = await page.goto(url, { waitUntil: "networkidle", timeout: 15_000 });
       } catch (error) {
-        errors.push({ url, reason: error instanceof Error ? error.message.split("\n")[0]! : String(error) });
+        errors.push({ url, reason: isDownload(error) ? "not a page: a download" : error instanceof Error ? error.message.split("\n")[0]! : String(error) });
         continue;
       }
       const status = response?.status() ?? 0;
       if (status >= 400) {
         errors.push({ url, status, reason: `${status} ${response?.statusText() ?? ""}`.trim() });
+        continue;
+      }
+      const file = notAPage(response);
+      if (file) {
+        errors.push({ url, reason: `not a page: ${file}` });
         continue;
       }
       const landed = normalize(page.url()) ?? url;

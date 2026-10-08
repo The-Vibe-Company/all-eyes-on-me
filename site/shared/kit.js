@@ -20,6 +20,7 @@ async function copy(text) {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
+    if (!document.queryCommandSupported?.("copy")) return false;
     const area = document.createElement("textarea");
     area.value = text;
     area.setAttribute("readonly", "");
@@ -45,11 +46,13 @@ for (const block of document.querySelectorAll("[data-copy]")) {
   button.type = "button";
   button.className = "copy";
   button.textContent = "Copy";
+  let reset;
   button.addEventListener("click", async () => {
+    clearTimeout(reset);
     const text = [...pre.querySelectorAll(".ln")].map((line) => line.textContent).join("\n");
     if (await copy(text)) {
       button.textContent = "Copied";
-      setTimeout(() => (button.textContent = "Copy"), 1800);
+      reset = setTimeout(() => (button.textContent = "Copy"), 1800);
     } else {
       // Nothing was copied: say so until the next click, with the code selected.
       getSelection()?.selectAllChildren(pre);
@@ -65,7 +68,8 @@ for (const count of document.querySelectorAll("[data-stars]")) {
   fetch("/api/stars")
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
-      if (!Number.isInteger(data?.stars)) return;
+      // No count, or none yet: a bare "0" reads as a counter that did not load.
+      if (!Number.isInteger(data?.stars) || data.stars < 1) return;
       count.textContent = data.stars.toLocaleString("en");
       count.hidden = false;
       const link = count.closest("a");
