@@ -1,6 +1,6 @@
 # The product sheet
 
-`.aeom/product.md` says what AEOM understood of the app on its own, before it changes a screen. The user corrects it whenever they like; AEOM never waits for them. `aeom product <draft>` writes it. It refuses a draft that misses one of the four parts, has fewer than three or more than five journeys, has a journey without numbered steps, or has a part or journey without a source. The rest of what follows is for AEOM to follow; no command checks it.
+`.aeom/product.md` says what AEOM understood of the app on its own, before it changes a screen. The user corrects it whenever they like; AEOM never waits for them. `aeom product <draft>` writes it. It refuses a draft that misses one of the four parts, has fewer than three or more than five journeys, has a journey without numbered steps, or has a part or journey without a source, a source left as the `<…>` placeholder, or a part or journey that appears twice. The rest of what follows is for AEOM to follow; no command checks it.
 
 ## Its shape
 

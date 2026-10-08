@@ -11,7 +11,7 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 
 ## 0. Before you start
 
-- **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README), check that the app starts with that command, and only then write the file; ask the user once only if nothing says it.
+- **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README), check that the app starts with that command (`aeom capture --start "<command>" --url <url> --pages / --out .aeom/runs/start-check`, which starts the app and stops it after), and only then write the file; ask the user once only if nothing says it.
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so.
 - **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch: `git checkout -b aeom/$RUN`. Everything this run keeps ends up on that branch, never on the user's branch.
 
@@ -88,7 +88,7 @@ Instead of fixing the current look, start from six new ones and keep the best.
 
 AEOM finds out on its own what the app is for and writes it down in `.aeom/product.md`, the product sheet. The user corrects it later, whenever they like: never ask them, never wait for them. [product.md](product.md) gives the sheet's shape and what AEOM may write in it.
 
-Set `RUN` as in section 0, but create no run branch: in this mode AEOM changes nothing in the project but `.aeom/`, launches no worker and commits nothing. The run ends after the steps below; sections 3 to 6 belong to the visual redesign.
+Set `RUN` as in section 0, but create no run branch. The clean-tree rule of section 0 does not count `.aeom/product.md` and `.aeom/product.base.md`: the user's uncommitted corrections there are exactly what the merge keeps; any other uncommitted change still stops the run. In this mode AEOM changes nothing in the project but `.aeom/`, launches no worker and commits nothing. The run ends after the steps below; sections 3 to 6 belong to the visual redesign.
 
 1. **Start from what is there.** If `.aeom/product.md` exists, read it first: what the user wrote in it is the best source there is.
 2. **Read the code.** The routes and screens, what each one shows (lists, forms, empty and error states), the actions a user can take and where they lead, the words the app uses. Note the files you read: they become sources.
