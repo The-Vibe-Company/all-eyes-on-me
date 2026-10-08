@@ -1,0 +1,32 @@
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_5952ab54bcf49b 12
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_5952ab54bcf49b 1-2,10-15,33-39,41-57,80-81,84-90,93,103-104
+packages/core/src/product/product.test.ts
+  s_4ce34ec42d9105::t_5952ab54bcf49b 29-31,56-61
+  s_4ce34ec42d9105::t_e0dac08a979b8c 62-63
+packages/cli/src/commands/product.test.ts
+  s_4ce34ec42d9105::t_5952ab54bcf49b 4-5,91-162
+packages/core/src/product/product.ts
+  s_4ce34ec42d9105::t_5952ab54bcf49b 6-7,12,71,77-78,83-88,92,97,99-100,103-105,107-110,112
+skills/aeom/product.md
+  s_4ce34ec42d9105::t_5952ab54bcf49b 3,28,39
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_5952ab54bcf49b 14,90,92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ef5032e9732919a926386bd3ce29ec9bf3d70a28",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
