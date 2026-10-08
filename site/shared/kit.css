@@ -1067,6 +1067,9 @@ h2 {
 .legend [data-command="tournament"]::before {
   background-image: repeating-linear-gradient(90deg, var(--mark) 0 2px, transparent 2px 7px);
 }
+.legend [data-command="product"]::before {
+  background-image: repeating-linear-gradient(0deg, var(--mark) 0 1.5px, transparent 1.5px 6px);
+}
 
 /* Try it: the install, as an X-ray film on the light box */
 

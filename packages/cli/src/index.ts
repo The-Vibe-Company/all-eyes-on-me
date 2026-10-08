@@ -4,6 +4,7 @@ import { runCapture } from "./commands/capture.js";
 import { runCheck } from "./commands/check.js";
 import { runJudge, runPrinciples } from "./commands/judge.js";
 import { runSheet, runTournament } from "./commands/directions.js";
+import { runProduct } from "./commands/product.js";
 import { runCompare, runSnapshot } from "./commands/run.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -22,6 +23,7 @@ Commands:
   compare     Compare two snapshots page by page
   sheet       Lay captures side by side in one image
   tournament  Run a knockout between directions, three votes per duel
+  product     Write the product sheet AEOM drafted, keeping the user's edits
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -35,6 +37,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   compare: runCompare,
   sheet: runSheet,
   tournament: runTournament,
+  product: runProduct,
 };
 
 const [command, ...rest] = process.argv.slice(2);
