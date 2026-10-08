@@ -47,8 +47,9 @@ test("with a login in the config, aeom capture signs in first and captures the p
     assert.match(out, /Signed in on \/connexion/);
     const manifest = await readFile(join(dir, "captures", "manifest.json"), "utf8");
     assert.match(manifest, /"path": "\/commandes"/);
-    const password = JSON.parse(await readFile(ACCOUNT, "utf8"))["Mot de passe"] as string;
-    assert.ok(!out.includes(password) && !manifest.includes(password), "the password is in no output and no report");
+    for (const value of Object.values(JSON.parse(await readFile(ACCOUNT, "utf8")) as Record<string, string>)) {
+      assert.ok(!out.includes(value) && !manifest.includes(value), "no value of the account is in the output or the report");
+    }
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -61,8 +62,21 @@ test("a refused account stops aeom capture before anything is captured, without 
     const { code, out } = await run(dir, ["capture", "--widths", "390", "--out", join(dir, "captures")]);
     assert.equal(code, 1);
     assert.match(out, /Signing in did not work: the app stayed on \/connexion after "Se connecter"/);
-    assert.doesNotMatch(out, /not-it-42/);
+    assert.doesNotMatch(out, /not-it-42|client@example\.test/);
     await assert.rejects(readFile(join(dir, "captures", "manifest.json")), "nothing was captured");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("an account file that is not valid JSON is refused without quoting it", async () => {
+  const dir = await project("broken.json");
+  try {
+    await writeFile(join(dir, "broken.json"), `{ "Email": "client@example.test", "Mot de passe": "secret-77" `);
+    const { code, out } = await run(dir, ["capture", "--widths", "390", "--out", join(dir, "captures")]);
+    assert.equal(code, 1);
+    assert.match(out, /Cannot read the sign-in account broken\.json: it is not valid JSON/);
+    assert.doesNotMatch(out, /secret-77|client@example\.test/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
