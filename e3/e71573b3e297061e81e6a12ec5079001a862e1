@@ -1,0 +1,21 @@
+examples/ugly-app/pages/index.html
+  s_4ce34ec42d9105::t_7cd7357c1f6df9 20
+examples/ugly-app/pages/produits.html
+  s_4ce34ec42d9105::t_10a1b887e0e750 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e3e71573b3e297061e81e6a12ec5079001a862e1",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
