@@ -86,6 +86,17 @@ test("an empty --base is refused rather than read as no base", async () => {
   }
 });
 
+test("moving a protected file is refused like changing it", async () => {
+  execFileSync("git", ["mv", "server.mjs", "app.mjs"], { cwd: dir });
+  try {
+    const { code, out } = await run(["guard", "before", "same", "--base", "HEAD"]);
+    assert.equal(code, 1);
+    assert.match(out, /✗ server\.mjs\s+a file that holds the app's data or logic/);
+  } finally {
+    execFileSync("git", ["reset", "-q", "--hard", "HEAD"], { cwd: dir });
+  }
+});
+
 test("a change that takes a file off the protected list and changes it is still refused", async () => {
   await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ protected: ["db/**"] }));
   await writeFile(join(dir, "server.mjs"), "// routes\napp.post('/api/panier')\n");
