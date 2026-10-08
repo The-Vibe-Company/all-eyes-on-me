@@ -91,7 +91,10 @@ export async function signInFromConfig(url: string): Promise<{ signedIn: SignedI
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || Object.values(parsed).some((v) => typeof v !== "string")) throw new Error("it must hold the account's fields by label, each a string");
     account = parsed as Record<string, string>;
   } catch (error) {
-    console.error(`Cannot read the sign-in account ${login.account}: ${error instanceof Error ? error.message : String(error)}`);
+    // A JSON error quotes the file, which holds the account: say only what is wrong.
+    const code = (error as NodeJS.ErrnoException).code;
+    const why = error instanceof SyntaxError ? "it is not valid JSON" : code === "ENOENT" ? "the file does not exist" : code ? "the file cannot be read" : (error as Error).message;
+    console.error(`Cannot read the sign-in account ${login.account}: ${why}`);
     return "failed";
   }
   try {

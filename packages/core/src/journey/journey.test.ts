@@ -186,6 +186,7 @@ describe("journey files", () => {
       await mkdir(dir, { recursive: true });
       await writeFile(join(dir, "bad.json"), JSON.stringify({ steps: [{ do: "click" }, { do: "fly" }, { do: "click", target: { role: "link" } }] }));
       await writeFile(join(dir, "broken.json"), "{ not json");
+      await writeFile(join(dir, "signed.json"), JSON.stringify({ name: "Signed", signedOut: "false", steps: [{ do: "open", path: "/" }] }));
       await writeFile(join(dir, "mixed.json"), JSON.stringify({ name: "Mixed", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "A", text: "A" }, lands: "commandes" }] }));
       await assert.rejects(loadJourneys(dir), (error: unknown) => {
         assert.ok(error instanceof JourneyError);
@@ -195,6 +196,7 @@ describe("journey files", () => {
         assert.match(error.message, /bad\.json, step 2: unknown action "fly"/);
         assert.match(error.message, /bad\.json, step 3: a target needs a role and a name, or a text/);
         assert.match(error.message, /broken\.json: not valid JSON/);
+        assert.match(error.message, /signed\.json: signedOut must be true or false/);
         assert.match(error.message, /mixed\.json, step 2: a target is either a role and a name, or a text, not both/);
         assert.match(error.message, /mixed\.json, step 2: lands needs a route starting with \//);
         return true;
