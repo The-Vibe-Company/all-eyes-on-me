@@ -1,0 +1,25 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_648e29358a1fdc 16,102-103
+CONTEXT.md
+  s_4ce34ec42d9105::t_648e29358a1fdc 13
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_648e29358a1fdc 20,23
+.veebee/milestones/02-couche-ux/tickets/05-garde-fou-pas-de-feature.md
+  s_4ce34ec42d9105::t_648e29358a1fdc 7,18-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ecafef6f1300ce2f89702aac28f20a02630d56e0",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
