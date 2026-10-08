@@ -61,7 +61,7 @@ describe("replaying journeys", () => {
     dir = await mkdtemp(join(tmpdir(), "aeom-journey-"));
   });
   after(async () => {
-    server.close();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     await rm(dir, { recursive: true, force: true });
   });
 
@@ -217,6 +217,28 @@ test("a reset command that fails stops the replay with a message that says so", 
       return true;
     });
   } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("an app served under a path keeps it, and lands can name a query", async () => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    if (req.url === "/app/") return res.end(`<a href="/app/list?page=2">Suivant</a> <a href="/app/list" target="_blank">Ailleurs</a> <a href="https://example.com/" target="_blank">Dehors</a>`);
+    res.end(`<p>Page ${new URL(req.url ?? "/", "http://x").searchParams.get("page") ?? "1"}</p>`);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}/app/`;
+  const dir = await mkdtemp(join(tmpdir(), "aeom-base-"));
+  try {
+    const next: Journey = { slug: "next", name: "Next", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "Suivant" }, lands: "/list?page=2" }, { do: "see", text: "Page 2" }] };
+    const out: Journey = { slug: "out", name: "Out", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "Dehors" } }] };
+    const [nextRun, outRun] = (await replayJourneys({ url, journeys: [next, out], outDir: dir, widths: [1280] })).journeys.map((j) => j.runs[0]!);
+    assert.equal(nextRun!.broken, null, "the journey opened /app/ and landed on /app/list?page=2");
+    assert.deepEqual(nextRun!.screens, ["/", "/list"]);
+    assert.match(outRun!.broken?.reason ?? "", /left the app for https:\/\/example\.com\//, "a new tab outside the app is caught");
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     await rm(dir, { recursive: true, force: true });
   }
 });

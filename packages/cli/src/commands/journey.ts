@@ -34,6 +34,14 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.error(`--url cannot be empty.`);
     return 1;
   }
+  if (!parsed.out.trim()) {
+    console.error(`--out cannot be empty.`);
+    return 1;
+  }
+  if (parsed.reset !== undefined && !parsed.reset.trim()) {
+    console.error(`--reset cannot be empty: give the command that puts the app's data back, or leave the option out.`);
+    return 1;
+  }
   const values = await withConfig(parsed);
   if (!values.url) {
     console.error(`--url is required, here or in .aeom/config.json.\n\n${JOURNEY_HELP}`);
