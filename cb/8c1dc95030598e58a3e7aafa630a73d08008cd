@@ -1,0 +1,19 @@
+examples/ugly-app/pages/contact.html
+  s_4ce34ec42d9105::t_5a88f7853800f1 14-15,19,21-22,27-28,30-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cb8c1dc95030598e58a3e7aafa630a73d08008cd",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
