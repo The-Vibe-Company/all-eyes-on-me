@@ -1,0 +1,71 @@
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_be64744c2b64c2 6-7,96-98
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_f555ef3de5f669 10-11,41-48
+  s_4ce34ec42d9105::t_02c70169cbf6c8 49
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_6ca0ce27b751db 4,63-65
+.veebee/milestones/02-couche-ux/tickets/03-app-derriere-un-login.md
+  s_4ce34ec42d9105::t_ba8e7a93ed79a9 7,18-23
+packages/core/src/journey/journey.test.ts
+  s_4ce34ec42d9105::t_b0ce57ad64ad36 2,8-9,23-24,26-37,141-162
+  s_4ce34ec42d9105::t_7699d25a8360d0 163-164
+examples/ugly-app/fixtures/compte.json
+  s_4ce34ec42d9105::t_6cf95b19be5e4e 1-4
+packages/cli/src/commands/sign-in.test.ts
+  s_4ce34ec42d9105::t_6cf8f781d26b7e 1-69
+skills/aeom/journeys.md
+  s_4ce34ec42d9105::t_ba8e7a93ed79a9 25-27
+packages/core/src/capture/discover.ts
+  s_4ce34ec42d9105::t_bc7952cc9744f2 2,30,39,102,106
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_bc7952cc9744f2 5,32-33,41,44,52
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_6ca0ce27b751db 5,39-41
+packages/core/src/capture/sign-in.ts
+  s_4ce34ec42d9105::t_ad21d26501bfaa 2-43,54-55
+  s_4ce34ec42d9105::t_0757cbb865187c 1,44-53
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_0757cbb865187c 4
+packages/core/src/journey/journey.ts
+  s_4ce34ec42d9105::t_bc7952cc9744f2 15,25-26,69-70
+examples/ugly-app/server.mjs
+  s_4ce34ec42d9105::t_6cf95b19be5e4e 1-2,11,19,21-32,48-64,89-92
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_ba8e7a93ed79a9 15
+packages/core/src/checks/run.ts
+  s_4ce34ec42d9105::t_bc7952cc9744f2 4,27,32,52-53,56-57
+examples/ugly-app/README.md
+  s_4ce34ec42d9105::t_ba8e7a93ed79a9 5-10
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_f555ef3de5f669 1,71-97,99-105
+  s_4ce34ec42d9105::t_0757cbb865187c 2,98
+  s_4ce34ec42d9105::t_e28f01d7f40995 106
+packages/cli/src/commands/capture.ts
+  s_4ce34ec42d9105::t_0757cbb865187c 4,44-46
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_be64744c2b64c2 10-12,15-16,45-47,58-82
+  s_4ce34ec42d9105::t_161c93dd2a4542 83
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_bc7952cc9744f2 7,57-60,90,98-101,103,120,150,185,196-197,200
+examples/ugly-app/pages/connexion.html
+  s_4ce34ec42d9105::t_6cf95b19be5e4e 1-26
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_2bd612f1ddad76 18,21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a36ca93058850c1da54af53778dbb68992686124",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
