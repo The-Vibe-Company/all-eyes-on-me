@@ -47,10 +47,16 @@ for (const block of document.querySelectorAll("[data-copy]")) {
   button.className = "copy";
   button.textContent = "Copy";
   let reset;
+  let clicks = 0;
   button.addEventListener("click", async () => {
+    const click = ++clicks;
     clearTimeout(reset);
     const text = [...pre.querySelectorAll(".ln")].map((line) => line.textContent).join("\n");
-    if (await copy(text)) {
+    const copied = await copy(text);
+    // A later click has taken over: its outcome, not this one, is shown.
+    if (click !== clicks) return;
+    clearTimeout(reset);
+    if (copied) {
       button.textContent = "Copied";
       reset = setTimeout(() => (button.textContent = "Copy"), 1800);
     } else {
