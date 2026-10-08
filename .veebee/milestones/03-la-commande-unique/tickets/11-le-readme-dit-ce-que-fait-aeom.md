@@ -11,10 +11,10 @@ tracker: { tool: github, id: 57, url: https://github.com/The-Vibe-Company/all-ey
 Un visiteur du repo ou de la landing comprend en une phrase ce que fait `aeom`, et voit ce qui existe vraiment.
 
 ## Ce qu'il voit
-« Tu lances aeom, il prend ton front et en fait un mieux : il corrige l'UI et l'UX, et part sur une DA tirée de ton produit. » Puis ce qui marche, et ce qui vient.
+« All Eyes On Me est le directeur artistique d'un produit codé par des agents : il pose le standard de son front, le fait respecter à chaque PR, et construit le front qui le suit. » Puis le premier niveau, qui marche : tu lances `aeom`, il prend ton front et en fait un mieux, en corrigeant l'UI et l'UX et en partant sur une DA tirée de ton produit. Les deux autres niveaux, garder et construire, sont dans « ce qui vient ».
 
 ## C'est fini quand
-- [ ] Les premières lignes du README disent en une phrase ce que fait `aeom`
+- [ ] Les premières lignes du README disent en une phrase ce qu'est AEOM, puis ce que fait `aeom` aujourd'hui
 - [ ] Ce qui existe et ce qui vient sont séparés ; rien n'est donné pour fait s'il ne l'est pas (le plafond, l'apprentissage du goût, le check en CI, npm restent dans « ce qui vient »)
 - [ ] La landing dit la même chose, avec le run de l'app de démo comme preuve
 - [ ] Les commandes que listent le README et la landing sont celles de `aeom --help` (le test du site l'exige déjà)
