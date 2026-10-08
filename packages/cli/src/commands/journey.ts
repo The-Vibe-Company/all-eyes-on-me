@@ -29,7 +29,6 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.log(JOURNEY_HELP);
     return 0;
   }
-  if (parsed.plan) return printPlan(parsed.out);
   if (parsed.url !== undefined && !parsed.url.trim()) {
     console.error(`--url cannot be empty.`);
     return 1;
@@ -38,6 +37,7 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.error(`--out cannot be empty.`);
     return 1;
   }
+  if (parsed.plan) return printPlan(parsed.out);
   if (parsed.reset !== undefined && !parsed.reset.trim()) {
     console.error(`--reset cannot be empty: give the command that puts the app's data back, or leave the option out.`);
     return 1;
@@ -116,8 +116,19 @@ async function printPlan(out: string): Promise<number> {
     console.error(`No replayed journeys in ${out}. Run aeom journey first.`);
     return 1;
   }
+  // The plan reads each journey's slug, name and the screens of each replay: anything else is not a replay to plan from.
+  const r = report as Partial<JourneyReport> | null;
+  const planned =
+    Array.isArray(r?.journeys) &&
+    r.journeys.length > 0 &&
+    r.journeys.every((j) => typeof j?.slug === "string" && typeof j.name === "string" && Array.isArray(j.runs) && j.runs.every((run) => Array.isArray(run?.screens) && run.screens.every((s) => typeof s === "string")));
+  if (!planned) {
+    console.error(`${join(out, "report.json")} is not a replay of aeom journey to plan from. Run aeom journey again.`);
+    return 1;
+  }
   const wave = planJourneyWave(report);
   console.log(`Shared, one worker first, with the navigation: ${wave.shared.join(", ") || "no screen"}`);
-  for (const journey of report.journeys) console.log(`${journey.name}: ${wave.own[journey.slug]!.join(", ") || "no screen of its own"}`);
+  // The slug names the journey's file: two journeys can share a name, never a file.
+  for (const journey of report.journeys) console.log(`${journey.name} (${journey.slug}): ${wave.own[journey.slug]!.join(", ") || "no screen of its own"}`);
   return 0;
 }
