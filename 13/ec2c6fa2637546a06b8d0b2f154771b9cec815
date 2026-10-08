@@ -1,0 +1,35 @@
+packages/core/src/journey/plan.ts
+  s_4ce34ec42d9105::t_7627a5e2e81839 1-28
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_d85151e06b9b60 104-109
+  s_4ce34ec42d9105::t_86dbe172ca526f 93
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_35ca744c051845 1-2,4,18-21,26,32,94-107
+  s_4ce34ec42d9105::t_6e07369f790b92 108
+packages/core/src/journey/guard.test.ts
+  s_4ce34ec42d9105::t_7627a5e2e81839 55-72
+examples/ugly-app/pages/index.html
+  s_4ce34ec42d9105::t_7627a5e2e81839 20
+packages/core/src/journey/index.ts
+  s_4ce34ec42d9105::t_7627a5e2e81839 4
+packages/cli/src/commands/journey.test.ts
+  s_4ce34ec42d9105::t_35ca744c051845 53-55
+examples/ugly-app/README.md
+  s_4ce34ec42d9105::t_7627a5e2e81839 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13ec2c6fa2637546a06b8d0b2f154771b9cec815",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
