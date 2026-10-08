@@ -63,6 +63,19 @@ test("moving a link changes no call and no protected file: it passes", async () 
   }
 });
 
+test("an empty --base is refused rather than read as no base", async () => {
+  await writeFile(join(dir, "server.mjs"), "// routes\napp.post('/api/panier')\n");
+  try {
+    for (const args of [["--base="], ["--base", ""], ["--base", " "]]) {
+      const { code, out } = await run(["guard", "before", "same", ...args]);
+      assert.equal(code, 1, args.join(" "));
+      assert.match(out, /--base cannot be empty/);
+    }
+  } finally {
+    execFileSync("git", ["checkout", "--", "server.mjs"], { cwd: dir });
+  }
+});
+
 test("a change that takes a file off the protected list and changes it is still refused", async () => {
   await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ protected: ["db/**"] }));
   await writeFile(join(dir, "server.mjs"), "// routes\napp.post('/api/panier')\n");
