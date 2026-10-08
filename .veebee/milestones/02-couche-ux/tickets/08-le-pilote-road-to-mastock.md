@@ -22,8 +22,9 @@ Dans Road-To-Mastock : `.aeom/product.md` écrit seul, les parcours critiqués a
 - [ ] Ce que le pilote apprend à AEOM devient une issue ou une PR sur AEOM, en mots, sans capture de Road-To-Mastock
 
 ## Comment
-- Road-To-Mastock est une app web Next.js (pnpm, port 3000), tout derrière un login email + mot de passe, données dans Neon via `DATABASE_URL`. Il n'a ni seed ni compte de démo : la base fictive et le compte viennent d'Antoine, par exemple dans un `.env` réservé à AEOM.
-- Lancer l'app construite (`pnpm build` puis `pnpm start`) plutôt que `pnpm dev` : en dev, le garde-fou d'hydratation recharge la page si la première compilation dépasse 4 secondes.
+- Road-To-Mastock est une app web Next.js (pnpm, port 3000), tout derrière un login email + mot de passe, données dans Neon via `DATABASE_URL`. Il n'a ni seed ni compte de démo : la base fictive et le compte viennent d'Antoine.
+- La base fictive passe dans l'environnement de la commande de démarrage : Next.js ne remplace jamais une variable déjà posée, alors qu'un `.env` à part perdrait contre `.env.local`, qui pointe peut-être sur la vraie base. AEOM refuse de démarrer l'app si sa commande ne pose pas `DATABASE_URL` sur la base qu'Antoine a déclarée fictive.
+- Lancer l'app construite (`pnpm build` puis `pnpm start`) plutôt que `pnpm dev` : en dev, le garde-fou d'hydratation recharge la page si la première compilation dépasse 4 secondes. `pnpm start` sert le dernier build : chaque version d'un worker est reconstruite et relancée avant d'être rejouée ou comparée, sinon c'est la version de départ qui serait jugée.
 - À la première visite, l'accueil empile plusieurs fenêtres d'annonce. C'est un constat à faire (04), pas un obstacle à contourner en douce.
 - Les parcours qui terminent une séance ont besoin d'une date différente, ou d'une base remise à zéro, à chaque passage.
 
