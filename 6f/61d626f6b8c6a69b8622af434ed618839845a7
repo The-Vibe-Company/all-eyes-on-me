@@ -1,0 +1,23 @@
+examples/ugly-app/pages/index.html
+  s_4ce34ec42d9105::t_55d1331af6ebf8 12
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_96d88066920f1e 21-33,36
+.veebee/milestones/02-couche-ux/tickets/06-la-flotte-refait-les-parcours.md
+  s_4ce34ec42d9105::t_fc913d231b16e2 7,18-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f61d626f6b8c6a69b8622af434ed618839845a7",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
