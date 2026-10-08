@@ -112,7 +112,7 @@ Set `RUN` as in section 0, but create no run branch before step 10. The clean-tr
         - `git diff --name-only $START HEAD` lists only the files it was given: a worker that edited another's files is refused, whatever its replay shows;
         - `aeom journey <its app> --journeys "$MAIN/.aeom/runs/$RUN/<worker>/journeys" --out "$MAIN/.aeom/runs/$RUN/<worker>/replay"` takes every journey that went to its end before to its end. The `reset` of the config must put back that worker's own data: if it resets something every worker shares, such as one database, replay the workers one after another;
         - `aeom guard "$MAIN/.aeom/runs/$RUN/journeys-before" "$MAIN/.aeom/runs/$RUN/<worker>/replay" --base $BASE` passes. A call it refuses on a path the old files never took may be one the app always made: replay the worker's journey files on the app at `$BASE` (the commands of section 5, with `$BASE`) and guard against that before counting it as a feature;
-        - `aeom check <its app> --out "$MAIN/.aeom/runs/$RUN/<worker>/check"` fails no check that passed before.
+        - its checks: `aeom check <its app> --out "$MAIN/.aeom/runs/$RUN/<worker>/check"` exits 1 as soon as anything fails, failures the app already had included, so its exit says nothing here. Read its `check.json` against the before's, `$MAIN/.aeom/runs/$RUN/before/reports/check.json`, page by page and width by width: a check that passed before and fails now refuses the worker; a failure the before already had does not.
 
        Anything short of that is not merged: say why. Merge what passes into the run branch, copy its journey files into `.aeom/journeys/` and commit them on the run branch. Show the user each changed journey's sheet before and after, with its step count.
 
