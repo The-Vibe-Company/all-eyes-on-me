@@ -68,6 +68,11 @@ export function tallyDuels(votes: JourneyDuelVote[], journeys: string[], { voter
     else seen.add(vote.voter);
   }
   for (const vote of votes) {
+    // A list would let a slug such as "0" read one of its items as a choice.
+    if (!vote.journeys || typeof vote.journeys !== "object" || Array.isArray(vote.journeys)) {
+      problems.push(`voter ${vote.voter}: its journeys are not an object of choices by slug`);
+      continue;
+    }
     for (const slug of journeys) {
       const choice = vote.journeys?.[slug];
       if (!choice || (choice.winner !== "before" && choice.winner !== "after")) problems.push(`voter ${vote.voter}: no winner for ${slug}, "before" or "after"`);
@@ -125,7 +130,7 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
 
       const breaks = journey.runs.find((r) => r.broken && !old.runs.find((o) => o.width === r.width)?.broken);
       if (breaks) return verdict(false, `breaks at step ${breaks.broken!.step} at ${breaks.width} px: ${breaks.broken!.reason}`);
-      const refused = [...(guard?.refused.filter((v) => v.journey === journey.name) ?? []), ...runRefused];
+      const refused = [...(guard?.refused.filter((v) => (v.journeys ?? [v.journey]).includes(journey.name)) ?? []), ...runRefused];
       if (refused.length) return verdict(false, `the guard refuses ${refused.map((v) => `${v.what} (${v.why})`).join(", ")}`);
       const duel = duels.get(journey.slug);
       if (!duel) return verdict(false, "no judge compared the two versions");

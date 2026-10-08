@@ -30,6 +30,8 @@ test("the new version wins only with more votes for it; a tie keeps the old one"
   assert.throws(() => tallyDuels([duel("1", {})], ["orders"], { voters: 1 }), DuelVoteError);
   assert.throws(() => tallyDuels([duel("1", { orders: "after" }), duel("1", { orders: "after" }), duel("3", { orders: "before" })], ["orders"]), /voter 1 voted more than once/);
   assert.throws(() => tallyDuels([duel("", { orders: "after" }), duel("2", { orders: "after" }), duel("3", { orders: "after" })], ["orders"]), /a vote has no voter/);
+  const listed = { voter: "1", journeys: [{ winner: "after", reason: "a list" }] } as unknown as JourneyDuelVote;
+  assert.throws(() => tallyDuels([listed, duel("2", { "0": "after" }), duel("3", { "0": "after" })], ["0"]), /voter 1: its journeys are not an object/);
 });
 
 test("a journey the judges prefer, that goes to its end and that the guard lets through, stays; its findings are cleared only by the critique redone", () => {
@@ -74,6 +76,16 @@ test("the old version comes back when the new one breaks, the guard refuses it, 
   assert.match(verdicts[0]!.why, /breaks at step 2 at 1280 px: the page answered 500/);
   assert.match(verdicts[1]!.why, /the guard refuses POST \/api\/panier/);
   assert.match(verdicts[2]!.why, /the judges prefer the old one \(2\/3 prefer the old one\)/);
+});
+
+test("a refused call two journeys make sends both back", () => {
+  const verdicts = ratchetJourneys({
+    before: replay({ a: run(3), b: run(3) }),
+    after: replay({ a: run(2), b: run(2) }),
+    duels: tallyDuels([duel("1", { a: "after", b: "after" }), duel("2", { a: "after", b: "after" }), duel("3", { a: "after", b: "after" })], ["a", "b"]),
+    guard: { refused: [{ kind: "call", what: "POST /api/panier", why: "a call the app did not make before", journey: "a", journeys: ["a", "b"] }], allowed: [] },
+  });
+  assert.deepEqual(verdicts.map((v) => [v.slug, v.kept]), [["a", false], ["b", false]]);
 });
 
 test("a changed protected file sends every journey back", () => {

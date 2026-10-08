@@ -123,3 +123,15 @@ test("a call the new path makes is known when a replay of the new files on the o
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("without the duel votes, the default three judges are missing and nothing is decided", async () => {
+  const dir = await ratchetDir();
+  try {
+    await rm(join(dir, "after", "duels"), { recursive: true, force: true });
+    const { code, out } = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(code, 1);
+    assert.match(out, /The duel votes cannot be counted:\n\s+expected 3 votes, found 0/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

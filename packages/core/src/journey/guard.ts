@@ -9,6 +9,8 @@ export interface Violation {
   why: string;
   /** The journey that showed it first, for a call. */
   journey?: string;
+  /** Every journey that makes it, for a call: each of them carries the feature. */
+  journeys?: string[];
 }
 
 export interface GuardResult {
@@ -63,16 +65,21 @@ export function guardJourneys({ before, after, changed = [], protectedFiles = []
   }
 
   const found = new Map<string, Violation>();
+  const note = (key: string, violation: Violation, journey: string) => {
+    const seen = found.get(key) ?? violation;
+    if (!seen.journeys!.includes(journey)) seen.journeys!.push(journey);
+    found.set(key, seen);
+  };
   for (const journey of after.journeys) {
     for (const call of journey.runs.flatMap((r) => r.calls ?? [])) {
       const what = `${call.method} ${call.path}`;
       const names = known.get(what);
       if (!names) {
-        if (!found.has(`call ${what}`)) found.set(`call ${what}`, { kind: "call", what, why: "a call the app did not make before", journey: journey.name });
+        note(`call ${what}`, { kind: "call", what, why: "a call the app did not make before", journey: journey.name, journeys: [] }, journey.name);
         continue;
       }
       const added = [...call.fields, ...call.query].filter((name) => !names.has(name));
-      if (added.length && !found.has(`fields ${what}`)) found.set(`fields ${what}`, { kind: "fields", what, why: `sends new fields: ${[...new Set(added)].join(", ")}`, journey: journey.name });
+      if (added.length) note(`fields ${what}`, { kind: "fields", what, why: `sends new fields: ${[...new Set(added)].join(", ")}`, journey: journey.name, journeys: [] }, journey.name);
     }
   }
   const patterns = protectedFiles.map(globToRegExp);

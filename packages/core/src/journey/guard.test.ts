@@ -23,7 +23,7 @@ test("the same calls as before, in any journey, are no feature", () => {
 
 test("a call the app never made is refused, naming the journey that made it", () => {
   const result = guardJourneys({ before: replay({ add: [] }), after: replay({ add: [call("POST", "/api/panier", ["item"])] }) });
-  assert.deepEqual(result.refused, [{ kind: "call", what: "POST /api/panier", why: "a call the app did not make before", journey: "add" }]);
+  assert.deepEqual(result.refused, [{ kind: "call", what: "POST /api/panier", why: "a call the app did not make before", journey: "add", journeys: ["add"] }]);
 });
 
 test("the same new call or the same new fields, in several journeys and widths, are refused once", () => {
@@ -32,6 +32,7 @@ test("the same new call or the same new fields, in several journeys and widths, 
   after.journeys[0]!.runs.push({ ...after.journeys[0]!.runs[0]!, width: 390 });
   const result = guardJourneys({ before, after });
   assert.deepEqual(result.refused.map((v) => [v.kind, v.what, v.journey]), [["call", "POST /api/panier", "add"], ["fields", "POST /add", "add"]]);
+  assert.deepEqual(result.refused.map((v) => v.journeys), [["add", "orders"], ["add", "orders"]], "each names every journey that makes it");
 });
 
 test("new fields sent to a call the app already made are refused too, by name only", () => {

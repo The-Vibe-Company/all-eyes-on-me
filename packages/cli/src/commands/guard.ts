@@ -142,7 +142,10 @@ export async function runGuard(argv: string[]): Promise<number> {
   if (protectedFiles.length === 0) console.log(`No "protected" list in .aeom/config.json: AEOM compared the calls only, and no file is protected.\n`);
   const { refused, allowed } = guardJourneys({ before, after, changed, protectedFiles, allow });
   for (const v of allowed) console.log(`✓ ${v.what}  let through for the feature asked: "${values.feature}"`);
-  for (const v of refused) console.log(`✗ ${v.what}  ${v.why}${v.journey ? `, in "${v.journey}"` : ""}`);
+  for (const v of refused) {
+    const journeys = v.journeys ?? (v.journey ? [v.journey] : []);
+    console.log(`✗ ${v.what}  ${v.why}${journeys.length ? `, in ${journeys.map((name) => `"${name}"`).join(", ")}` : ""}`);
+  }
   if (refused.length) {
     console.log(`\nRefused: ${refused.length === 1 ? "this is" : "these are"} a feature, and AEOM changes navigation, copy and states only. Undo it, or, if the user asked for it explicitly, run again with --feature and --allow.`);
     return 1;
