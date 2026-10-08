@@ -1,0 +1,39 @@
+.veebee/milestones/04-garder-a-chaque-pr/product.md
+  s_4ce34ec42d9105::t_00c7fb5c36804e 1-7
+.veebee/milestones/04-garder-a-chaque-pr/tickets/01-aeom-review.md
+  s_4ce34ec42d9105::t_e49349cc9984f1 1-32
+.veebee/milestones/04-garder-a-chaque-pr/tickets/02-le-check-github.md
+  s_4ce34ec42d9105::t_0ae1220c479ed1 1-28
+.veebee/milestones/04-garder-a-chaque-pr/tickets/03-le-meme-produit.md
+  s_4ce34ec42d9105::t_4afe9125407dda 1-27
+.veebee/milestones/04-garder-a-chaque-pr/tickets/04-les-parcours-de-la-pr.md
+  s_4ce34ec42d9105::t_9e9173b1768df8 1-24
+.veebee/milestones/04-garder-a-chaque-pr/tickets/05-le-standard-suit.md
+  s_4ce34ec42d9105::t_1a7fdc3a4a3a86 1-24
+.veebee/milestones/05-construire/product.md
+  s_4ce34ec42d9105::t_3f1b2291d9e67d 1-5
+.veebee/milestones/05-construire/tickets/01-aeom-build.md
+  s_4ce34ec42d9105::t_ca4e6427bea519 1-30
+.veebee/milestones/05-construire/tickets/02-les-features-front-construites.md
+  s_4ce34ec42d9105::t_86d94c0ade72a7 1-24
+.veebee/milestones/05-construire/tickets/03-from-scratch.md
+  s_4ce34ec42d9105::t_bae4702e63cba4 1-28
+.veebee/milestones/05-construire/tickets/04-la-vraie-api.md
+  s_4ce34ec42d9105::t_54d0c2f440a339 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "94b7d47d61add5d7372aabab95deb7537f2ee53d",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
