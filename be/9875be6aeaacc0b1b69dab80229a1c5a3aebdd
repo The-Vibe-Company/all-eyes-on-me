@@ -1,0 +1,28 @@
+.veebee/autopilot/2026-10-08.md
+  s_4ce34ec42d9105::t_dd770e21ec6761 17,36-37
+  s_4ce34ec42d9105::t_16917570fc69b2 38
+packages/cli/src/commands/journey.test.ts
+  s_4ce34ec42d9105::t_dd770e21ec6761 55-62
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_dd770e21ec6761 40,119-128,131-132
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_b5121983e2e656 106
+  s_4ce34ec42d9105::t_dd770e21ec6761 95,111-116
+  s_4ce34ec42d9105::t_65963d07608e60 121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "be9875be6aeaacc0b1b69dab80229a1c5a3aebdd",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
