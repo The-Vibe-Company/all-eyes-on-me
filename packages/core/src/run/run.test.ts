@@ -27,6 +27,7 @@ const judge = (failing: [string, string][]): JudgeReport => ({
       pass: !failing.some(([p, id]) => p === page && id === principle),
       votes: "",
       reasons: [],
+      dissent: [],
     })),
   })),
   failures: failing.length,

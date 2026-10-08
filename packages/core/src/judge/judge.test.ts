@@ -38,12 +38,16 @@ test("a principle fails a page when most votes fail it", () => {
   assert.equal(states.pass, false);
   assert.equal(states.votes, "2/3 fail");
   assert.deepEqual(states.reasons, ["1 on states", "2 on states"], "the reasons given by the majority");
+  assert.deepEqual(states.dissent, ["3 on states"], "the minority's reason is kept too");
   assert.equal(report.failures, 1);
 });
 
 test("one dissenting vote does not fail a page", () => {
   const report = tally([vote("1", { "/": ["hierarchy"] }), vote("2"), vote("3")], pages, principles);
   assert.equal(report.failures, 0);
+  const hierarchy = report.pages.find((p) => p.page === "/")!.verdicts.find((v) => v.principle === "hierarchy")!;
+  assert.deepEqual(hierarchy.reasons, ["2 on hierarchy", "3 on hierarchy"]);
+  assert.deepEqual(hierarchy.dissent, ["1 on hierarchy"]);
 });
 
 test("a tie fails, so a split judge never lets a page through", () => {

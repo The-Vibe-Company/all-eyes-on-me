@@ -2,7 +2,9 @@
 // the code drift apart.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createServer } from "node:net";
 import { test } from "node:test";
 
@@ -77,4 +79,26 @@ test("the run that rebuilt the page is kept: six directions, a tournament, befor
     assert.equal(sheet.status, 200);
     assert.equal(sheet.headers.get("content-type"), "image/webp");
   });
+});
+
+test("the site builds to static files a host serves as is", () => {
+  const out = mkdtempSync(join(tmpdir(), "aeom-site-"));
+  try {
+    execFileSync("node", [new URL("site/build.mjs", root).pathname, out], { stdio: "ignore" });
+    const built = readFileSync(join(out, "index.html"), "utf8");
+    assert.match(built, /All Eyes On Me/);
+    assert.doesNotMatch(built, /<!-- (include|missing partial):/);
+    for (const [, href] of built.matchAll(/(?:href|src)="\/((?:shared|run)\/[^"]+)"/g)) {
+      assert.ok(existsSync(join(out, href)), `${href} is linked but not built`);
+    }
+    assert.ok(existsSync(join(out, "shared/kit.css")));
+  } finally {
+    rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test("Vercel builds the site from site/ with that same script", () => {
+  const vercel = JSON.parse(readFileSync(new URL("site/vercel.json", root), "utf8"));
+  assert.equal(vercel.buildCommand, "node build.mjs");
+  assert.equal(vercel.outputDirectory, "dist");
 });

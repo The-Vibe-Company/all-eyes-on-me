@@ -19,7 +19,7 @@ Le bouton « Star on GitHub » avec le nombre d'étoiles à côté.
 - [x] Si GitHub ne répond pas ou limite les appels, le bouton reste là, sans nombre et sans erreur dans la console
 
 ## Comment
-- Lecture côté navigateur de l'API publique de GitHub pour `The-Vibe-Company/all-eyes-on-me`.
+- La page demande `/api/stars` au site, qui lit l'API publique de GitHub côté serveur pour `The-Vibe-Company/all-eyes-on-me` et répond toujours 200, avec ou sans nombre : le navigateur n'appelle jamais GitHub, donc un GitHub muet ne laisse aucune erreur dans la console.
 
 ## Hors ticket
 - La mise en ligne : 05.
