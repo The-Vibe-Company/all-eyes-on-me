@@ -22,6 +22,9 @@ function shop(): Server {
     "/contact": () => page(`<label>Email <input name="email"></label><button onclick="alert('Envoyé')">Envoyer</button>`),
     "/login": () => page(`<form method="post" action="/login"><label>Email <input name="email"></label><label>Password <input name="password" type="password"></label><button>Sign in</button></form>`),
     "/account": () => page(`<h1>My account</h1>`),
+    "/check": () => page(`<label>Email <input name="email"></label><button onclick="alert('No account for ' + document.querySelector('input').value)">Check</button>`),
+    "/slow-login": () =>
+      page(`<label>Email <input name="email"></label><button onclick="setTimeout(() => { document.cookie = 'session=ok; path=/'; location.href = '/account'; }, 6000)">Sign in</button>`),
   };
   return createServer(async (req, res) => {
     if (req.url === "/login" && req.method === "POST") {
@@ -162,6 +165,24 @@ describe("replaying journeys", () => {
     assert.equal(signing!.broken, null, "and signs in with the account's values");
     assert.deepEqual(signing!.calls, [{ method: "POST", path: "/login", query: [], fields: ["email", "password"] }], "the form sent is recorded by its fields' names");
     assert.doesNotMatch(readFileSync(join(out("signed-in"), "report.json"), "utf8"), /fake-secret-123|ana@example\.test/);
+  });
+
+  test("a dialog that quotes a value of the account is recorded with the value hidden", async () => {
+    const account = { Email: "ana@example.test" };
+    const check: Journey = { slug: "check", name: "Check", steps: [{ do: "open", path: "/check" }, { do: "fill", target: { text: "Email" }, value: { account: "Email" } }, { do: "click", target: { role: "button", name: "Check" } }] };
+    const run = (await replayJourneys({ url, journeys: [check], outDir: out("hidden"), widths: [1280], account })).journeys[0]!.runs[0]!;
+    assert.equal(run.steps[2]!.dialog, "No account for •••");
+    assert.doesNotMatch(readFileSync(join(out("hidden"), "report.json"), "utf8"), /ana@example\.test/);
+  });
+
+  test("a sign-in that takes several seconds still signs in", async () => {
+    const browser = await chromium.launch();
+    try {
+      const signedIn = await signIn(browser, url, { path: "/slow-login", account: { Email: "ana@example.test" }, submit: "Sign in" });
+      assert.ok(signedIn.cookies.some((c) => c.name === "session"));
+    } finally {
+      await browser.close();
+    }
   });
 
   test("without a reset, AEOM warns that journeys changing data can differ", async () => {
