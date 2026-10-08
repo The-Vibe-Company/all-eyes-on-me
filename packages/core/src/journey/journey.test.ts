@@ -86,6 +86,7 @@ describe("replaying journeys", () => {
       assert.equal(run.steps.length, 4);
       for (const step of run.steps) assert.ok(existsSync(join(out("steps"), step.capture!)), `${step.capture} exists`);
       assert.ok(existsSync(join(out("steps"), run.sheet)), "the sheet exists");
+      assert.deepEqual(run.calls, [{ method: "POST", path: "/add", query: [], fields: [] }], "the app's call to its server is recorded");
     }
     assert.ok(existsSync(join(out("steps"), "report.json")));
   });
@@ -159,6 +160,7 @@ describe("replaying journeys", () => {
     assert.equal(account1!.broken, null, "the signed-in journey reaches the account");
     assert.equal(signing!.steps[0]!.path, "/login", "the signed-out journey starts on the sign-in page");
     assert.equal(signing!.broken, null, "and signs in with the account's values");
+    assert.deepEqual(signing!.calls, [{ method: "POST", path: "/login", query: [], fields: ["email", "password"] }], "the form sent is recorded by its fields' names");
     assert.doesNotMatch(readFileSync(join(out("signed-in"), "report.json"), "utf8"), /fake-secret-123|ana@example\.test/);
   });
 
