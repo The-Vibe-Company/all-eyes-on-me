@@ -1,0 +1,27 @@
+.veebee/milestones/03-la-commande-unique/product.md
+  s_4ce34ec42d9105::t_585e3c37b49861 5
+.veebee/milestones/03-la-commande-unique/tickets/01-aeom-sans-option.md
+  s_4ce34ec42d9105::t_5e38e7fc938c7d 19,25
+.veebee/milestones/03-la-commande-unique/tickets/04-garder-le-style.md
+  s_4ce34ec42d9105::t_94cbd8d09cf5da 18
+.veebee/milestones/03-la-commande-unique/tickets/08-le-banc.md
+  s_4ce34ec42d9105::t_55e993eb1c4693 5
+.veebee/milestones/03-la-commande-unique/tickets/09-le-banc-se-repete.md
+  s_4ce34ec42d9105::t_806b7aa78c90b0 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b25c24fa88f3f61fac39db6392f7d4616dc600b",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
