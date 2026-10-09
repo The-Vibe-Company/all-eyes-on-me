@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -72,6 +73,23 @@ describe("console", () => {
     assert.match(messages, /boom/);
     assert.match(messages, /kaboom/);
   });
+});
+
+test("contrast is measured on a page whose Content-Security-Policy forbids inline scripts", async () => {
+  const server = createHttpServer((_, res) => {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": "script-src 'self'" });
+    res.end('<!doctype html><title>t</title><p style="color:#ccc;background:#fff">Pâle</p>');
+  });
+  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  const page = await browser.newPage();
+  try {
+    await page.goto(`http://127.0.0.1:${(server.address() as { port: number }).port}/`);
+    const issues = await checkContrast(page);
+    assert.equal(issues.length, 1, "the faint paragraph is found, though the page forbids inline scripts");
+  } finally {
+    await page.close();
+    await new Promise((done) => server.close(done));
+  }
 });
 
 describe("on the ugly app", () => {

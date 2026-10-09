@@ -13,7 +13,9 @@ interface AxeNode {
 /** Text must reach WCAG AA contrast against its background, as axe-core measures it. */
 export async function checkContrast(page: Page): Promise<Issue[]> {
   axeSource ??= readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
-  await page.addScriptTag({ content: await axeSource });
+  // Evaluated through the browser's own protocol, not as a <script> tag: a page whose
+  // Content-Security-Policy forbids inline scripts is measured like any other.
+  await page.evaluate(await axeSource);
   const nodes = (await page.evaluate(async () => {
     const axe = (window as unknown as { axe: { run(context: Document, options: object): Promise<{ violations: { nodes: unknown[] }[] }> } }).axe;
     const result = await axe.run(document, { runOnly: { type: "rule", values: ["color-contrast"] } });
