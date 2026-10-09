@@ -1,0 +1,21 @@
+.veebee/autopilot/2026-10-09.md
+  s_4ce34ec42d9105::t_0e2b8d35ee47cb 4,105-125
+.veebee/autopilot/blocked.json
+  s_4ce34ec42d9105::t_7a17b043862080 11-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f7c758391dfd5519e85a94da4275f67f9b82105c",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
