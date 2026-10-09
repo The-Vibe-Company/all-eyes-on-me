@@ -1,0 +1,31 @@
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_02bb427f85d45d 2,11,14,142-188
+packages/cli/src/commands/report.ts
+  s_4ce34ec42d9105::t_b46c44c6b682b8 2-4,6,8,16-20,22-24,35,45,48,63,74-128
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_c6bdaefe092e77 7
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_1c3bdc4124bd9d 196-255,257,259,264,272,275,278,317-322,330
+packages/core/src/run/taste.test.ts
+  s_4ce34ec42d9105::t_2c89113841699c 1-26
+packages/core/src/run/taste.ts
+  s_4ce34ec42d9105::t_080571408f454c 1-58
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_ad5d3f4ef6aef9 41,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "926ed674f79edb7a826802abf73587eb2d84525b",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
