@@ -9,6 +9,7 @@ import { runJourney } from "./commands/journey.js";
 import { runProduct } from "./commands/product.js";
 import { runCompare, runSnapshot } from "./commands/run.js";
 import { runFeatures } from "./commands/features.js";
+import { runPr } from "./commands/pr.js";
 import { runReport } from "./commands/report.js";
 import { runVerdict } from "./commands/verdict.js";
 
@@ -34,6 +35,7 @@ Commands:
   verdict     Say whether the front needs redoing, from what AEOM measured
   report      Write the page of what a run gave, in the run's folder
   features    Name what a blocked journey would need, without building it
+  pr          Push the run's branch and open a PR, in words, with no capture
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -53,6 +55,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   verdict: runVerdict,
   report: runReport,
   features: runFeatures,
+  pr: runPr,
 };
 
 const [command, ...rest] = process.argv.slice(2);
