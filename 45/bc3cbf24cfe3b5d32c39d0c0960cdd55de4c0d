@@ -1,0 +1,21 @@
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_eae12e633ae3fc 2,78-94
+packages/core/src/checks/contrast.ts
+  s_4ce34ec42d9105::t_97180df6f2fb01 16-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "45bc3cbf24cfe3b5d32c39d0c0960cdd55de4c0d",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
