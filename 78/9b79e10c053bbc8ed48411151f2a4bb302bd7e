@@ -1,0 +1,59 @@
+.veebee/milestones/03-la-commande-unique/tickets/12-le-standard-du-front.md
+  s_4ce34ec42d9105::t_4ffbb783529f37 7
+README.md
+  s_4ce34ec42d9105::t_8407abcd2b212d 15,19-20,82,87,105
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_e85ae6ff5830f2 1,3-4,6-7,63-71,74-75,77
+packages/cli/src/commands/standard.test.ts
+  s_97a431cfa65ca7::t_1efab3325f7489 1-134
+packages/cli/src/commands/standard.ts
+  s_4ce34ec42d9105::t_7a8d1e13938fb2 1-123
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_fd246d0533e377 14,40,61
+packages/cli/src/sheet-file.ts
+  s_4ce34ec42d9105::t_e9a9df56bd85fa 1-118
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_1c7d447db396fd 8
+packages/core/src/product/index.ts
+  s_4ce34ec42d9105::t_bd96bde71d467c 2
+packages/core/src/product/merge.ts
+  s_4ce34ec42d9105::t_bfb01e2b9f99f7 1-62
+packages/core/src/product/product.ts
+  s_4ce34ec42d9105::t_96004190e9d39b 10-11,93-95,101-111
+packages/core/src/standard/index.ts
+  s_4ce34ec42d9105::t_357d9ed5d3cf86 1
+packages/core/src/standard/standard.test.ts
+  s_4ce34ec42d9105::t_eff6fbac4f5d18 1-135
+packages/core/src/standard/standard.ts
+  s_4ce34ec42d9105::t_0bdb3b79148949 1-270
+site/pages/index.html
+  s_4ce34ec42d9105::t_7f7a2dc4dbc383 189-190,220,252-253
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_fb0cdd1b342b9a 3,17,41,62,66-72,167,245
+skills/aeom/standard.md
+  s_4ce34ec42d9105::t_aed0c9b4bf812d 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "789b79e10c053bbc8ed48411151f2a4bb302bd7e",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    },
+    "s_97a431cfa65ca7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0fb77bea-e470-4301-91e2-b9c67ca65e18",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
