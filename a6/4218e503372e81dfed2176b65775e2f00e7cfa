@@ -1,0 +1,37 @@
+.veebee/autopilot/2026-10-09.md
+  s_4ce34ec42d9105::t_77faf18207076f 78-82
+.veebee/milestones/03-la-commande-unique/tickets/07-d-accord-pas-d-accord.md
+  s_4ce34ec42d9105::t_83f230f83fbeb6 7
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_5d09f86f9ef51e 2-4,10,13,16,28-59,140-141,178-373
+packages/cli/src/commands/report.ts
+  s_4ce34ec42d9105::t_49b16d139e06f0 2-5,7,9,17-21,23-25,36-45,54-55,57-59,74,85-175
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_e965d5818e6f7b 5,7
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_1216232f128c7d 1-88
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_6289d98e0ff036 12,203-298,300,302,307,315,318,321,343,361-366,374
+packages/core/src/run/taste.test.ts
+  s_4ce34ec42d9105::t_ead8d6d8f106b9 1-43
+packages/core/src/run/taste.ts
+  s_4ce34ec42d9105::t_39dbc4c6d12675 1-70
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_70c3f051d6e8d4 41,62-64,160,238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a64218e503372e81dfed2176b65775e2f00e7cfa",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
