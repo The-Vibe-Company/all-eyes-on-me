@@ -272,6 +272,8 @@ const FEEDBACK_SCRIPT = `
   const send = async (box, agree) => {
     clearTimeout(box.typing);
     box.typing = null;
+    // The choice counts from the click: a reason typed before the server answers is kept with it.
+    box.dataset.agree = String(agree);
     const why = box.querySelector("input").value.trim();
     const res = await fetch("api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: box.dataset.verdictId, agree, why: why || undefined }) }).catch(() => null);
     if (!res || !res.ok) { box.querySelector(".said").textContent = "Not saved: is aeom report --serve still running?"; return; }
