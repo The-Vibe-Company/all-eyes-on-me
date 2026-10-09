@@ -1,0 +1,19 @@
+.veebee/autopilot/2026-10-09.md
+  s_827536fc524374::t_5298b0eaf9c7c0 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fc63f8cd6e68b998efc69ea5d8f47d7f351a7c6e",
+  "prompts": {},
+  "sessions": {
+    "s_827536fc524374": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f4f3ed3-3360-45b5-869f-19a7a3605e05",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
