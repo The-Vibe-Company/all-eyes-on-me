@@ -2,8 +2,8 @@ import { readFileSync, realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
-import { champion, draftStandard, mergeStandard, productBrief, standardProblems, type StandardMerge, type Tournament } from "@aeom/core";
-import { readIfThere, sheetFile, updateSheet } from "../sheet-file.js";
+import { champion, draftStandard, mergeStandard, productBrief, standardProblems, type Tournament } from "@aeom/core";
+import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
 
 const STANDARD = sheetFile("standard");
 
@@ -26,8 +26,8 @@ holds an image, is refused and nothing is written. What the user corrected in
 the standard since AEOM last wrote it stays as they wrote it, and AEOM says
 what it changed.`;
 
-/** A path given on the command line, from the project's root, or null when it is outside the project. */
-function fromRoot(path: string): string | null {
+/** Where a path is from the project's root, links followed, or null when it is outside the project. */
+function inProject(path: string): string | null {
   let full = resolve(path);
   try {
     full = realpathSync(full);
@@ -35,13 +35,14 @@ function fromRoot(path: string): string | null {
     // A file that does not exist is said so once it is read.
   }
   const inside = relative(realpathSync(process.cwd()), full);
-  return !inside || inside.startsWith("..") || isAbsolute(inside) ? null : inside.split(sep).join("/");
+  return !inside || inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside) ? null : inside.split(sep).join("/");
 }
 
-/** A file of the project by its path from the root, or null when there is none. */
+/** A file of the project by its path from the root, or null when there is none, or when it lies outside the project through a link. */
 function readProject(path: string): string | null {
+  if (inProject(path) === null) return null;
   try {
-    return readFileSync(join(process.cwd(), path), "utf8");
+    return readFileSync(resolve(path), "utf8");
   } catch {
     return null;
   }
@@ -55,7 +56,7 @@ async function json<T>(file: string): Promise<T | null> {
 async function printDraft(paths: string[], runDir: string | undefined): Promise<number> {
   const files = [];
   for (const path of paths) {
-    const inside = fromRoot(path);
+    const inside = inProject(path);
     if (inside === null) {
       console.error(`${path} is outside the project: give the shared files of the front from the project's root, such as shared/kit.css.`);
       return 1;
@@ -72,7 +73,9 @@ async function printDraft(paths: string[], runDir: string | undefined): Promise<
   const winner = tournament ? champion(tournament) : null;
   const notes = runDir ? ((await json<{ label: string; note?: string }[]>(join(runDir, "directions", "sheet.json"))) ?? []) : [];
   const direction = winner ? { champion: winner, sentence: notes.find((n) => n.label === winner)?.note ?? null } : null;
-  process.stdout.write(draftStandard(files, { name: sheet === undefined ? undefined : productBrief(sheet).name, direction }));
+  // AEOM's last words first: what the user changed in the direction stays theirs when the drafts are merged.
+  const previous = (await readIfThere(STANDARD.base)) ?? (await readIfThere(STANDARD.sheet));
+  process.stdout.write(draftStandard(files, { name: sheet === undefined ? undefined : productBrief(sheet).name, direction, previous }));
   return 0;
 }
 
@@ -104,20 +107,8 @@ export async function runStandard(argv: string[]): Promise<number> {
       console.error(`With your corrections in .aeom/standard.md, the standard would not hold, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}\nIn .aeom/standard.md, write each value as the code writes it, put back a heading you renamed, or take the line out, then run again.`);
       return 1;
     }
-    return { text: merged.text, base: draft, after: () => say(merged, current === undefined, draft) };
-  });
-}
-
-function say(merged: StandardMerge, first: boolean, draft: string): void {
-  if (first) {
     const count = (part: string) => (draft.split(`\n## ${part}\n`)[1]?.split("\n## ")[0] ?? "").split("\n").filter((l) => /^[-*] `/.test(l)).length;
-    console.log(`Wrote .aeom/standard.md: ${count("Tokens")} tokens and ${count("Components")} components, each where it lives in the code`);
-    return;
-  }
-  console.log("Wrote .aeom/standard.md");
-  if (merged.kept.length) console.log(`  Kept your edits: ${merged.kept.join(", ")}`);
-  if (merged.updated.length) console.log(`  Updated: ${merged.updated.join(", ")}`);
-  if (merged.added.length) console.log(`  Added: ${merged.added.join(", ")}`);
-  if (merged.removed.length) console.log(`  Removed, no longer in the code: ${merged.removed.join(", ")}`);
-  if (!merged.kept.length && !merged.updated.length && !merged.added.length && !merged.removed.length) console.log("  Nothing changed");
+    const first = `Wrote .aeom/standard.md: ${count("Tokens")} tokens and ${count("Components")} components, each where it lives in the code`;
+    return { text: merged.text, base: draft, after: () => (current === undefined ? console.log(first) : sayMerge(".aeom/standard.md", merged, "no longer in the code")) };
+  });
 }

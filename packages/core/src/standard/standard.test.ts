@@ -16,7 +16,14 @@ const kit = `/* The kit: link shared/kit.css, include shared/header.html. */
 .carte:hover, a:not(.btn) { outline: 0; }
 @media (max-width: 600px) { .carte { padding: 8px; } }
 `;
-const files: Record<string, string> = { "shared/kit.css": kit, "shared/header.html": '<header class="entete"></header>', "src/theme.ts": "export const theme = {\n  accent: '#c0392b',\n};\n" };
+const files: Record<string, string> = {
+  "shared/kit.css": kit,
+  "shared/header.html": '<header class="entete"></header>',
+  "src/theme.ts": "export const theme = {\n  accent: '#c0392b',\n};\n",
+  "shared/tissus.css": ".tissu { --teinte: var(--petrole); }\n.tissu--petrole { --teinte: var(--petrole); }\n",
+  "shared/twice.css": ":root { --fond: #fff; }\n:root { --fond: #fafafa; }\n",
+  "shared/icons.css": ':root { --fleche: url("data:image/svg+xml,%3Csvg%3E%3C/svg%3E"); --accent: red !important; }\n',
+};
 const read = (path: string) => files[path] ?? null;
 const draftOf = (names: string[], options = {}) => draftStandard(names.map((path) => ({ path, text: files[path]! })), options);
 
@@ -64,7 +71,6 @@ test("a direction named without its sentence still has to be written", () => {
 });
 
 test("the same token set under two rules is two lines, not one said twice", () => {
-  files["shared/tissus.css"] = ".tissu { --teinte: var(--petrole); }\n.tissu--petrole { --teinte: var(--petrole); }\n";
   const draft = draftOf(["shared/tissus.css"]);
   assert.match(draft, /^- `--teinte: var\(--petrole\)` in `shared\/tissus\.css`, under `\.tissu`$/m);
   assert.match(draft, /^- `--teinte: var\(--petrole\)` in `shared\/tissus\.css`, under `\.tissu--petrole`$/m);
@@ -84,7 +90,42 @@ test("a standard can be written only when everything in it is in the code, and i
     assert.match(problems(standard(`- See ${image}`)), /words only/, image);
   }
   assert.match(problems(standard().replace("## Tokens", "## Couleurs")), /missing "Tokens"/);
+  assert.match(problems(standard().replace("label ink\n", "label ink\n- `--encre: #f4f1ea` in `shared/kit.css`\n")), /`--encre: #f4f1ea` is not set at the root of shared\/kit\.css/);
+  assert.match(problems(standard().replace("label ink\n", "label ink\n- `--encre: #1c2226` in `shared/kit.css`, under `.nulle-part`\n")), /`--encre: #1c2226` is not set under `\.nulle-part` in shared\/kit\.css/);
+  assert.deepEqual(problems(standard("- Every `<img>` has an alt text; no image is only decoration.")), "", "an element named in code is not an image");
   assert.match(problems(standard().replace("## Rules\n", "## Rules\n\n## Rules\n")), /"Rules" appears more than once/);
+});
+
+test("every line of the tokens and the components is one the code is checked against", () => {
+  const problems = (text: string) => standardProblems(text, read).join("\n");
+  for (const line of ["1. `--petrole: #000000` in `shared/kit.css`", "| `--petrole: #000000` | `shared/kit.css` |", "Colours: `--petrole: #000000` in `shared/kit.css`", "  `--petrole: #000000`"]) {
+    assert.match(problems(standard().replace("## Components\n", `${line}\n\n## Components\n`)), /"Tokens" holds a line that is neither a token nor a ### heading/, line);
+  }
+  assert.deepEqual(problems(standard().replace("## Tokens\n", "## Tokens\n\n### Colours\n")), "", "a ### heading groups the tokens");
+});
+
+test("drafted tokens hold their own check, an inline image as a value or !important included", () => {
+  const draft = draftOf(["shared/icons.css"]);
+  assert.match(draft, /^- `--fleche: url\("data:image\/svg\+xml,%3Csvg%3E%3C\/svg%3E"\)` in `shared\/icons\.css`$/m);
+  assert.match(draft, /^- `--accent: red` in `shared\/icons\.css`$/m);
+  assert.deepEqual(standardProblems(draft, read).filter((p) => !/placeholder/.test(p)), []);
+});
+
+test("with no new direction, the draft keeps the direction of the last standard", () => {
+  const draft = draftOf(["shared/kit.css"], { previous: standard() });
+  assert.match(draft, /## Direction\nnuancier, an upholsterer's swatch book\. It serves the main loop: choose a piece, add it, follow it\.\n/);
+  assert.match(draftOf(["shared/kit.css"], { previous: standard(), direction: { champion: "guichet", sentence: "Sert la commande." } }), /## Direction\nguichet: Sert la commande\.\n/);
+  assert.match(draftOf(["shared/kit.css"], { previous: draftOf(["shared/kit.css"]) }), /## Direction\n<The direction kept/, "a placeholder is not carried over");
+  assert.match(draftOf(["shared/kit.css"], { previous: standard(), direction: { champion: "nuancier", sentence: null } }), /## Direction\nnuancier, an upholsterer's swatch book\./, "the same champion without its sentence keeps what was written of it");
+});
+
+test("headings the user adds to group the tokens stay theirs, and leave the tokens AEOM's", () => {
+  const base = standard();
+  const current = standard().replace("## Tokens\n", "## Tokens\n\n### Colours\n");
+  const merged = mergeStandard({ base, current, proposed: standard().replace("#1f4b57", "#224f5b") });
+  assert.match(merged.text, /## Tokens\n\n### Colours\n- `--encre/);
+  assert.deepEqual(merged.kept, ["### Colours"]);
+  assert.deepEqual(merged.updated, ["`--petrole: #224f5b` in `shared/kit.css`"]);
 });
 
 test("a later run keeps what the user corrected by hand and says what it changed", () => {
@@ -119,7 +160,6 @@ test("a token whose value the code changed is updated, unless the user wrote on 
 });
 
 test("a token set twice under the same rule is drafted once, with the value that wins", () => {
-  files["shared/twice.css"] = ":root { --fond: #fff; }\n:root { --fond: #fafafa; }\n";
   const draft = draftOf(["shared/twice.css"]);
   assert.doesNotMatch(draft, /--fond: #fff`/);
   assert.match(draft, /^- `--fond: #fafafa` in `shared\/twice\.css`$/m);

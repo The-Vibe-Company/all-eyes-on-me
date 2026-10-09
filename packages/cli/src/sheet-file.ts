@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { SheetMerge } from "@aeom/core";
 
 /**
  * A file AEOM writes for the user to correct, such as the product sheet: the
@@ -115,4 +116,14 @@ export async function updateSheet(
   } finally {
     await rm(file.lock, { force: true });
   }
+}
+
+/** Says what a merge kept of the user's edits and what it changed; `gone` says why AEOM removed what it removed. */
+export function sayMerge(file: string, merged: SheetMerge, gone: string): void {
+  console.log(`Wrote ${file}`);
+  if (merged.kept.length) console.log(`  Kept your edits: ${merged.kept.join(", ")}`);
+  if (merged.updated.length) console.log(`  Updated: ${merged.updated.join(", ")}`);
+  if (merged.added.length) console.log(`  Added: ${merged.added.join(", ")}`);
+  if (merged.removed.length) console.log(`  Removed, ${gone}: ${merged.removed.join(", ")}`);
+  if (!merged.kept.length && !merged.updated.length && !merged.added.length && !merged.removed.length) console.log("  Nothing changed");
 }

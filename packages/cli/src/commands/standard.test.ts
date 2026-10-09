@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -57,6 +57,35 @@ test("aeom standard --draft takes the tokens and the kit from the shared files, 
     assert.match(stdout, /^- `\.bouton` in `shared\/kit\.css`$/m);
     assert.match(stdout, /^- `shared\/header\.html`$/m, "a path given in full is said from the project's root");
     assert.match(stdout, /## Direction\nnuancier: Sert la boucle principale\.\n/);
+  } finally {
+    await rm(p.dir, { recursive: true, force: true });
+  }
+});
+
+test("a file outside the project is never read, even through a link inside it", async () => {
+  const p = await project();
+  const elsewhere = await mkdtemp(join(tmpdir(), "aeom-elsewhere-"));
+  try {
+    await writeFile(join(elsewhere, "kit.css"), ":root { --dehors: #123456; }\n");
+    await symlink(join(elsewhere, "kit.css"), join(p.dir, "shared", "link.css"));
+    assert.match((await run(p.dir, ["standard", "--draft", "shared/link.css"])).out, /outside the project/);
+    const draft = written((await run(p.dir, ["standard", "--draft", "shared/kit.css"])).stdout).replace("## Components\n", "## Components\n").replace("label ink\n", "label ink\n- `--dehors: #123456` in `shared/link.css`\n");
+    const refused = await run(p.dir, ["standard", await writeDraft(p.draft, draft)]);
+    assert.equal(refused.code, 1);
+    assert.match(refused.out, /shared\/link\.css does not exist in the project/);
+  } finally {
+    await rm(p.dir, { recursive: true, force: true });
+    await rm(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test("a later run with no new direction drafts the direction AEOM last wrote", async () => {
+  const p = await project();
+  try {
+    const draft = (await run(p.dir, ["standard", "--draft", "shared/kit.css"])).stdout;
+    assert.equal((await run(p.dir, ["standard", await writeDraft(p.draft, written(draft))])).code, 0);
+    const next = (await run(p.dir, ["standard", "--draft", "shared/kit.css"])).stdout;
+    assert.match(next, /## Direction\nnuancier: Sert la boucle principale, comme un coupon de tissu qu'on suit\.\n/);
   } finally {
     await rm(p.dir, { recursive: true, force: true });
   }

@@ -7,7 +7,7 @@
  * journeys is a journey.
  */
 
-import { threeWay } from "./merge.js";
+import { threeWay, type SheetMerge } from "../sheet/merge.js";
 
 export const PARTS = ["What it is for", "Who uses it", "The main loop", "Key journeys"] as const;
 const JOURNEYS = "Key journeys";
@@ -77,17 +77,7 @@ export function validateProduct(text: string): string[] {
   return problems;
 }
 
-export interface ProductMerge {
-  text: string;
-  /** Kept as the user wrote it, though AEOM proposed something else or nothing. */
-  kept: string[];
-  /** Replaced by what AEOM learned, since the user had not touched it. */
-  updated: string[];
-  /** New in this proposal. */
-  added: string[];
-  /** AEOM's own, untouched by the user, and no longer in its proposal. */
-  removed: string[];
-}
+export type ProductMerge = SheetMerge;
 
 /**
  * Merges AEOM's new proposal into the sheet the user may have corrected, part

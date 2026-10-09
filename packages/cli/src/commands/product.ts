@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { mergeProduct, productBrief, validateProduct, type ProductMerge } from "@aeom/core";
-import { readIfThere, sheetFile, updateSheet } from "../sheet-file.js";
+import { mergeProduct, productBrief, validateProduct } from "@aeom/core";
+import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
 
 const PRODUCT = sheetFile("product");
 const SHEET = PRODUCT.sheet;
@@ -67,19 +67,7 @@ export async function runProduct(argv: string[]): Promise<number> {
       console.error(`With the corrections in .aeom/product.md, the sheet would not be complete, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}\nRestore what is missing in .aeom/product.md, keeping its headings as they are, and run again.`);
       return 1;
     }
-    return { text: merged.text, base: draft, after: () => say(merged, current === undefined) };
+    const journeys = merged.added.filter((key) => key.startsWith("journey ")).length;
+    return { text: merged.text, base: draft, after: () => (current === undefined ? console.log(`Wrote .aeom/product.md, a first sheet with ${journeys} key journeys`) : sayMerge(".aeom/product.md", merged, "no longer in AEOM's draft")) };
   });
-}
-
-function say(merged: ProductMerge, first: boolean): void {
-  if (first) {
-    console.log(`Wrote .aeom/product.md, a first sheet with ${merged.added.filter((key) => key.startsWith("journey ")).length} key journeys`);
-    return;
-  }
-  console.log("Wrote .aeom/product.md");
-  if (merged.kept.length) console.log(`  Kept your edits: ${merged.kept.join(", ")}`);
-  if (merged.updated.length) console.log(`  Updated: ${merged.updated.join(", ")}`);
-  if (merged.added.length) console.log(`  Added: ${merged.added.join(", ")}`);
-  if (merged.removed.length) console.log(`  Removed, no longer in AEOM's draft: ${merged.removed.join(", ")}`);
-  if (!merged.kept.length && !merged.updated.length && !merged.added.length && !merged.removed.length) console.log("  Nothing changed");
 }
