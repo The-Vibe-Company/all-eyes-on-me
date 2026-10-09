@@ -8,6 +8,7 @@ import { runGuard } from "./commands/guard.js";
 import { runJourney } from "./commands/journey.js";
 import { runProduct } from "./commands/product.js";
 import { runCompare, runSnapshot } from "./commands/run.js";
+import { runFeatures } from "./commands/features.js";
 import { runReport } from "./commands/report.js";
 import { runVerdict } from "./commands/verdict.js";
 
@@ -32,6 +33,7 @@ Commands:
   guard       Refuse a change that adds a feature instead of fixing a journey
   verdict     Say whether the front needs redoing, from what AEOM measured
   report      Write the page of what a run gave, in the run's folder
+  features    Name what a blocked journey would need, without building it
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -50,6 +52,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   guard: runGuard,
   verdict: runVerdict,
   report: runReport,
+  features: runFeatures,
 };
 
 const [command, ...rest] = process.argv.slice(2);

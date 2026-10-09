@@ -73,6 +73,17 @@ test("aeom report writes, in the run's folder, a page of what the run gave: the 
     assert.match(html, /See my orders[^]*Before the run, it broke at step 2: the page answered 500[^]*2 → 3 steps[^]*Mes commandes is in the menu\./);
     assert.match(html, /Still failing[^]*\/contact[^]*states on \/contact: the list is blank/);
     assert.match(html, /Still failing[^]*\/aide[^]*not measured after the run/);
+    assert.doesNotMatch(html, /Missing features/, "no section when the run named none");
+    await put(join(R, "journeys-end", "judge-journeys.json"), { judgedAt: "", voters: ["1", "2", "3"], principles: [{ id: "result-shown", text: "" }], failures: 1, pages: [{ page: "orders", verdicts: [{ principle: "result-shown", pass: false, votes: "", reasons: ["Ajouter adds nothing."], dissent: [], steps: [2] }] }] });
+    await put(join(R, "features.json"), { entries: [{ slug: "orders", name: "See my orders", step: 2, capture: "journeys-end/orders@1280.png", why: "Ajouter adds nothing.", missing: "A way to put a product in the order." }], more: 1 });
+    await run(dir, ["report"]);
+    const withFeatures = await readFile(join(R, "report.html"), "utf8");
+    assert.match(withFeatures, /Missing features[^]*See my orders[^]*blocks at step 2[^]*A way to put a product in the order\.[^]*src="journeys-end\/orders@1280\.png"[^]*1 more blocked journey/);
+    await put(join(R, "features.json"), { entries: [{ slug: "gone", name: "A journey that now passes", step: 1, capture: null, why: "x", missing: "y" }], more: 0 });
+    await run(dir, ["report"]);
+    assert.doesNotMatch(await readFile(join(R, "report.html"), "utf8"), /A journey that now passes/, "an entry for a journey no longer blocked is left out");
+    await put(join(R, "features.json"), {});
+    assert.equal((await run(dir, ["report"])).code, 0, "a features file of the wrong shape is left out, not a crash");
     assert.doesNotMatch(html, /(src|href)="https?:/, "nothing loads from the network");
   } finally {
     await rm(dir, { recursive: true, force: true });

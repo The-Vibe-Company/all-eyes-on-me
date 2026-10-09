@@ -16,7 +16,7 @@ Options:
   --open   Open the page in the browser`;
 
 /** The run folder most recently changed in .aeom/runs. */
-async function latestRun(): Promise<string | null> {
+export async function latestRun(): Promise<string | null> {
   const root = join(".aeom", "runs");
   const names = await readdir(root).catch(() => [] as string[]);
   const runs = await Promise.all(names.map(async (name) => ({ dir: join(root, name), at: (await stat(join(root, name, "before")).catch(() => null))?.mtimeMs })));
