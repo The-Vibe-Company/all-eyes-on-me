@@ -37,8 +37,8 @@ const judge = (failing: [string, string][]): JudgeReport => ({
 test("a page's score counts its failing checks and its failing principles", () => {
   const scores = scorePages(check([["/", "cursor"], ["/", "contrast"]]), judge([["/commandes", "states"]]));
   assert.deepEqual(scores, [
-    { page: "/", checks: 2, principles: 0, total: 2 },
-    { page: "/commandes", checks: 0, principles: 1, total: 1 },
+    { page: "/", checks: 2, principles: 0, total: 2, failing: ["contrast", "cursor"] },
+    { page: "/commandes", checks: 0, principles: 1, total: 1, failing: ["states"] },
   ]);
 });
 
@@ -50,6 +50,15 @@ test("each page is better, the same, or worse than before", () => {
     [["/", "better"], ["/commandes", "worse"]],
   );
   assert.equal(comparePages(before, before)[0]!.verdict, "same");
+});
+
+test("a page names what fails after and passed before, even when fewer things fail on it", () => {
+  const before = scorePages(check([["/", "cursor"], ["/", "contrast"]]), judge([["/", "states"]]));
+  const after = scorePages(check([["/", "overflow"]]), judge([]));
+  const [home] = comparePages(before, after);
+  assert.equal(home!.verdict, "better");
+  assert.deepEqual(home!.newly, ["overflow"]);
+  assert.deepEqual(comparePages(before, before)[0]!.newly, []);
 });
 
 test("the project config gives the defaults for url and start, and is optional", async () => {
@@ -92,8 +101,8 @@ test("a check failing several times on a page counts once", () => {
 });
 
 test("a page missing after is never better, and a page found only after is new", () => {
-  const before = [{ page: "/", checks: 3, principles: 0, total: 3 }];
-  const after = [{ page: "/new", checks: 0, principles: 0, total: 0 }];
+  const before = [{ page: "/", checks: 3, principles: 0, total: 3, failing: ["console", "contrast", "cursor"] }];
+  const after = [{ page: "/new", checks: 0, principles: 0, total: 0, failing: [] }];
   assert.deepEqual(comparePages(before, after).map((c) => [c.page, c.verdict]), [["/", "missing"], ["/new", "new"]]);
 });
 

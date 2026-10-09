@@ -9,6 +9,8 @@ export interface PageScore {
   /** Principles the judge failed on the page. */
   principles: number;
   total: number;
+  /** What fails on the page: each failing check, then each failing principle. */
+  failing: string[];
 }
 
 export interface PageComparison {
@@ -18,15 +20,17 @@ export interface PageComparison {
   /** null when the page is missing after: it broke or disappeared. */
   after: PageScore | null;
   verdict: "better" | "same" | "worse" | "missing" | "new";
+  /** What fails after and passed before: a page can be better and still break something. */
+  newly: string[];
 }
 
 /** Counts, page by page, what fails. Lower is better; 0 is a page that passes everything. */
 export function scorePages(check: CheckReport | undefined, judge: JudgeReport | undefined): PageScore[] {
   const pages = new Set<string>([...(check?.pages ?? []).map(route), ...(judge?.pages ?? []).map((p) => p.page)]);
   return [...pages].map((page) => {
-    const checks = new Set((check?.findings ?? []).filter((f) => route(f.url) === page).map((f) => f.check)).size;
-    const principles = judge?.pages.find((p) => p.page === page)?.verdicts.filter((v) => !v.pass).length ?? 0;
-    return { page, checks, principles, total: checks + principles };
+    const checks = [...new Set((check?.findings ?? []).filter((f) => route(f.url) === page).map((f) => f.check))].sort();
+    const principles = judge?.pages.find((p) => p.page === page)?.verdicts.filter((v) => !v.pass).map((v) => v.principle) ?? [];
+    return { page, checks: checks.length, principles: principles.length, total: checks.length + principles.length, failing: [...checks, ...principles] };
   });
 }
 
@@ -39,8 +43,9 @@ export function comparePages(before: PageScore[], after: PageScore[]): PageCompa
   return pages.map((page) => {
     const b = before.find((s) => s.page === page) ?? null;
     const a = after.find((s) => s.page === page) ?? null;
-    if (!a) return { page, before: b, after: null, verdict: "missing" };
-    if (!b) return { page, before: null, after: a, verdict: "new" };
-    return { page, before: b, after: a, verdict: a.total < b.total ? "better" : a.total > b.total ? "worse" : "same" };
+    if (!a) return { page, before: b, after: null, verdict: "missing", newly: [] };
+    if (!b) return { page, before: null, after: a, verdict: "new", newly: a.failing };
+    const newly = a.failing.filter((f) => !b.failing.includes(f));
+    return { page, before: b, after: a, verdict: a.total < b.total ? "better" : a.total > b.total ? "worse" : "same", newly };
   });
 }
