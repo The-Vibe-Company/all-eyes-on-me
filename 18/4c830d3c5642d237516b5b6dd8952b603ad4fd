@@ -1,0 +1,21 @@
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_f6ac1e5d8b3eaf 41,50-51
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_b281dd057b459c 275-276
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "184c830d3c5642d237516b5b6dd8952b603ad4fd",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
