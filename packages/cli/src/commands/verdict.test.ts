@@ -140,3 +140,21 @@ test("a report that is not the right one, or an unknown option, never reads as s
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("when something fails, aeom verdict says what comes next: a new direction, or the existing style kept", async () => {
+  const dir = await project({ failing: { "/": ["states"] } });
+  try {
+    const fresh = await run(dir, ["verdict"]);
+    assert.equal(fresh.code, 1);
+    assert.match(fresh.out, /Next: six new art directions, drawn from the product sheet\.$/m);
+    assert.match((await run(dir, ["verdict", "--keep-style"])).out, /Next: the kit wave fixes the existing style, without a new direction \(--keep-style\)\.$/m);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
+    assert.match((await run(dir, ["verdict"])).out, /Next: the kit wave fixes the existing style, without a new direction \("style": "keep" in \.aeom\/config\.json\)\.$/m);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "garder" }));
+    const broken = await run(dir, ["verdict"]);
+    assert.equal(broken.code, 2);
+    assert.match(broken.out, /"style" is "keep"/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

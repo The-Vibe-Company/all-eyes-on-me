@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { parseArgs } from "node:util";
-import { verdictOf, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { loadConfig, verdictOf, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 
 export const VERDICT_HELP = `Usage: aeom verdict [options]
 
@@ -9,12 +9,16 @@ Says whether the front needs redoing, from what AEOM last measured: the
 checks and the judge on every screen and, when the project has key journeys,
 their replay and their critique. Exits with 0 when nothing fails, 1 when
 something does, and 2 when it cannot decide: a report missing or unreadable,
-or a screen or journey one report has and another leaves out.
+or a screen or journey one report has and another leaves out. When something
+fails, its last line says what comes next: six new art directions, or, with
+--keep-style or "style": "keep" in .aeom/config.json, the kit wave on the
+existing style.
 
 Options:
   --reports <dir>   check.json, judge.json and judge-journeys.json (default .aeom/reports)
   --journeys <dir>  The key journeys, one file each (default .aeom/journeys)
-  --captures <dir>  The last replay of the journeys (default .aeom/captures/journeys)`;
+  --captures <dir>  The last replay of the journeys (default .aeom/captures/journeys)
+  --keep-style      Keep the existing style, such as a brand charter: no new direction`;
 
 const isList = (value: unknown) => Array.isArray(value);
 const isJudge = (r: Partial<JudgeReport> | null) => !!r && isList(r.principles) && isList(r.pages) && r.pages!.every((p) => typeof p?.page === "string" && isList(p.verdicts));
@@ -59,12 +63,14 @@ export async function runVerdict(argv: string[]): Promise<number> {
 async function verdict(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { reports: { type: "string", default: ".aeom/reports" }, journeys: { type: "string", default: ".aeom/journeys" }, captures: { type: "string", default: ".aeom/captures/journeys" }, help: { type: "boolean", short: "h" } },
+    options: { reports: { type: "string", default: ".aeom/reports" }, journeys: { type: "string", default: ".aeom/journeys" }, captures: { type: "string", default: ".aeom/captures/journeys" }, "keep-style": { type: "boolean" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(VERDICT_HELP);
     return 0;
   }
+  // A config that cannot be read throws, and the verdict says it cannot decide.
+  const config = await loadConfig();
   const problems: string[] = [];
   const check = await read<CheckReport>(join(values.reports, "check.json"), "check", problems);
   const judge = await read<JudgeReport>(join(values.reports, "judge.json"), "judge", problems);
@@ -96,5 +102,7 @@ async function verdict(argv: string[]): Promise<number> {
   console.log("");
   for (const f of failures) console.log(`✗ ${f.where.padEnd(column)}${f.what}`);
   console.log(`\n${s(failures.length, "thing")} to redo.`);
+  const kept = values["keep-style"] ? "--keep-style" : config.style === "keep" ? `"style": "keep" in .aeom/config.json` : null;
+  console.log(kept ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).` : `Next: six new art directions, drawn from the product sheet.`);
   return 1;
 }
