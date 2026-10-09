@@ -1,0 +1,206 @@
+{
+  "teachers": [
+    {
+      "id": "margaux",
+      "name": "Margaux Ferrand",
+      "role": "Tournage, fondatrice de l’atelier",
+      "discipline": "tour",
+      "bio": "Margaux a appris le tournage dans le Berry, puis a passé six ans dans un atelier de vaisselle de la Drôme avant d’ouvrir Terre & Tour en 2019. Elle enseigne le tour avec patience, et une étagère entière de bols ratés pour prouver que tout le monde commence par là."
+    },
+    {
+      "id": "idriss",
+      "name": "Idriss Amrani",
+      "role": "Modelage et sculpture",
+      "discipline": "modelage",
+      "bio": "Sculpteur de formation, Idriss travaille la terre uniquement à la main : colombins, plaques, pinçage. Il aime les formes un peu de travers et les élèves qui n’ont jamais touché d’argile."
+    },
+    {
+      "id": "helene",
+      "name": "Hélène Vidal",
+      "role": "Émaux, cuissons et tour libre",
+      "discipline": "emaillage",
+      "bio": "Hélène prépare elle-même les émaux de l’atelier et s’occupe du four. Ancienne chimiste, elle sait expliquer pourquoi un émail coule, craquelle ou change de couleur, et comment en tirer parti."
+    }
+  ],
+  "classes": [
+    {
+      "id": "c01",
+      "type": "tour",
+      "title": "Initiation au tour",
+      "level": "debutant",
+      "teacherId": "margaux",
+      "date": "2026-10-12",
+      "start": "18:30",
+      "end": "21:00",
+      "price": 55,
+      "capacity": 6,
+      "description": "Première rencontre avec le tour : on apprend à centrer la terre, à l’ouvrir, puis à monter une paroi. La plupart des élèves repartent avec deux ou trois petits bols, et c’est déjà beaucoup."
+    },
+    {
+      "id": "c02",
+      "type": "modelage",
+      "title": "Bols au colombin",
+      "level": "debutant",
+      "teacherId": "idriss",
+      "date": "2026-10-13",
+      "start": "10:00",
+      "end": "12:30",
+      "price": 45,
+      "capacity": 8,
+      "description": "Des boudins de terre empilés puis lissés : c’est la plus vieille façon de monter un bol, et la plus douce pour découvrir l’argile. Pas de machine, pas de vitesse, juste vos mains."
+    },
+    {
+      "id": "c03",
+      "type": "tour",
+      "title": "Monter un cylindre",
+      "level": "intermediaire",
+      "teacherId": "margaux",
+      "date": "2026-10-13",
+      "start": "18:30",
+      "end": "21:00",
+      "price": 55,
+      "capacity": 6,
+      "description": "Pour celles et ceux qui centrent déjà sans trop d’efforts. On travaille la hauteur et la régularité des parois, la base des mugs, des vases et des pichets."
+    },
+    {
+      "id": "c04",
+      "type": "modelage",
+      "title": "Petits animaux en terre",
+      "level": "tous",
+      "teacherId": "idriss",
+      "date": "2026-10-14",
+      "start": "14:00",
+      "end": "16:00",
+      "price": 40,
+      "capacity": 8,
+      "description": "Un après-midi de sculpture à la main : oiseaux, poissons, chats ou bêtes inventées. Ouvert dès 10 ans, accompagné d’un adulte ; chaque personne compte pour une place."
+    },
+    {
+      "id": "c05",
+      "type": "emaillage",
+      "title": "Émailler ses pièces",
+      "level": "tous",
+      "teacherId": "helene",
+      "date": "2026-10-14",
+      "start": "18:30",
+      "end": "21:00",
+      "price": 40,
+      "capacity": 10,
+      "description": "Vous avez des pièces cuites qui attendent leur couleur ? On découvre le trempé, le versé et le pinceau, puis on choisit parmi les douze émaux de l’atelier. Des pièces vous sont prêtées si vous n’en avez pas."
+    },
+    {
+      "id": "c06",
+      "type": "tour",
+      "title": "Tournasage et pieds",
+      "level": "intermediaire",
+      "teacherId": "margaux",
+      "date": "2026-10-15",
+      "start": "10:00",
+      "end": "12:30",
+      "price": 55,
+      "capacity": 6,
+      "description": "Reprendre ses pièces à consistance cuir pour affiner les parois et creuser un vrai pied. Apportez vos pièces de la semaine, ou travaillez sur celles que Margaux aura préparées."
+    },
+    {
+      "id": "c07",
+      "type": "modelage",
+      "title": "Assiettes à la plaque",
+      "level": "debutant",
+      "teacherId": "idriss",
+      "date": "2026-10-15",
+      "start": "18:30",
+      "end": "21:00",
+      "price": 45,
+      "capacity": 8,
+      "description": "On étale la terre au rouleau, on découpe, on courbe : assiettes, plats et coupelles, décorés d’empreintes de feuilles, de dentelle ou de tissu."
+    },
+    {
+      "id": "c08",
+      "type": "tour",
+      "title": "Initiation au tour",
+      "level": "debutant",
+      "teacherId": "margaux",
+      "date": "2026-10-16",
+      "start": "18:30",
+      "end": "21:00",
+      "price": 55,
+      "capacity": 6,
+      "description": "Première rencontre avec le tour : on apprend à centrer la terre, à l’ouvrir, puis à monter une paroi. La plupart des élèves repartent avec deux ou trois petits bols, et c’est déjà beaucoup."
+    },
+    {
+      "id": "c09",
+      "type": "tour",
+      "title": "Matinée au tour",
+      "level": "debutant",
+      "teacherId": "margaux",
+      "date": "2026-10-17",
+      "start": "10:00",
+      "end": "13:00",
+      "price": 65,
+      "capacity": 6,
+      "description": "Trois heures pour prendre son temps : centrage, ouverture, premières formes, et une pause café pour comparer ses essais. Idéal si une soirée vous semble trop courte."
+    },
+    {
+      "id": "c10",
+      "type": "emaillage",
+      "title": "Superpositions d’émaux",
+      "level": "confirme",
+      "teacherId": "helene",
+      "date": "2026-10-17",
+      "start": "14:30",
+      "end": "17:30",
+      "price": 50,
+      "capacity": 10,
+      "description": "Deux émaux l’un sur l’autre ne donnent jamais la somme des deux. On fait des essais sur tessons, on note tout, puis on émaille une pièce à soi. Il faut avoir déjà émaillé au moins une fois."
+    },
+    {
+      "id": "c11",
+      "type": "modelage",
+      "title": "Pots pincés",
+      "level": "tous",
+      "teacherId": "idriss",
+      "date": "2026-10-17",
+      "start": "14:30",
+      "end": "17:00",
+      "price": 40,
+      "capacity": 8,
+      "description": "Une boule de terre et deux pouces : le pot pincé est la façon la plus directe de façonner. Un atelier calme, presque méditatif, ouvert à tous."
+    },
+    {
+      "id": "c12",
+      "type": "tour",
+      "title": "Tour libre accompagné",
+      "level": "confirme",
+      "teacherId": "helene",
+      "date": "2026-10-18",
+      "start": "10:00",
+      "end": "12:30",
+      "price": 45,
+      "capacity": 6,
+      "description": "Un tour, de la terre, et une enseignante disponible pour vos questions : pour avancer sur un projet personnel. Réservé aux élèves qui centrent et montent seuls."
+    }
+  ],
+  "bookings": [
+    { "code": "TT-K7P4", "classId": "c02", "name": "Léa Martin", "email": "lea.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-03T09:12:00.000Z" },
+    { "code": "TT-M3RX", "classId": "c10", "name": "Léa Martin", "email": "lea.test@example.test", "seats": 1, "status": "confirmee", "createdAt": "2026-10-03T09:15:00.000Z" },
+    { "code": "TT-A9DE", "classId": "c08", "name": "Tom Garnier", "email": "tom.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-01T18:40:00.000Z" },
+    { "code": "TT-B4HN", "classId": "c08", "name": "Sofia Rossi", "email": "sofia.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-02T12:05:00.000Z" },
+    { "code": "TT-C6WJ", "classId": "c08", "name": "Hugo Lambert", "email": "hugo.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-04T20:30:00.000Z" },
+    { "code": "TT-D2QF", "classId": "c09", "name": "Inès Bernard", "email": "ines.test@example.test", "seats": 3, "status": "confirmee", "createdAt": "2026-10-02T08:50:00.000Z" },
+    { "code": "TT-E8LT", "classId": "c09", "name": "Paul Moreau", "email": "paul.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-05T19:22:00.000Z" },
+    { "code": "TT-F5VZ", "classId": "c03", "name": "Chloé Petit", "email": "chloe.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-03T14:02:00.000Z" },
+    { "code": "TT-G7YB", "classId": "c03", "name": "Nathan Roux", "email": "nathan.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-06T07:45:00.000Z" },
+    { "code": "TT-H3KS", "classId": "c01", "name": "Camille Fournier", "email": "camille.test@example.test", "seats": 1, "status": "confirmee", "createdAt": "2026-10-06T21:10:00.000Z" },
+    { "code": "TT-J8PN", "classId": "c06", "name": "Lucas Girard", "email": "lucas.test@example.test", "seats": 2, "status": "annulee", "createdAt": "2026-10-01T10:00:00.000Z", "cancelledAt": "2026-10-05T16:30:00.000Z" },
+    { "code": "TT-N4QC", "classId": "c07", "name": "Maxime Perrin", "email": "maxime.test@example.test", "seats": 4, "status": "confirmee", "createdAt": "2026-10-04T11:18:00.000Z" },
+    { "code": "TT-P6RM", "classId": "c07", "name": "Emma Robin", "email": "emma.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-07T17:33:00.000Z" },
+    { "code": "TT-R2WD", "classId": "c05", "name": "Julie Mercier", "email": "julie.test@example.test", "seats": 3, "status": "confirmee", "createdAt": "2026-10-05T09:01:00.000Z" },
+    { "code": "TT-S9XA", "classId": "c11", "name": "Sarah Lefort", "email": "sarah.test@example.test", "seats": 2, "status": "confirmee", "createdAt": "2026-10-07T13:27:00.000Z" }
+  ],
+  "waitlist": [
+    { "id": "W-7QK2MA", "classId": "c08", "name": "Manon Dubois", "email": "manon.test@example.test", "seats": 1, "createdAt": "2026-10-06T10:14:00.000Z" }
+  ],
+  "giftCards": [
+    { "ref": "CC-4HQW-T7NP", "amount": 55, "recipientName": "Jules", "message": "Pour fabriquer enfin tes propres bols.", "buyerName": "Claire Dumont", "buyerEmail": "claire.test@example.test", "status": "commandee", "createdAt": "2026-10-04T15:40:00.000Z" }
+  ]
+}

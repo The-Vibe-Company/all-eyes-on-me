@@ -1,0 +1,119 @@
+{
+  "app": "Super Boutique, the demo app",
+  "defects": [
+    {
+      "id": "demo-01",
+      "screen": "/",
+      "rule": "not-generic",
+      "what": "A purple-to-blue gradient header, emoji in every title and rounded shadowed cards: any SaaS template."
+    },
+    {
+      "id": "demo-02",
+      "screen": "/",
+      "rule": "overflow",
+      "what": "At 390 px the page scrolls sideways: the three 220 px cards stay in one row."
+    },
+    {
+      "id": "demo-03",
+      "screen": "/",
+      "rule": "cursor",
+      "what": "« Découvrir » acts as a button but keeps the default cursor."
+    },
+    {
+      "id": "demo-19",
+      "screen": "/",
+      "rule": "contrast",
+      "what": "White text on the pink « Découvrir » button, below AA."
+    },
+    {
+      "id": "demo-04",
+      "screen": "/produits",
+      "rule": "consistent-chrome",
+      "what": "Another header: a black bar, green capitals, the links in another order and « home » in English."
+    },
+    {
+      "id": "demo-05",
+      "screen": "/produits",
+      "rule": "cursor",
+      "what": "The « Ajouter » buttons keep the default cursor."
+    },
+    {
+      "id": "demo-06",
+      "screen": "/produits",
+      "rule": "contrast",
+      "what": "« Prix TTC, livraison offerte dès 50 € » is light grey on white, below AA."
+    },
+    {
+      "id": "demo-07",
+      "screen": "/contact",
+      "rule": "consistent-chrome",
+      "what": "A third header, orange monospace, with only Accueil and Aide."
+    },
+    {
+      "id": "demo-08",
+      "screen": "/contact",
+      "rule": "one-direction",
+      "what": "A dark terminal style that no other page shares."
+    },
+    {
+      "id": "demo-09",
+      "screen": "/contact",
+      "rule": "cursor",
+      "what": "« ENVOYER » is a div with the default cursor."
+    },
+    {
+      "id": "demo-10",
+      "screen": "/commandes",
+      "rule": "states",
+      "what": "The order list stays blank: nothing says there is no order, or what to do."
+    },
+    {
+      "id": "demo-11",
+      "screen": "/commandes",
+      "rule": "console",
+      "what": "The call to /api/orders fails and leaves an error in the console."
+    },
+    {
+      "id": "demo-12",
+      "screen": "/aide",
+      "rule": "loads",
+      "what": "The help page answers 500."
+    },
+    {
+      "id": "demo-13",
+      "journey": "see-my-orders",
+      "rule": "clear-start",
+      "what": "« Mes commandes » is not in the home menu: the customer has to guess it is behind Produits."
+    },
+    {
+      "id": "demo-14",
+      "journey": "see-my-orders",
+      "rule": "short",
+      "what": "The way to the orders goes through the products page, a detour."
+    },
+    {
+      "id": "demo-15",
+      "journey": "see-my-orders",
+      "rule": "result-shown",
+      "what": "At the end, the order list is blank."
+    },
+    {
+      "id": "demo-16",
+      "journey": "add-a-product-to-my-order",
+      "rule": "result-shown",
+      "what": "« Ajouter » does nothing anyone can see."
+    },
+    {
+      "id": "demo-17",
+      "journey": "get-help",
+      "rule": "breaks",
+      "what": "« Aide » leads to a 500."
+    },
+    {
+      "id": "demo-18",
+      "journey": "contact-the-shop",
+      "rule": "result-shown",
+      "what": "« Envoyé » shows in an alert while the message goes nowhere."
+    }
+  ]
+}

@@ -1,0 +1,292 @@
+{
+  "_aLire": "État de départ du Prêt. Données fictives. Les dates (ajouteLe, debut, fin, creeLe, renduLe) sont des décalages en jours par rapport au jour de la remise à zéro : node reset.mjs les transforme en vraies dates dans data/donnees.json.",
+  "quartier": "quartier des Tilleuls",
+  "categories": [
+    { "id": "bricolage", "nom": "Bricolage" },
+    { "id": "jardinage", "nom": "Jardinage" },
+    { "id": "cuisine", "nom": "Cuisine" },
+    { "id": "maison", "nom": "Maison" },
+    { "id": "plein-air", "nom": "Plein air" },
+    { "id": "fetes-jeux", "nom": "Fêtes et jeux" }
+  ],
+  "voisins": [
+    {
+      "id": "camille",
+      "prenom": "Camille",
+      "initiale": "T.",
+      "rue": "rue des Tilleuls",
+      "adresse": "12 rue des Tilleuls, 2e étage",
+      "creneaux": "le soir en semaine, sonnez à « Test »",
+      "depuis": 2024,
+      "mot": "J’emprunte surtout pour bricoler, et je prête mon service à fondue.",
+      "email": "camille.test@example.test",
+      "sel": "75888f7175c7205aad9543f8ab19820b",
+      "empreinte": "faa29bff5a88bb35783e809e1bb7f141fd74bafef036a2f2d3c59749c88cf400"
+    },
+    {
+      "id": "malik",
+      "prenom": "Malik",
+      "initiale": "B.",
+      "rue": "rue des Tilleuls",
+      "adresse": "3 rue des Tilleuls, atelier au fond de la cour",
+      "creneaux": "en semaine après 18 h, le samedi toute la journée",
+      "depuis": 2021,
+      "mot": "Menuisier du dimanche. Si vous n’avez jamais tenu une scie sauteuse, je vous montre."
+    },
+    {
+      "id": "helene",
+      "prenom": "Hélène",
+      "initiale": "R.",
+      "rue": "résidence Les Charmes",
+      "adresse": "Résidence Les Charmes, bâtiment A, rez-de-chaussée",
+      "creneaux": "le matin avant 10 h, ou le week-end",
+      "depuis": 2022,
+      "mot": "Une échelle, une enceinte et un jardin trop grand pour moi toute seule."
+    },
+    {
+      "id": "bernard",
+      "prenom": "Bernard",
+      "initiale": "L.",
+      "rue": "avenue du Parc",
+      "adresse": "27 avenue du Parc, maison avec le portail vert",
+      "creneaux": "plutôt le matin, je suis là presque tous les jours",
+      "depuis": 2021,
+      "mot": "Retraité, du temps et un garage plein. Passez boire un café en même temps."
+    },
+    {
+      "id": "sofia",
+      "prenom": "Sofia",
+      "initiale": "M.",
+      "rue": "impasse des Lilas",
+      "adresse": "8 impasse des Lilas",
+      "creneaux": "le mercredi après-midi et le dimanche",
+      "depuis": 2023,
+      "mot": "On campe tout l’été. Le reste de l’année, le matériel vous attend."
+    },
+    {
+      "id": "jeanne",
+      "prenom": "Jeanne",
+      "initiale": "D.",
+      "rue": "résidence Les Charmes",
+      "adresse": "Résidence Les Charmes, bâtiment C, 4e étage",
+      "creneaux": "en semaine entre 18 h et 20 h",
+      "depuis": 2022,
+      "mot": "Je cuisine beaucoup et je fais le ménage le moins possible."
+    },
+    {
+      "id": "yanis",
+      "prenom": "Yanis",
+      "initiale": "K.",
+      "rue": "rue des Tilleuls",
+      "adresse": "41 rue des Tilleuls, interphone « Kader »",
+      "creneaux": "le soir après 19 h",
+      "depuis": 2025,
+      "mot": "Je viens d’emménager et j’ai gardé tout le matériel du déménagement."
+    }
+  ],
+  "objets": [
+    {
+      "id": "perceuse-visseuse",
+      "nom": "Perceuse-visseuse sans fil",
+      "categorie": "bricolage",
+      "description": "Perceuse-visseuse 18 V avec deux batteries, un chargeur et un coffret de forets pour le bois, le métal et le béton. Assez puissante pour fixer des étagères ou percer un mur en brique.",
+      "etat": "tres-bon",
+      "preteur": "malik",
+      "dureeMax": 7,
+      "consignes": "Rendez les batteries chargées et les forets rangés dans le coffret.",
+      "ajouteLe": -400
+    },
+    {
+      "id": "echelle-telescopique",
+      "nom": "Échelle télescopique 3,80 m",
+      "categorie": "bricolage",
+      "description": "Échelle en aluminium qui se replie à 90 cm et tient dans un coffre de voiture. Pour les gouttières, un plafond à repeindre ou un élagage léger.",
+      "etat": "bon",
+      "preteur": "helene",
+      "dureeMax": 5,
+      "consignes": "À deux, c’est plus sûr. Demandez-moi, je peux venir tenir l’échelle.",
+      "ajouteLe": -380
+    },
+    {
+      "id": "scie-sauteuse",
+      "nom": "Scie sauteuse",
+      "categorie": "bricolage",
+      "description": "Scie sauteuse filaire de 650 W, avec des lames pour le bois et le métal. Coupe droite ou en courbe, pratique pour un plan de travail ou du contreplaqué.",
+      "etat": "tres-bon",
+      "preteur": "malik",
+      "dureeMax": 7,
+      "consignes": "Les lunettes de protection sont dans la mallette : servez-vous-en.",
+      "ajouteLe": -200
+    },
+    {
+      "id": "enrouleur-25-m",
+      "nom": "Enrouleur électrique 25 m",
+      "categorie": "bricolage",
+      "description": "Enrouleur de 25 mètres avec quatre prises et une sécurité contre la surchauffe, utilisable dehors. Pour le taille-haie, un chantier ou une soirée dans le jardin.",
+      "etat": "bon",
+      "preteur": "yanis",
+      "dureeMax": 7,
+      "consignes": "Déroulez-le entièrement avant de brancher un appareil puissant.",
+      "ajouteLe": -60
+    },
+    {
+      "id": "taille-haie",
+      "nom": "Taille-haie électrique",
+      "categorie": "jardinage",
+      "description": "Lame de 55 cm, prévue pour les haies d’un jardin ordinaire. Livré avec une rallonge de 10 mètres.",
+      "etat": "bon",
+      "preteur": "bernard",
+      "dureeMax": 3,
+      "consignes": "Nettoyez la lame après usage, une brosse est fournie.",
+      "ajouteLe": -180
+    },
+    {
+      "id": "tondeuse-helicoidale",
+      "nom": "Tondeuse manuelle hélicoïdale",
+      "categorie": "jardinage",
+      "description": "Une tondeuse sans moteur, pour les petites pelouses jusqu’à 200 m². Elle ne fait presque pas de bruit : on peut tondre le dimanche sans fâcher personne.",
+      "etat": "comme-neuf",
+      "preteur": "helene",
+      "dureeMax": 4,
+      "consignes": "",
+      "ajouteLe": -90
+    },
+    {
+      "id": "appareil-raclette",
+      "nom": "Appareil à raclette 8 personnes",
+      "categorie": "cuisine",
+      "description": "Huit poêlons, huit spatules et une plaque gril sur le dessus pour la charcuterie et les pommes de terre. Le fromage n’est pas fourni, hélas.",
+      "etat": "tres-bon",
+      "preteur": "bernard",
+      "dureeMax": 4,
+      "consignes": "Rendez les poêlons lavés, sans éponge qui gratte.",
+      "ajouteLe": -300
+    },
+    {
+      "id": "service-fondue",
+      "nom": "Service à fondue",
+      "categorie": "cuisine",
+      "description": "Caquelon en fonte émaillée, réchaud et six fourchettes. Convient pour une fondue savoyarde comme pour une bourguignonne.",
+      "etat": "tres-bon",
+      "preteur": "camille",
+      "dureeMax": 4,
+      "consignes": "Le gel combustible n’est pas fourni.",
+      "ajouteLe": -150
+    },
+    {
+      "id": "yaourtiere",
+      "nom": "Yaourtière 7 pots",
+      "categorie": "cuisine",
+      "description": "Yaourtière électrique avec sept pots en verre et leurs couvercles. Pour essayer avant d’en acheter une, ou pour une grosse fournée.",
+      "etat": "comme-neuf",
+      "preteur": "jeanne",
+      "dureeMax": 14,
+      "consignes": "",
+      "ajouteLe": -120
+    },
+    {
+      "id": "shampouineuse",
+      "nom": "Shampouineuse à moquette",
+      "categorie": "maison",
+      "description": "Injecteur-extracteur pour les moquettes, les tapis et les sièges de voiture. Un flacon de produit entamé est fourni avec.",
+      "etat": "bon",
+      "preteur": "jeanne",
+      "dureeMax": 3,
+      "consignes": "Videz et rincez le réservoir d’eau sale avant de la rendre.",
+      "ajouteLe": -220
+    },
+    {
+      "id": "diable-demenagement",
+      "nom": "Diable de déménagement",
+      "categorie": "maison",
+      "description": "Diable pliable qui porte jusqu’à 150 kg, avec deux sangles. Les cartons, le frigo et la machine à laver descendent sans abîmer votre dos.",
+      "etat": "tres-bon",
+      "preteur": "yanis",
+      "dureeMax": 3,
+      "consignes": "",
+      "ajouteLe": -60
+    },
+    {
+      "id": "nettoyeur-haute-pression",
+      "nom": "Nettoyeur haute pression",
+      "categorie": "maison",
+      "description": "130 bars, avec une buse rotative et une brosse pour les terrasses. Pour une terrasse, un vélo ou un salon de jardin.",
+      "etat": "tres-bon",
+      "preteur": "malik",
+      "dureeMax": 3,
+      "consignes": "",
+      "ajouteLe": -170
+    },
+    {
+      "id": "tente-4-places",
+      "nom": "Tente familiale 4 places",
+      "categorie": "plein-air",
+      "description": "Tente dôme avec deux chambres et un auvent, montée en quinze minutes à deux. Sardines, maillet et sac de rangement inclus.",
+      "etat": "bon",
+      "preteur": "sofia",
+      "dureeMax": 14,
+      "consignes": "Faites-la bien sécher avant de la replier.",
+      "ajouteLe": -250
+    },
+    {
+      "id": "sac-de-couchage",
+      "nom": "Sac de couchage grand froid",
+      "categorie": "plein-air",
+      "description": "Sac sarcophage, confortable jusqu’à −5 °C, avec un drap intérieur lavable et un sac de compression.",
+      "etat": "bon",
+      "preteur": "sofia",
+      "dureeMax": 14,
+      "consignes": "Le drap intérieur passe en machine : lavez-le avant de rendre le sac.",
+      "ajouteLe": -250
+    },
+    {
+      "id": "jeu-de-petanque",
+      "nom": "Jeu de pétanque 6 boules",
+      "categorie": "fetes-jeux",
+      "description": "Six boules de loisir, un cochonnet et un mètre ruban pour départager, dans leur sacoche.",
+      "etat": "use",
+      "preteur": "bernard",
+      "dureeMax": 7,
+      "consignes": "",
+      "ajouteLe": -350
+    },
+    {
+      "id": "molkky",
+      "nom": "Mölkky",
+      "categorie": "fetes-jeux",
+      "description": "Le jeu de quilles finlandais : douze quilles numérotées et le lanceur, en bois de bouleau, dans un sac en toile.",
+      "etat": "bon",
+      "preteur": "yanis",
+      "dureeMax": 7,
+      "consignes": "",
+      "ajouteLe": -30
+    },
+    {
+      "id": "enceinte-soiree",
+      "nom": "Enceinte de soirée sur batterie",
+      "categorie": "fetes-jeux",
+      "description": "Enceinte Bluetooth de 100 W avec un micro sans fil et une poignée à roulettes. Elle tient une soirée entière sur sa batterie.",
+      "etat": "tres-bon",
+      "preteur": "helene",
+      "dureeMax": 3,
+      "consignes": "Pas de musique dans la cour après 22 h, pour les voisins.",
+      "ajouteLe": -40
+    }
+  ],
+  "emprunts": [
+    { "id": "e-0001", "objet": "perceuse-visseuse", "voisin": "bernard", "debut": -2, "fin": 3, "statut": "actif", "creeLe": -5 },
+    { "id": "e-0002", "objet": "perceuse-visseuse", "voisin": "helene", "debut": 4, "fin": 6, "statut": "actif", "creeLe": -1 },
+    { "id": "e-0003", "objet": "echelle-telescopique", "voisin": "sofia", "debut": 5, "fin": 7, "statut": "actif", "creeLe": -1 },
+    { "id": "e-0004", "objet": "appareil-raclette", "voisin": "camille", "debut": -1, "fin": 2, "statut": "actif", "creeLe": -4 },
+    { "id": "e-0005", "objet": "tente-4-places", "voisin": "jeanne", "debut": 10, "fin": 16, "statut": "actif", "creeLe": -3 },
+    { "id": "e-0006", "objet": "taille-haie", "voisin": "camille", "debut": 6, "fin": 8, "statut": "actif", "creeLe": -2 },
+    { "id": "e-0007", "objet": "nettoyeur-haute-pression", "voisin": "yanis", "debut": -1, "fin": 1, "statut": "actif", "creeLe": -6 },
+    { "id": "e-0008", "objet": "enceinte-soiree", "voisin": "malik", "debut": 2, "fin": 3, "statut": "actif", "creeLe": -2 },
+    { "id": "e-0009", "objet": "service-fondue", "voisin": "yanis", "debut": 3, "fin": 5, "statut": "actif", "creeLe": -1 },
+    { "id": "e-0010", "objet": "scie-sauteuse", "voisin": "camille", "debut": -30, "fin": -27, "statut": "rendu", "renduLe": -27, "creeLe": -33 },
+    { "id": "e-0011", "objet": "molkky", "voisin": "camille", "debut": -20, "fin": -18, "statut": "rendu", "renduLe": -18, "creeLe": -22 },
+    { "id": "e-0012", "objet": "diable-demenagement", "voisin": "camille", "debut": -14, "fin": -14, "statut": "annule", "annuleLe": -16, "creeLe": -19 },
+    { "id": "e-0013", "objet": "shampouineuse", "voisin": "malik", "debut": -6, "fin": -4, "statut": "rendu", "renduLe": -4, "creeLe": -9 },
+    { "id": "e-0014", "objet": "service-fondue", "voisin": "helene", "debut": -12, "fin": -9, "statut": "rendu", "renduLe": -9, "creeLe": -15 }
+  ]
+}

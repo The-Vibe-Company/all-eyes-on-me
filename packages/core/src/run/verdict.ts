@@ -12,6 +12,10 @@ export interface Failure {
   /** The screen's route, or the journey's name. */
   where: string;
   what: string;
+  /** The check or principle that fails, `loads` for a page that does not load, `breaks` for a journey that breaks. */
+  rule?: string;
+  /** The journey's slug, for a journey. */
+  slug?: string;
 }
 
 export interface RunVerdict {
@@ -36,7 +40,7 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
   const keptWithStyle: Failure[] = [];
   const missing: string[] = [];
   // A page that does not load was neither checked nor judged, and is broken for whoever opens it.
-  for (const e of check.errors) failures.push({ kind: "page", where: route(e.url), what: `does not load: ${e.reason}` });
+  for (const e of check.errors) failures.push({ kind: "page", where: route(e.url), rule: "loads", what: `does not load: ${e.reason}` });
   // A check failing at several widths on one screen is one thing to redo, each element named once.
   const byCheck = new Map<string, { where: string; check: string; elements: Set<string> }>();
   for (const f of check.findings) {
@@ -47,11 +51,11 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
   }
   for (const { where, check: name, elements } of byCheck.values()) {
     const [first, ...others] = [...elements];
-    failures.push({ kind: "check", where, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` });
+    failures.push({ kind: "check", where, rule: name, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` });
   }
   for (const page of judge.pages) {
     for (const v of page.verdicts.filter((v) => !v.pass)) {
-      const failure: Failure = { kind: "principle", where: page.page, what: `${v.principle}: ${v.reasons[0] ?? ""}` };
+      const failure: Failure = { kind: "principle", where: page.page, rule: v.principle, what: `${v.principle}: ${v.reasons[0] ?? ""}` };
       (keepStyle && STYLE_PRINCIPLES.includes(v.principle) ? keptWithStyle : failures).push(failure);
     }
   }
@@ -61,12 +65,12 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     for (const run of journey.runs.filter((r) => r.broken)) {
       const what = `breaks at step ${run.broken!.step} at ${run.width} px: ${run.broken!.reason}`;
       const way = `${run.broken!.step} ${run.broken!.reason}`;
-      if (!ways.has(way)) failures.push({ kind: "journey", where: journey.name, what });
+      if (!ways.has(way)) failures.push({ kind: "journey", where: journey.name, slug: journey.slug, rule: "breaks", what });
       ways.add(way);
     }
   }
   for (const page of journeyJudge?.pages ?? []) {
-    for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "journey-principle", where: name(page.page), what: `${v.principle}: ${v.reasons[0] ?? ""}` });
+    for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "journey-principle", where: name(page.page), slug: page.page, rule: v.principle, what: `${v.principle}: ${v.reasons[0] ?? ""}` });
   }
 
   const checked = new Set(check.pages.map(route));

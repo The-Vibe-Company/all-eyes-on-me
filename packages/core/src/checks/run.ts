@@ -1,6 +1,6 @@
 import { chromium, type Browser } from "playwright";
 import { DEFAULT_WIDTHS } from "../capture/capture.js";
-import { discoverPages, type PageError } from "../capture/discover.js";
+import { discoverPages, visitPages, type PageError } from "../capture/discover.js";
 import type { SignedIn } from "../capture/sign-in.js";
 import { checkContrast } from "./contrast.js";
 import { watchConsole } from "./console.js";
@@ -50,10 +50,10 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
 }
 
 /** Finds every page reachable from `url`, then checks each one, signed in when given what a signed-in browser keeps. */
-export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn }: { url: string; widths?: number[]; signedIn?: SignedIn }): Promise<CheckReport> {
+export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths }: { url: string; widths?: number[]; signedIn?: SignedIn; paths?: string[] }): Promise<CheckReport> {
   const browser = await chromium.launch();
   try {
-    const { pages, errors } = await discoverPages(browser, url, { signedIn });
+    const { pages, errors } = paths ? await visitPages(browser, url, paths, { signedIn }) : await discoverPages(browser, url, { signedIn });
     const findings = await checkPages(browser, pages, widths, signedIn);
     return { url, checkedAt: new Date().toISOString(), widths, checks: CHECKS, pages, errors, findings };
   } finally {

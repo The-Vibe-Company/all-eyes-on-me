@@ -59,7 +59,7 @@ test("an app without journeys is judged on its pages alone", () => {
 test("a page that does not load is something to redo, though nothing was checked or judged on it", () => {
   const v = verdictOf({ check: { ...check(), errors: [{ url: "http://x/aide", status: 500, reason: "500 Internal Server Error" }] }, judge: judge({ "/": [], "/commandes": [] }) });
   assert.equal(v.nothingToRedo, false);
-  assert.deepEqual(v.failures, [{ kind: "page", where: "/aide", what: "does not load: 500 Internal Server Error" }]);
+  assert.deepEqual(v.failures, [{ kind: "page", where: "/aide", rule: "loads", what: "does not load: 500 Internal Server Error" }]);
   assert.deepEqual(v.missing, []);
 });
 

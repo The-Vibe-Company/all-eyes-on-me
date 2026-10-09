@@ -1,0 +1,9 @@
+{ "name": "Offer a gift card", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Offrir une carte cadeau" }, "lands": "/carte-cadeau" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Prénom de la personne qui la reçoit" }, "value": "Lou" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Votre nom et prénom" }, "value": "Sam Bench" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Votre e-mail" }, "value": "sam.test@example.test" },
+  { "do": "click", "target": { "role": "button", "name": "Commander la carte" } },
+  { "do": "see", "text": "Merci" }
+] }

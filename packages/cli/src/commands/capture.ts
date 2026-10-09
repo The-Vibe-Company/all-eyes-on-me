@@ -11,7 +11,9 @@ page at every width.
 Options:
 ${APP_OPTIONS_HELP}
   --out <dir>          Where to write the screenshots (default .aeom/captures)
-  --pages <list>       Capture only these routes, comma-separated, such as /,/produits`;
+  --pages <list>       Capture only these routes, comma-separated, such as /,/produits
+                       (default: pages in .aeom/config.json, or every page the
+                       links lead to)`;
 
 export async function runCapture(argv: string[]): Promise<number> {
   const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/captures" }, pages: { type: "string" } } }).values;

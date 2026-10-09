@@ -1,0 +1,6 @@
+{ "name": "Borrow an object", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Scie sauteuse" }, "lands": "/objets/scie-sauteuse" },
+  { "do": "click", "target": { "role": "button", "name": "Réserver" } },
+  { "do": "see", "text": "Scie sauteuse" }
+] }

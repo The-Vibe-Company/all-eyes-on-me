@@ -11,10 +11,13 @@ Exits with 1 when any check fails.
 
 Options:
 ${APP_OPTIONS_HELP}
-  --out <dir>          Where to write check.json (default .aeom/reports)`;
+  --out <dir>          Where to write check.json (default .aeom/reports)
+  --pages <list>       Check only these routes, comma-separated, such as /,/produits
+                       (default: pages in .aeom/config.json, or every page the
+                       links lead to)`;
 
 export async function runCheck(argv: string[]): Promise<number> {
-  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" } } }).values;
+  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" }, pages: { type: "string" } } }).values;
   if (parsed.help) {
     console.log(CHECK_HELP);
     return 0;
@@ -38,7 +41,12 @@ export async function runCheck(argv: string[]): Promise<number> {
   return withApp({ ...values, url }, async () => {
     const session = await signInFromConfig(url);
     if (session === "failed") return 1;
-    const report = await checkSite({ url, widths, ...(session ? { signedIn: session.signedIn } : {}) });
+    const paths = values.pages?.split(",").map((p) => p.trim()).filter(Boolean);
+    if (paths && paths.length === 0) {
+      console.error(`--pages lists no route. Give at least one, such as --pages /.`);
+      return 1;
+    }
+    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(session ? { signedIn: session.signedIn } : {}) });
     await mkdir(values.out, { recursive: true });
     const reportFile = join(values.out, "check.json");
     await writeFile(reportFile, JSON.stringify(report, null, 2) + "\n");

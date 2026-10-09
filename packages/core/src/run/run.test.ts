@@ -85,6 +85,10 @@ test("the project config gives the defaults for url and start, and is optional",
     assert.deepEqual(await loadConfig(dir), { style: "keep" }, "a brand charter AEOM keeps, run after run");
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "garder" }));
     await assert.rejects(loadConfig(dir), /"style" is "keep", to keep the existing style, or left out/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ pages: ["/", " /objets/perceuse "] }));
+    assert.deepEqual((await loadConfig(dir)).pages, ["/", "/objets/perceuse"], "one page of each kind, when the app has many of one");
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ pages: ["objets"] }));
+    await assert.rejects(loadConfig(dir), /"pages" lists routes from the app's root, such as \["\/", "\/objets\/perceuse"\]/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

@@ -1,0 +1,31 @@
+{
+  "app": "Terre & Tour, made by an agent without AEOM",
+  "defects": [
+    {
+      "id": "atelier-01",
+      "screen": "/",
+      "rule": "not-ai-default",
+      "what": "Cream paper, a big serif headline and a terracotta accent: the exact look the principle names."
+    },
+    {
+      "id": "atelier-02",
+      "screen": "/cours",
+      "rule": "hierarchy",
+      "what": "At 390 px the filter form fills the first screen: the classes, what the page is for, start below it.",
+      "sure": false
+    },
+    {
+      "id": "atelier-03",
+      "screen": "/",
+      "rule": "grid",
+      "what": "At 390 px the menu wraps, « Mes réservations » alone on a second line.",
+      "sure": false
+    },
+    {
+      "id": "atelier-04",
+      "journey": "book-a-seat",
+      "rule": "next-step",
+      "what": "In the week's list nothing says a class opens to be booked: no button, the title is the only link and does not look like one."
+    }
+  ]
+}

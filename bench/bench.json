@@ -1,0 +1,69 @@
+{
+  "apps": [
+    {
+      "slug": "demo",
+      "app": "examples/ugly-app",
+      "journeys": "bench/journeys/demo",
+      "defects": "bench/defects/demo.json",
+      "config": {
+        "url": "http://localhost:4501",
+        "start": "PORT=4501 node server.mjs",
+        "login": {
+          "path": "/connexion",
+          "account": "fixtures/compte.json",
+          "submit": "Se connecter"
+        },
+        "protected": [
+          "server.mjs"
+        ]
+      }
+    },
+    {
+      "slug": "pret",
+      "app": "bench/apps/pret",
+      "journeys": "bench/journeys/pret",
+      "defects": "bench/defects/pret.json",
+      "config": {
+        "url": "http://localhost:4502",
+        "start": "PORT=4502 node server.mjs",
+        "reset": "node reset.mjs",
+        "login": {
+          "path": "/connexion",
+          "account": "fixtures/compte.json",
+          "submit": "Se connecter"
+        },
+        "protected": [
+          "server.mjs",
+          "lib/donnees.mjs",
+          "lib/regles.mjs",
+          "lib/dates.mjs",
+          "data/**",
+          "reset.mjs"
+        ],
+        "pages": [
+          "/",
+          "/objets",
+          "/objets/perceuse-visseuse",
+          "/proposer",
+          "/a-propos",
+          "/mes-emprunts"
+        ]
+      }
+    },
+    {
+      "slug": "atelier",
+      "app": "bench/apps/atelier",
+      "journeys": "bench/journeys/atelier",
+      "defects": "bench/defects/atelier.json",
+      "config": {
+        "url": "http://localhost:4503",
+        "start": "PORT=4503 node server.mjs",
+        "reset": "node reset.mjs",
+        "protected": [
+          "data/**",
+          "reset.mjs"
+        ]
+      }
+    }
+  ]
+}

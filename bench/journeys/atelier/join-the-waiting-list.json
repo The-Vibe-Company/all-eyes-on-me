@@ -1,0 +1,8 @@
+{ "name": "Join the waiting list of a full class", "steps": [
+  { "do": "open", "path": "/cours" },
+  { "do": "click", "target": { "role": "link", "name": "Initiation au tour", "within": { "role": "region", "name": "Vendredi 16 octobre" } }, "lands": "/cours/c08" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Nom et prénom" }, "value": "Sam Bench" },
+  { "do": "fill", "target": { "role": "textbox", "name": "E-mail" }, "value": "sam.test@example.test" },
+  { "do": "click", "target": { "role": "button", "name": "M’inscrire sur la liste d’attente" } },
+  { "do": "see", "text": "liste d’attente" }
+] }

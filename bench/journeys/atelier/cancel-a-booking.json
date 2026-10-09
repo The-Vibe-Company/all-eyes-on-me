@@ -1,0 +1,10 @@
+{ "name": "Cancel a booking", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Mes réservations", "within": { "role": "navigation", "name": "Navigation principale" } }, "lands": "/mes-reservations" },
+  { "do": "fill", "target": { "role": "textbox", "name": "E-mail" }, "value": "lea.test@example.test" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Code de réservation" }, "value": "TT-K7P4" },
+  { "do": "click", "target": { "role": "button", "name": "Voir mes réservations" } },
+  { "do": "click", "target": { "role": "button", "name": "Annuler la réservation TT-K7P4" } },
+  { "do": "click", "target": { "role": "button", "name": "Oui, annuler la réservation" } },
+  { "do": "see", "text": "annulée" }
+] }

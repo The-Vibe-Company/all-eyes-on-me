@@ -1,0 +1,9 @@
+{ "name": "Book a seat in a class", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Voir les cours de la semaine" }, "lands": "/cours" },
+  { "do": "click", "target": { "role": "link", "name": "Bols au colombin" }, "lands": "/cours/c02" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Nom et prénom" }, "value": "Sam Bench" },
+  { "do": "fill", "target": { "role": "textbox", "name": "E-mail" }, "value": "sam.test@example.test" },
+  { "do": "click", "target": { "role": "button", "name": "Réserver" } },
+  { "do": "see", "text": "C’est réservé" }
+] }

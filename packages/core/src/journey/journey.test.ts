@@ -25,6 +25,8 @@ function shop(): Server {
     "/search": () =>
       page(`<button onclick="window.open('/pop')">Open the stock</button><form action="/results" method="get"><label>Query <input name="q"></label><button>Search</button></form><a href="/results?page=2">Next</a>`),
     "/results": () => page(`<p>Results</p>`),
+    "/lend": () => page(`<form action="/lent" method="get"><label>Catégorie <select name="c"><option value="">Choisir…</option><option value="b">Bricolage</option><option value="j">Jardinage</option></select></label><button>Lend</button></form>`),
+    "/lent": () => page(`<p>Lent</p>`),
     "/pop": () => page(`<p>Stock</p><script>fetch('/stock?item=1')</script>`),
     "/check": () => page(`<label>Email <input name="email"></label><button onclick="alert('No account for ' + document.querySelector('input').value)">Check</button>`),
     "/slow-login": () =>
@@ -83,6 +85,22 @@ describe("replaying journeys", () => {
       { do: "see", text: "1 article" },
     ],
   };
+
+  test("an option is chosen in a list by the words the user sees", async () => {
+    const lend: Journey = {
+      slug: "lend",
+      name: "Lend",
+      steps: [
+        { do: "open", path: "/lend" },
+        { do: "choose", target: { role: "combobox", name: "Catégorie" }, option: "Jardinage" },
+        { do: "click", target: { role: "button", name: "Lend" }, lands: "/lent?c=j" },
+      ],
+    };
+    const report = await replayJourneys({ url, journeys: [lend], outDir: out("choose"), widths: [390], reset: reset() });
+    assert.equal(report.journeys[0]!.runs[0]!.broken, null);
+    const missing = await replayJourneys({ url, journeys: [{ ...lend, steps: [lend.steps[0]!, { do: "choose", target: { role: "combobox", name: "Catégorie" }, option: "Cuisine" }] }], outDir: out("choose-missing"), widths: [390], reset: reset() });
+    assert.match(missing.journeys[0]!.runs[0]!.broken!.reason, /no option "Cuisine"/);
+  });
 
   test("each step is captured at every width, and a sheet lays them out in order", async () => {
     const report = await replayJourneys({ url, journeys: [buy], outDir: out("steps"), widths: [390, 1280], reset: reset() });
@@ -236,11 +254,13 @@ describe("journey files", () => {
       await mkdir(dir, { recursive: true });
       await writeFile(join(dir, "bad.json"), JSON.stringify({ steps: [{ do: "click" }, { do: "fly" }, { do: "click", target: { role: "link" } }] }));
       await writeFile(join(dir, "broken.json"), "{ not json");
+      await writeFile(join(dir, "choose.json"), JSON.stringify({ name: "Choose", steps: [{ do: "open", path: "/" }, { do: "choose", target: { role: "combobox", name: "Catégorie" } }] }));
       await writeFile(join(dir, "signed.json"), JSON.stringify({ name: "Signed", signedOut: "false", steps: [{ do: "open", path: "/" }] }));
       await writeFile(join(dir, "mixed.json"), JSON.stringify({ name: "Mixed", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "A", text: "A" }, lands: "commandes" }] }));
       await assert.rejects(loadJourneys(dir), (error: unknown) => {
         assert.ok(error instanceof JourneyError);
         assert.match(error.message, /bad\.json: no name/);
+        assert.match(error.message, /choose\.json, step 2: choose needs an option, the words of the one to pick/);
         assert.match(error.message, /bad\.json: the journey does not start with an open step/);
         assert.match(error.message, /bad\.json, step 1: click needs a target/);
         assert.match(error.message, /bad\.json, step 2: unknown action "fly"/);

@@ -16,6 +16,7 @@ A key journey of the product sheet, written so a browser can replay it: `.aeom/j
 - **`name`** is the journey's name in the product sheet, word for word.
 - **The first step opens a route.** Then, one action per step:
   - `click` and `fill` (with a `value`) act on a target;
+  - `choose` picks an option in a list, by the words the user sees: `{ "do": "choose", "target": { "role": "combobox", "name": "Catégorie" }, "option": "Bricolage" }`;
   - `press` presses a key, such as `Enter`;
   - `see` checks that a text is on the screen.
 - **A target** is what the user sees:

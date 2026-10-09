@@ -52,11 +52,11 @@ export async function withApp(values: { url: string; start?: string; timeout?: s
 export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 /**
- * Fills --url and --start from .aeom/config.json. The config's start command
+ * Fills --url, --start and --pages from .aeom/config.json. The config's start command
  * is used only when --url is not given either: an explicit --url means an app
  * that is already running there.
  */
-export async function withConfig<T extends { url?: string; start?: string }>(values: T): Promise<T> {
+export async function withConfig<T extends { url?: string; start?: string; pages?: string }>(values: T): Promise<T> {
   let config;
   try {
     config = await loadConfig();
@@ -65,6 +65,8 @@ export async function withConfig<T extends { url?: string; start?: string }>(val
     console.error(error.message);
     process.exit(1);
   }
+  // The config's pages hold however the app is reached: --pages alone replaces them.
+  if (values.pages === undefined && config.pages) values = { ...values, pages: config.pages.join(",") };
   if (values.url !== undefined) return values;
   return { ...values, url: config.url, start: values.start ?? config.start };
 }

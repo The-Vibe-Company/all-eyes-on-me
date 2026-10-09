@@ -1,0 +1,6 @@
+{ "name": "Give an object back", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Mes emprunts" }, "lands": "/mes-emprunts" },
+  { "do": "click", "target": { "role": "button", "name": "J’ai rendu l’objet" } },
+  { "do": "see", "text": "Rendu" }
+] }

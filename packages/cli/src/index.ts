@@ -12,6 +12,7 @@ import { runFeatures } from "./commands/features.js";
 import { runPr } from "./commands/pr.js";
 import { runReport } from "./commands/report.js";
 import { runStandard } from "./commands/standard.js";
+import { runBench, runTokens } from "./commands/bench.js";
 import { runVerdict } from "./commands/verdict.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -38,6 +39,8 @@ Commands:
   features    Name what a blocked journey would need, without building it
   pr          Push the run's branch and open a PR, in words, with no capture
   standard    Write the standard of the front, keeping the user's edits
+  tokens      Count the tokens a run used, its agents included
+  bench       Grade a run against the defects noted by hand on its app
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#what-comes-next`;
@@ -59,6 +62,8 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   features: runFeatures,
   pr: runPr,
   standard: runStandard,
+  tokens: runTokens,
+  bench: runBench,
 };
 
 const [command, ...rest] = process.argv.slice(2);

@@ -13,6 +13,7 @@ export type Step =
   | { do: "open"; path: string }
   | { do: "click"; target: Target; lands?: string }
   | { do: "fill"; target: Target; value: string | { account: string } }
+  | { do: "choose"; target: Target; option: string }
   | { do: "press"; key: string; lands?: string }
   | { do: "see"; text: string };
 
@@ -35,7 +36,7 @@ export class JourneyError extends Error {
   }
 }
 
-const ACTIONS = ["open", "click", "fill", "press", "see"];
+const ACTIONS = ["open", "click", "fill", "choose", "press", "see"];
 
 function targetProblem(target: unknown): string | null {
   if (!target || typeof target !== "object") return "needs a target";
@@ -64,12 +65,13 @@ function problemsOf(file: string, data: unknown): string[] {
     const at = `${file}, step ${i + 1}`;
     if (!ACTIONS.includes(step.do as string)) return problems.push(`${at}: unknown action "${String(step.do)}"`);
     if (step.do === "open" && (typeof step.path !== "string" || !step.path.startsWith("/"))) problems.push(`${at}: open needs a path starting with /`);
-    if (step.do === "click" || step.do === "fill") {
+    if (step.do === "click" || step.do === "fill" || step.do === "choose") {
       const problem = targetProblem(step.target);
       if (problem) problems.push(`${at}: ${problem === "needs a target" ? `${step.do} needs a target` : problem}`);
     }
     const fromAccount = typeof step.value === "object" && step.value !== null && typeof (step.value as { account?: unknown }).account === "string";
     if (step.do === "fill" && typeof step.value !== "string" && !fromAccount) problems.push(`${at}: fill needs a value, or { "account": "<field>" } for a value from the sign-in account`);
+    if (step.do === "choose" && (typeof step.option !== "string" || !step.option)) problems.push(`${at}: choose needs an option, the words of the one to pick`);
     if (step.do === "press" && (typeof step.key !== "string" || !step.key)) problems.push(`${at}: press needs a key`);
     if ((step.do === "click" || step.do === "press") && step.lands !== undefined && (typeof step.lands !== "string" || !step.lands.startsWith("/"))) problems.push(`${at}: lands needs a route starting with /`);
     if (step.do === "see" && (typeof step.text !== "string" || !step.text)) problems.push(`${at}: see needs a text`);
@@ -119,6 +121,8 @@ export function describeStep(step: Step): string {
       return `click ${target(step.target)}`;
     case "fill":
       return `fill ${target(step.target)}`;
+    case "choose":
+      return `choose "${step.option}" in ${target(step.target)}`;
     case "press":
       return `press ${step.key}`;
     case "see":

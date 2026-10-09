@@ -1,0 +1,6 @@
+{ "name": "Find an object I need", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "fill", "target": { "text": "De quoi avez-vous besoin ?" }, "value": "tente" },
+  { "do": "click", "target": { "role": "button", "name": "Chercher" } },
+  { "do": "see", "text": "Tente familiale 4 places" }
+] }

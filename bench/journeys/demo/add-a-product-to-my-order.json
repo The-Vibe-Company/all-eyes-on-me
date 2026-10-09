@@ -1,0 +1,4 @@
+{ "name": "Add a product to my order", "steps": [
+  { "do": "open", "path": "/produits" },
+  { "do": "click", "target": { "role": "button", "name": "Ajouter", "within": { "role": "row", "name": "Lampe" } } }
+] }

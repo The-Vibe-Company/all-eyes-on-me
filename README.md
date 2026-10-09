@@ -80,6 +80,8 @@ A full run is long and spawns many agents: on the demo app, about an hour of wor
 | `aeom features` | Name what a blocked journey would need, without building it |
 | `aeom pr` | Push the run's branch and open a PR, in words, with no capture |
 | `aeom standard` | Write the standard of the front, keeping the user's edits |
+| `aeom tokens` | Count the tokens a run used, its agents included |
+| `aeom bench` | Grade a run against the defects noted by hand on its app |
 
 ## What comes next
 

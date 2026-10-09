@@ -13,6 +13,8 @@ export interface ProjectConfig {
   protected?: string[];
   /** "keep": the app has a style to keep, such as a client's brand charter; AEOM fixes it rather than proposing a new direction. */
   style?: "keep";
+  /** The pages to capture and check, when the app has many of one kind (a page per product): one of each kind, rather than every page its links lead to. */
+  pages?: string[];
 }
 
 /** `.aeom/config.json` exists but cannot be used. */
@@ -47,6 +49,11 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
     if (!Array.isArray(guarded) || guarded.some((g) => typeof g !== "string" || !g.trim())) throw new ConfigError(`${file}: "protected" must list globs, such as ["src/lib/db/**", "src/app/api/**"].`);
     // A glob is matched against whole paths: stray spaces around it would make it match nothing.
     config.protected = (guarded as string[]).map((g) => g.trim());
+  }
+  const pages = (parsed as Record<string, unknown>).pages;
+  if (pages !== undefined) {
+    if (!Array.isArray(pages) || !pages.length || pages.some((p) => typeof p !== "string" || !p.trim().startsWith("/"))) throw new ConfigError(`${file}: "pages" lists routes from the app's root, such as ["/", "/objets/perceuse"].`);
+    config.pages = (pages as string[]).map((p) => p.trim());
   }
   const style = (parsed as Record<string, unknown>).style;
   if (style !== undefined) {

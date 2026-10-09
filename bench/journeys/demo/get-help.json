@@ -1,0 +1,4 @@
+{ "name": "Get help", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Aide" }, "lands": "/aide" }
+] }

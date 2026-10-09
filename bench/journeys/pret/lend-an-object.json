@@ -1,0 +1,10 @@
+{ "name": "Lend an object", "steps": [
+  { "do": "open", "path": "/" },
+  { "do": "click", "target": { "role": "link", "name": "Prêter un objet" }, "lands": "/proposer" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Nom de l’objet" }, "value": "Ponceuse orbitale" },
+  { "do": "choose", "target": { "role": "combobox", "name": "Catégorie" }, "option": "Bricolage" },
+  { "do": "fill", "target": { "role": "textbox", "name": "Description" }, "value": "Avec six feuilles de rechange." },
+  { "do": "click", "target": { "role": "radio", "name": "Bon état" } },
+  { "do": "click", "target": { "role": "button", "name": "Proposer l’objet" } },
+  { "do": "see", "text": "Ponceuse orbitale" }
+] }

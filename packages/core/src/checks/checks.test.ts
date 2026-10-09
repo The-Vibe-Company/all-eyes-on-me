@@ -104,4 +104,11 @@ describe("on the ugly app", () => {
     assert.deepEqual(where("console"), ["/commandes"]);
     assert.equal(report.errors.length, 1, "the broken link is reported, not checked");
   });
+
+  test("checks only the pages it is given, and still says which do not load", async () => {
+    const report = await checkSite({ url, paths: ["/produits", "/aide"] });
+    assert.deepEqual(report.pages.map((p) => new URL(p).pathname), ["/produits"]);
+    assert.deepEqual(report.errors.map((e) => new URL(e.url).pathname), ["/aide"]);
+    assert.ok(report.findings.every((f) => new URL(f.url).pathname === "/produits"));
+  });
 });

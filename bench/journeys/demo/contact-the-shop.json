@@ -1,0 +1,6 @@
+{ "name": "Contact the shop", "steps": [
+  { "do": "open", "path": "/contact" },
+  { "do": "fill", "target": { "text": "Email" }, "value": "client@example.test" },
+  { "do": "fill", "target": { "text": "Message" }, "value": "Où en est ma commande ?" },
+  { "do": "click", "target": { "text": "ENVOYER" } }
+] }

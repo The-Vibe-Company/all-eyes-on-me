@@ -1,0 +1,24 @@
+{
+  "app": "Le Prêt, made by an agent without AEOM",
+  "defects": [
+    {
+      "id": "pret-01",
+      "screen": "/",
+      "rule": "not-ai-default",
+      "what": "Cream paper, a big serif headline and red « stamp » labels: the warm local look AIs propose by default."
+    },
+    {
+      "id": "pret-02",
+      "screen": "/objets/perceuse-visseuse",
+      "rule": "contrast",
+      "what": "The past days of the calendar are light grey on white (#a8a49b, 2.6:1)."
+    },
+    {
+      "id": "pret-03",
+      "screen": "/",
+      "rule": "grid",
+      "what": "At 390 px the menu wraps over three ragged lines, the account squeezed after it.",
+      "sure": false
+    }
+  ]
+}

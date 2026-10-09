@@ -155,6 +155,13 @@ async function act(page: Page, app: App, step: Step, account: Record<string, str
       await field.fill(value, { timeout: STEP_TIMEOUT });
       return typeof step.value === "string" ? null : field;
     }
+    case "choose": {
+      const list = await resolve(page, step.target, { field: true });
+      await list.selectOption({ label: step.option }, { timeout: STEP_TIMEOUT }).catch(() => {
+        throw new StepFailure(`no option "${step.option}" in ${describeTarget(step.target)}`);
+      });
+      return null;
+    }
     case "press":
       await page.keyboard.press(step.key);
       return null;
