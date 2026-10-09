@@ -16,7 +16,7 @@ import { runVerdict } from "./commands/verdict.js";
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 const HELP = `aeom ${version}
-All Eyes On Me: a fleet of agents that rebuilds your frontend and judges every screen against your taste.
+All Eyes On Me: the art director of a product coded by agents. It takes your front and makes a better one.
 
 Usage: aeom <command>
 

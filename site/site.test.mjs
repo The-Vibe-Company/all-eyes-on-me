@@ -23,12 +23,21 @@ test("the commands on the page are exactly the CLI's, with its words", () => {
   assert.deepEqual(shown, cliCommands());
 });
 
-test("the roadmap, on the page and in the README, puts the UX layer right after the landing", () => {
-  const items = [...page.matchAll(/<li data-stage="([^"]+)">/g)].map(([, stage]) => stage);
-  assert.equal(items[items.indexOf("landing") + 1], "ux");
-  const roadmap = readme.split("## Roadmap")[1].split("\n## ")[0];
-  assert.ok(roadmap.indexOf("**First iteration after V0.**") < roadmap.indexOf("**Then, the UX layer.**"));
-  assert.ok(roadmap.indexOf("**Then, the UX layer.**") < roadmap.indexOf("**V1.**"));
+test("the README and the page say what AEOM is in one sentence, then what works today, apart from what comes", () => {
+  const sentence = "All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.";
+  assert.ok(readme.split("\n").slice(0, 4).join(" ").includes(sentence), "the README opens on the sentence");
+  assert.ok(page.includes(sentence), "the page says the same sentence");
+  const today = readme.split("## What it does today")[1]?.split("\n## ")[0] ?? "";
+  const next = readme.split("## What comes next")[1]?.split("\n## ")[0] ?? "";
+  assert.ok(today && next, "the README has « What it does today » and « What comes next »");
+  assert.ok(readme.indexOf("## What it does today") < readme.indexOf("## What comes next"));
+  for (const notYet of [/spend cap/i, /npm/i, /\bCI\b/, /learn/i]) {
+    assert.doesNotMatch(today, notYet, `${notYet} is not done: it belongs in « What comes next »`);
+    assert.match(next, notYet);
+  }
+  for (const text of [readme, page]) assert.match(text, /not (yet )?run on a real project/i, "until a real project goes through it, it says so");
+  const stages = [...page.matchAll(/<li data-stage="([^"]+)">/g)].map(([, stage]) => stage);
+  assert.deepEqual(stages, ["done", "now", "next", "then", "later"], "the page's roadmap goes from what is done to what comes last");
 });
 
 test("the page links to the repository to star it", () => {

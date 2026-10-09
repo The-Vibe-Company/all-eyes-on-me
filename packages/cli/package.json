@@ -1,7 +1,7 @@
 {
   "name": "@the-vibe-company/aeom",
   "version": "0.0.0",
-  "description": "All Eyes On Me: a fleet of agents that rebuilds your frontend and judges every screen against your taste.",
+  "description": "All Eyes On Me: the art director of a product coded by agents. It takes your front and makes a better one.",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -19,7 +19,7 @@
     "directory": "packages/cli"
   },
   "scripts": {
-    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json && node -e \"require('node:fs').chmodSync('dist/index.js', 0o755)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test \"dist/**/*.test.js\""
   },

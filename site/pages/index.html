@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>All Eyes On Me</title>
-<meta name="description" content="A fleet of agents that rebuilds your frontend in parallel, judges every screen, and keeps only what got better. Open source.">
+<meta name="description" content="The art director of a product coded by agents. Type /aeom: it takes your front and makes a better one, on an art direction drawn from your product. Open source.">
 <!-- include: head -->
 </head>
 <body>
@@ -15,9 +15,9 @@
   <div class="hero__text">
     <p class="kicker"><span class="kicker__ref">01</span> Open-source CLI and Claude Code skills</p>
     <h1 id="title">All Eyes On Me</h1>
-    <p class="lede">A fleet of agents rebuilds your app's frontend in parallel, judges every screen, and keeps only what got better.</p>
-    <p>Coding agents can build a backend on their own, because tests tell them when they got it right. The frontend has no such oracle, so agents improvise: generic screens, a different header on every page, buttons that do not look clickable.</p>
-    <p>All Eyes On Me gives the frontend that oracle.</p>
+    <p class="lede">All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.</p>
+    <p>Today, the first of these works. You type <code>/aeom</code> in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.</p>
+    <p>It runs end to end on demo apps. It has not run on a real project yet.</p>
     <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it from source</a></p>
   </div>
 
@@ -169,6 +169,7 @@
     <div><dt>Object</dt><dd>A web app's frontend</dd></div>
     <div><dt>Examined</dt><dd>Every page, at phone and desktop width</dd></div>
     <div><dt>Judged by</dt><dd>Three independent judges; the majority decides</dd></div>
+    <div><dt>Status</dt><dd>Pre-alpha: demo apps only, not yet run on a real project</dd></div>
     <div><dt>Licence</dt><dd>MIT, open source</dd></div>
   </dl>
 </section>
@@ -180,13 +181,14 @@
   </div>
   <div class="section__body">
     <ol class="steps">
-      <li><strong>Capture.</strong> It starts your app, follows every link and screenshots each page at phone and desktop width.</li>
-      <li><strong>Check.</strong> It measures what a machine can measure: pointer cursors, sideways scrolling, contrast, console errors.</li>
-      <li><strong>Judge.</strong> Three independent judges look at every page against a short list of principles, and the majority decides.</li>
-      <li><strong>Directions.</strong> On demand, it builds six art directions from things your users know, never from the looks AIs propose by default, and keeps one in a knockout.</li>
-      <li><strong>Waves.</strong> One worker writes the shared kit, then one worker per page rebuilds every page at once, each in its own files.</li>
-      <li><strong>Ratchet.</strong> A page is kept only if fewer things fail on it than before.</li>
+      <li><strong>Understand.</strong> It writes what your app is for, who uses it and its main loop, and replays three to five key journeys in a real browser.</li>
+      <li><strong>Look.</strong> It captures every screen at phone and desktop width, measures pointer cursors, sideways scrolling, contrast and console errors, and three independent judges hold each page to eight principles.</li>
+      <li><strong>Decide.</strong> If nothing fails, it says « nothing to redo » and stops.</li>
+      <li><strong>A new direction.</strong> Six art directions drawn from things your users know, never from the looks AIs propose by default, and a knockout keeps one. A client's own style can be kept instead.</li>
+      <li><strong>Pages, then journeys.</strong> One worker per page, then per journey, each in its own files. A guard refuses any change that adds a feature. Only what got better is kept.</li>
+      <li><strong>Show.</strong> A result page on your machine, the features a blocked journey would need (never built), and a pull request in words, with no capture.</li>
     </ol>
+    <p>On the demo app, the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0; the measurable checks from 10 to 0; « See my orders » from four steps to three. No feature was added.</p>
   </div>
 </section>
 
@@ -229,7 +231,12 @@
       <div class="film__head"><span><b class="film__tag">XR</b> From the source</span></div>
       <pre><code><span class="ln">git clone \</span><span class="ln ln--more">  https://github.com/The-Vibe-Company/all-eyes-on-me</span><span class="ln">cd all-eyes-on-me</span><span class="ln">pnpm install</span><span class="ln">pnpm build</span><span class="ln">pnpm <span class="nw">--filter</span> @aeom/core exec \</span><span class="ln ln--more">  playwright install chromium</span><span class="ln">node packages/cli/dist/index.js <span class="nw">--help</span></span></code></pre>
     </div>
-    <p>Then copy <code>skills/aeom</code> and <code>skills/aeom-judge</code> into your project's <code>.claude/skills/</code> and type <code>/aeom</code> in Claude Code.</p>
+    <p>Then put <code>aeom</code> on your <code>PATH</code> and the two skills where Claude Code finds them:</p>
+    <div class="film" data-copy>
+      <div class="film__head"><span><b class="film__tag">XR</b> Link it</span></div>
+      <pre><code><span class="ln">mkdir -p ~/.local/bin ~/.claude/skills</span><span class="ln">ln -s "$PWD/packages/cli/dist/index.js" \</span><span class="ln ln--more">  ~/.local/bin/aeom</span><span class="ln">ln -s "$PWD/skills/aeom" \</span><span class="ln ln--more">  "$PWD/skills/aeom-judge" ~/.claude/skills/</span></code></pre>
+    </div>
+    <p>In your project, your app must start locally with one command, on fake data. Type <code>/aeom</code> in Claude Code. A full run takes about 30 to 45 minutes on the demo app.</p>
   </div>
 </section>
 
@@ -240,11 +247,11 @@
   </div>
   <div class="section__body">
     <ol class="strata">
-      <li data-stage="v0"><strong>V0, done.</strong> The crudest loop that runs end to end, on a deliberately ugly demo app.</li>
-      <li data-stage="landing"><strong>Now.</strong> This page, rebuilt by AEOM itself.</li>
-      <li data-stage="ux"><strong>Next, the UX layer.</strong> AEOM understands what an app is for, maps its key journeys, and critiques the existing experience journey by journey. It may reorder steps and navigation, never build features.</li>
-      <li data-stage="v1"><strong>Then.</strong> Feedback that turns into principles, a spend cap, the npm package.</li>
-      <li data-stage="v2"><strong>Later.</strong> Codex, mobile, new projects from scratch.</li>
+      <li data-stage="done"><strong>Done.</strong> Level 1 on demo apps: <code>/aeom</code> understands the product, judges every screen and journey, and rebuilds the front on a new direction, or keeps a client's style.</li>
+      <li data-stage="now"><strong>Now.</strong> A bench of apps with known defects, measuring what AEOM finds and fixes, and a run that ends by writing the standard of the front.</li>
+      <li data-stage="next"><strong>Next, level 2: keep.</strong> Every pull request held to the standard: what can be measured blocks the CI check, the judges comment on whether it is still the same product.</li>
+      <li data-stage="then"><strong>Then, level 3: build.</strong> Build what is asked, or a front from scratch, inside the standard, front only.</li>
+      <li data-stage="later"><strong>Later.</strong> The judges learn your taste from your feedback, a spend cap, the npm package, Codex, mobile.</li>
     </ol>
   </div>
 </section>
