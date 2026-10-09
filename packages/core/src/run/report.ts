@@ -151,7 +151,7 @@ const list = (label: string, items: string[]) => (items.length ? `<p><span class
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 export function resultHtml(r: ResultPage): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${escape(r.verdict.line)}</p>` : ""}</header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}</header>`;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a><a href="#still">Still failing</a></nav>`;
 
   const direction = r.direction
