@@ -7,22 +7,41 @@ export async function runSheet(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { out: { type: "string" }, columns: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { out: { type: "string" }, columns: { type: "string", default: "3" }, note: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || !values.out || positionals.length === 0) {
-    console.log(`Usage: aeom sheet --out <sheet.png> <label>=<capture.png>...
+    console.log(`Usage: aeom sheet --out <sheet.png> <label>=<capture.png>... [--note <label>=<sentence>]...
 
 Lays captures side by side, labelled, in one image. A missing capture shows
 as a cell saying the direction did not build.
 
 Options:
-  --columns <n>  How many captures per row (default 3)`);
+  --columns <n>             How many captures per row (default 3)
+  --note <label>=<sentence> One sentence read under that capture, such as the
+                            part of the product sheet a direction serves`);
     return values.help ? 0 : 1;
   }
-  const items = positionals.map((arg) => {
+  const items: { label: string; file: string; note?: string }[] = positionals.map((arg) => {
     const at = arg.indexOf("=");
     return at > 0 ? { label: arg.slice(0, at), file: arg.slice(at + 1) } : { label: arg, file: arg };
   });
+  for (const note of values.note ?? []) {
+    const at = note.indexOf("=");
+    if (at < 1 || !note.slice(at + 1).trim()) {
+      console.error(`--note takes <label>=<sentence>, such as --note "tissus=Serves the main loop: ...".`);
+      return 1;
+    }
+    const item = items.find((i) => i.label === note.slice(0, at));
+    if (!item) {
+      console.error(`A note for ${note.slice(0, at)}, which the sheet does not show: give it a capture, or leave the note out.`);
+      return 1;
+    }
+    if (item.note !== undefined) {
+      console.error(`Two notes for ${item.label}: give each capture one sentence.`);
+      return 1;
+    }
+    item.note = note.slice(at + 1).trim();
+  }
   const columns = Number(values.columns);
   if (!Number.isInteger(columns) || columns < 1) {
     console.error(`--columns must be a positive whole number.`);

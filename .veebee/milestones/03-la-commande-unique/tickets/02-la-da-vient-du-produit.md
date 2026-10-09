@@ -4,6 +4,7 @@ title: La DA vient du propos du produit : chaque direction dit ce qu'elle tire d
 milestone: 03-la-commande-unique
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 48, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/48 }
 ---
 

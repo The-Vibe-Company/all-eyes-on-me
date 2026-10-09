@@ -314,7 +314,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
         const sheet = `${journey.slug}@${width}.png`;
         await contactSheet({
           out: join(outDir, sheet),
-          items: run.steps.map((s) => ({ label: String(s.index), note: s.action, file: s.capture ? join(outDir, s.capture) : join(outDir, "missing.png") })),
+          items: run.steps.map((s) => ({ label: String(s.index), caption: s.action, file: s.capture ? join(outDir, s.capture) : join(outDir, "missing.png") })),
           columns: Math.min(run.steps.length, 4) || 1,
           cellWidth: width < 768 ? 300 : 480,
           browser,

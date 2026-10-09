@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mergeProduct, validateProduct } from "./index.js";
+import { mergeProduct, productBrief, validateProduct } from "./index.js";
 
 const journey = (name: string, source = "(seen: /)") => `### ${name}\nWhy: a visitor wants it. ${source}\n1. Open \`/\`.\n2. Click "${name}".\n`;
 
@@ -102,4 +102,39 @@ test("a renamed app gets its new name at the top of the sheet", () => {
   const result = mergeProduct({ base, current: base, proposed: product().replace("# Super boutique", "# Super Boutique en ligne") });
   assert.ok(result.text.startsWith("# Super Boutique en ligne\n"));
   assert.deepEqual(validateProduct(result.text), []);
+});
+
+test("the brief of the directions holds what the app is for, who uses it and its loop, and nothing marked to confirm", () => {
+  const brief = productBrief(product({ purpose: "A shop that sells mugs. (seen: /) It ships across France. (to confirm)" }));
+  assert.equal(brief.name, "Super boutique");
+  assert.deepEqual(brief.parts, [
+    { part: "What it is for", text: "A shop that sells mugs." },
+    { part: "The main loop", text: "Browse, order, check the order." },
+  ]);
+  assert.deepEqual(brief.unconfirmed, ["What it is for: It ships across France.", "Who uses it: People buying a gift."]);
+});
+
+test("what the user confirms with their name as source goes in the brief; words with no source stay out", () => {
+  const confirmed = productBrief(product({ who: "Interior designers buying for their clients. (seen: Antoine)" }));
+  assert.deepEqual(confirmed.parts[1], { part: "Who uses it", text: "Interior designers buying for their clients." });
+  assert.deepEqual(confirmed.unconfirmed, []);
+  const unsourced = productBrief(product({ purpose: "A shop that sells mugs. (seen: /) It mostly sells to companies." }));
+  assert.deepEqual(unsourced.parts[0], { part: "What it is for", text: "A shop that sells mugs." });
+  assert.deepEqual(unsourced.unconfirmed, ["What it is for: It mostly sells to companies. (no source)", "Who uses it: People buying a gift."]);
+});
+
+test("a source path with parentheses, a capital To confirm, a list and a title with text under it are read as meant", () => {
+  const brief = productBrief(
+    product({ purpose: "- A shop that sells mugs. (seen: src/app/(shop)/page.tsx)\n- Mugs come in three sizes. (To confirm)" }).replace("# Super boutique\n", "# Super boutique\nDrafted by AEOM.\n"),
+  );
+  assert.equal(brief.name, "Super boutique");
+  assert.deepEqual(brief.parts[0], { part: "What it is for", text: "A shop that sells mugs." });
+  assert.deepEqual(brief.unconfirmed.slice(0, 1), ["What it is for: Mugs come in three sizes."]);
+  assert.deepEqual(validateProduct(product({ purpose: "A shop that sells mugs. (seen: src/app/(shop)/page.tsx)" })), []);
+});
+
+test("a part the sheet does not hold under its heading, such as one the user renamed, is named as missing", () => {
+  const brief = productBrief(product().replace("## What it is for", "## What it's for"));
+  assert.deepEqual(brief.missing, ["What it is for"]);
+  assert.deepEqual(brief.parts.map((p) => p.part), ["The main loop"]);
 });

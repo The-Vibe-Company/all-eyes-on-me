@@ -63,6 +63,9 @@ test("a contact sheet lays the captures side by side, and marks a direction that
     assert.match(html, /<figure data-label="1"><figcaption><b>1<\/b><\/figcaption><img src="data:image\/png;base64,/);
     assert.match(html, /<figure data-label="2"><figcaption><b>2<\/b><\/figcaption><div class="missing">No capture: this direction did not build\.<\/div>/);
     assert.match(await sheetHtml([{ label: 'a" onload="x', file: join(dir, "a.png") }], 1, 300), /data-label="a&quot; onload=&quot;x"/);
+    const noted = await sheetHtml([{ label: "tissus", file: join(dir, "a.png"), note: "Serves the main loop: choose a piece & follow it." }], 1, 300);
+    assert.match(noted, /<img [^>]*><p class="note">Serves the main loop: choose a piece &amp; follow it\.<\/p><\/figure>/, "the note reads under the capture");
+    assert.match(await sheetHtml([{ label: "2", caption: 'click "Ajouter"', file: join(dir, "a.png") }], 1, 300), /<figcaption><b>2<\/b> click &quot;Ajouter&quot;<\/figcaption>/, "a caption reads next to the label");
     await contactSheet({ out: join(dir, "sheet.png"), columns: 2, cellWidth: 300, items });
     assert.ok((await stat(join(dir, "sheet.png"))).size > 1000);
   } finally {

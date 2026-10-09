@@ -180,3 +180,29 @@ test("a second aeom product waits its turn: it is refused while another one writ
     await rm(p.dir, { recursive: true, force: true });
   }
 });
+
+test("aeom product --brief gives the directions what the app is for, who uses it and its loop, and names what is left out as to confirm", async () => {
+  const { dir, sheet: file } = await project();
+  try {
+    const none = await run(dir, ["product", "--brief"]);
+    assert.equal(none.code, 1);
+    assert.match(none.out, /No product sheet in \.aeom\/product\.md/);
+    await mkdir(join(dir, ".aeom"), { recursive: true });
+    await writeFile(file, sheet());
+    const { code, out } = await run(dir, ["product", "--brief"]);
+    assert.equal(code, 0, out);
+    assert.match(out, /^Super boutique\n\nWhat it is for: A shop that sells mugs\.\nThe main loop: Browse, order, check\.\n/);
+    assert.doesNotMatch(out, /\(seen:/);
+    assert.match(out, /Left out, to confirm:\n- Who uses it: People buying a gift\./);
+    await writeFile(file, sheet().replace("## What it is for", "## What it's for"));
+    const renamed = await run(dir, ["product", "--brief"]);
+    assert.equal(renamed.code, 1);
+    assert.match(renamed.out, /has no "What it is for": put the heading back/);
+    await writeFile(file, sheet().replace("(seen: /)", "(to confirm)").replace("(seen: /produits)", "(to confirm)"));
+    const guessed = await run(dir, ["product", "--brief"]);
+    assert.equal(guessed.code, 1);
+    assert.match(guessed.out, /Nothing in \.aeom\/product\.md is confirmed/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

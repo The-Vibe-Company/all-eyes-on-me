@@ -5,6 +5,9 @@ export interface SheetItem {
   label: string;
   /** A PNG screenshot. A missing file shows as a cell saying it failed. */
   file: string;
+  /** A few words next to the label, such as a journey step's action. */
+  caption?: string;
+  /** One sentence read under the capture, such as what of the product a direction serves. */
   note?: string;
 }
 
@@ -21,7 +24,7 @@ function checkLayout(columns: number, cellWidth: number) {
 export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640): Promise<string> {
   checkLayout(columns, cellWidth);
   const cells = await Promise.all(
-    items.map(async ({ label, file, note }) => {
+    items.map(async ({ label, file, caption, note }) => {
       const image = await readFile(file).then(
         (data) => `<img src="data:image/png;base64,${data.toString("base64")}" alt="">`,
         (error: NodeJS.ErrnoException) => {
@@ -30,7 +33,7 @@ export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640
         },
       );
       const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-      return `<figure data-label="${escape(label)}"><figcaption><b>${escape(label)}</b>${note ? ` ${escape(note)}` : ""}</figcaption>${image}</figure>`;
+      return `<figure data-label="${escape(label)}"><figcaption><b>${escape(label)}</b>${caption ? ` ${escape(caption)}` : ""}</figcaption>${image}${note ? `<p class="note">${escape(note)}</p>` : ""}</figure>`;
     }),
   );
   return `<!doctype html><meta charset="utf-8"><style>
@@ -39,6 +42,7 @@ export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640
     figure { margin: 0; } figcaption { margin-bottom: 8px; } b { font-size: 20px; margin-right: 8px; }
     img { display: block; width: ${cellWidth}px; height: auto; background: #fff; }
     .missing { height: 200px; display: grid; place-items: center; background: #3a2222; color: #ffb4b4; }
+    .note { margin: 10px 0 0; font-size: 18px; line-height: 1.4; color: #f2f2f2; }
   </style><main>${cells.join("")}</main>`;
 }
 
@@ -52,7 +56,8 @@ export async function contactSheet({ out, items, columns = 3, cellWidth = 640, b
   // A browser already open renders the sheet in a page of its own; otherwise one is launched and closed.
   const browser = open ?? (await chromium.launch());
   try {
-    const page = await browser.newPage({ viewport: { width: columns * cellWidth + (columns - 1) * 24 + 48, height: 600 } });
+    // A short viewport, so the full-page shot is as tall as the sheet and no taller.
+    const page = await browser.newPage({ viewport: { width: columns * cellWidth + (columns - 1) * 24 + 48, height: 100 } });
     try {
       await page.setContent(html);
       // Every image decoded before the shot; Chromium can still refuse a shot now and then, so try once more.

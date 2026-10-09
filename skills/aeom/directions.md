@@ -20,10 +20,10 @@ Design movements are banned as starting points for the same reason: "Swiss", "br
 
 ## Where a direction comes from
 
-From the product's own world, not from design history.
+From the product's own world, not from design history. That world is the product brief, `aeom product --brief`: what the app is for, who uses it, its main loop.
 
-1. **List twelve sources** that the product's customers would recognise and that are not websites: an object they handle, a document they receive, a sign they read, a place they go, a trade that serves them, a tool, a package, a form. Find new ones each time, for this product.
+1. **List twelve sources** that the people the brief names would recognise, around what the app is for and what they do again and again, and that are not websites: an object they handle, a document they receive, a sign they read, a place they go, a trade that serves them, a tool, a package, a form. Each one says, in one sentence, which part of the brief it serves and how. What the brief leaves out as to confirm is a guess: no source rests on it. When it leaves out who uses the app, start from what it is for and its loop. Find new ones each time, for this product.
 2. **Pick six** that are far apart in colour, type, density and material. Drop any source whose obvious rendering is one of the banned looks. Mix kinds of source: at most two printed documents (forms, labels, manuals, plans all end up as white paper and a technical sans), and at least two that are not on paper at all, such as a material, a place, a light, a sound turned visible, a gesture of the trade.
-3. **Give each worker its source.** It takes what makes the source recognisable (its colour system, its type, its layout conventions, its marks and codes) and turns that into a web kit. It does not draw a picture of the object.
+3. **Give each worker its source and its sentence.** It takes what makes the source recognisable (its colour system, its type, its layout conventions, its marks and codes) and turns that into a web kit. It does not draw a picture of the object.
 
 For a shop selling lamps, chairs and rugs, a first run picked a paint chip fan deck, the European energy label, an assembly sheet, a carbon-copy order form, a furnished floor plan and a 1975 mail-order catalogue. Five of the six were printed documents, and five came out as white paper with a technical sans: only the catalogue stood apart. Sources like the glow of a lampshade at dusk, a wool rug's dyed yarn on the loom, or a chair maker's bench with its oiled wood would have spread the six further. These are examples of the kind, not a list to reuse.
