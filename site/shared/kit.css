@@ -1233,20 +1233,20 @@ h2 {
   margin-bottom: 2px;
 }
 
-.strata [data-stage="v0"]::before { background: var(--irr-3); }
-.strata [data-stage="landing"]::before {
+.strata [data-stage="done"]::before { background: var(--irr-3); }
+.strata [data-stage="now"]::before {
   background: repeating-linear-gradient(45deg, var(--mark) 0 3px, #d7a3bd 3px 7px);
 }
-.strata [data-stage="landing"] strong { color: var(--mark); }
-.strata [data-stage="landing"] { background: #fbf4f8; }
-.strata [data-stage="ux"]::before {
+.strata [data-stage="now"] strong { color: var(--mark); }
+.strata [data-stage="now"] { background: #fbf4f8; }
+.strata [data-stage="next"]::before {
   background-color: var(--irr-0);
   background-image: radial-gradient(circle, var(--irr-3) 1.3px, transparent 1.6px);
   background-size: 7px 7px;
 }
-.strata [data-stage="v1"]::before {
+.strata [data-stage="then"]::before {
   background: repeating-linear-gradient(0deg, var(--irr-1) 0 1px, transparent 1px 6px);
 }
-.strata [data-stage="v2"]::before {
+.strata [data-stage="later"]::before {
   background: repeating-linear-gradient(0deg, var(--irr-1) 0 1px, transparent 1px 12px);
 }

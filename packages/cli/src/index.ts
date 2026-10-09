@@ -16,7 +16,7 @@ import { runVerdict } from "./commands/verdict.js";
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 const HELP = `aeom ${version}
-All Eyes On Me: a fleet of agents that rebuilds your frontend and judges every screen against your taste.
+All Eyes On Me: the art director of a product coded by agents. It takes your front and makes a better one.
 
 Usage: aeom <command>
 
@@ -38,7 +38,7 @@ Commands:
   pr          Push the run's branch and open a PR, in words, with no capture
 
 Run aeom <command> --help for its options.
-Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
+Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#what-comes-next`;
 
 const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   capture: runCapture,

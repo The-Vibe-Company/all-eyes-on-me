@@ -1,68 +1,109 @@
 # All Eyes On Me
 
-Coding agents can now build a backend on their own, because tests tell them when they got it right. The frontend has no such oracle, so agents improvise. You get generic screens, a different header on every page, buttons without a pointer cursor, missing empty states, and an art direction nobody actually chose.
+All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.
 
-All Eyes On Me (`aeom`) gives the frontend that oracle. A fleet of agents rebuilds your app's frontend in parallel. Every screen is checked against measurable rules and a taste judge. The fleet learns from your feedback until it stops needing you.
+Today, most of the first works. You type `/aeom` in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.
 
-> **Status: pre-alpha.** Each step runs end to end on the demo app in `examples/`, one mode at a time: capture, checks, the judge and the fleet; six directions and a tournament with `--directions`; the journeys with `--ux`. The single command that chains them is being built. It has not run on a real project yet. V1 is being built in the open, see the [roadmap](#roadmap).
+> **Status: pre-alpha.** `/aeom` runs end to end on demo apps. It has not run on a real project yet.
 
-## How it works
+## What it does today
 
-1. **`aeom init`** detects the stack and the screens, starts the app on fake data and sets up capture.
-2. **Audit.** Every screen is captured at every size, checked, and inconsistencies are listed. A finding is kept only once a second pass confirms it.
-3. **Six directions** (with `/aeom --directions`). Six art directions, each taken from a source in the product's own world (an object, a document, a place, a trade its customers know), never from a design movement, and checked against a list of the looks AIs propose by default. Each one is built in real code on the home page, in parallel worktrees.
-4. **Tournament.** Judges first remove any direction that looks like an AI default, then compare the rest two by two and keep the winner. Its shared files become the kit.
-5. **Kit wave.** Without directions, one worker turns the failures shared by several pages into tokens and shared components.
-6. **Screen wave.** One worker per page, each confined to its own files, so workers never conflict.
-7. **Ratchet.** A page is kept only if fewer checks and principles fail on it than before.
-8. **Loop.** Steps 2 to 7 repeat until no new version beats the best one, or the spend cap is reached.
+`/aeom` is a Claude Code skill. It coordinates a fleet of agents (workers, each in its own git worktree, and judges), and the `aeom` CLI does the measuring.
 
-## The judge
+1. **Understand.** AEOM writes what the app is for, who uses it and its main loop in `.aeom/product.md`, which you can correct, and records three to five key journeys that it replays in a real browser.
+2. **Look.** Every screen is captured at 390 and 1280 px. Four checks are measured: pointer cursor, sideways scrolling, AA contrast, console errors. Eight principles are judged by three independent judges, and the majority decides.
+3. **Decide.** If nothing fails, AEOM says « nothing to redo » and stops. No branch is created.
+4. **A new direction.** Six art directions, each drawn from something the product's users know (an object, a document, a place, a trade), never from the looks AIs propose by default. Judges screen out the default looks, then a knockout keeps one, three votes per duel. With `--garder-le-style`, or `"style": "keep"` in `.aeom/config.json`, the app's own style is kept and fixed instead.
+5. **The pages.** One worker per page, all at once, each in its own files. A page is kept only if fewer things fail on it than before.
+6. **The journeys.** Journeys the judges found failing are reworked on the new direction. A guard refuses any change that adds a feature (a new call to the server, a protected file). A journey is kept only if the judges prefer it and it still reaches its end.
+7. **Show.** AEOM names, at most three, the features a blocked journey would need, and builds none of them. It writes a result page on your machine, where you can say whether you agree with each verdict. It then opens a pull request in words, with no capture.
 
-**Measurable checks, blocking.** Pointer cursor on everything clickable. No horizontal scroll at 375, 768 and 1280 px. AA contrast. Visible hover and focus. No console errors. No overflowing text or stretched images. No hard-coded values outside the tokens. Kit components only. The same header and navigation on every screen.
+Everything the run keeps is on a branch, `aeom/<run>`: your branch does not move.
 
-**Checks judged on screenshots, blocking.** Visual hierarchy, alignment, density, empty, error and loading states present, nothing generic. The judge votes three times and the majority wins.
+**On the demo app** in `examples/` (a deliberately ugly shop):
+- the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0;
+- the measurable checks went from 10 to 0, and the journeys' failures from 14 to 7;
+- « See my orders » went from four steps to three;
+- no feature was added.
 
-**Taste.** Pairwise comparisons only. A model compares two screens far more reliably than it scores one.
+On the same demo given one brand charter, run with the style kept, the checks went from 16 to 1 and the charter stayed the same on every page.
 
-## Taste
+**What it asks of you, and what it never does:**
+- Your app runs on fake data: its journeys write to it. AEOM signs in only with a test account.
+- It never builds a feature, unless you ask in so many words.
+- It never sends a capture out of your machine. Captures, the result page and your feedback stay local. What leaves is the run's branch and a pull request in words, when the repository has a remote and `gh` is signed in (`--sans-pr` stops at the branch).
 
-Every install starts from the same **base principles**, written as plain text, with no images.
+## Try it
 
-When you give feedback in a session, AEOM fixes the screen, offers to turn it into a rule for the whole project, and records the before and after. Over time it distills your feedback into principles, each with the feedback that backs it. Those principles live in your **personal layer** in `~/.aeom/taste/`, on top of the base principles. Screenshots never leave your machine.
+AEOM is not on npm yet. From the source, with Node 22, pnpm and Claude Code:
 
-AEOM measures how well it predicts your feedback, category by category, and stops asking about a category once it gets it right.
+```bash
+git clone https://github.com/The-Vibe-Company/all-eyes-on-me
+cd all-eyes-on-me
+pnpm install
+pnpm build
+pnpm --filter @aeom/core exec playwright install chromium
+mkdir -p ~/.local/bin
+ln -s "$PWD/packages/cli/dist/index.js" ~/.local/bin/aeom   # any folder on your PATH
+export PATH="$HOME/.local/bin:$PATH"                           # and in your shell profile
+aeom --help
+mkdir -p ~/.claude/skills
+ln -s "$PWD/skills/aeom" "$PWD/skills/aeom-judge" ~/.claude/skills/
+```
 
-## Working alongside other agents
+Then, in your project:
+- it is a git repository with a clean working tree;
+- your app starts locally with one command, on fake data;
+- for the pull request at the end, the repository has a remote and `gh` is signed in;
+- type `/aeom` in Claude Code.
 
-AEOM does not need to own the repository. It writes a section in `AGENTS.md` that points other agents to the kit and the tokens, and catches drift after other agents merge. Its checks can also run in CI, so any fleet that waits for green checks before merging follows the same rules.
+A full run is long and spawns many agents: on the demo app, about an hour of work and some sixty subagents (judges, workers). The bench will measure it properly.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `aeom capture` | Find every page of a web app and screenshot it |
+| `aeom check` | Run the measurable checks on every page |
+| `aeom judge` | Count the judges' votes on the captures |
+| `aeom principles` | Print the principles the judge uses |
+| `aeom snapshot` | Keep a copy of the captures and reports, such as before a fleet run |
+| `aeom compare` | Compare two snapshots page by page |
+| `aeom sheet` | Lay captures side by side in one image |
+| `aeom tournament` | Run a knockout between directions, three votes per duel |
+| `aeom product` | Write the product sheet AEOM drafted, keeping the user's edits |
+| `aeom journey` | Replay each key journey and capture every step |
+| `aeom guard` | Refuse a change that adds a feature instead of fixing a journey |
+| `aeom verdict` | Say whether the front needs redoing, from what AEOM measured |
+| `aeom report` | Write the page of what a run gave, in the run's folder |
+| `aeom features` | Name what a blocked journey would need, without building it |
+| `aeom pr` | Push the run's branch and open a PR, in words, with no capture |
+
+## What comes next
+
+None of this is done yet:
+- **Level 1, finished.** A bench of three apps with defects noted by hand, measuring what AEOM finds and fixes. A run that ends by writing the standard of the front (the direction, its tokens, its kit).
+- **Level 2, keep.** On every pull request, the new screens are held to the standard. What can be measured blocks the CI check, with no model. The judges say in a comment whether it is still the same product.
+- **Level 3, build.** Build what is asked, or a front from scratch, inside the standard: front only, on an existing API or fake data.
+- **Later.**
+  - The judges learn your taste from your feedback, which today is only counted.
+  - A spend cap.
+  - The npm package.
+  - Codex, and mobile.
 
 ## Architecture
 
 | Path | Role |
 | --- | --- |
-| `packages/cli` | The `aeom` command: the deterministic plumbing agents call (capture, checks, worktrees and ports, feedback journal, taste profile). |
-| `packages/core` | Capture (built on [e2e](https://github.com/tester-army/e2e)), checks, judge and memory. |
-| `skills/` | The coordinator skill. It runs in Claude Code (Codex later) and launches workers as subagents. |
+| `packages/cli` | The `aeom` command: the deterministic plumbing agents call (capture, checks, journeys, the guard, the verdict, the result page, the PR). |
+| `packages/core` | Capture (built on Playwright), checks, journeys, the judge's tally, the ratchets, the result page. |
+| `skills/` | The coordinator skill, `/aeom`, and the judges, `/aeom-judge`. They run in Claude Code and launch workers and judges as subagents. |
 
 State lives in files:
-
-- `.aeom/` in the project's repository: art direction, rules, history of directions, feedback journal.
-- `~/.aeom/taste/` on your machine: your personal layer.
+- `.aeom/` in the project's repository: the product sheet, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
+- `~/.aeom/taste/` on your machine: your feedback on each verdict.
 
 The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
-
-## Roadmap
-
-**V0, done.** The crudest version that runs end to end, tested on a deliberately ugly demo app in `examples/`. It captures every page with Playwright, runs four measurable checks, judges each page against the base principles inside the Claude Code session, fixes things with parallel workers, and proposes six directions from the product's own world. The tickets are in `.veebee/tickets/`.
-
-**First iteration after V0.** This project's landing page, built with AEOM.
-
-**Then, the UX layer.** Before touching a screen, AEOM understands the product on its own: what it is for, who uses it, its main loop and three to five key journeys, written to `.aeom/product.md` for the user to correct. It critiques the existing experience journey by journey, with captures, and judges journeys, not only pages. It may change navigation and journeys (the order of steps, how screens group, shortcuts to actions that already exist, copy, states), never build features, unless the user asks very explicitly. The first pilot is a workout tracker mixed with a card-collection game.
-
-**V1.** Redesign mode on the web. Claude Code. Capture through e2e. Blocking checks. Six directions and the tournament. Kit and screen waves with the ratchet. Feedback journal and distillation. Base principles v0. Spend cap. The npm package.
-
-**V2.** Launch mode for new projects. Codex. Mobile (iOS and Android, through e2e). Per-category autonomy. The CI check for other fleets. A landing page, designed by AEOM.
 
 ## Development
 
@@ -71,6 +112,7 @@ Requires Node 22 or later and pnpm.
 ```bash
 pnpm install
 pnpm build
+pnpm test
 node packages/cli/dist/index.js --help
 ```
 
