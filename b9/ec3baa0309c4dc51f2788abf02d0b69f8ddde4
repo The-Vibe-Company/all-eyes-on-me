@@ -1,0 +1,31 @@
+.veebee/autopilot/2026-10-09.md
+  s_4ce34ec42d9105::t_db384184b3b667 30-41
+.veebee/milestones/03-la-commande-unique/tickets/03-les-parcours-sur-la-nouvelle-da.md
+  s_4ce34ec42d9105::t_c28a6070e72754 7
+packages/cli/src/commands/compare.test.ts
+  s_4ce34ec42d9105::t_a7ffa3434411c8 3,38,47-63
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_9b9fa87a8ae402 67-70
+packages/core/src/run/compare.ts
+  s_4ce34ec42d9105::t_84037e80ced88a 12,31-34,36,50
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_30abe295bb64e2 40,60,64-70
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_ba77c317667446 3,44-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b9ec3baa0309c4dc51f2788abf02d0b69f8ddde4",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
