@@ -1,0 +1,35 @@
+packages/cli/src/commands/pr.test.ts
+  s_4ce34ec42d9105::t_62cced4c96de0b 1-126
+packages/cli/src/commands/pr.ts
+  s_4ce34ec42d9105::t_ab9ca2e854cb9e 1-103
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_25dedf17bf5647 12,38,58
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_cd7bc1e0b30cea 7
+packages/core/src/run/pr.test.ts
+  s_4ce34ec42d9105::t_44ae119117203b 1-32
+packages/core/src/run/pr.ts
+  s_4ce34ec42d9105::t_a797db431a23df 1-53
+site/pages/index.html
+  s_4ce34ec42d9105::t_9014405717e5ee 216
+site/shared/kit.css
+  s_4ce34ec42d9105::t_62d76ebddcca11 1090-1095
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_969207bef9d5e3 3,19,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e72c1a29fd77a942d7b25664080a11164d468d93",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
