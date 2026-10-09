@@ -1,6 +1,6 @@
 ---
 name: aeom
-description: Run All Eyes On Me on a web project. Captures every page, runs the measurable checks and the judge, fixes the shared kit with one worker then every page with one worker each in parallel, and keeps only the pages that got better, on a run branch with a before and after for each page. With --directions, first builds six contrasting art directions on the home page and lets the judge pick one in a knockout. With --ux, first understands the product on its own and writes .aeom/product.md: what the app is for, who uses it, its main loop and its key journeys. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
+description: Run All Eyes On Me on a web project: take its front and make a better one. Without an option, AEOM understands the product on its own (.aeom/product.md, its key journeys), captures, checks and judges every screen and replays every journey; if nothing fails it says there is nothing to redo and changes nothing, otherwise it builds six art directions drawn from the product, lets the judge pick one in a knockout, rebuilds every page on it with one worker each, and keeps only the pages that got better, on a run branch. --directions and --ux still force their own mode. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
 ---
 
 # /aeom
@@ -15,7 +15,7 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 - **A sign-in, when the app needs one.** AEOM signs in only with a fake account, never a real one: the project's own test account, or one the user gives. Give the config a `login`: `{ "path": "/connexion", "account": "<a JSON file of the account's fields by label>", "submit": "<the button's name>" }`. Capture, check and journeys then sign in once, before they start, and never print or report the account's values. No fake account and no way to make one: stop and ask the user for one.
 - **What only a feature touches.** Give the config a `protected` list of the files that hold the app's data or logic, as globs: the database schema and migrations, the API routes, the server code, such as `["src/lib/db/**", "src/app/api/**"]`. `aeom guard` refuses any change to them.
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so.
-- **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch: `git checkout -b aeom/$RUN`. Everything this run keeps ends up on that branch, never on the user's branch.
+- **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch, `git checkout -b aeom/$RUN`, only once the run is about to change the project: after the verdict in a run without an option, before section 2b with `--directions`, at step 10 with `--ux`. Everything this run keeps ends up on that branch, never on the user's branch.
 
 ## Show as you go
 
@@ -29,6 +29,21 @@ The user follows the run through its captures, not through a report at the end. 
 - **The end**: the comparison table and every page before and after.
 
 One message per checkpoint, a line of context with the images, no more. A long wave still sends something at least every few minutes: the latest page that landed. The user reacting to a capture is feedback, not an interruption: take it and keep going.
+
+## Without an option: judge, then redo what fails
+
+`/aeom` with no option takes the front and makes a better one, or says there is nothing to redo. In this order:
+
+1. **Understand the product**: steps 1 to 9 of section 2c. The product sheet, the key journeys recorded and replayed, their critique. The directions start from the sheet, so it comes first. If the app does not start, stop there, as step 3 says: nothing is created.
+2. **Look**: section 1. Every screen captured, checked and judged, and the before kept.
+3. **The verdict**: `aeom verdict`. It reads what steps 1 and 2 measured.
+   - **It exits 0**: tell the user « rien à refaire », with the line saying what was measured and the captures of section 1. Stop: no run branch, no worktree, no worker.
+   - **It exits 2**: a step is missing (it names which). Run it, then the verdict again.
+   - **It exits 1**: it lists what fails, screen by screen and journey by journey. Send that list to the user, then go on.
+4. **A new direction**: create the run branch (section 0), then section 2b. Six directions, drawn from the product, the knockout, the champion applied as the kit and the home page.
+5. **The pages**: the screen wave on every other page (section 4), then measure and keep only what got better (section 5), and show it (section 6).
+
+`/aeom --directions` and `/aeom --ux` skip the verdict and run their own mode, as their sections say.
 
 ## 1. Look
 
@@ -67,7 +82,7 @@ Every brief, kit or page, also says:
 
 If a worker stops without committing, look at its worktree: when the work is there and stays inside its files, commit it yourself and say so.
 
-## 2b. Directions (only with `/aeom --directions`)
+## 2b. Directions (in a run without an option once the verdict finds something to redo, or with `/aeom --directions`)
 
 Instead of fixing the current look, start from six new ones and keep the best.
 
@@ -88,7 +103,7 @@ Instead of fixing the current look, start from six new ones and keep the best.
 
 > Look at both screenshots. First: if one of the banned looks describes one page and not the other, the other wins. Then judge against the base principles, and on which is more specific to the product and less like anything an AI would propose. Reply with only a JSON object: `{"winner": "<source>", "reason": "<one sentence naming what you see>"}`.
 
-## 2c. Understand the product (only with `/aeom --ux`)
+## 2c. Understand the product (with `/aeom --ux`; steps 1 to 9 also open a run without an option)
 
 AEOM finds out on its own what the app is for and writes it down in `.aeom/product.md`, the product sheet. The user corrects it later, whenever they like: never ask them, never wait for them. [product.md](product.md) gives the sheet's shape and what AEOM may write in it.
 

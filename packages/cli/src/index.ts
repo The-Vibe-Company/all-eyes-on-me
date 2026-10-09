@@ -8,6 +8,7 @@ import { runGuard } from "./commands/guard.js";
 import { runJourney } from "./commands/journey.js";
 import { runProduct } from "./commands/product.js";
 import { runCompare, runSnapshot } from "./commands/run.js";
+import { runVerdict } from "./commands/verdict.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -28,6 +29,7 @@ Commands:
   product     Write the product sheet AEOM drafted, keeping the user's edits
   journey     Replay each key journey and capture every step
   guard       Refuse a change that adds a feature instead of fixing a journey
+  verdict     Say whether the front needs redoing, from what AEOM measured
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
@@ -44,6 +46,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   product: runProduct,
   journey: runJourney,
   guard: runGuard,
+  verdict: runVerdict,
 };
 
 const [command, ...rest] = process.argv.slice(2);
