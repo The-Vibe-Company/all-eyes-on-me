@@ -1,0 +1,35 @@
+.veebee/autopilot/2026-10-09.md
+  s_4ce34ec42d9105::t_13fa42f8db7717 74-77
+.veebee/milestones/03-la-commande-unique/tickets/06-les-features-manquantes.md
+  s_4ce34ec42d9105::t_b83c6bf24f9664 7
+packages/cli/src/commands/features.test.ts
+  s_4ce34ec42d9105::t_ccf6275f68535e 35,39-45,68-85
+packages/cli/src/commands/features.ts
+  s_4ce34ec42d9105::t_94b43798eb9af4 1,14-15,18,21-23,40-42,44-48,56-80,90,95-109,112,114-116,124
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_8745cf7ae997f3 77,82-86
+packages/core/src/run/features.test.ts
+  s_4ce34ec42d9105::t_09d75c68ac57a8 41,58-66
+packages/core/src/run/features.ts
+  s_4ce34ec42d9105::t_972ff3f131b948 32,37-39,42-46
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_4f41031373d3d0 11,178-186,223
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_06e36fd714cd8b 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cd507c6ca3b5daae5a7d1b058deca63ae172a090",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
