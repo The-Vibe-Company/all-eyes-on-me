@@ -2,7 +2,6 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type Page } from "playwright";
 import { discoverPages, visitPages, type PageError } from "./discover.js";
-import { readIdentity, type PageIdentity } from "./identity.js";
 import type { SignedIn } from "./sign-in.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
@@ -13,8 +12,6 @@ export interface CapturedPage {
   path: string;
   /** One screenshot per width, relative to the output folder. */
   files: { width: number; file: string }[];
-  /** Its fonts, colours, gradients and logo, read at the widest width. */
-  identity: PageIdentity;
 }
 
 export interface CaptureManifest {
@@ -51,7 +48,6 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
     const captured: CapturedPage[] = [];
     for (const pageUrl of pages) {
       const files: CapturedPage["files"] = [];
-      let identity: PageIdentity = { fonts: [], palette: [], gradients: [], logo: null };
       for (const width of widths) {
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
         try {
@@ -61,12 +57,11 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
           const file = `${slug(pageUrl)}@${width}.png`;
           await page.screenshot({ path: join(outDir, file), fullPage: true });
           files.push({ width, file });
-          if (width === Math.max(...widths)) identity = await readIdentity(page);
         } finally {
           await context.close();
         }
       }
-      captured.push({ url: pageUrl, path: route(pageUrl), files, identity });
+      captured.push({ url: pageUrl, path: route(pageUrl), files });
     }
 
     const manifest: CaptureManifest = { url, capturedAt: new Date().toISOString(), widths, pages: captured, errors };

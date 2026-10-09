@@ -1,7 +1,7 @@
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, VOTERS, type CaptureManifest, type JourneyReport, type JudgeReport, type Principle, type Vote } from "@aeom/core";
+import { DEFAULT_PRINCIPLES_FILE, STYLE_KEPT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, VOTERS, type CaptureManifest, type JourneyReport, type JudgeReport, type Principle, type Vote } from "@aeom/core";
 
 export const JUDGE_HELP = `Usage: aeom judge [options]
 
@@ -25,6 +25,8 @@ Options:
   --out <dir>          Where to write judge.json, or judge-journeys.json (default .aeom/reports)
   --principles <file>  The principles to judge against (default: the base
                        principles, or the journey principles with --journeys)
+  --style-kept         Judge whether each page kept the app's charter, from votes
+                       that compared it before and after the run
   --voters <n>         How many votes to expect (default ${VOTERS})`;
 
 export async function runJudge(argv: string[]): Promise<number> {
@@ -36,6 +38,7 @@ export async function runJudge(argv: string[]): Promise<number> {
       votes: { type: "string" },
       out: { type: "string", default: ".aeom/reports" },
       principles: { type: "string" },
+      "style-kept": { type: "boolean" },
       voters: { type: "string", default: String(VOTERS) },
       help: { type: "boolean", short: "h" },
     },
@@ -55,7 +58,7 @@ export async function runJudge(argv: string[]): Promise<number> {
     console.error(`No captures in ${captures}. Run aeom capture first.`);
     return 1;
   }
-  const principles = await loadPrinciples(values.principles ?? DEFAULT_PRINCIPLES_FILE);
+  const principles = await loadPrinciples(values.principles ?? (values["style-kept"] ? STYLE_KEPT_PRINCIPLES_FILE : DEFAULT_PRINCIPLES_FILE));
   const pages = manifest.pages.map((p) => p.path);
   if (pages.length === 0) {
     console.error(`The captures in ${captures} have no page. Run aeom capture again.`);
@@ -88,12 +91,12 @@ export async function runJudge(argv: string[]): Promise<number> {
 }
 
 export async function runPrinciples(argv: string[]): Promise<number> {
-  const { values } = parseArgs({ args: argv, options: { principles: { type: "string" }, journeys: { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  const { values } = parseArgs({ args: argv, options: { principles: { type: "string" }, journeys: { type: "boolean" }, "style-kept": { type: "boolean" }, help: { type: "boolean", short: "h" } } });
   if (values.help) {
-    console.log(`Usage: aeom principles [--journeys] [--principles <file>]\n\nPrints the principles the judge uses, one per line: id, then what it asks for.\nWith --journeys, the principles it asks of each key journey.`);
+    console.log(`Usage: aeom principles [--journeys | --style-kept] [--principles <file>]\n\nPrints the principles the judge uses, one per line: id, then what it asks for.\nWith --journeys, the principles it asks of each key journey. With --style-kept,\nwhat it asks of each page when a run keeps the app's style.`);
     return 0;
   }
-  for (const p of await loadPrinciples(values.principles ?? (values.journeys ? JOURNEY_PRINCIPLES_FILE : DEFAULT_PRINCIPLES_FILE))) console.log(`${p.id}  ${p.text}`);
+  for (const p of await loadPrinciples(values.principles ?? (values.journeys ? JOURNEY_PRINCIPLES_FILE : values["style-kept"] ? STYLE_KEPT_PRINCIPLES_FILE : DEFAULT_PRINCIPLES_FILE))) console.log(`${p.id}  ${p.text}`);
   return 0;
 }
 

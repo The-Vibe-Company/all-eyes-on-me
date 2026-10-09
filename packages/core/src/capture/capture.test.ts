@@ -53,10 +53,6 @@ describe("capture on the ugly app", () => {
       for (const { file } of page.files) assert.ok(existsSync(join(outDir, file)), `${file} exists`);
     }
     assert.ok(existsSync(join(outDir, "manifest.json")));
-    const home = manifest.pages.find((p) => p.path === "/")!;
-    assert.deepEqual(home.identity.fonts, ["Comic Sans MS"], "the fonts the page sets its text in");
-    assert.ok(home.identity.palette.includes("#8e2de2") && home.identity.palette.includes("#4a00e0"), "the gradient's colours are in the palette");
-    assert.equal(home.identity.logo, "✨ Super Boutique ✨");
   });
 
   test("signed out, the orders page leads to signing in, and that is what gets captured", async () => {

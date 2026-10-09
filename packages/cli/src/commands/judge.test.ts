@@ -173,3 +173,24 @@ test("a journey that breaks differently at two widths is reported once per way i
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom judge --style-kept counts the votes on whether each page kept the charter", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-judge-style-"));
+  try {
+    await mkdir(join(dir, "captures"));
+    await mkdir(join(dir, "votes"));
+    await writeFile(join(dir, "captures", "manifest.json"), JSON.stringify({ url: "x", capturedAt: "", widths: [1280], pages: [{ url: "http://x/", path: "/", files: [] }, { url: "http://x/contact", path: "/contact", files: [] }], errors: [] }));
+    for (const voter of ["1", "2", "3"]) {
+      const pages = { "/": { "charter-kept": { pass: true, reason: "Same gradient, font and logo; only the pink is darker." } }, "/contact": { "charter-kept": { pass: voter === "3", reason: "The buttons turned green." } } };
+      await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages }));
+    }
+    const principles = await run(["principles", "--style-kept"]);
+    assert.match(principles.out, /^charter-kept\s+/m);
+    const { code, out } = await run(["judge", "--style-kept", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out")]);
+    assert.equal(code, 1);
+    assert.match(out, /\/contact\n\s+✗ charter-kept\s+The buttons turned green\. \(2\/3 fail\)/);
+    assert.doesNotMatch(out, /^\/\n/m);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
