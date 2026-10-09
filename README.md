@@ -12,7 +12,7 @@ Today, most of the first works. You type `/aeom` in Claude Code on your app: it 
 
 1. **Understand.** AEOM writes what the app is for, who uses it and its main loop in `.aeom/product.md`, which you can correct, and records three to five key journeys that it replays in a real browser.
 2. **Look.** Every screen is captured at 390 and 1280 px. Four checks are measured: pointer cursor, sideways scrolling, AA contrast, console errors. Eight principles are judged by three independent judges, and the majority decides.
-3. **Decide.** If nothing fails, AEOM says « nothing to redo », writes the standard of the front as it is (step 8), and stops. No branch is created.
+3. **Decide.** If nothing fails, AEOM says « nothing to redo », writes the standard of the front as it is (step 8), and stops. No branch is created. With `/aeom --diagnostic`, it stops here whatever the verdict: what fails, screen by screen and journey by journey, without redoing anything, for about ten agents instead of fifty.
 4. **A new direction.** Six art directions, each drawn from something the product's users know (an object, a document, a place, a trade), never from the looks AIs propose by default. Judges screen out the default looks, then a knockout keeps one, three votes per duel. With `--garder-le-style`, or `"style": "keep"` in `.aeom/config.json`, the app's own style is kept and fixed instead.
 5. **The pages.** One worker per page, all at once, each in its own files. A page is kept only if fewer things fail on it than before.
 6. **The journeys.** Journeys the judges found failing are reworked on the new direction. A guard refuses any change that adds a feature (a new call to the server, a protected file). A journey is kept only if the judges prefer it and it still reaches its end.
@@ -58,7 +58,7 @@ Then, in your project:
 - for the pull request at the end, the repository has a remote and `gh` is signed in;
 - type `/aeom` in Claude Code.
 
-A full run is long and spawns many agents: on the demo app, about an hour of work and some sixty subagents (judges, workers). The bench will measure it properly.
+A full run is long and spawns many agents: on the demo app, about an hour of work and some sixty subagents (judges, workers). The bench will measure it properly. For a first look at a project, `/aeom --diagnostic` stops at the verdict.
 
 ## Commands
 
