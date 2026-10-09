@@ -76,19 +76,67 @@ test("aeom verdict lists what fails, screen by screen and journey by journey, an
   }
 });
 
-test("without the reports, or with journeys not yet replayed and critiqued, aeom verdict cannot decide and exits 2", async () => {
+test("without the reports, or with journeys not yet replayed or not yet critiqued, aeom verdict cannot decide and exits 2", async () => {
   const empty = await mkdtemp(join(tmpdir(), "aeom-verdict-"));
-  const unjudged = await project({ journeys: { broken: null, failing: [] } });
+  const unreplayed = await project({ journeys: { broken: null, failing: [] } });
+  const uncritiqued = await project({ journeys: { broken: null, failing: [] } });
   try {
     const none = await run(empty, ["verdict"]);
     assert.equal(none.code, 2);
     assert.match(none.out, /Cannot decide: .*check\.json is missing.*Run aeom check and the judge first/s);
-    await rm(join(unjudged, ".aeom", "reports", "judge-journeys.json"));
-    const partial = await run(unjudged, ["verdict"]);
-    assert.equal(partial.code, 2);
-    assert.match(partial.out, /judge-journeys\.json is missing/);
+    await rm(join(unreplayed, ".aeom", "captures", "journeys", "report.json"));
+    const notReplayed = await run(unreplayed, ["verdict"]);
+    assert.equal(notReplayed.code, 2);
+    assert.match(notReplayed.out, /report\.json is missing.*then aeom journey and the journey judge/s);
+    await rm(join(uncritiqued, ".aeom", "reports", "judge-journeys.json"));
+    const notCritiqued = await run(uncritiqued, ["verdict"]);
+    assert.equal(notCritiqued.code, 2);
+    assert.match(notCritiqued.out, /judge-journeys\.json is missing/);
   } finally {
     await rm(empty, { recursive: true, force: true });
-    await rm(unjudged, { recursive: true, force: true });
+    await rm(unreplayed, { recursive: true, force: true });
+    await rm(uncritiqued, { recursive: true, force: true });
+  }
+});
+
+test("a screen judged but not checked, or a journey recorded but not replayed, stops the verdict with exit 2", async () => {
+  const dir = await project({ failing: { "/contact": [] }, journeys: { broken: null, failing: [] } });
+  try {
+    await writeFile(join(dir, ".aeom", "journeys", "help.json"), "{}");
+    const { code, out } = await run(dir, ["verdict"]);
+    assert.equal(code, 2);
+    assert.match(out, /Cannot decide: \/contact was judged but not checked, the journey help was not replayed\./);
+    assert.doesNotMatch(out, /Nothing to redo/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a page that does not load is something to redo, and exits 1", async () => {
+  const dir = await project();
+  try {
+    await writeFile(join(dir, ".aeom", "reports", "check.json"), JSON.stringify({ ...check(), errors: [{ url: "http://x/aide", status: 500, reason: "500 Internal Server Error" }] }));
+    const { code, out } = await run(dir, ["verdict"]);
+    assert.equal(code, 1);
+    assert.match(out, /✗ \/aide\s+does not load: 500 Internal Server Error/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a report that is not the right one, or an unknown option, never reads as something to redo: exit 2", async () => {
+  const dir = await project();
+  try {
+    await writeFile(join(dir, ".aeom", "reports", "check.json"), "{}");
+    const wrong = await run(dir, ["verdict"]);
+    assert.equal(wrong.code, 2);
+    assert.match(wrong.out, /check\.json is not a report of aeom check/);
+    await writeFile(join(dir, ".aeom", "reports", "check.json"), "null");
+    assert.equal((await run(dir, ["verdict"])).code, 2);
+    const unknown = await run(dir, ["verdict", "--foo"]);
+    assert.equal(unknown.code, 2);
+    assert.match(unknown.out, /Cannot decide: .*--foo/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
   }
 });

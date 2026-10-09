@@ -5,7 +5,7 @@ import type { JudgeReport } from "../judge/tally.js";
 
 /** One thing that fails, where it shows. */
 export interface Failure {
-  kind: "check" | "principle" | "journey" | "journey-principle";
+  kind: "page" | "check" | "principle" | "journey" | "journey-principle";
   /** The screen's route, or the journey's name. */
   where: string;
   what: string;
@@ -15,24 +15,33 @@ export interface RunVerdict {
   /** What was looked at, so that « nothing to redo » says on what. */
   measured: { screens: number; widths: number[]; checks: number; principles: number; journeys: number; journeyPrinciples: number };
   failures: Failure[];
-  /** True only when nothing fails: no check, no principle, no journey that breaks or fails a principle. */
+  /** What a report leaves out that another one has: a verdict on part of the front decides nothing. */
+  missing: string[];
+  /** True only when every screen and journey was measured and nothing fails. */
   nothingToRedo: boolean;
 }
 
 /**
  * Decides whether a front needs redoing, from what AEOM measured: the
  * measurable checks and the judge on every screen, and, when the project
- * has key journeys, their replay and their critique.
+ * has key journeys (`recorded`, their slugs), their replay and their critique.
  */
-export function verdictOf({ check, judge, journeys, journeyJudge }: { check: CheckReport; judge: JudgeReport; journeys?: JourneyReport; journeyJudge?: JudgeReport }): RunVerdict {
+export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [] }: { check: CheckReport; judge: JudgeReport; journeys?: JourneyReport; journeyJudge?: JudgeReport; recorded?: string[] }): RunVerdict {
   const failures: Failure[] = [];
-  // A check failing at several widths on one screen is one thing to redo.
-  const seen = new Set<string>();
+  const missing: string[] = [];
+  // A page that does not load was neither checked nor judged, and is broken for whoever opens it.
+  for (const e of check.errors) failures.push({ kind: "page", where: route(e.url), what: `does not load: ${e.reason}` });
+  // A check failing at several widths on one screen is one thing to redo, each element named once.
+  const byCheck = new Map<string, { where: string; check: string; elements: Set<string> }>();
   for (const f of check.findings) {
     const key = `${route(f.url)} ${f.check}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    failures.push({ kind: "check", where: route(f.url), what: `${f.check}: ${f.message}` });
+    const entry = byCheck.get(key) ?? { where: route(f.url), check: f.check, elements: new Set<string>() };
+    entry.elements.add(f.element ? `${f.element}: ${f.message}` : f.message);
+    byCheck.set(key, entry);
+  }
+  for (const { where, check: name, elements } of byCheck.values()) {
+    const [first, ...others] = [...elements];
+    failures.push({ kind: "check", where, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` });
   }
   for (const page of judge.pages) {
     for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "principle", where: page.page, what: `${v.principle}: ${v.reasons[0] ?? ""}` });
@@ -50,16 +59,30 @@ export function verdictOf({ check, judge, journeys, journeyJudge }: { check: Che
   for (const page of journeyJudge?.pages ?? []) {
     for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "journey-principle", where: name(page.page), what: `${v.principle}: ${v.reasons[0] ?? ""}` });
   }
+
+  const checked = new Set(check.pages.map(route));
+  const judged = new Set(judge.pages.map((p) => p.page));
+  if (!checked.size) missing.push("no page was checked");
+  for (const page of checked) if (!judged.has(page)) missing.push(`${page} was checked but not judged`);
+  for (const page of judged) if (!checked.has(page)) missing.push(`${page} was judged but not checked`);
+  const replayed = new Set(journeys?.journeys.map((j) => j.slug));
+  const critiqued = new Set(journeyJudge?.pages.map((p) => p.page));
+  for (const slug of recorded) {
+    if (!replayed.has(slug)) missing.push(`the journey ${slug} was not replayed`);
+    else if (!critiqued.has(slug)) missing.push(`the journey "${name(slug)}" was not judged`);
+  }
+
   return {
     measured: {
-      screens: new Set([...check.pages.map(route), ...judge.pages.map((p) => p.page)]).size,
+      screens: checked.size,
       widths: check.widths,
       checks: check.checks.length,
       principles: judge.principles.length,
-      journeys: journeys?.journeys.length ?? 0,
+      journeys: recorded.length,
       journeyPrinciples: journeyJudge?.principles.length ?? 0,
     },
     failures,
-    nothingToRedo: failures.length === 0,
+    missing,
+    nothingToRedo: failures.length === 0 && missing.length === 0,
   };
 }

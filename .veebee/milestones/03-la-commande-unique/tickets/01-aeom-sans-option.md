@@ -4,6 +4,7 @@ title: /aeom sans option comprend le produit et, si quelque chose échoue, part 
 milestone: 03-la-commande-unique
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 47, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/47 }
 ---
 
