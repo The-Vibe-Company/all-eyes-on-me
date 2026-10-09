@@ -114,8 +114,27 @@ test("the brief of the directions holds what the app is for, who uses it and its
   assert.deepEqual(brief.unconfirmed, ["What it is for: It ships across France.", "Who uses it: People buying a gift."]);
 });
 
-test("what the user wrote in place of a guess goes in the brief, with or without a source", () => {
-  const brief = productBrief(product({ who: "Interior designers buying for their clients." }));
-  assert.deepEqual(brief.parts[1], { part: "Who uses it", text: "Interior designers buying for their clients." });
-  assert.deepEqual(brief.unconfirmed, []);
+test("what the user confirms with their name as source goes in the brief; words with no source stay out", () => {
+  const confirmed = productBrief(product({ who: "Interior designers buying for their clients. (seen: Antoine)" }));
+  assert.deepEqual(confirmed.parts[1], { part: "Who uses it", text: "Interior designers buying for their clients." });
+  assert.deepEqual(confirmed.unconfirmed, []);
+  const unsourced = productBrief(product({ purpose: "A shop that sells mugs. (seen: /) It mostly sells to companies." }));
+  assert.deepEqual(unsourced.parts[0], { part: "What it is for", text: "A shop that sells mugs." });
+  assert.deepEqual(unsourced.unconfirmed, ["What it is for: It mostly sells to companies. (no source)", "Who uses it: People buying a gift."]);
+});
+
+test("a source path with parentheses, a capital To confirm, a list and a title with text under it are read as meant", () => {
+  const brief = productBrief(
+    product({ purpose: "- A shop that sells mugs. (seen: src/app/(shop)/page.tsx)\n- Mugs come in three sizes. (To confirm)" }).replace("# Super boutique\n", "# Super boutique\nDrafted by AEOM.\n"),
+  );
+  assert.equal(brief.name, "Super boutique");
+  assert.deepEqual(brief.parts[0], { part: "What it is for", text: "A shop that sells mugs." });
+  assert.deepEqual(brief.unconfirmed.slice(0, 1), ["What it is for: Mugs come in three sizes."]);
+  assert.deepEqual(validateProduct(product({ purpose: "A shop that sells mugs. (seen: src/app/(shop)/page.tsx)" })), []);
+});
+
+test("a part the sheet does not hold under its heading, such as one the user renamed, is named as missing", () => {
+  const brief = productBrief(product().replace("## What it is for", "## What it's for"));
+  assert.deepEqual(brief.missing, ["What it is for"]);
+  assert.deepEqual(brief.parts.map((p) => p.part), ["The main loop"]);
 });

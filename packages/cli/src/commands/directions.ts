@@ -36,6 +36,10 @@ Options:
       console.error(`A note for ${note.slice(0, at)}, which the sheet does not show: give it a capture, or leave the note out.`);
       return 1;
     }
+    if (item.note !== undefined) {
+      console.error(`Two notes for ${item.label}: give each capture one sentence.`);
+      return 1;
+    }
     item.note = note.slice(at + 1).trim();
   }
   const columns = Number(values.columns);
