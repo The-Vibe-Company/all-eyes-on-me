@@ -1,0 +1,25 @@
+packages/cli/src/commands/compare.test.ts
+  s_4ce34ec42d9105::t_b51d6a19c8c5eb 1-46
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_37ef82290c49e9 35,38-39,49,61,92-98
+packages/core/src/run/compare.ts
+  s_4ce34ec42d9105::t_eda0749a3ca0d2 12-13,23-24,31-33,46-49
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_e1b08d263b7b6e 40-41,55-63,104-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5ffc62c8f709933770c7d4dc2213190e784f52f9",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
