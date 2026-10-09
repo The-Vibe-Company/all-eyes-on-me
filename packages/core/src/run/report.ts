@@ -9,6 +9,7 @@ import type { JudgeReport } from "../judge/tally.js";
 import { route } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { blockedJourneys } from "./features.js";
+import type { FeedbackCategory } from "./taste.js";
 import { STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
 
 /** What `aeom verdict --out` keeps of a verdict. */
@@ -30,6 +31,8 @@ export interface ResultPage {
     status: "kept" | "sent back" | "new" | "missing" | "unchanged" | "does not load";
     /** What fails on it, before the run and at the end, when both were measured. */
     count: { before: number; after: number } | null;
+    /** Why the page wave sent it back: as many failing as before, or more, counted on the version it put back. */
+    back?: { verdict: "same" | "worse"; before: number | null; after: number | null };
     widths: { width: number; before: string | null; after: string | null }[];
     cleared: string[];
     still: string[];
@@ -79,7 +82,9 @@ async function first(runDir: string, names: string[], file: string): Promise<str
  */
 export async function readRun(runDir: string, run: string): Promise<ResultPage> {
   const before = await json<CaptureManifest>(join(runDir, "before", "captures", "manifest.json"));
-  if (!before) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
+  // A run of the journeys only (--ux) takes no snapshot of the screens: its replays are what it shows.
+  const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
+  if (!before && !replayBefore) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
   const verdict = await json<SavedVerdict>(join(runDir, "verdict.json"));
   const keepStyle = verdict?.keepStyle === true;
 
@@ -93,18 +98,19 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const comparison = now ? comparePages(scorePages(was.check, was.judge, ignore), scorePages(now.check, now.judge, ignore)) : [];
 
   // What section 5 decided, page by page: a page that got better is kept, any other is put back.
-  const decided = (await json<{ page: string; verdict: string }[]>(join(runDir, "after", "compare.json"))) ?? null;
-  const erroredBefore = before.errors.map((e) => route(e.url));
+  const decided = (await json<{ page: string; verdict: string; before?: { total: number } | null; after?: { total: number } | null }[]>(join(runDir, "after", "compare.json"))) ?? null;
+  const erroredBefore = before?.errors.map((e) => route(e.url)) ?? [];
   const erroredAfter = after?.errors.map((e) => route(e.url)) ?? [];
-  const pages = [...new Set([...before.pages.map((p) => p.path), ...erroredBefore, ...(after?.pages.map((p) => p.path) ?? []), ...erroredAfter])];
+  const pages = [...new Set([...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore, ...(after?.pages.map((p) => p.path) ?? []), ...erroredAfter])];
   const screens: ResultPage["screens"] = pages.map((page) => {
-    const b = before.pages.find((p) => p.path === page);
+    const b = before?.pages.find((p) => p.path === page);
     const a = after?.pages.find((p) => p.path === page);
     const widths = [...new Set([...(b?.files ?? []), ...(a?.files ?? [])].map((f) => f.width))].sort((x, y) => x - y);
     const c = comparison.find((x) => x.page === page);
     const failingBefore = c?.before?.failing ?? [];
     const failingAfter = c?.after?.failing ?? [];
-    const decision = decided?.find((d) => d.page === page)?.verdict;
+    const d = decided?.find((x) => x.page === page);
+    const decision = d?.verdict;
     const status: ResultPage["screens"][number]["status"] =
       erroredAfter.includes(page) || (erroredBefore.includes(page) && !a) ? "does not load"
       : !decision ? (c?.verdict === "new" ? "new" : "unchanged")
@@ -113,6 +119,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       page,
       status,
       count: c?.before && c.after ? { before: c.before.total, after: c.after.total } : null,
+      ...(status === "sent back" ? { back: { verdict: decision === "worse" ? ("worse" as const) : ("same" as const), before: d?.before?.total ?? null, after: d?.after?.total ?? null } } : {}),
       widths: widths.map((width) => ({
         width,
         before: b?.files.find((f) => f.width === width) ? `before/captures/${b.files.find((f) => f.width === width)!.file}` : null,
@@ -130,12 +137,12 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const notes = (await json<{ label: string; note?: string }[]>(join(runDir, "directions", "sheet.json"))) ?? [];
   const direction = tournament && winner ? { champion: winner, sentence: notes.find((n) => n.label === winner)?.note ?? null, entrants: tournament.entrants, reasons: final?.reasons ?? [], sheet: (await exists(join(runDir, "directions", "sheet.png"))) ? "directions/sheet.png" : null } : null;
 
-  const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
   const lastReplay = await first(runDir, ["journeys-end", "journeys-after"], "report.json");
   const replayAfter = lastReplay ? await json<JourneyReport>(join(runDir, lastReplay, "report.json")) : null;
-  const ratchet = (await json<RatchetVerdict[]>(join(runDir, "journeys-end", "ratchet.json"))) ?? [];
+  // The ratchet sits beside the replay it judged: journeys-end after the pages, journeys-after in a run of the journeys only.
+  const ratchet = (await json<RatchetVerdict[]>(join(runDir, lastReplay ?? "journeys-end", "ratchet.json"))) ?? [];
   // Cleared and still failing are counted from the critique of the app before the run, as the sheets are.
-  const critiqueBefore = await json<JudgeReport>(join(runDir, "before", "reports", "judge-journeys.json"));
+  const critiqueBefore = (await json<JudgeReport>(join(runDir, "before", "reports", "judge-journeys.json"))) ?? (await json<JudgeReport>(join(runDir, "journeys-before", "judge-journeys.json")));
   const critiqueAfter = lastReplay ? await json<JudgeReport>(join(runDir, lastReplay, "judge-journeys.json")) : null;
   const failingOf = (report: JudgeReport | null, slug: string) => report?.pages.find((p) => p.page === slug)?.verdicts.filter((v) => !v.pass).map((v) => v.principle) ?? null;
   const broke = (r: JourneyReport["journeys"][number] | undefined) => {
@@ -193,15 +200,111 @@ const href = (path: string) => path.split("/").map((segment) => encodeURI(segmen
 const img = (src: string | null, alt: string) => (src ? `<img src="${escape(href(src))}" alt="${escape(alt)}" loading="lazy">` : `<p class="none">No capture</p>`);
 const list = (label: string, items: string[]) => (items.length ? `<p><span class="label">${label}</span> ${items.map(escape).join(", ")}</p>` : "");
 
+/** A verdict of the page the person can agree or disagree with: its id, its category, and what AEOM said, in a few words. */
+export interface PageVerdict {
+  id: string;
+  category: FeedbackCategory;
+  verdict: string;
+}
+
+const NOTHING_TO_REDO: PageVerdict = { id: "nothing-to-redo", category: "screens", verdict: "Nothing to redo" };
+const ofDirection = (d: NonNullable<ResultPage["direction"]>): PageVerdict => ({ id: "direction", category: "direction", verdict: `Direction: ${d.champion}` });
+const ofScreen = (s: ResultPage["screens"][number]): PageVerdict => ({ id: `screen:${s.page}`, category: "screens", verdict: `${s.page} ${s.status}` });
+const ofJourney = (j: ResultPage["journeys"][number]): PageVerdict => ({ id: `journey:${j.slug}`, category: "journeys", verdict: `${j.name} ${j.status}` });
+/** Only a principle in failure is a verdict: a check is measured, not judged. */
+const ofFailure = (f: Failure): PageVerdict | null => {
+  if (f.kind !== "principle" && f.kind !== "journey-principle") return null;
+  const principle = f.what.split(":")[0];
+  return { id: `fail:${f.where}:${principle}`, category: "principles", verdict: `${f.where} fails ${principle}` };
+};
+
+/** Every verdict the page asks about, in its order: what `aeom report --serve` accepts a gesture on. */
+export function pageVerdicts(r: ResultPage): PageVerdict[] {
+  if (r.verdict?.nothingToRedo === true) return [NOTHING_TO_REDO];
+  return [...(r.direction ? [ofDirection(r.direction)] : []), ...r.screens.map(ofScreen), ...r.journeys.map(ofJourney), ...r.stillFailing.flatMap((f) => ofFailure(f) ?? [])];
+}
+
+/** One verdict the person can agree or disagree with, and say why. */
+const say = (v: PageVerdict | null) =>
+  v ? `<div class="say" data-verdict-id="${escape(v.id)}"><button type="button" data-agree="true">Agree</button><button type="button" data-agree="false">Disagree</button><input type="text" maxlength="500" placeholder="Why, if you disagree (optional)" aria-label="Why"><span class="said" role="status"></span></div>` : "";
+
+const CATEGORY_NAMES: Record<string, string> = { direction: "Direction", screens: "Screens", journeys: "Journeys", principles: "Principles" };
+
+/** How often the person agreed with AEOM, by category, or that they have not said yet: asked only once the page is served. */
+const ratesHtml = (rates: Record<string, { agreed: number; total: number }> | undefined) => {
+  const given = rates ? Object.entries(rates).filter(([, r]) => r.total > 0) : [];
+  return `<p class="rates" id="rates">${given.length ? `How often you agreed with AEOM, over every run: ${given.map(([c, r]) => `${CATEGORY_NAMES[c] ?? c} <strong>${r.agreed} of ${r.total}</strong>`).join(" · ")}` : `No feedback yet<span class="served" hidden>: say whether you agree with each verdict</span>.`}</p>`;
+};
+
+/** Sends each gesture to the server of `aeom report --serve` as it is made, and shows what was already said. */
+const FEEDBACK_SCRIPT = `
+(() => {
+  const served = location.protocol === "http:" || location.protocol === "https:";
+  const boxes = [...document.querySelectorAll(".say")];
+  if (!served) {
+    boxes.forEach((b) => (b.hidden = true));
+    const note = document.getElementById("feedback-note");
+    if (note) note.hidden = false;
+    return;
+  }
+  document.querySelectorAll(".served").forEach((e) => (e.hidden = false));
+  const names = ${JSON.stringify(CATEGORY_NAMES)};
+  const showRates = (rates) => {
+    const given = Object.entries(rates).filter(([, r]) => r.total > 0);
+    const el = document.getElementById("rates");
+    if (!given.length) return;
+    el.textContent = "How often you agreed with AEOM, over every run: ";
+    given.forEach(([c, r], i) => {
+      if (i) el.append(" · ");
+      el.append((names[c] || c) + " ");
+      const s = document.createElement("strong");
+      s.textContent = r.agreed + " of " + r.total;
+      el.append(s);
+    });
+  };
+  const mark = (box, agree, why) => {
+    box.dataset.agree = String(agree);
+    box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.agree === String(agree))));
+    if (why !== undefined) box.querySelector("input").value = why;
+    box.querySelector(".said").textContent = agree ? "You agree." : "You disagree.";
+  };
+  // The server stopped, or answered no: say so, never fail in silence.
+  const send = async (box, agree) => {
+    clearTimeout(box.typing);
+    box.typing = null;
+    const why = box.querySelector("input").value.trim();
+    const res = await fetch("api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: box.dataset.verdictId, agree, why: why || undefined }) }).catch(() => null);
+    if (!res || !res.ok) { box.querySelector(".said").textContent = "Not saved: is aeom report --serve still running?"; return; }
+    mark(box, agree);
+    const answer = await res.json().catch(() => null);
+    if (answer && answer.rates) showRates(answer.rates);
+  };
+  boxes.forEach((box) => {
+    const input = box.querySelector("input");
+    box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => send(box, b.dataset.agree === "true")));
+    // A reason is kept once typing stops, without leaving the field; leaving it keeps it at once.
+    input.addEventListener("input", () => {
+      if (!box.dataset.agree) return;
+      clearTimeout(box.typing);
+      box.typing = setTimeout(() => send(box, box.dataset.agree === "true"), 600);
+    });
+    input.addEventListener("change", () => { if (box.typing) send(box, box.dataset.agree === "true"); });
+  });
+  fetch("api/feedback").then((r) => r.json()).then(({ mine, rates }) => {
+    for (const f of mine) { const box = boxes.find((b) => b.dataset.verdictId === f.id); if (box) mark(box, f.agree, f.why || ""); }
+    showRates(rates);
+  }).catch(() => {});
+})();`;
+
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
-export function resultHtml(r: ResultPage): string {
+export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}</header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
   const named = r.features?.entries.length ? r.features : null;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 
   const direction = r.direction
-    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
+    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${say(ofDirection(r.direction))}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
     : r.verdict?.keepStyle
       ? `<section id="direction"><h2>Style kept</h2><p class="muted">No new direction: the run fixed what failed on the app's own style.</p></section>`
       : "";
@@ -209,13 +312,13 @@ export function resultHtml(r: ResultPage): string {
   const pair = (w: { width: number; before: string | null; after: string | null }, what: string) =>
     `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Before</figcaption>${img(w.before, `${what} before, ${w.width} px`)}</figure>${nothing ? "" : `<figure><figcaption>After</figcaption>${img(w.after, `${what} after, ${w.width} px`)}</figure>`}</div></div>`;
   const screens = r.screens
-    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
+    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${nothing ? "" : say(ofScreen(s))}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
     .join("");
   const journeys = r.journeys
-    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
+    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${nothing ? "" : say(ofJourney(j))}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
     .join("");
   const still = `${r.measuredAfter ? "" : `<p class="muted">Not measured after the run: what failed before it.</p>`}${
-    r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
+    r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}${say(ofFailure(f))}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
   }`;
 
   const features = named
@@ -237,6 +340,7 @@ export function resultHtml(r: ResultPage): string {
   :root { --ink: #161616; --muted: #5c5c5c; --rule: #d9d9d9; --paper: #ffffff; --kept: #1d6b33; --back: #a3261b; }
   @media (prefers-color-scheme: dark) { :root { --ink: #ececec; --muted: #a8a8a8; --rule: #3a3a3a; --paper: #141414; --kept: #6fcf8a; --back: #f08a7e; } }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; } /* over any display rule, such as .say's flex: opened as a file, the page asks for nothing */
   body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
   header, nav, section { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
   header { padding-top: 32px; border-bottom: 1px solid var(--rule); padding-bottom: 16px; }
@@ -254,6 +358,12 @@ export function resultHtml(r: ResultPage): string {
   .none { color: var(--muted); font-style: italic; }
   figure.step { max-width: 520px; }
   ul { padding-left: 20px; } li { margin: 4px 0; }
+  .rates { margin: 8px 0 0; }
+  .say { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  .say button { font: inherit; font-size: 14px; padding: 4px 12px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .say button[aria-pressed="true"] { border-color: var(--ink); font-weight: 600; }
+  .say input { font: inherit; font-size: 14px; padding: 4px 8px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); flex: 1 1 220px; min-width: 0; }
+  .said { font-size: 13px; color: var(--muted); }
   @media (max-width: 640px) { .sides { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -261,6 +371,7 @@ export function resultHtml(r: ResultPage): string {
 ${head}
 ${nav}
 ${body}
+<script>${FEEDBACK_SCRIPT}</script>
 </body>
 </html>
 `;
