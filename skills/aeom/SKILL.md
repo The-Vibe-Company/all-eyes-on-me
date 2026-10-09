@@ -1,6 +1,6 @@
 ---
 name: aeom
-description: Run All Eyes On Me on a web project. Captures every page, runs the measurable checks and the judge, fixes the shared kit with one worker then every page with one worker each in parallel, and keeps only the pages that got better, on a run branch with a before and after for each page. With --directions, first builds six contrasting art directions on the home page and lets the judge pick one in a knockout. With --ux, first understands the product on its own and writes .aeom/product.md: what the app is for, who uses it, its main loop and its key journeys. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
+description: Run All Eyes On Me on a web project: take its front and make a better one. Without an option, AEOM understands the product on its own (.aeom/product.md, its key journeys), captures, checks and judges every screen and replays every journey; if nothing fails it says there is nothing to redo and leaves the app untouched (only what it understood is written in .aeom/), otherwise it builds six art directions drawn from the product, lets the judge pick one in a knockout, rebuilds every page on it with one worker each, and keeps only the pages that got better, on a run branch. --directions and --ux still force their own mode. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
 ---
 
 # /aeom
@@ -14,8 +14,8 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 - **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README), check that the app starts with that command (`aeom capture --start "<command>" --url <url> --pages / --out .aeom/runs/start-check`, which starts the app and stops it after), and only then write the file; ask the user once only if nothing says it.
 - **A sign-in, when the app needs one.** AEOM signs in only with a fake account, never a real one: the project's own test account, or one the user gives. Give the config a `login`: `{ "path": "/connexion", "account": "<a JSON file of the account's fields by label>", "submit": "<the button's name>" }`. Capture, check and journeys then sign in once, before they start, and never print or report the account's values. No fake account and no way to make one: stop and ask the user for one.
 - **What only a feature touches.** Give the config a `protected` list of the files that hold the app's data or logic, as globs: the database schema and migrations, the API routes, the server code, such as `["src/lib/db/**", "src/app/api/**"]`. `aeom guard` refuses any change to them.
-- **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so.
-- **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch: `git checkout -b aeom/$RUN`. Everything this run keeps ends up on that branch, never on the user's branch.
+- **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so. `.aeom/product.md`, `.aeom/product.base.md`, `.aeom/journeys/` and `.aeom/config.json` do not count: AEOM writes them while it understands the product (section 2c), and the user's uncommitted corrections there are exactly what the next run keeps.
+- **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch, `git checkout -b aeom/$RUN`, only once the run is about to change the project: after the verdict in a run without an option, before section 2b with `--directions`, at step 10 with `--ux`. Everything this run keeps ends up on that branch, never on the user's branch.
 
 ## Show as you go
 
@@ -29,6 +29,21 @@ The user follows the run through its captures, not through a report at the end. 
 - **The end**: the comparison table and every page before and after.
 
 One message per checkpoint, a line of context with the images, no more. A long wave still sends something at least every few minutes: the latest page that landed. The user reacting to a capture is feedback, not an interruption: take it and keep going.
+
+## Without an option: judge, then redo what fails
+
+`/aeom` with no option takes the front and makes a better one, or says there is nothing to redo. In this order:
+
+1. **Understand the product**: steps 1 to 9 of section 2c. The product sheet, the key journeys recorded and replayed, their critique. The directions start from the sheet, so it comes first. If the app does not start, stop there, as step 3 says: nothing is created.
+2. **Look**: section 1. Every screen captured, checked and judged, and the before kept. The replays of step 1 changed the app's data: run the config's `reset` command first, when it has one, so the screens are measured as they were before them.
+3. **The verdict**: `aeom verdict`. It reads what steps 1 and 2 measured.
+   - **It exits 0**: tell the user « rien à refaire », with the line saying what was measured and the captures of section 1. Stop: no run branch, no worktree, no worker. Say that the product sheet and the key journeys are in `.aeom/`, not committed: the next run starts from them.
+   - **It exits 2**: a step is missing (it names which). Run it, then the verdict again.
+   - **It exits 1**: it lists what fails, screen by screen and journey by journey. Send that list to the user, then go on.
+4. **A new direction**: create the run branch (section 0) and commit on it the journeys and the config step 1 wrote, `git add .aeom/journeys .aeom/config.json && git commit -m "aeom: the key journeys"`, so every worker's worktree has them, the `reset` included, and the user's branch keeps none of the run's changes. The product sheet stays uncommitted, as [product.md](product.md) says: the user commits it. Then section 2b. Six directions, drawn from the product, the knockout, the champion applied as the kit and the home page.
+5. **The pages**: the screen wave on every other page (section 4), then measure and keep only what got better (section 5), and show it (section 6).
+
+`/aeom --directions` and `/aeom --ux` skip the verdict and run their own mode, as their sections say.
 
 ## 1. Look
 
@@ -67,12 +82,12 @@ Every brief, kit or page, also says:
 
 If a worker stops without committing, look at its worktree: when the work is there and stays inside its files, commit it yourself and say so.
 
-## 2b. Directions (only with `/aeom --directions`)
+## 2b. Directions (in a run without an option once the verdict finds something to redo, or with `/aeom --directions`)
 
 Instead of fixing the current look, start from six new ones and keep the best.
 
 1. **Six sources.** Follow [directions.md](directions.md): list twelve sources from the product's own world, pick six far apart, and drop any whose obvious rendering is a banned look. Give each a short slug, such as `nuancier`.
-2. **Six workers, at once.** Note the run checkout's root first (`MAIN="$(git rev-parse --show-toplevel)"`): every path below that starts with `$MAIN` must stay absolute, because commands run from inside other worktrees. For each source, create a worktree from the run branch (`.aeom/worktrees/$RUN-dir-<source>`) and launch a worker with the direction brief. Each owns the shared files and the home page's files in its own worktree; they never see each other.
+2. **Six workers, at once.** Note the run checkout's root first (`MAIN="$(git rev-parse --show-toplevel)"`): every path below that starts with `$MAIN` must stay absolute, because commands run from inside other worktrees. Note too the commit the run starts from, before any direction lands, `KIT_BASE=$(git rev-parse aeom/$RUN)`: section 5 replays the app as it was there and puts files back from it. For each source, create a worktree from the run branch (`.aeom/worktrees/$RUN-dir-<source>`) and launch a worker with the direction brief. Each owns the shared files and the home page's files in its own worktree; they never see each other.
 3. **Capture each one.** For each worktree, from inside it, start its app on its own port and capture the home page only, with the run checkout's CLI, since a fresh worktree has no build:
    `node "$MAIN/packages/cli/dist/index.js" capture --start "<start command with PORT=<port>>" --url http://localhost:<port> --pages / --widths 1280 --out "$MAIN/.aeom/runs/$RUN/directions/<source>"`, then copy `index@1280.png` to `"$MAIN/.aeom/runs/$RUN/directions/<source>.png"`. A direction that does not start or does not build gets no capture: say so, and leave it out of the tournament.
 4. **Show them.** `aeom sheet --out .aeom/runs/$RUN/directions/sheet.png <source>=<its capture>...` with all six, the failed ones included, and show the sheet to the user.
@@ -88,11 +103,11 @@ Instead of fixing the current look, start from six new ones and keep the best.
 
 > Look at both screenshots. First: if one of the banned looks describes one page and not the other, the other wins. Then judge against the base principles, and on which is more specific to the product and less like anything an AI would propose. Reply with only a JSON object: `{"winner": "<source>", "reason": "<one sentence naming what you see>"}`.
 
-## 2c. Understand the product (only with `/aeom --ux`)
+## 2c. Understand the product (with `/aeom --ux`; steps 1 to 9 also open a run without an option)
 
 AEOM finds out on its own what the app is for and writes it down in `.aeom/product.md`, the product sheet. The user corrects it later, whenever they like: never ask them, never wait for them. [product.md](product.md) gives the sheet's shape and what AEOM may write in it.
 
-Set `RUN` as in section 0, but create no run branch before step 10. The clean-tree rule of section 0 does not count `.aeom/product.md`, `.aeom/product.base.md` and `.aeom/journeys/`: AEOM writes them in this mode, and the user's uncommitted corrections there are exactly what the next run keeps; any other uncommitted change still stops the run. Until step 10, AEOM changes nothing in the project but `.aeom/`, launches no worker and commits nothing; step 10 is the only one that changes the app, on a run branch, which carries the journey files with it. The run ends after the steps below; sections 3 to 6 belong to the visual redesign.
+Set `RUN` as in section 0, but create no run branch before step 10. Until step 10, AEOM changes nothing in the project but `.aeom/`, launches no worker and commits nothing (section 0 says which of these files the clean-tree rule leaves out); step 10 is the only one that changes the app, on a run branch, which carries the journey files with it. With `--ux`, the run ends after the steps below; in a run without an option, steps 1 to 9 come first and the run goes on with the verdict.
 
 1. **Start from what is there.** If `.aeom/product.md` exists, read it first: what the user wrote in it is the best source there is.
 2. **Read the code.** The routes and screens, what each one shows (lists, forms, empty and error states), the actions a user can take and where they lead, the words the app uses. Note the files you read: they become sources.
