@@ -16,8 +16,8 @@
     <p class="kicker"><span class="kicker__ref">01</span> Open-source CLI and Claude Code skills</p>
     <h1 id="title">All Eyes On Me</h1>
     <p class="lede">All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.</p>
-    <p>Today, the first of these works. You type <code>/aeom</code> in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.</p>
-    <p>It runs end to end on demo apps. It has not run on a real project yet.</p>
+    <p>Today, most of the first works. You type <code>/aeom</code> in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.</p>
+    <p>It runs end to end on demo apps. It has not run on a real project yet, apart from this page, rebuilt by an earlier version.</p>
     <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it from source</a></p>
   </div>
 
@@ -188,7 +188,7 @@
       <li><strong>Pages, then journeys.</strong> One worker per page, then per journey, each in its own files. A guard refuses any change that adds a feature. Only what got better is kept.</li>
       <li><strong>Show.</strong> A result page on your machine, the features a blocked journey would need (never built), and a pull request in words, with no capture.</li>
     </ol>
-    <p>On the demo app, the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0; the measurable checks from 10 to 0; « See my orders » from four steps to three. No feature was added.</p>
+    <p>On the demo app, the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0; the measurable checks from 10 to 0; the journeys' failures from 14 to 7; « See my orders » from four steps to three. No feature was added.</p>
   </div>
 </section>
 
@@ -234,9 +234,9 @@
     <p>Then put <code>aeom</code> on your <code>PATH</code> and the two skills where Claude Code finds them:</p>
     <div class="film" data-copy>
       <div class="film__head"><span><b class="film__tag">XR</b> Link it</span></div>
-      <pre><code><span class="ln">mkdir -p ~/.local/bin ~/.claude/skills</span><span class="ln">ln -s "$PWD/packages/cli/dist/index.js" \</span><span class="ln ln--more">  ~/.local/bin/aeom</span><span class="ln">ln -s "$PWD/skills/aeom" \</span><span class="ln ln--more">  "$PWD/skills/aeom-judge" ~/.claude/skills/</span></code></pre>
+      <pre><code><span class="ln">mkdir -p ~/.local/bin ~/.claude/skills</span><span class="ln">export PATH="$HOME/.local/bin:$PATH"</span><span class="ln">ln -s "$PWD/packages/cli/dist/index.js" \</span><span class="ln ln--more">  ~/.local/bin/aeom</span><span class="ln">ln -s "$PWD/skills/aeom" \</span><span class="ln ln--more">  "$PWD/skills/aeom-judge" ~/.claude/skills/</span></code></pre>
     </div>
-    <p>In your project, your app must start locally with one command, on fake data. Type <code>/aeom</code> in Claude Code. A full run takes about 30 to 45 minutes on the demo app.</p>
+    <p>Your project is a git repository with a clean tree, and your app starts locally with one command, on fake data: its journeys write to it. Type <code>/aeom</code> in Claude Code. A full run is long: on the demo app, about an hour and some sixty subagents.</p>
   </div>
 </section>
 
@@ -247,7 +247,7 @@
   </div>
   <div class="section__body">
     <ol class="strata">
-      <li data-stage="done"><strong>Done.</strong> Level 1 on demo apps: <code>/aeom</code> understands the product, judges every screen and journey, and rebuilds the front on a new direction, or keeps a client's style.</li>
+      <li data-stage="done"><strong>Done.</strong> Most of level 1, on demo apps: <code>/aeom</code> understands the product, judges every screen and journey, and rebuilds the front on a new direction, or keeps a client's style.</li>
       <li data-stage="now"><strong>Now.</strong> A bench of apps with known defects, measuring what AEOM finds and fixes, and a run that ends by writing the standard of the front.</li>
       <li data-stage="next"><strong>Next, level 2: keep.</strong> Every pull request held to the standard: what can be measured blocks the CI check, the judges comment on whether it is still the same product.</li>
       <li data-stage="then"><strong>Then, level 3: build.</strong> Build what is asked, or a front from scratch, inside the standard, front only.</li>

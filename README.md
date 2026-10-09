@@ -2,36 +2,36 @@
 
 All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.
 
-Today, the first of these works. You type `/aeom` in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.
+Today, most of the first works. You type `/aeom` in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.
 
 > **Status: pre-alpha.** `/aeom` runs end to end on demo apps. It has not run on a real project yet.
 
 ## What it does today
 
-`/aeom` is a Claude Code skill. It coordinates a fleet of agents, each in its own git worktree, and the `aeom` CLI does the measuring.
+`/aeom` is a Claude Code skill. It coordinates a fleet of agents (workers, each in its own git worktree, and judges), and the `aeom` CLI does the measuring.
 
 1. **Understand.** AEOM writes what the app is for, who uses it and its main loop in `.aeom/product.md`, which you can correct, and records three to five key journeys that it replays in a real browser.
 2. **Look.** Every screen is captured at 390 and 1280 px. Four checks are measured: pointer cursor, sideways scrolling, AA contrast, console errors. Eight principles are judged by three independent judges, and the majority decides.
 3. **Decide.** If nothing fails, AEOM says « nothing to redo » and stops. No branch is created.
 4. **A new direction.** Six art directions, each drawn from something the product's users know (an object, a document, a place, a trade), never from the looks AIs propose by default. Judges screen out the default looks, then a knockout keeps one, three votes per duel. With `--garder-le-style`, or `"style": "keep"` in `.aeom/config.json`, the app's own style is kept and fixed instead.
 5. **The pages.** One worker per page, all at once, each in its own files. A page is kept only if fewer things fail on it than before.
-6. **The journeys.** Journeys are made shorter and clearer on the new direction. A guard refuses any change that adds a feature (a new call to the server, a protected file). A journey is kept only if the judges prefer it and it still reaches its end.
+6. **The journeys.** Journeys the judges found failing are reworked on the new direction. A guard refuses any change that adds a feature (a new call to the server, a protected file). A journey is kept only if the judges prefer it and it still reaches its end.
 7. **Show.** AEOM names, at most three, the features a blocked journey would need, and builds none of them. It writes a result page on your machine, where you can say whether you agree with each verdict. It then opens a pull request in words, with no capture.
 
 Everything the run keeps is on a branch, `aeom/<run>`: your branch does not move.
 
 **On the demo app** in `examples/` (a deliberately ugly shop):
 - the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0;
-- the measurable checks went from 10 to 0, and the journeys' failures from 12 to 7;
+- the measurable checks went from 10 to 0, and the journeys' failures from 14 to 7;
 - « See my orders » went from four steps to three;
 - no feature was added.
 
-On an app with its own charter, run with the style kept, the checks went from 16 to 1 and the charter stayed the same on every page.
+On the same demo given one brand charter, run with the style kept, the checks went from 16 to 1 and the charter stayed the same on every page.
 
-**What it never does:**
-- Read or write real data. It runs on fake data, with a test account for apps behind a sign-in.
-- Build a feature, unless you ask in so many words.
-- Send anything out of your machine. Captures, the result page and your feedback stay local.
+**What it asks of you, and what it never does:**
+- Your app runs on fake data: its journeys write to it. AEOM signs in only with a test account.
+- It never builds a feature, unless you ask in so many words.
+- It never sends a capture out of your machine. Captures, the result page and your feedback stay local. What leaves is the run's branch and a pull request in words, when the repository has a remote and `gh` is signed in (`--sans-pr` stops at the branch).
 
 ## Try it
 
@@ -45,15 +45,19 @@ pnpm build
 pnpm --filter @aeom/core exec playwright install chromium
 mkdir -p ~/.local/bin
 ln -s "$PWD/packages/cli/dist/index.js" ~/.local/bin/aeom   # any folder on your PATH
+export PATH="$HOME/.local/bin:$PATH"                           # and in your shell profile
+aeom --help
 mkdir -p ~/.claude/skills
 ln -s "$PWD/skills/aeom" "$PWD/skills/aeom-judge" ~/.claude/skills/
 ```
 
 Then, in your project:
-- your app must start locally with one command, on fake data;
+- it is a git repository with a clean working tree;
+- your app starts locally with one command, on fake data;
+- for the pull request at the end, the repository has a remote and `gh` is signed in;
 - type `/aeom` in Claude Code.
 
-A full run takes about 30 to 45 minutes on the demo app, with 30 to 40 agents.
+A full run is long and spawns many agents: on the demo app, about an hour of work and some sixty subagents (judges, workers). The bench will measure it properly.
 
 ## Commands
 

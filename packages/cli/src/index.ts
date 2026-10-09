@@ -38,7 +38,7 @@ Commands:
   pr          Push the run's branch and open a PR, in words, with no capture
 
 Run aeom <command> --help for its options.
-Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#roadmap`;
+Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#what-comes-next`;
 
 const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   capture: runCapture,

@@ -23,6 +23,11 @@ test("the commands on the page are exactly the CLI's, with its words", () => {
   assert.deepEqual(shown, cliCommands());
 });
 
+test("the commands in the README are exactly the CLI's, with its words", () => {
+  const listed = new Map([...readme.matchAll(/^\| `aeom (\S+)` \| (.+?) \|$/gm)].map(([, name, what]) => [name, what.trim()]));
+  assert.deepEqual(listed, cliCommands());
+});
+
 test("the README and the page say what AEOM is in one sentence, then what works today, apart from what comes", () => {
   const sentence = "All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.";
   assert.ok(readme.split("\n").slice(0, 4).join(" ").includes(sentence), "the README opens on the sentence");
