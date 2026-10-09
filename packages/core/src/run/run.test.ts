@@ -81,6 +81,10 @@ test("the project config gives the defaults for url and start, and is optional",
     assert.deepEqual((await loadConfig(dir)).protected, ["src/lib/db/**", "server.mjs"], "each glob without its stray spaces");
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ login: { path: "connexion", account: "compte.json", submit: "Se connecter" } }));
     await assert.rejects(loadConfig(dir), /"login\.path" is the sign-in route from the app's root/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
+    assert.deepEqual(await loadConfig(dir), { style: "keep" }, "a brand charter AEOM keeps, run after run");
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "garder" }));
+    await assert.rejects(loadConfig(dir), /"style" is "keep", to keep the existing style, or left out/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

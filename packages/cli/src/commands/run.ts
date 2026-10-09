@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { comparePages, ConfigError, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { comparePages, ConfigError, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
@@ -32,7 +32,7 @@ async function readReport<T>(file: string, problems: string[]): Promise<T | unde
   }
 }
 
-const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict]
+const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict] [--keep-style]
        aeom compare --journeys <before-dir> <after-dir> [--duels <dir>] [--base <ref>] [--known <dir>]
 
 Compares two snapshots page by page: what fails before and after (checks + principles),
@@ -47,6 +47,8 @@ in <after-dir>.
 
 Options:
   --strict             Exit with 1 when anything that passed before fails after
+  --keep-style         Leave out the principles that judge the charter itself
+                       (also when .aeom/config.json says "style": "keep")
   --journeys           Compare journeys, not pages
   --duels <dir>        The judges' duel votes (default <after-dir>/duels)
   --base <ref>         The commit the change started from, for the guard
@@ -58,7 +60,7 @@ export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { strict: { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { strict: { type: "boolean" }, "keep-style": { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || positionals.length !== 2) {
     console.log(COMPARE_HELP);
@@ -81,7 +83,17 @@ export async function runCompare(argv: string[]): Promise<number> {
     console.error(`Both snapshots need check.json and judge.json:\n${problems.map((p) => `  ${p}`).join("\n")}`);
     return 1;
   }
-  const comparison = comparePages(scorePages(before.check, before.judge), scorePages(after.check, after.judge));
+  // With the style kept, the principles that judge the charter itself say nothing of what the run did.
+  let keepStyle = Boolean(values["keep-style"]);
+  try {
+    keepStyle ||= (await loadConfig()).style === "keep";
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    console.error(error.message);
+    return 1;
+  }
+  const ignore = keepStyle ? STYLE_PRINCIPLES : [];
+  const comparison = comparePages(scorePages(before.check, before.judge, ignore), scorePages(after.check, after.judge, ignore));
   if (comparison.length === 0) {
     console.error(`No page to compare in ${beforeDir} and ${afterDir}.`);
     return 1;

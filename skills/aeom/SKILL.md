@@ -1,6 +1,6 @@
 ---
 name: aeom
-description: Run All Eyes On Me on a web project: take its front and make a better one. Without an option, AEOM understands the product on its own (.aeom/product.md, its key journeys), captures, checks and judges every screen and replays every journey; if nothing fails it says there is nothing to redo and leaves the app untouched (only what it understood is written in .aeom/), otherwise it builds six art directions drawn from the product, lets the judge pick one in a knockout, rebuilds every page on it with one worker each, keeps only the pages that got better, then rebuilds the key journeys that still fail and keeps only the journeys that got better, on a run branch. --directions and --ux still force their own mode. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
+description: Run All Eyes On Me on a web project: take its front and make a better one. Without an option, AEOM understands the product on its own (.aeom/product.md, its key journeys), captures, checks and judges every screen and replays every journey; if nothing fails it says there is nothing to redo and leaves the app untouched (only what it understood is written in .aeom/), otherwise it builds six art directions drawn from the product, lets the judge pick one in a knockout, rebuilds every page on it with one worker each, keeps only the pages that got better, then rebuilds the key journeys that still fail and keeps only the journeys that got better, on a run branch. With --garder-le-style, or "style": "keep" in .aeom/config.json, it keeps the existing style, such as a client's brand charter: no directions, the kit wave fixes that style instead. --directions and --ux still force their own mode. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
 ---
 
 # /aeom
@@ -15,6 +15,7 @@ You are the AEOM coordinator. You do not edit the project's frontend yourself: w
 - **A sign-in, when the app needs one.** AEOM signs in only with a fake account, never a real one: the project's own test account, or one the user gives. Give the config a `login`: `{ "path": "/connexion", "account": "<a JSON file of the account's fields by label>", "submit": "<the button's name>" }`. Capture, check and journeys then sign in once, before they start, and never print or report the account's values. No fake account and no way to make one: stop and ask the user for one.
 - **What only a feature touches.** Give the config a `protected` list of the files that hold the app's data or logic, as globs: the database schema and migrations, the API routes, the server code, such as `["src/lib/db/**", "src/app/api/**"]`. `aeom guard` refuses any change to them.
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so. `.aeom/product.md`, `.aeom/product.base.md`, `.aeom/journeys/` and `.aeom/config.json` do not count: AEOM writes them while it understands the product (section 2c), and the user's uncommitted corrections there are exactly what the next run keeps.
+- **A style to keep.** `/aeom --garder-le-style` keeps the app's existing style, for a client with a brand charter: no directions, no tournament. `"style": "keep"` in `.aeom/config.json` does the same on every run, without the option; it is the user's to write. `/aeom --directions` overrides it for that run, and says so.
 - **The run.** `RUN` = `run-<YYYYMMDD-HHMM>`. Create the run branch from the current branch, `git checkout -b aeom/$RUN`, only once the run is about to change the project: after the verdict in a run without an option, before section 2b with `--directions` (once the product sheet exists, see 2b), at step 10 with `--ux`. Everything this run keeps ends up on that branch, never on the user's branch.
 
 ## Show as you go
@@ -36,14 +37,16 @@ One message per checkpoint, a line of context with the images, no more. A long w
 
 1. **Understand the product**: steps 1 to 9 of section 2c. The product sheet, the key journeys recorded and replayed, their critique. The directions start from the sheet, so it comes first. If the app does not start, stop there, as step 3 says: nothing is created.
 2. **Look**: section 1. Every screen captured, checked and judged, and the before kept. The replays of step 1 changed the app's data: run the config's `reset` command first, when it has one, so the screens are measured as they were before them.
-3. **The verdict**: `aeom verdict`. It reads what steps 1 and 2 measured.
+3. **The verdict**: `aeom verdict`, with `--keep-style` when the user typed `--garder-le-style`. It reads what steps 1 and 2 measured.
    - **It exits 0**: tell the user « rien à refaire », with the line saying what was measured and the captures of section 1. Stop: no run branch, no worktree, no worker. Say that the product sheet and the key journeys are in `.aeom/`, not committed: the next run starts from them.
-   - **It exits 2**: a step is missing (it names which). Run it, then the verdict again.
-   - **It exits 1**: it lists what fails, screen by screen and journey by journey. Send that list to the user, then go on.
-4. **A new direction**: create the run branch (section 0) and commit on it the journeys and the config step 1 wrote, `git add .aeom/journeys .aeom/config.json && git commit -m "aeom: the key journeys"`, so every worker's worktree has them, the `reset` included, and the user's branch keeps none of the run's changes. The product sheet stays uncommitted, as [product.md](product.md) says: the user commits it. Then section 2b. Six directions, drawn from the product, the knockout, the champion applied as the kit and the home page.
-5. **The pages**: the screen wave on every other page (section 4), then measure and keep only what got better (section 5).
-6. **The journeys, on the new direction.** Section 5 replayed the journeys on the pages it kept, in `.aeom/runs/$RUN/journeys-after`; if it then put pages back, replay them again there. Judge that replay with the journey judge of the `aeom-judge` skill, pointed at it: `aeom judge --journeys --captures .aeom/runs/$RUN/journeys-after --votes .aeom/runs/$RUN/journeys-after/votes --out .aeom/runs/$RUN/journeys-after`. That critique is the journeys' before: the workers' findings come from it, and it is not judged again.
-   - **No journey breaks and none fails a principle**: tell the user « les parcours passent sur la nouvelle DA : pas de vague des parcours », and go to step 8.
+   - **It exits 2**: a step is missing (it names which): run it, then the verdict again. Or the config or an option is wrong (it says which): tell the user and stop.
+   - **It exits 1**: it lists what fails, screen by screen and journey by journey, and its last line says what comes next: a new direction, or the existing style kept (step 4). Send that list to the user, then go on. With the style kept, it first lists the principles left to the style (`not-generic`, `not-ai-default`): they judge the charter itself, and nothing in the run redoes them.
+4. **A new direction, or the style kept.** Create the run branch (section 0) and commit on it the journeys and the config step 1 wrote, `git add .aeom/journeys .aeom/config.json && git commit -m "aeom: the key journeys"`, so every worker's worktree has them, the `reset` included, and the user's branch keeps none of the run's changes. The product sheet stays uncommitted, as [product.md](product.md) says: the user commits it. Note the run checkout's root, `MAIN="$(git rev-parse --show-toplevel)"`. Then, as the verdict's last line says:
+   - **A new direction**: section 2b. Six directions, drawn from the product, the knockout, the champion applied as the kit and the home page.
+   - **The style kept**: section 2 (Plan) and section 3 (Kit wave) with the kit brief for a style kept. No directions, no tournament. Every `aeom compare` of the run takes `--keep-style` (the config's `"style": "keep"` does the same), so the principles that judge the charter count for nothing. When only journeys fail, no screen does: skip the kit and the screen waves, note `KIT_BASE=$(git rev-parse HEAD)`, take section 1's capture as `after` (`aeom snapshot .aeom/runs/$RUN/after`), replay the journeys into `journeys-after` (`aeom journey --out .aeom/runs/$RUN/journeys-after`), and go to step 6.
+5. **The pages**: the screen wave (section 4) on every page the champion did not rebuild, every page when the style is kept, then measure and keep only what got better (section 5).
+6. **The journeys, on the new direction** (or on the style kept). Section 5 replayed the journeys on the pages it kept, in `.aeom/runs/$RUN/journeys-after`; if it then put pages back, replay them again there. Judge that replay with the journey judge of the `aeom-judge` skill, pointed at it: `aeom judge --journeys --captures .aeom/runs/$RUN/journeys-after --votes .aeom/runs/$RUN/journeys-after/votes --out .aeom/runs/$RUN/journeys-after`. That critique is the journeys' before: the workers' findings come from it, and it is not judged again.
+   - **No journey breaks and none fails a principle**: tell the user « les parcours passent sur la nouvelle DA : pas de vague des parcours » (« sur le style gardé » when the style is kept), and go to step 8.
    - **Otherwise**, rebuild them as section 2c does, steps 10.2 to 10.5, then step 11, on the run branch already open, with these changes:
      - `BASE=$(git rev-parse HEAD)` now, after the page wave: the journey workers start from it, and a journey sent back returns to its version on the new direction, never to the app before the run.
      - The journeys' before is the replay on the new direction: where section 2c says `journeys-before`, use `journeys-after`; where it says `journeys-after`, use `journeys-end`. Step 11.1 judges `journeys-end` only.
@@ -55,9 +58,10 @@ One message per checkpoint, a line of context with the images, no more. A long w
    1. **Is it the journey wave?** For each page it names, list the journey merges whose files are behind that page (`git diff --name-only <merge>^1 <merge>`). None: a principle can flip on three new votes alone. Judge that page once more with three fresh voters; if it still fails, report it as it is, and send nobody back.
    2. **Send back** the journey worker whose merge touched the page, as section 2c step 11.4 says, the shared worker only when no journey worker's files explain it. Then replay, critique `journeys-end`, duel, run the ratchet and measure the screens again.
    3. **Stop** when `--strict` passes, or when every journey merge is sent back: say what still fails and why.
+   4. **With the style kept**, judge the charter once more on `end`, as section 5 does (`--captures .aeom/runs/$RUN/end/captures --votes .aeom/runs/$RUN/style-end/votes --out .aeom/runs/$RUN/style-end`): a page that fails it sends back the journey worker whose merge touched it.
 8. **Show** the pages (section 6), from `before` to the last snapshot the run branch matches: `end` after a journey wave (`aeom compare .aeom/runs/$RUN/before .aeom/runs/$RUN/end`, its captures from `end/captures`), otherwise `after` or `after-revert`. Then the journeys (section 2c step 11.5): for each, its sheets before and after, its step count, kept or sent back and why.
 
-`/aeom --directions` and `/aeom --ux` skip the verdict and run their own mode, as their sections say.
+`/aeom --garder-le-style` runs these same steps, with the style kept at step 4. `/aeom --directions` and `/aeom --ux` skip the verdict and run their own mode, as their sections say.
 
 ## 1. Look
 
@@ -81,7 +85,7 @@ Read `.aeom/reports/check.json` and `.aeom/reports/judge.json`, and the project 
 - **Shared**: what more than one page uses (tokens, global CSS, the header or layout, shared components). In `examples/ugly-app` this is `shared/`.
 - **Per page**: what only one page uses. In `examples/ugly-app` this is one file per page in `pages/`.
 
-Sort every failure the same way. A failure that shows on several pages, or a principle that compares pages (`one-direction`, `consistent-chrome`, `not-generic`), goes to the kit. Everything else goes to its page.
+Sort every failure the same way. A failure that shows on several pages, or a principle that compares pages (`one-direction`, `consistent-chrome`, `not-generic`), goes to the kit. Everything else goes to its page. With the style kept, `not-generic` and `not-ai-default` go to nobody: they judge the charter, which stays.
 
 ## Briefing any worker
 
@@ -167,6 +171,10 @@ Note the commit the worktree started from (`KIT_BASE=$(git rev-parse aeom/$RUN)`
 
 > Build one art direction for the whole app, held in the shared files only (partials such as a header are inserted into pages, not served on their own): colour, type and spacing tokens, the header and navigation every page will use, the buttons, links and the empty, error and loading states. It must be specific to this product, not a generic template. Every clickable thing gets a pointer cursor and a visible hover and focus. Text reaches AA contrast. Do not edit any page. Write at the top of the main shared file, in a comment, how pages use the kit (which file to link, which partial to include, which classes exist). Commit your work in the worktree.
 
+**Kit brief for a style kept** (step 4). Give the worker the same, and ask instead:
+
+> Keep this app's identity exactly as it is: its colours, its fonts, its logo, its layout conventions. It is the client's charter, not yours to improve. Where pages disagree, the home page's style is the charter, and the others come to it. Gather that style into the shared files as tokens, the header and navigation every page will use, the buttons, links and the empty, error and loading states, and fix only what fails: every clickable thing gets a pointer cursor and a visible hover and focus; a colour changes only where its contrast fails AA, to the nearest shade of the same hue that passes; a missing empty or error state is drawn in the existing style. Never add a colour, a font or a mark the app did not have. `not-generic` and `not-ai-default` are not yours to fix: they judge the charter, which stays. Do not edit any page. Write at the top of the main shared file, in a comment, how pages use the kit. Commit your work in the worktree.
+
 ## 4. Screen wave: one worker per page, all at once
 
 Note the commit every page worktree starts from (`WAVE_BASE=$(git rev-parse aeom/$RUN)`), then create each page's worktree from the run branch, which now has the kit:
@@ -182,6 +190,8 @@ Collect what each worker calls a kit candidate into `.aeom/runs/$RUN/kit-candida
 **Page brief.** Give the worker: its worktree path, the files of its page and nothing else, the page's failing checks and principles with their reasons, and where the kit says how to use it. Ask it to:
 
 > Rebuild this page on the kit: use its header partial, its stylesheet and its classes, and drop the page's own styling of anything the kit covers. Fix every failure listed. Keep the page's content and purpose. If the kit lacks something you need, add it in your page file and say in your last message that it is a kit candidate. Edit only your page's files. Commit your work in the worktree.
+
+When the style is kept (step 4), add to the page brief: the page keeps the app's identity, its colours, fonts and logo, and only what fails changes; `not-generic` and `not-ai-default` are left to the charter.
 
 ## 5. Measure, keep only what got better
 
@@ -216,6 +226,8 @@ git worktree remove "$MAIN/.aeom/worktrees/$RUN-base"
 ```
 
 The app starts from that worktree with its own start command; install its dependencies there first if it needs any.
+
+With the style kept, check that it was, page by page: the style judge of the `aeom-judge` skill, three judges comparing each page before and after, then `aeom judge --style-kept --captures .aeom/runs/$RUN/after/captures --votes .aeom/runs/$RUN/style/votes --out .aeom/runs/$RUN/style`. A page that fails `charter-kept` changed the charter: find what changed it, the page's own diff since `$WAVE_BASE` or the kit's since `$KIT_BASE`. The page's own: put its files back like a page that is not `better`, below, and say why. The kit's, or every page failing: revert the kit's merge and every page merge after it, so the run branch holds the journeys commit alone, show the user the before captures and what the kit changed, and stop the run there.
 
 For every page that is not `better`, put its files back as they were before the screen wave (`git checkout $WAVE_BASE -- <the page's files>`) and commit. Such a page still renders through the new kit, so it is neither the page before the run nor the page after the wave: capture, check and judge again, snapshot to `.aeom/runs/$RUN/after-revert`, and compare that with `before`. Say which pages were put back, why, and how they now compare. If the kit itself made a page worse, say so: putting the page back cannot undo the kit.
 

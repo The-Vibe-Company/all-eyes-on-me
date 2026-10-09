@@ -61,3 +61,26 @@ test("with --strict, a page gone after exits 1, a new page that fails does not, 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("with the style kept, aeom compare leaves out the principles that judge the charter", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-"));
+  try {
+    await snapshot(join(dir, "before"), [], ["states"]);
+    await snapshot(join(dir, "after"), [], []);
+    const judge = JSON.parse(await readFile(join(dir, "after", "reports", "judge.json"), "utf8"));
+    judge.principles.push({ id: "not-generic", text: "" });
+    judge.pages[0].verdicts.push({ principle: "not-generic", pass: false, votes: "", reasons: [], dissent: [], steps: [] });
+    await writeFile(join(dir, "after", "reports", "judge.json"), JSON.stringify(judge));
+    const counted = await run(dir, ["compare", "before", "after", "--strict"]);
+    assert.match(counted.out, /\/\s+1\s+1\s+= same\n\s+newly failing: not-generic/);
+    assert.equal(counted.code, 1);
+    const kept = await run(dir, ["compare", "before", "after", "--strict", "--keep-style"]);
+    assert.equal(kept.code, 0, kept.out);
+    assert.match(kept.out, /\/\s+1\s+0\s+↑ better/);
+    await mkdir(join(dir, ".aeom"), { recursive: true });
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
+    assert.equal((await run(dir, ["compare", "before", "after", "--strict"])).code, 0, "the config keeps the style too");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -140,3 +140,37 @@ test("a report that is not the right one, or an unknown option, never reads as s
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("when something fails, aeom verdict says what comes next: a new direction, or the existing style kept", async () => {
+  const dir = await project({ failing: { "/": ["states"] } });
+  try {
+    const fresh = await run(dir, ["verdict"]);
+    assert.equal(fresh.code, 1);
+    assert.match(fresh.out, /Next: six new art directions, drawn from the product sheet\.$/m);
+    assert.match((await run(dir, ["verdict", "--keep-style"])).out, /Next: the kit wave fixes the existing style, without a new direction \(--keep-style\)\.$/m);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
+    assert.match((await run(dir, ["verdict"])).out, /Next: the kit wave fixes the existing style, without a new direction \("style": "keep" in \.aeom\/config\.json\)\.$/m);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "garder" }));
+    const broken = await run(dir, ["verdict"]);
+    assert.equal(broken.code, 2);
+    assert.match(broken.out, /"style" is "keep"/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("with the style kept, the principles that judge the style itself are left to it, and do not stop « nothing to redo »", async () => {
+  const dir = await project({ failing: { "/": ["not-ai-default", "not-generic"] } });
+  try {
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["not-ai-default", "not-generic"], "/commandes": [] }, ["not-generic", "not-ai-default", "states"])));
+    const fresh = await run(dir, ["verdict"]);
+    assert.equal(fresh.code, 1, "without a style to keep, they are things to redo");
+    const kept = await run(dir, ["verdict", "--keep-style"]);
+    assert.equal(kept.code, 0, kept.out);
+    assert.match(kept.out, /Left to the style kept: \/ not-generic, \/ not-ai-default\./);
+    assert.match(kept.out, /Nothing to redo: nothing fails\.$/m);
+    assert.doesNotMatch(kept.out, /Next:/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

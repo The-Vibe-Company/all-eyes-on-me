@@ -24,15 +24,15 @@ export interface PageComparison {
   newly: string[];
 }
 
-/** Counts, page by page, what fails. Lower is better; 0 is a page that passes everything. */
-export function scorePages(check: CheckReport | undefined, judge: JudgeReport | undefined): PageScore[] {
+/** Counts, page by page, what fails, leaving out the principles in `ignore`. Lower is better; 0 is a page that passes everything. */
+export function scorePages(check: CheckReport | undefined, judge: JudgeReport | undefined, ignore: string[] = []): PageScore[] {
   const pages = new Set<string>([...(check?.pages ?? []).map(route), ...(judge?.pages ?? []).map((p) => p.page)]);
   return [...pages].map((page) => {
     const findings = (check?.findings ?? []).filter((f) => route(f.url) === page);
     const checks = new Set(findings.map((f) => f.check)).size;
     // Width by width: a check failing at 390 says nothing of the same check at 1280.
     const atWidth = [...new Set(findings.map((f) => `${f.check}@${f.width}`))].sort();
-    const principles = judge?.pages.find((p) => p.page === page)?.verdicts.filter((v) => !v.pass).map((v) => v.principle) ?? [];
+    const principles = judge?.pages.find((p) => p.page === page)?.verdicts.filter((v) => !v.pass && !ignore.includes(v.principle)).map((v) => v.principle) ?? [];
     return { page, checks, principles: principles.length, total: checks + principles.length, failing: [...atWidth, ...principles] };
   });
 }

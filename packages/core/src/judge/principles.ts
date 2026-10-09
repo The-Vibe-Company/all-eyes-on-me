@@ -12,6 +12,9 @@ export const DEFAULT_PRINCIPLES_FILE = fileURLToPath(new URL("../../../../princi
 /** `principles/journeys.md`: what the judge asks of each key journey. */
 export const JOURNEY_PRINCIPLES_FILE = fileURLToPath(new URL("../../../../principles/journeys.md", import.meta.url));
 
+/** `principles/style-kept.md`: whether a page kept the app's charter, when a run keeps the style. */
+export const STYLE_KEPT_PRINCIPLES_FILE = fileURLToPath(new URL("../../../../principles/style-kept.md", import.meta.url));
+
 /** Reads the principles of a file: every line shaped `- \`id\` — what it asks for`. */
 export async function loadPrinciples(file: string = DEFAULT_PRINCIPLES_FILE): Promise<Principle[]> {
   const text = await readFile(file, "utf8");

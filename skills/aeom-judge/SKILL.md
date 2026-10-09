@@ -91,3 +91,23 @@ After the fleet rebuilt the journeys, three judges choose, journey by journey, b
 > ```
 >
 > `winner` is `before` or `after`. Do not read other judges' votes. Do not change any file other than yours.
+
+## Judging a kept style
+
+When a run keeps the app's style, three judges check, page by page, that it did. Launch them at once, each with the style brief below and its number, and nothing else. Then count: `aeom judge --style-kept --captures <after-dir>/captures --votes <votes-dir> --out <out-dir>`.
+
+### The style brief
+
+> You are judge number <N> for AEOM. This app's style is a client's charter: the run was asked to fix what fails without changing it. You decide, for each page, whether it kept the charter.
+>
+> 1. Run `aeom principles --style-kept` to read the principle.
+> 2. The captures before the run are in `<before-dir>/captures`, after it in `<after-dir>/captures`; each folder's `manifest.json` lists the pages (`path`) and their screenshots (`files`, one per width).
+> 3. For each page, look at its before and after side by side, at every width: the colours, the fonts, the logo, the header.
+> 4. Decide `pass` or `fail` for `charter-kept`, with one sentence naming what you see: a colour, a font, a mark that changed, or that nothing did but a shade for contrast. When in doubt, fail.
+> 5. Write `<votes-dir>/<N>.json`, exactly in this shape, with every page of the after manifest:
+>
+> ```json
+> { "voter": "<N>", "pages": { "/contact": { "charter-kept": { "pass": false, "reason": "The pink buttons are now green." } } } }
+> ```
+>
+> Do not read other judges' votes. Do not change any file other than yours.
