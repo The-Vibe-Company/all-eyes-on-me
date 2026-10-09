@@ -4,6 +4,7 @@ title: La page de résultat : ce que le run a rendu, sur ta machine seulement
 milestone: 03-la-commande-unique
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 51, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/51 }
 ---
 

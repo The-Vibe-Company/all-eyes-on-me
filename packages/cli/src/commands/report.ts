@@ -1,6 +1,6 @@
 import { execFile, spawn } from "node:child_process";
 import { readdir, stat, writeFile } from "node:fs/promises";
-import { basename, join, relative } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { readRun, resultHtml, RunReportError } from "@aeom/core";
 
@@ -47,12 +47,17 @@ export async function runReport(argv: string[]): Promise<number> {
   console.log(`Report: ${relative(process.cwd(), page) || page}`);
 
   // The captures stay on this machine: a run folder git would commit is said.
-  const ignored = await promisify(execFile)("git", ["check-ignore", "-q", runDir]).then(() => true, (error: { code?: number }) => (error.code === 1 ? false : null));
+  // Asked of the run folder's own repository, wherever aeom runs from.
+  const ignored = await promisify(execFile)("git", ["check-ignore", "-q", "."], { cwd: runDir }).then(() => true, (error: { code?: number }) => (error.code === 1 ? false : null));
   if (ignored === false) console.log(`${runDir} is not ignored by git: add .aeom/runs/ to .gitignore, so no capture enters a commit.`);
 
   if (values.open) {
-    const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
-    spawn(opener, [page], { detached: true, stdio: "ignore" }).unref();
+    const file = resolve(page);
+    const [opener, args] = process.platform === "darwin" ? ["open", [file]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", file]] : ["xdg-open", [file]];
+    const child = spawn(opener, args as string[], { detached: true, stdio: "ignore" });
+    // No program to open it, such as on a server: the page is written, so say where it is.
+    child.on("error", () => console.log(`Could not open it here: open ${file} in a browser.`));
+    child.unref();
   }
   return 0;
 }

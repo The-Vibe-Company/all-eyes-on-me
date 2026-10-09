@@ -1,5 +1,5 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { loadConfig, verdictOf, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 
@@ -96,6 +96,7 @@ async function verdict(argv: string[]): Promise<number> {
   const s = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const journeyPart = m.journeys ? `; ${s(m.journeys, "journey")} on ${s(m.journeyPrinciples, "principle")}` : "";
   const line = `Measured: ${s(m.screens, "screen")} at ${m.widths.join(", ")} px, ${s(m.checks, "check")} and ${s(m.principles, "principle")} each${journeyPart}.`;
+  if (values.out) await mkdir(dirname(values.out), { recursive: true });
   if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null }, null, 2) + "\n");
   console.log(line);
   if (keptWithStyle.length) console.log(`Left to the style kept: ${keptWithStyle.map((f) => `${f.where} ${f.what.split(":")[0]}`).join(", ")}.`);

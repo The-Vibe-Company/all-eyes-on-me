@@ -178,8 +178,8 @@ test("with the style kept, the principles that judge the style itself are left t
 test("aeom verdict --out keeps the verdict in a file, for the result page", async () => {
   const dir = await project({ failing: { "/": ["states"] } });
   try {
-    await run(dir, ["verdict", "--out", "verdict.json"]);
-    const saved = JSON.parse(await readFile(join(dir, "verdict.json"), "utf8"));
+    await run(dir, ["verdict", "--out", "runs/r/verdict.json"]);
+    const saved = JSON.parse(await readFile(join(dir, "runs", "r", "verdict.json"), "utf8"));
     assert.equal(saved.nothingToRedo, false);
     assert.match(saved.line, /^Measured: 2 screens/);
     assert.equal(saved.failures[0].where, "/");

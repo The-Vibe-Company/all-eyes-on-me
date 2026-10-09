@@ -48,6 +48,8 @@ Options:
     return 1;
   }
   await contactSheet({ out: values.out, items, columns });
+  // The sentences stay beside the sheet, so the result page can say what each direction serves.
+  if (items.some((i) => i.note)) await writeFile(values.out.replace(/\.png$/i, "") + ".json", JSON.stringify(items.map(({ label, note }) => ({ label, note })), null, 2) + "\n");
   console.log(`Sheet of ${items.length} captures: ${values.out}`);
   return 0;
 }

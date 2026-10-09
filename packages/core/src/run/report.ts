@@ -6,6 +6,7 @@ import { champion, type Tournament } from "../directions/tournament.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { RatchetVerdict } from "../journey/ratchet.js";
 import type { JudgeReport } from "../judge/tally.js";
+import { route } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
 
@@ -22,10 +23,12 @@ export interface ResultPage {
   run: string;
   verdict: SavedVerdict | null;
   /** The direction the knockout chose, when the run built directions. */
-  direction: { champion: string; entrants: string[]; reasons: string[]; sheet: string | null } | null;
+  direction: { champion: string; sentence: string | null; entrants: string[]; reasons: string[]; sheet: string | null } | null;
   screens: {
     page: string;
-    status: "kept" | "sent back" | "new" | "missing" | "unchanged";
+    status: "kept" | "sent back" | "new" | "missing" | "unchanged" | "does not load";
+    /** What fails on it, before the run and at the end, when both were measured. */
+    count: { before: number; after: number } | null;
     widths: { width: number; before: string | null; after: string | null }[];
     cleared: string[];
     still: string[];
@@ -36,12 +39,16 @@ export interface ResultPage {
     name: string;
     status: "kept" | "sent back" | "unchanged";
     why: string | null;
+    /** Where it broke, before the run and at the end. */
+    broke: { before: string | null; after: string | null };
     steps: { before: number | null; after: number | null };
     widths: { width: number; before: string | null; after: string | null }[];
     cleared: string[];
     remaining: string[];
   }[];
   stillFailing: Failure[];
+  /** False when the run stopped before measuring its end: what still fails is then what failed before. */
+  measuredAfter: boolean;
 }
 
 /** A run folder without what the page needs. */
@@ -82,7 +89,11 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const ignore = keepStyle ? STYLE_PRINCIPLES : [];
   const comparison = now ? comparePages(scorePages(was.check, was.judge, ignore), scorePages(now.check, now.judge, ignore)) : [];
 
-  const pages = [...new Set([...before.pages.map((p) => p.path), ...(after?.pages.map((p) => p.path) ?? [])])];
+  // What section 5 decided, page by page: a page that got better is kept, any other is put back.
+  const decided = (await json<{ page: string; verdict: string }[]>(join(runDir, "after", "compare.json"))) ?? null;
+  const erroredBefore = before.errors.map((e) => route(e.url));
+  const erroredAfter = after?.errors.map((e) => route(e.url)) ?? [];
+  const pages = [...new Set([...before.pages.map((p) => p.path), ...erroredBefore, ...(after?.pages.map((p) => p.path) ?? []), ...erroredAfter])];
   const screens: ResultPage["screens"] = pages.map((page) => {
     const b = before.pages.find((p) => p.path === page);
     const a = after?.pages.find((p) => p.path === page);
@@ -90,10 +101,15 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     const c = comparison.find((x) => x.page === page);
     const failingBefore = c?.before?.failing ?? [];
     const failingAfter = c?.after?.failing ?? [];
-    const status = !c ? "unchanged" : c.verdict === "better" ? "kept" : c.verdict === "new" || c.verdict === "missing" ? c.verdict : "sent back";
+    const decision = decided?.find((d) => d.page === page)?.verdict;
+    const status: ResultPage["screens"][number]["status"] =
+      erroredAfter.includes(page) || (erroredBefore.includes(page) && !a) ? "does not load"
+      : !decision ? (c?.verdict === "new" ? "new" : "unchanged")
+      : decision === "better" ? "kept" : decision === "new" || decision === "missing" ? decision : "sent back";
     return {
       page,
       status,
+      count: c?.before && c.after ? { before: c.before.total, after: c.after.total } : null,
       widths: widths.map((width) => ({
         width,
         before: b?.files.find((f) => f.width === width) ? `before/captures/${b.files.find((f) => f.width === width)!.file}` : null,
@@ -108,12 +124,21 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const tournament = await json<Tournament>(join(runDir, "directions", "tournament.json"));
   const winner = tournament ? champion(tournament) : null;
   const final = tournament?.duels.filter((d) => d.winner === winner).sort((x, y) => y.round - x.round)[0];
-  const direction = tournament && winner ? { champion: winner, entrants: tournament.entrants, reasons: final?.reasons ?? [], sheet: (await exists(join(runDir, "directions", "sheet.png"))) ? "directions/sheet.png" : null } : null;
+  const notes = (await json<{ label: string; note?: string }[]>(join(runDir, "directions", "sheet.json"))) ?? [];
+  const direction = tournament && winner ? { champion: winner, sentence: notes.find((n) => n.label === winner)?.note ?? null, entrants: tournament.entrants, reasons: final?.reasons ?? [], sheet: (await exists(join(runDir, "directions", "sheet.png"))) ? "directions/sheet.png" : null } : null;
 
   const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
   const lastReplay = await first(runDir, ["journeys-end", "journeys-after"], "report.json");
   const replayAfter = lastReplay ? await json<JourneyReport>(join(runDir, lastReplay, "report.json")) : null;
   const ratchet = (await json<RatchetVerdict[]>(join(runDir, "journeys-end", "ratchet.json"))) ?? [];
+  // Cleared and still failing are counted from the critique of the app before the run, as the sheets are.
+  const critiqueBefore = await json<JudgeReport>(join(runDir, "before", "reports", "judge-journeys.json"));
+  const critiqueAfter = lastReplay ? await json<JudgeReport>(join(runDir, lastReplay, "judge-journeys.json")) : null;
+  const failingOf = (report: JudgeReport | null, slug: string) => report?.pages.find((p) => p.page === slug)?.verdicts.filter((v) => !v.pass).map((v) => v.principle) ?? null;
+  const broke = (r: JourneyReport["journeys"][number] | undefined) => {
+    const b = r?.runs.find((x) => x.broken)?.broken;
+    return b ? `it broke at step ${b.step}: ${b.reason}` : null;
+  };
   const widest = (r: JourneyReport["journeys"][number] | undefined) => r?.runs.reduce<(typeof r.runs)[number] | undefined>((w, x) => (!w || x.width > w.width ? x : w), undefined);
   const journeys: ResultPage["journeys"] = (replayBefore?.journeys ?? []).map((j) => {
     const a = replayAfter?.journeys.find((x) => x.slug === j.slug);
@@ -124,28 +149,36 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       name: j.name,
       status: verdictOfJourney ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
       why: verdictOfJourney?.why ?? null,
+      broke: { before: broke(j), after: broke(a) },
       steps: { before: widest(j)?.counts.steps ?? null, after: a ? (widest(a)?.counts.steps ?? null) : null },
       widths: widths.map((width) => ({
         width,
         before: j.runs.find((r) => r.width === width)?.sheet ? `journeys-before/${j.runs.find((r) => r.width === width)!.sheet}` : null,
         after: a?.runs.find((r) => r.width === width)?.sheet ? `${lastReplay}/${a.runs.find((r) => r.width === width)!.sheet}` : null,
       })),
-      cleared: verdictOfJourney?.cleared ?? [],
-      remaining: verdictOfJourney?.remaining ?? [],
+      ...(() => {
+        const was = failingOf(critiqueBefore, j.slug), now = failingOf(critiqueAfter, j.slug);
+        if (was && now) return { cleared: was.filter((p) => !now.includes(p)), remaining: now };
+        return { cleared: verdictOfJourney?.cleared ?? [], remaining: verdictOfJourney?.remaining ?? [] };
+      })(),
     };
   });
 
   // What still fails: the verdict of the last state, screens and journeys.
   let stillFailing: Failure[] = [];
+  const measuredAfter = Boolean(now?.check && now.judge);
   if (now?.check && now.judge) {
-    const journeyJudge = lastReplay ? ((await json<JudgeReport>(join(runDir, lastReplay, "judge-journeys.json"))) ?? undefined) : undefined;
-    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures;
-  }
-  return { run, verdict, direction, screens, journeys, stillFailing };
+    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures;
+    // A page that did not load before the run and that the end did not measure: still broken, as far as anyone knows.
+    for (const page of erroredBefore) if (!after?.pages.some((p) => p.path === page) && !erroredAfter.includes(page)) stillFailing.push({ kind: "page", where: page, what: "did not load before the run, and was not measured after the run" });
+  } else if (verdict) stillFailing = verdict.failures;
+  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-const img = (src: string | null, alt: string) => (src ? `<img src="${escape(src)}" alt="${escape(alt)}" loading="lazy">` : `<p class="none">No capture</p>`);
+/** A path inside the run's folder, each segment URL-encoded: a `#` or `?` in a file name stays part of the name. */
+const href = (path: string) => path.split("/").map((segment) => encodeURI(segment).replace(/#/g, "%23").replace(/\?/g, "%3F")).join("/");
+const img = (src: string | null, alt: string) => (src ? `<img src="${escape(href(src))}" alt="${escape(alt)}" loading="lazy">` : `<p class="none">No capture</p>`);
 const list = (label: string, items: string[]) => (items.length ? `<p><span class="label">${label}</span> ${items.map(escape).join(", ")}</p>` : "");
 
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
@@ -155,7 +188,7 @@ export function resultHtml(r: ResultPage): string {
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a><a href="#still">Still failing</a></nav>`;
 
   const direction = r.direction
-    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2><p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
+    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
     : r.verdict?.keepStyle
       ? `<section id="direction"><h2>Style kept</h2><p class="muted">No new direction: the run fixed what failed on the app's own style.</p></section>`
       : "";
@@ -163,17 +196,17 @@ export function resultHtml(r: ResultPage): string {
   const pair = (w: { width: number; before: string | null; after: string | null }, what: string) =>
     `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Before</figcaption>${img(w.before, `${what} before, ${w.width} px`)}</figure>${nothing ? "" : `<figure><figcaption>After</figcaption>${img(w.after, `${what} after, ${w.width} px`)}</figure>`}</div></div>`;
   const screens = r.screens
-    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(" ", "-")}">${s.status}</span></h3>${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
+    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
     .join("");
   const journeys = r.journeys
-    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3><p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
+    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
     .join("");
-  const still = r.stillFailing.length
-    ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul>`
-    : `<p>Nothing.</p>`;
+  const still = `${r.measuredAfter ? "" : `<p class="muted">Not measured after the run: what failed before it.</p>`}${
+    r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
+  }`;
 
   const body = nothing
-    ? `<section id="screens"><h2>Screens</h2>${screens}</section>`
+    ? `<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}`
     : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}<section id="still"><h2>Still failing</h2>${still}</section>`;
 
   return `<!doctype html>
@@ -194,7 +227,7 @@ export function resultHtml(r: ResultPage): string {
   nav { display: flex; gap: 16px; padding-top: 12px; padding-bottom: 12px; position: sticky; top: 0; background: var(--paper); border-bottom: 1px solid var(--rule); }
   nav a { color: var(--ink); }
   .status { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-left: 8px; }
-  .status.kept { color: var(--kept); } .status.sent-back, .status.missing { color: var(--back); } .status.unchanged, .status.new { color: var(--muted); }
+  .status.kept { color: var(--kept); } .status.sent-back, .status.missing, .status.does-not-load { color: var(--back); } .status.unchanged, .status.new { color: var(--muted); }
   blockquote { margin: 8px 0; padding-left: 12px; border-left: 3px solid var(--rule); }
   .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   figure { margin: 0; } figcaption { font-size: 13px; margin-bottom: 4px; }
