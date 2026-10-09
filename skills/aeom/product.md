@@ -8,7 +8,7 @@
 # <The app's name>
 
 ## What it is for
-Two to four sentences: what the app does, in its users' words. (seen: <screen or file>)
+Two to four sentences: what the app does, in its users' words, naming what it handles: what it sells, lends or tracks, its subject. The art directions start from these words: « a small online shop » gives them nothing to start from, « a shop for lamps, chairs and rugs for the home » does. (seen: <screen or file>)
 
 ## Who uses it
 Who opens it, how often, on what device. (to confirm)
