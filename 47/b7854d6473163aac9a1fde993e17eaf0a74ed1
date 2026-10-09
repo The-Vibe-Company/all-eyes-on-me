@@ -1,0 +1,39 @@
+packages/cli/src/commands/compare.test.ts
+  s_4ce34ec42d9105::t_992915cda7a3b2 65,68-77,79-82
+packages/cli/src/commands/judge.test.ts
+  s_4ce34ec42d9105::t_17ff489be3b30e 176-196
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_80b1d34b711930 4,28-29,41,61,94,96,99
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_ebe7636cf186ec 4,35,50-51,63,86-96
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_baeea1589f9e69 64
+packages/core/src/judge/index.ts
+  s_4ce34ec42d9105::t_ba15e902f452f0 1
+packages/core/src/judge/principles.ts
+  s_4ce34ec42d9105::t_8487bf1b5600f0 15-17
+packages/core/src/run/compare.ts
+  s_4ce34ec42d9105::t_ec9c53a3f4a220 27-28,35
+principles/style-kept.md
+  s_4ce34ec42d9105::t_14ee56b863eafc 1-5
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_e3543c2f1eb68f 94-113
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_1b994e09a2e3e4 46,61,230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47b7854d6473163aac9a1fde993e17eaf0a74ed1",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
