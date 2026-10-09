@@ -64,6 +64,10 @@ export async function runCompare(argv: string[]): Promise<number> {
     console.log(COMPARE_HELP);
     return values.help ? 0 : 1;
   }
+  if (values.journeys && values.strict) {
+    console.error(`--strict compares pages; the journeys' ratchet already sends back what got worse.`);
+    return 1;
+  }
   if (values.journeys) return compareJourneys(positionals[0]!, positionals[1]!, values);
   const [beforeDir, afterDir] = positionals as [string, string];
   const problems: string[] = [];

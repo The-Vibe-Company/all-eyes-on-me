@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -35,11 +35,28 @@ test("aeom compare names what fails after and passed before, and --strict exits 
     await snapshot(join(dir, "journeys"), ["overflow"], []);
     const { code, out } = await run(dir, ["compare", "pages", "journeys"]);
     assert.equal(code, 0, out);
-    assert.match(out, /\/\s+3\s+1\s+↑ better\n\s+newly failing: overflow/);
+    assert.match(out, /\/\s+3\s+1\s+↑ better\n\s+newly failing: overflow@1280/);
     const strict = await run(dir, ["compare", "pages", "journeys", "--strict"]);
     assert.equal(strict.code, 1);
     assert.match(strict.out, /1 page broke something that passed before: \//);
     assert.equal((await run(dir, ["compare", "pages", "pages", "--strict"])).code, 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("with --strict, a page gone after exits 1, a new page that fails does not, and --journeys refuses it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-"));
+  try {
+    await snapshot(join(dir, "before"), [], []);
+    await snapshot(join(dir, "after"), [], []);
+    const report = JSON.parse(await readFile(join(dir, "after", "reports", "check.json"), "utf8"));
+    await writeFile(join(dir, "after", "reports", "check.json"), JSON.stringify({ ...report, pages: ["http://x/", "http://x/neuve"], findings: [{ check: "contrast", url: "http://x/neuve", width: 1280, message: "" }] }));
+    assert.equal((await run(dir, ["compare", "before", "after", "--strict"])).code, 0, "a new page has nothing that passed before");
+    const gone = await run(dir, ["compare", "after", "before", "--strict"]);
+    assert.equal(gone.code, 1);
+    assert.match(gone.out, /\/neuve\s+1\s+-\s+✗ missing after/);
+    assert.equal((await run(dir, ["compare", "--journeys", "before", "after", "--strict"])).code, 1);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

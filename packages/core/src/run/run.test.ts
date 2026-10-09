@@ -37,7 +37,7 @@ const judge = (failing: [string, string][]): JudgeReport => ({
 test("a page's score counts its failing checks and its failing principles", () => {
   const scores = scorePages(check([["/", "cursor"], ["/", "contrast"]]), judge([["/commandes", "states"]]));
   assert.deepEqual(scores, [
-    { page: "/", checks: 2, principles: 0, total: 2, failing: ["contrast", "cursor"] },
+    { page: "/", checks: 2, principles: 0, total: 2, failing: ["contrast@1280", "cursor@1280"] },
     { page: "/commandes", checks: 0, principles: 1, total: 1, failing: ["states"] },
   ]);
 });
@@ -57,8 +57,15 @@ test("a page names what fails after and passed before, even when fewer things fa
   const after = scorePages(check([["/", "overflow"]]), judge([]));
   const [home] = comparePages(before, after);
   assert.equal(home!.verdict, "better");
-  assert.deepEqual(home!.newly, ["overflow"]);
+  assert.deepEqual(home!.newly, ["overflow@1280"]);
   assert.deepEqual(comparePages(before, before)[0]!.newly, []);
+});
+
+test("a check that passed at one width and fails there now is named, though it already failed at another width", () => {
+  const at = (widths: number[]): CheckReport => ({ ...check([]), findings: widths.map((width) => ({ check: "contrast" as const, url: "http://x.test/", width, message: "" })) });
+  const [home] = comparePages(scorePages(at([390]), undefined), scorePages(at([390, 1280]), undefined));
+  assert.equal(home!.verdict, "same");
+  assert.deepEqual(home!.newly, ["contrast@1280"]);
 });
 
 test("the project config gives the defaults for url and start, and is optional", async () => {
