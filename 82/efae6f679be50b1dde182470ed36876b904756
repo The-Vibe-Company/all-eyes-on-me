@@ -1,0 +1,39 @@
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_7ed1b0d82b6365 3,30-33,35-39
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_685b3cbf16ffd3 39-42
+packages/cli/src/commands/product.test.ts
+  s_4ce34ec42d9105::t_82d7572c8976ae 197-204
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_ef1e8f9e8dee4f 29-30,99-108
+packages/core/src/directions/directions.test.ts
+  s_4ce34ec42d9105::t_891b91ca3b3d05 68
+packages/core/src/directions/sheet.ts
+  s_4ce34ec42d9105::t_f287cf0c28f4f5 8-9,27,36,59-60
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_e2d4568cc0e0f6 317
+packages/core/src/product/product.test.ts
+  s_4ce34ec42d9105::t_e97876b77ef6c4 117-139
+packages/core/src/product/product.ts
+  s_4ce34ec42d9105::t_63e2c4c1d157d3 12-14,143,145,147-148,152-154,158-160,164-165,168-171,176,178-180,182-184
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_c5c6f8b80d4345 18,89,98,100,102,104
+skills/aeom/product.md
+  s_4ce34ec42d9105::t_acc6e596176375 31,39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "82efae6f679be50b1dde182470ed36876b904756",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
