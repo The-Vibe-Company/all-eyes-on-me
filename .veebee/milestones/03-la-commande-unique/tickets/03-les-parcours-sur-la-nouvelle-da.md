@@ -4,6 +4,7 @@ title: Dans le même run, les parcours sont refaits sur la nouvelle DA
 milestone: 03-la-commande-unique
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 49, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/49 }
 ---
 

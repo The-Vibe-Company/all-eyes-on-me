@@ -32,11 +32,11 @@ async function readReport<T>(file: string, problems: string[]): Promise<T | unde
   }
 }
 
-const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir>
+const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict]
        aeom compare --journeys <before-dir> <after-dir> [--duels <dir>] [--base <ref>] [--known <dir>]
 
-Compares two snapshots page by page: what fails before and after (checks + principles).
-Writes compare.json in <after-dir>.
+Compares two snapshots page by page: what fails before and after (checks + principles),
+and what fails after that passed before. Writes compare.json in <after-dir>.
 
 With --journeys, the ratchet of the journeys: each folder holds a replay
 (report.json, from aeom journey) and its critique (judge-journeys.json, from
@@ -46,6 +46,7 @@ prefer it in the duel; otherwise the old one comes back. Writes ratchet.json
 in <after-dir>.
 
 Options:
+  --strict             Exit with 1 when anything that passed before fails after
   --journeys           Compare journeys, not pages
   --duels <dir>        The judges' duel votes (default <after-dir>/duels)
   --base <ref>         The commit the change started from, for the guard
@@ -57,11 +58,15 @@ export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { strict: { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || positionals.length !== 2) {
     console.log(COMPARE_HELP);
     return values.help ? 0 : 1;
+  }
+  if (values.journeys && values.strict) {
+    console.error(`--strict compares pages; the journeys' ratchet already sends back what got worse.`);
+    return 1;
   }
   if (values.journeys) return compareJourneys(positionals[0]!, positionals[1]!, values);
   const [beforeDir, afterDir] = positionals as [string, string];
@@ -88,6 +93,13 @@ export async function runCompare(argv: string[]): Promise<number> {
   console.log(`${"page".padEnd(column)}before  after   (checks + principles failing)`);
   for (const c of comparison) {
     console.log(`${c.page.padEnd(column)}${String(c.before?.total ?? "-").padEnd(8)}${String(c.after?.total ?? "-").padEnd(8)}${mark[c.verdict]}`);
+    if (c.before && c.newly.length) console.log(`${"".padEnd(column)}newly failing: ${c.newly.join(", ")}`);
+  }
+  // A page missing after broke as a whole: nothing it passed can be said to pass any more.
+  const broken = comparison.filter((c) => (c.before && c.newly.length) || c.verdict === "missing");
+  if (values.strict && broken.length) {
+    console.error(`\n${broken.length} page${broken.length === 1 ? "" : "s"} broke something that passed before: ${broken.map((c) => c.page).join(", ")}.`);
+    return 1;
   }
   return 0;
 }
