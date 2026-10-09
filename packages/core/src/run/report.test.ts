@@ -38,7 +38,7 @@ test("« nothing to redo » is itself a verdict on the screens, and the page ask
   assert.deepEqual(ids(resultHtml(NOTHING)), ["nothing-to-redo"]);
 });
 
-test("in a browser, the page keeps a reason typed without leaving the field, says when the server is gone, and opened as a file asks for nothing", async () => {
+test("in a browser, the page keeps a reason typed without leaving the field, even typed before the server answers the click, says when the server is gone, and opened as a file asks for nothing", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-page-"));
   const posts: { id: string; agree: boolean; why?: string }[] = [];
   const zero = { direction: { agreed: 0, total: 0 }, screens: { agreed: 0, total: 0 }, journeys: { agreed: 0, total: 0 }, principles: { agreed: 0, total: 0 } };
@@ -47,6 +47,8 @@ test("in a browser, the page keeps a reason typed without leaving the field, say
       let body = "";
       for await (const chunk of req) body += chunk;
       posts.push(JSON.parse(body));
+      // A slow answer: the reason is typed before the click is confirmed.
+      await new Promise((done) => setTimeout(done, 800));
       return res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ rates: zero }));
     }
     if (req.url === "/api/feedback") return res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ mine: [], rates: zero }));
