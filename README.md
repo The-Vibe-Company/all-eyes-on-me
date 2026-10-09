@@ -12,11 +12,12 @@ Today, most of the first works. You type `/aeom` in Claude Code on your app: it 
 
 1. **Understand.** AEOM writes what the app is for, who uses it and its main loop in `.aeom/product.md`, which you can correct, and records three to five key journeys that it replays in a real browser.
 2. **Look.** Every screen is captured at 390 and 1280 px. Four checks are measured: pointer cursor, sideways scrolling, AA contrast, console errors. Eight principles are judged by three independent judges, and the majority decides.
-3. **Decide.** If nothing fails, AEOM says « nothing to redo » and stops. No branch is created.
+3. **Decide.** If nothing fails, AEOM says « nothing to redo », writes the standard of the front as it is (step 8), and stops. No branch is created.
 4. **A new direction.** Six art directions, each drawn from something the product's users know (an object, a document, a place, a trade), never from the looks AIs propose by default. Judges screen out the default looks, then a knockout keeps one, three votes per duel. With `--garder-le-style`, or `"style": "keep"` in `.aeom/config.json`, the app's own style is kept and fixed instead.
 5. **The pages.** One worker per page, all at once, each in its own files. A page is kept only if fewer things fail on it than before.
 6. **The journeys.** Journeys the judges found failing are reworked on the new direction. A guard refuses any change that adds a feature (a new call to the server, a protected file). A journey is kept only if the judges prefer it and it still reaches its end.
-7. **Show.** AEOM names, at most three, the features a blocked journey would need, and builds none of them. It writes a result page on your machine, where you can say whether you agree with each verdict. It then opens a pull request in words, with no capture.
+7. **Show.** AEOM names, at most three, the features a blocked journey would need, and builds none of them. It writes a result page on your machine, where you can say whether you agree with each verdict.
+8. **The standard, then the PR.** AEOM writes the standard of your front in `.aeom/standard.md`, in words: the direction and where it comes from, every token and every component of the kit with the file of the code it lives in, and the product's own rules. It commits it on the run's branch, then opens a pull request in words, with no capture. After « nothing to redo », it writes the standard of the front as it is, and leaves it uncommitted. What you correct in it by hand stays on the next run.
 
 Everything the run keeps is on a branch, `aeom/<run>`: your branch does not move.
 
@@ -78,11 +79,12 @@ A full run is long and spawns many agents: on the demo app, about an hour of wor
 | `aeom report` | Write the page of what a run gave, in the run's folder |
 | `aeom features` | Name what a blocked journey would need, without building it |
 | `aeom pr` | Push the run's branch and open a PR, in words, with no capture |
+| `aeom standard` | Write the standard of the front, keeping the user's edits |
 
 ## What comes next
 
 None of this is done yet:
-- **Level 1, finished.** A bench of three apps with defects noted by hand, measuring what AEOM finds and fixes. A run that ends by writing the standard of the front (the direction, its tokens, its kit).
+- **Level 1, finished.** A bench of three apps with defects noted by hand, measuring what AEOM finds and fixes.
 - **Level 2, keep.** On every pull request, the new screens are held to the standard. What can be measured blocks the CI check, with no model. The judges say in a comment whether it is still the same product.
 - **Level 3, build.** Build what is asked, or a front from scratch, inside the standard: front only, on an existing API or fake data.
 - **Later.**
@@ -100,7 +102,7 @@ None of this is done yet:
 | `skills/` | The coordinator skill, `/aeom`, and the judges, `/aeom-judge`. They run in Claude Code and launch workers and judges as subagents. |
 
 State lives in files:
-- `.aeom/` in the project's repository: the product sheet, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
+- `.aeom/` in the project's repository: the product sheet, the standard of the front, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
 - `~/.aeom/taste/` on your machine: your feedback on each verdict.
 
 The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).

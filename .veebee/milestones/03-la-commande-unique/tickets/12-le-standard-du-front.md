@@ -4,6 +4,7 @@ title: Le run écrit le standard du front
 milestone: 03-la-commande-unique
 depends_on: [01, 02]
 design: null
+status: done
 tracker: { tool: github, id: 59, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/59 }
 ---
 
