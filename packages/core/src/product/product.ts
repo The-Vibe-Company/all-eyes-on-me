@@ -7,6 +7,8 @@
  * journeys is a journey.
  */
 
+import { threeWay } from "./merge.js";
+
 export const PARTS = ["What it is for", "Who uses it", "The main loop", "Key journeys"] as const;
 const JOURNEYS = "Key journeys";
 /** A source: `(seen: …)`, which may hold a path with one level of parentheses such as `src/app/(shop)/page.tsx`, or `(to confirm)`. */
@@ -88,52 +90,25 @@ export interface ProductMerge {
 }
 
 /**
- * Merges AEOM's new proposal into the sheet the user may have corrected.
- * `base` is AEOM's previous proposal: a part or journey that differs from it,
- * or that it did not hold, is the user's and stays as they wrote it; one the
- * user removed stays removed. What the user left alone takes the new proposal,
- * or goes when the proposal no longer holds it, and what is new in the
- * proposal is added. Without `base`, everything already in the sheet counts as
- * the user's.
+ * Merges AEOM's new proposal into the sheet the user may have corrected, part
+ * by part and journey by journey, as `threeWay` says. A new title goes first,
+ * a new part before the journeys, a new journey after the last one.
  */
 export function mergeProduct({ base, current, proposed }: { base?: string; current?: string; proposed: string }): ProductMerge {
   const next = units(proposed);
   const join = (list: Unit[]) => list.map((u) => u.text).join("\n\n") + "\n";
   if (current === undefined) return { text: join(next), kept: [], updated: [], added: next.map((u) => u.key), removed: [] };
-
-  const before = base === undefined ? null : new Map(units(base).map((u) => [u.key, u.text]));
-  const now = units(current);
-  const proposedText = new Map(next.map((u) => [u.key, u.text]));
-  const result = { kept: [] as string[], updated: [] as string[], added: [] as string[], removed: [] as string[] };
-
-  const merged: Unit[] = [];
-  for (const unit of now) {
-    const offered = proposedText.get(unit.key);
-    const untouched = before !== null && before.get(unit.key) === unit.text;
-    if (offered === unit.text) merged.push(unit);
-    else if (untouched && offered === undefined) result.removed.push(unit.key);
-    else if (untouched) {
-      result.updated.push(unit.key);
-      merged.push({ ...unit, text: offered! });
-    } else {
-      merged.push(unit);
-      if (before !== null || offered !== undefined) result.kept.push(unit.key);
-    }
-  }
-
-  const present = new Set(now.map((u) => u.key));
-  for (const unit of next) {
-    if (present.has(unit.key)) continue;
-    // In AEOM's last proposal but gone from the sheet: the user removed it.
-    if (before?.has(unit.key)) continue;
-    // A new title goes first, a new part before the journeys, a new journey after the last one.
-    let at = unit.title ? 0 : merged.findIndex((u) => u.key === JOURNEYS);
-    if (unit.journey) merged.forEach((u, i) => (u.journey || u.key === JOURNEYS) && (at = i + 1));
-    merged.splice(at === -1 ? merged.length : at, 0, unit);
-    result.added.push(unit.key);
-  }
-
-  return { text: join(merged), ...result };
+  const { pieces, ...result } = threeWay({
+    base: base === undefined ? undefined : units(base),
+    current: units(current),
+    proposed: next,
+    place: (merged, unit) => {
+      let at = unit.title ? 0 : merged.findIndex((u) => u.key === JOURNEYS);
+      if (unit.journey) merged.forEach((u, i) => (u.journey || u.key === JOURNEYS) && (at = i + 1));
+      return at === -1 ? merged.length : at;
+    },
+  });
+  return { text: join(pieces), ...result };
 }
 
 /** What a direction may start from: the app's purpose, its users and its main loop, as far as they are known. */
