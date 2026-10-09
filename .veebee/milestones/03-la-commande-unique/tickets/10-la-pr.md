@@ -4,6 +4,7 @@ title: Le run se termine par une PR, sans captures
 milestone: 03-la-commande-unique
 depends_on: [05, 06]
 design: null
+status: done
 tracker: { tool: github, id: 56, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/56 }
 ---
 
