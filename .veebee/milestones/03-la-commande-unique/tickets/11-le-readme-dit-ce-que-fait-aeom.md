@@ -4,6 +4,7 @@ title: Le README et la landing disent ce que fait aeom
 milestone: 03-la-commande-unique
 depends_on: [01, 05]
 design: null
+status: done
 tracker: { tool: github, id: 57, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/57 }
 ---
 
