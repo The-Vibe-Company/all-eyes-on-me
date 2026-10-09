@@ -8,5 +8,10 @@
     "kind": "waiting-human",
     "reason": "Le pilote attend la base et le compte fictifs de Road-To-Mastock, qu'Antoine prépare lui-même.",
     "pr": ""
+  },
+  "03-la-commande-unique/08": {
+    "kind": "waiting-human",
+    "reason": "Prêt, mais coûteux : trois /aeom complets (environ trois heures, quelque 180 sous-agents), puis trois fois plus pour le 09. Attend le go d'Antoine, et de savoir qui note les défauts à la main.",
+    "pr": ""
   }
 }
