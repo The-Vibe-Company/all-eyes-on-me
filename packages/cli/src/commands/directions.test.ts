@@ -37,6 +37,7 @@ test("aeom sheet puts each direction's note under its capture, and refuses a not
     const height = async (file: string) => (await readFile(join(dir, file))).readUInt32BE(20);
     assert.ok((await height("noted.png")) > (await height("bare.png")), "the note takes room under the capture");
     assert.ok((await stat(join(dir, "noted.png"))).size > 1000);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, "noted.json"), "utf8")), [{ label: "tissus", note: "Serves the main loop: choose a piece, add it, follow the order." }], "the sentences stay beside the sheet, for the result page");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

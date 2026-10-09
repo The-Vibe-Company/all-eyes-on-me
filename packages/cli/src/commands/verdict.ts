@@ -1,5 +1,5 @@
-import { readdir, readFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { loadConfig, verdictOf, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 
@@ -18,7 +18,8 @@ Options:
   --reports <dir>   check.json, judge.json and judge-journeys.json (default .aeom/reports)
   --journeys <dir>  The key journeys, one file each (default .aeom/journeys)
   --captures <dir>  The last replay of the journeys (default .aeom/captures/journeys)
-  --keep-style      Keep the existing style, such as a brand charter: no new direction`;
+  --keep-style      Keep the existing style, such as a brand charter: no new direction
+  --out <file>      Also keep the verdict in this file, for the result page (aeom report)`;
 
 const isList = (value: unknown) => Array.isArray(value);
 const isJudge = (r: Partial<JudgeReport> | null) => !!r && isList(r.principles) && isList(r.pages) && r.pages!.every((p) => typeof p?.page === "string" && isList(p.verdicts));
@@ -63,7 +64,7 @@ export async function runVerdict(argv: string[]): Promise<number> {
 async function verdict(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { reports: { type: "string", default: ".aeom/reports" }, journeys: { type: "string", default: ".aeom/journeys" }, captures: { type: "string", default: ".aeom/captures/journeys" }, "keep-style": { type: "boolean" }, help: { type: "boolean", short: "h" } },
+    options: { reports: { type: "string", default: ".aeom/reports" }, journeys: { type: "string", default: ".aeom/journeys" }, captures: { type: "string", default: ".aeom/captures/journeys" }, "keep-style": { type: "boolean" }, out: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(VERDICT_HELP);
@@ -94,7 +95,10 @@ async function verdict(argv: string[]): Promise<number> {
   }
   const s = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const journeyPart = m.journeys ? `; ${s(m.journeys, "journey")} on ${s(m.journeyPrinciples, "principle")}` : "";
-  console.log(`Measured: ${s(m.screens, "screen")} at ${m.widths.join(", ")} px, ${s(m.checks, "check")} and ${s(m.principles, "principle")} each${journeyPart}.`);
+  const line = `Measured: ${s(m.screens, "screen")} at ${m.widths.join(", ")} px, ${s(m.checks, "check")} and ${s(m.principles, "principle")} each${journeyPart}.`;
+  if (values.out) await mkdir(dirname(values.out), { recursive: true });
+  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null }, null, 2) + "\n");
+  console.log(line);
   if (keptWithStyle.length) console.log(`Left to the style kept: ${keptWithStyle.map((f) => `${f.where} ${f.what.split(":")[0]}`).join(", ")}.`);
   if (nothingToRedo) {
     console.log(`\nNothing to redo: nothing fails.`);

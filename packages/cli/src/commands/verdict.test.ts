@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -170,6 +170,20 @@ test("with the style kept, the principles that judge the style itself are left t
     assert.match(kept.out, /Left to the style kept: \/ not-generic, \/ not-ai-default\./);
     assert.match(kept.out, /Nothing to redo: nothing fails\.$/m);
     assert.doesNotMatch(kept.out, /Next:/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom verdict --out keeps the verdict in a file, for the result page", async () => {
+  const dir = await project({ failing: { "/": ["states"] } });
+  try {
+    await run(dir, ["verdict", "--out", "runs/r/verdict.json"]);
+    const saved = JSON.parse(await readFile(join(dir, "runs", "r", "verdict.json"), "utf8"));
+    assert.equal(saved.nothingToRedo, false);
+    assert.match(saved.line, /^Measured: 2 screens/);
+    assert.equal(saved.failures[0].where, "/");
+    assert.equal(saved.keepStyle, false);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
