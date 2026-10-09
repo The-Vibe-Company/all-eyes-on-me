@@ -38,7 +38,7 @@ test("a key journey that breaks, or whose result is not shown or ends in a dead 
     critique: critique({ help: [], add: [{ principle: "result-shown", step: 2, reason: "Ajouter adds nothing." }], orders: [{ principle: "short", step: 2, reason: "A detour." }] }),
   });
   assert.deepEqual(blocked.entries.map((b) => [b.slug, b.step, b.capture, b.why]), [
-    ["help", 2, "help@1280-02.png", "breaks at step 2: the page answered 500"],
+    ["help", 2, "help@1280-02.png", "it breaks: the page answered 500 (at 1280 px)"],
     ["add", 2, "add@1280-02.png", "Ajouter adds nothing."],
   ], "a journey that is only long is not blocked");
   assert.equal(blocked.more, 0);
@@ -53,6 +53,15 @@ test("at most three, the journeys of the product sheet's order first, and the re
   });
   assert.deepEqual(blocked.entries.map((b) => b.slug), ["d", "b", "a"]);
   assert.equal(blocked.more, 2);
+});
+
+test("a journey can be ranked by its slug, and a step past the last one is the last one", () => {
+  const blocked = blockedJourneys({
+    replay: replay([journey("a", "A"), journey("b", "B")]),
+    critique: critique({ a: [{ principle: "result-shown", step: 9, reason: "Nothing shown." }], b: [{ principle: "result-shown", step: 2, reason: "Nothing shown." }] }),
+    order: ["b"],
+  });
+  assert.deepEqual(blocked.entries.map((b) => [b.slug, b.step, b.capture]), [["b", 2, "b@1280-02.png"], ["a", 3, "a@1280-03.png"]]);
 });
 
 test("no journey blocked, nothing to name", () => {

@@ -29,15 +29,21 @@ export function blockedJourneys({ replay, critique, order = [], limit = 3 }: { r
     const captureAt = (run: typeof widest, step: number) => run?.steps.find((s) => s.index === step)?.capture ?? null;
     if (brokenRun) {
       const { step, reason } = brokenRun.broken!;
-      blocked.push({ slug: journey.slug, name: journey.name, step, capture: captureAt(brokenRun, step), why: `breaks at step ${step}: ${reason}` });
+      blocked.push({ slug: journey.slug, name: journey.name, step, capture: captureAt(brokenRun, step), why: `it breaks: ${reason} (at ${brokenRun.width} px)` });
       continue;
     }
     const verdict = critique?.pages.find((p) => p.page === journey.slug)?.verdicts.find((v) => !v.pass && BLOCKING_PRINCIPLES.includes(v.principle));
     if (!verdict) continue;
-    const step = verdict.steps[0] ?? widest?.counts.steps ?? 1;
+    // A step the journey does not have is its last one: the judges saw it end there.
+    const last = widest?.counts.steps ?? 1;
+    const step = Math.min(verdict.steps[0] ?? last, last);
     blocked.push({ slug: journey.slug, name: journey.name, step, capture: captureAt(widest, step), why: verdict.reasons[0] ?? verdict.principle });
   }
-  const rank = (b: BlockedJourney) => (order.includes(b.name) ? order.indexOf(b.name) : order.length);
+  // The sheet names a journey by its name; the slug works too, for one the user renamed in the sheet.
+  const rank = (b: BlockedJourney) => {
+    const at = order.findIndex((o) => o === b.name || o === b.slug);
+    return at === -1 ? order.length : at;
+  };
   const sorted = blocked.map((b, i) => ({ b, i })).sort((x, y) => rank(x.b) - rank(y.b) || x.i - y.i).map(({ b }) => b);
   return { entries: sorted.slice(0, limit), more: Math.max(0, sorted.length - limit) };
 }

@@ -4,6 +4,7 @@ title: Les features manquantes, au plus trois, seulement quand un parcours ne pe
 milestone: 03-la-commande-unique
 depends_on: [05]
 design: null
+status: done
 tracker: { tool: github, id: 52, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/52 }
 ---
 

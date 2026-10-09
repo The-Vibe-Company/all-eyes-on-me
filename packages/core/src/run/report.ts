@@ -8,6 +8,7 @@ import type { RatchetVerdict } from "../journey/ratchet.js";
 import type { JudgeReport } from "../judge/tally.js";
 import { route } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
+import { blockedJourneys } from "./features.js";
 import { STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
 
 /** What `aeom verdict --out` keeps of a verdict. */
@@ -174,7 +175,15 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     // A page that did not load before the run and that the end did not measure: still broken, as far as anyone knows.
     for (const page of erroredBefore) if (!after?.pages.some((p) => p.path === page) && !erroredAfter.includes(page)) stillFailing.push({ kind: "page", where: page, what: "did not load before the run, and was not measured after the run" });
   } else if (verdict) stillFailing = verdict.failures;
-  const features = await json<ResultPage["features"]>(join(runDir, "features.json"));
+  // An optional file: unreadable or of the wrong shape, it is left out. Only journeys still blocked at the end are named.
+  const saved = await json<ResultPage["features"]>(join(runDir, "features.json")).catch(() => null);
+  let features: ResultPage["features"] = null;
+  if (saved && Array.isArray(saved.entries)) {
+    const still = replayAfter ? blockedJourneys({ replay: replayAfter, critique: critiqueAfter ?? undefined, limit: Infinity }).entries.map((b) => b.slug) : [];
+    const entries = [];
+    for (const f of saved.entries.filter((f) => typeof f?.slug === "string" && still.includes(f.slug))) entries.push({ ...f, capture: f.capture && (await exists(join(runDir, f.capture))) ? f.capture : null });
+    features = { entries, more: Number.isInteger(saved.more) ? saved.more : 0 };
+  }
   return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features };
 }
 
@@ -211,7 +220,7 @@ export function resultHtml(r: ResultPage): string {
 
   const features = named
     ? `<section id="features"><h2>Missing features</h2><p class="muted">What a key journey would need to reach its end. AEOM built none of it.</p>${named.entries
-        .map((f) => `<section class="feature" data-journey="${escape(f.slug)}"><h3>${escape(f.name)}</h3><p>blocks at step ${f.step}: <span class="muted">${escape(f.why)}</span></p><p><strong>${escape(f.missing)}</strong></p>${f.capture ? `<figure class="step">${img(f.capture, `${f.name}, step ${f.step}`)}</figure>` : ""}</section>`)
+        .map((f) => `<section class="feature" data-journey="${escape(f.slug)}"><h3>${escape(f.name)}</h3><p>blocks at step ${escape(String(f.step))}: <span class="muted">${escape(f.why)}</span></p><p><strong>${escape(f.missing)}</strong></p><figure class="step">${img(f.capture, `${f.name}, step ${f.step}`)}</figure></section>`)
         .join("")}${named.more ? `<p class="muted">${named.more} more blocked journey${named.more === 1 ? "" : "s"}, not named: three at most per run.</p>` : ""}</section>`
     : "";
   const body = nothing

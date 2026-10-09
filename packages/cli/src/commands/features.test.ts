@@ -32,12 +32,17 @@ test("aeom features names what a blocked journey misses, in the user's words, an
     await put(join(R, "journeys-end", "judge-journeys.json"), critique({ add: true, orders: false }));
     const ask = await run(dir, ["features", ".aeom/runs/run-1"]);
     assert.equal(ask.code, 1);
-    assert.match(ask.out, /Add a product\s+blocks at step 2: Ajouter adds nothing\./);
+    assert.match(ask.out, /add\s+Add a product\s+blocks at step 2: Ajouter adds nothing\./);
     assert.match(ask.out, /Say what each one misses, in one sentence and without a technical solution: --missing "add=<sentence>"/);
     const wrong = await run(dir, ["features", ".aeom/runs/run-1", "--missing", "orders=Nothing."]);
     assert.equal(wrong.code, 1);
-    assert.match(wrong.out, /See my orders is not blocked/);
-    const { code, out } = await run(dir, ["features", ".aeom/runs/run-1", "--missing", "add=A way to put a product in the order."]);
+    assert.match(wrong.out, /See my orders reaches its end: name a feature only for a journey that cannot/);
+    assert.match((await run(dir, ["features", ".aeom/runs/run-1", "--missing", "checkout=x"])).out, /No journey checkout: the blocked ones are add/);
+    assert.match((await run(dir, ["features", ".aeom/runs/run-1", "--missing", "add=One.", "--missing", "add=Two."])).out, /Two sentences for add/);
+    await put(join(R, "features.json"), { entries: [{ slug: "old" }], more: 0 });
+    assert.equal((await run(dir, ["features", ".aeom/runs/run-1"])).code, 1);
+    await assert.rejects(readFile(join(R, "features.json"), "utf8"), "a list kept by an older pass is dropped as soon as the journeys are looked at again");
+    const { code, out } = await run(dir, ["features", ".aeom/runs/run-1", "--missing", "Add a product=A way to put a product in the order."]);
     assert.equal(code, 0, out);
     const saved = JSON.parse(await readFile(join(R, "features.json"), "utf8"));
     assert.deepEqual(saved, { entries: [{ slug: "add", name: "Add a product", step: 2, capture: "journeys-end/add@1280-02.png", why: "Ajouter adds nothing.", missing: "A way to put a product in the order." }], more: 0 });
@@ -56,6 +61,24 @@ test("with no journey blocked, aeom features says so and keeps an empty list", a
     assert.equal(code, 0, out);
     assert.match(out, /Every key journey reaches its end: no feature is missing\./);
     assert.deepEqual(JSON.parse(await readFile(join(R, "features.json"), "utf8")), { entries: [], more: 0 });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("without a critique of every replayed journey, aeom features cannot say which are blocked: exit 2, and the command to run", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-features-"));
+  const R = join(dir, ".aeom", "runs", "run-3");
+  try {
+    await put(join(R, "journeys-end", "report.json"), { url: "x", replayedAt: "", widths: [1280], warnings: [], journeys: [journey("add", "Add a product"), journey("orders", "See my orders")] });
+    const none = await run(dir, ["features", ".aeom/runs/run-3"]);
+    assert.equal(none.code, 2);
+    assert.match(none.out, /No critique of the journeys in .*journeys-end: run aeom judge --journeys --captures .*journeys-end/);
+    await put(join(R, "journeys-end", "judge-journeys.json"), critique({ add: true }));
+    const partial = await run(dir, ["features", ".aeom/runs/run-3"]);
+    assert.equal(partial.code, 2);
+    assert.match(partial.out, /does not judge See my orders/);
+    assert.equal((await run(dir, ["features", ".aeom/runs/nope"])).code, 2);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
