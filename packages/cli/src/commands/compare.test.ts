@@ -61,3 +61,31 @@ test("with --strict, a page gone after exits 1, a new page that fails does not, 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom compare --style keeps a style whose fonts, gradients and logo stay and whose colours are the app's or shades of them", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-"));
+  const manifest = (palette: string[], fonts = ["Comic Sans MS"]) => ({ url: "http://x", capturedAt: "", widths: [1280], errors: [], pages: [{ url: "http://x/", path: "/", files: [], identity: { fonts, palette, gradients: ["linear-gradient(90deg, #8e2de2, #4a00e0)"], logo: "Super Boutique" } }] });
+  const write = async (name: string, m: unknown) => {
+    await mkdir(join(dir, name, "captures"), { recursive: true });
+    await writeFile(join(dir, name, "captures", "manifest.json"), JSON.stringify(m));
+  };
+  try {
+    await write("before", manifest(["#ff4081", "#fdf6e3"]));
+    await write("kept", manifest(["#e31c6b", "#fdf6e3"]));
+    await write("changed", manifest(["#2e7d32", "#fdf6e3"], ["Inter"]));
+    await write("old", { ...manifest([]), pages: [{ url: "http://x/", path: "/", files: [] }] });
+    const kept = await run(dir, ["compare", "before", "kept", "--style"]);
+    assert.equal(kept.code, 0, kept.out);
+    assert.match(kept.out, /Style kept/);
+    assert.match(kept.out, /#e31c6b \(from #ff4081\)/);
+    const changed = await run(dir, ["compare", "before", "changed", "--style"]);
+    assert.equal(changed.code, 1);
+    assert.match(changed.out, /\/: a font the app did not use, Inter/);
+    assert.match(changed.out, /\/: a colour the app did not have, #2e7d32/);
+    const old = await run(dir, ["compare", "old", "kept", "--style"]);
+    assert.equal(old.code, 1);
+    assert.match(old.out, /old\/captures\/manifest\.json was captured before AEOM read styles: capture again/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

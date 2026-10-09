@@ -158,3 +158,19 @@ test("when something fails, aeom verdict says what comes next: a new direction, 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("with the style kept, the principles that judge the style itself are left to it, and do not stop « nothing to redo »", async () => {
+  const dir = await project({ failing: { "/": ["not-ai-default", "not-generic"] } });
+  try {
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["not-ai-default", "not-generic"], "/commandes": [] }, ["not-generic", "not-ai-default", "states"])));
+    const fresh = await run(dir, ["verdict"]);
+    assert.equal(fresh.code, 1, "without a style to keep, they are things to redo");
+    const kept = await run(dir, ["verdict", "--keep-style"]);
+    assert.equal(kept.code, 0, kept.out);
+    assert.match(kept.out, /Left to the style kept: \/ not-generic, \/ not-ai-default\./);
+    assert.match(kept.out, /Nothing to redo: nothing fails\.$/m);
+    assert.doesNotMatch(kept.out, /Next:/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

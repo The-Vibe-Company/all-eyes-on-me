@@ -3,6 +3,9 @@ import type { CheckReport } from "../checks/run.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { JudgeReport } from "../judge/tally.js";
 
+/** The principles that judge a style itself: a client's charter fails them by what it is, and keeping it is the point. */
+export const STYLE_PRINCIPLES = ["not-generic", "not-ai-default"];
+
 /** One thing that fails, where it shows. */
 export interface Failure {
   kind: "page" | "check" | "principle" | "journey" | "journey-principle";
@@ -17,6 +20,8 @@ export interface RunVerdict {
   failures: Failure[];
   /** What a report leaves out that another one has: a verdict on part of the front decides nothing. */
   missing: string[];
+  /** With the style kept, the principles that judge the style itself fail because of the charter, not of the front: said, never redone. */
+  keptWithStyle: Failure[];
   /** True only when every screen and journey was measured and nothing fails. */
   nothingToRedo: boolean;
 }
@@ -26,8 +31,9 @@ export interface RunVerdict {
  * measurable checks and the judge on every screen, and, when the project
  * has key journeys (`recorded`, their slugs), their replay and their critique.
  */
-export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [] }: { check: CheckReport; judge: JudgeReport; journeys?: JourneyReport; journeyJudge?: JudgeReport; recorded?: string[] }): RunVerdict {
+export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [], keepStyle = false }: { check: CheckReport; judge: JudgeReport; journeys?: JourneyReport; journeyJudge?: JudgeReport; recorded?: string[]; keepStyle?: boolean }): RunVerdict {
   const failures: Failure[] = [];
+  const keptWithStyle: Failure[] = [];
   const missing: string[] = [];
   // A page that does not load was neither checked nor judged, and is broken for whoever opens it.
   for (const e of check.errors) failures.push({ kind: "page", where: route(e.url), what: `does not load: ${e.reason}` });
@@ -44,7 +50,10 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [] 
     failures.push({ kind: "check", where, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` });
   }
   for (const page of judge.pages) {
-    for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "principle", where: page.page, what: `${v.principle}: ${v.reasons[0] ?? ""}` });
+    for (const v of page.verdicts.filter((v) => !v.pass)) {
+      const failure: Failure = { kind: "principle", where: page.page, what: `${v.principle}: ${v.reasons[0] ?? ""}` };
+      (keepStyle && STYLE_PRINCIPLES.includes(v.principle) ? keptWithStyle : failures).push(failure);
+    }
   }
   const name = (slug: string) => journeys?.journeys.find((j) => j.slug === slug)?.name ?? slug;
   for (const journey of journeys?.journeys ?? []) {
@@ -83,6 +92,7 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [] 
     },
     failures,
     missing,
+    keptWithStyle,
     nothingToRedo: failures.length === 0 && missing.length === 0,
   };
 }

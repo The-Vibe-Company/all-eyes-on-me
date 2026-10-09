@@ -86,7 +86,8 @@ async function verdict(argv: string[]): Promise<number> {
     return 2;
   }
 
-  const { measured: m, failures, missing, nothingToRedo } = verdictOf({ check, judge, journeys, journeyJudge, recorded });
+  const kept = values["keep-style"] ? "--keep-style" : config.style === "keep" ? `"style": "keep" in .aeom/config.json` : null;
+  const { measured: m, failures, missing, keptWithStyle, nothingToRedo } = verdictOf({ check, judge, journeys, journeyJudge, recorded, keepStyle: kept !== null });
   if (missing.length) {
     console.error(`Cannot decide: ${missing.join(", ")}. Capture, check and judge again${recorded.length ? ", and replay and judge the journeys again" : ""}, so every report covers the same screens and journeys.`);
     return 2;
@@ -94,6 +95,7 @@ async function verdict(argv: string[]): Promise<number> {
   const s = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const journeyPart = m.journeys ? `; ${s(m.journeys, "journey")} on ${s(m.journeyPrinciples, "principle")}` : "";
   console.log(`Measured: ${s(m.screens, "screen")} at ${m.widths.join(", ")} px, ${s(m.checks, "check")} and ${s(m.principles, "principle")} each${journeyPart}.`);
+  if (keptWithStyle.length) console.log(`Left to the style kept: ${keptWithStyle.map((f) => `${f.where} ${f.what.split(":")[0]}`).join(", ")}.`);
   if (nothingToRedo) {
     console.log(`\nNothing to redo: nothing fails.`);
     return 0;
@@ -102,7 +104,6 @@ async function verdict(argv: string[]): Promise<number> {
   console.log("");
   for (const f of failures) console.log(`✗ ${f.where.padEnd(column)}${f.what}`);
   console.log(`\n${s(failures.length, "thing")} to redo.`);
-  const kept = values["keep-style"] ? "--keep-style" : config.style === "keep" ? `"style": "keep" in .aeom/config.json` : null;
   console.log(kept ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).` : `Next: six new art directions, drawn from the product sheet.`);
   return 1;
 }

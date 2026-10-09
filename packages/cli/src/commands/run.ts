@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { comparePages, ConfigError, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { compareIdentity, comparePages, ConfigError, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CaptureManifest, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
@@ -32,7 +32,7 @@ async function readReport<T>(file: string, problems: string[]): Promise<T | unde
   }
 }
 
-const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict]
+const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict | --style]
        aeom compare --journeys <before-dir> <after-dir> [--duels <dir>] [--base <ref>] [--known <dir>]
 
 Compares two snapshots page by page: what fails before and after (checks + principles),
@@ -45,8 +45,13 @@ wherever the old one did, the guard refuses nothing it does, and the judges
 prefer it in the duel; otherwise the old one comes back. Writes ratchet.json
 in <after-dir>.
 
+With --style, says whether the style was kept, from each snapshot's captures:
+no font added, no gradient gone, no logo changed, and every colour one the app
+had or a shade of it, as a contrast fix makes. Exits with 1 when it changed.
+
 Options:
   --strict             Exit with 1 when anything that passed before fails after
+  --style              Compare the style (fonts, colours, gradients, logo), not what fails
   --journeys           Compare journeys, not pages
   --duels <dir>        The judges' duel votes (default <after-dir>/duels)
   --base <ref>         The commit the change started from, for the guard
@@ -58,7 +63,7 @@ export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { strict: { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { strict: { type: "boolean" }, style: { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || positionals.length !== 2) {
     console.log(COMPARE_HELP);
@@ -69,6 +74,7 @@ export async function runCompare(argv: string[]): Promise<number> {
     return 1;
   }
   if (values.journeys) return compareJourneys(positionals[0]!, positionals[1]!, values);
+  if (values.style) return compareStyle(positionals[0]!, positionals[1]!);
   const [beforeDir, afterDir] = positionals as [string, string];
   const problems: string[] = [];
   const read = async (dir: string) => ({
@@ -102,6 +108,31 @@ export async function runCompare(argv: string[]): Promise<number> {
     return 1;
   }
   return 0;
+}
+
+async function compareStyle(beforeDir: string, afterDir: string): Promise<number> {
+  const read = async (dir: string) => {
+    const file = join(dir, "captures", "manifest.json");
+    const manifest = JSON.parse(await readFile(file, "utf8")) as CaptureManifest;
+    if (manifest.pages.some((p) => !p.identity)) throw new Error(`${file} was captured before AEOM read styles: capture again, then snapshot.`);
+    return manifest.pages;
+  };
+  let before: CaptureManifest["pages"], after: CaptureManifest["pages"];
+  try {
+    before = await read(beforeDir);
+    after = await read(afterDir);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
+  const { changed, shades } = compareIdentity(before, after);
+  if (shades.length) console.log(`Shades of the app's colours, such as contrast fixes: ${shades.join(", ")}.`);
+  if (!changed.length) {
+    console.log(`Style kept: the same fonts, gradients and logo, and every colour one the app had or a shade of it.`);
+    return 0;
+  }
+  console.log(`The style changed:\n${changed.map((c) => `  ✗ ${c}`).join("\n")}`);
+  return 1;
 }
 
 async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; base?: string; known?: string; voters: string }): Promise<number> {
