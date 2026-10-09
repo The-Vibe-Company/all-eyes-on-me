@@ -30,6 +30,8 @@ export interface ResultPage {
     status: "kept" | "sent back" | "new" | "missing" | "unchanged" | "does not load";
     /** What fails on it, before the run and at the end, when both were measured. */
     count: { before: number; after: number } | null;
+    /** Why the page wave sent it back: as many failing as before, or more, counted on the version it put back. */
+    back?: { verdict: "same" | "worse"; before: number | null; after: number | null };
     widths: { width: number; before: string | null; after: string | null }[];
     cleared: string[];
     still: string[];
@@ -79,7 +81,9 @@ async function first(runDir: string, names: string[], file: string): Promise<str
  */
 export async function readRun(runDir: string, run: string): Promise<ResultPage> {
   const before = await json<CaptureManifest>(join(runDir, "before", "captures", "manifest.json"));
-  if (!before) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
+  // A run of the journeys only (--ux) takes no snapshot of the screens: its replays are what it shows.
+  const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
+  if (!before && !replayBefore) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
   const verdict = await json<SavedVerdict>(join(runDir, "verdict.json"));
   const keepStyle = verdict?.keepStyle === true;
 
@@ -93,18 +97,19 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const comparison = now ? comparePages(scorePages(was.check, was.judge, ignore), scorePages(now.check, now.judge, ignore)) : [];
 
   // What section 5 decided, page by page: a page that got better is kept, any other is put back.
-  const decided = (await json<{ page: string; verdict: string }[]>(join(runDir, "after", "compare.json"))) ?? null;
-  const erroredBefore = before.errors.map((e) => route(e.url));
+  const decided = (await json<{ page: string; verdict: string; before?: { total: number } | null; after?: { total: number } | null }[]>(join(runDir, "after", "compare.json"))) ?? null;
+  const erroredBefore = before?.errors.map((e) => route(e.url)) ?? [];
   const erroredAfter = after?.errors.map((e) => route(e.url)) ?? [];
-  const pages = [...new Set([...before.pages.map((p) => p.path), ...erroredBefore, ...(after?.pages.map((p) => p.path) ?? []), ...erroredAfter])];
+  const pages = [...new Set([...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore, ...(after?.pages.map((p) => p.path) ?? []), ...erroredAfter])];
   const screens: ResultPage["screens"] = pages.map((page) => {
-    const b = before.pages.find((p) => p.path === page);
+    const b = before?.pages.find((p) => p.path === page);
     const a = after?.pages.find((p) => p.path === page);
     const widths = [...new Set([...(b?.files ?? []), ...(a?.files ?? [])].map((f) => f.width))].sort((x, y) => x - y);
     const c = comparison.find((x) => x.page === page);
     const failingBefore = c?.before?.failing ?? [];
     const failingAfter = c?.after?.failing ?? [];
-    const decision = decided?.find((d) => d.page === page)?.verdict;
+    const d = decided?.find((x) => x.page === page);
+    const decision = d?.verdict;
     const status: ResultPage["screens"][number]["status"] =
       erroredAfter.includes(page) || (erroredBefore.includes(page) && !a) ? "does not load"
       : !decision ? (c?.verdict === "new" ? "new" : "unchanged")
@@ -113,6 +118,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       page,
       status,
       count: c?.before && c.after ? { before: c.before.total, after: c.after.total } : null,
+      ...(status === "sent back" ? { back: { verdict: decision === "worse" ? ("worse" as const) : ("same" as const), before: d?.before?.total ?? null, after: d?.after?.total ?? null } } : {}),
       widths: widths.map((width) => ({
         width,
         before: b?.files.find((f) => f.width === width) ? `before/captures/${b.files.find((f) => f.width === width)!.file}` : null,
@@ -130,12 +136,12 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const notes = (await json<{ label: string; note?: string }[]>(join(runDir, "directions", "sheet.json"))) ?? [];
   const direction = tournament && winner ? { champion: winner, sentence: notes.find((n) => n.label === winner)?.note ?? null, entrants: tournament.entrants, reasons: final?.reasons ?? [], sheet: (await exists(join(runDir, "directions", "sheet.png"))) ? "directions/sheet.png" : null } : null;
 
-  const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
   const lastReplay = await first(runDir, ["journeys-end", "journeys-after"], "report.json");
   const replayAfter = lastReplay ? await json<JourneyReport>(join(runDir, lastReplay, "report.json")) : null;
-  const ratchet = (await json<RatchetVerdict[]>(join(runDir, "journeys-end", "ratchet.json"))) ?? [];
+  // The ratchet sits beside the replay it judged: journeys-end after the pages, journeys-after in a run of the journeys only.
+  const ratchet = (await json<RatchetVerdict[]>(join(runDir, lastReplay ?? "journeys-end", "ratchet.json"))) ?? [];
   // Cleared and still failing are counted from the critique of the app before the run, as the sheets are.
-  const critiqueBefore = await json<JudgeReport>(join(runDir, "before", "reports", "judge-journeys.json"));
+  const critiqueBefore = (await json<JudgeReport>(join(runDir, "before", "reports", "judge-journeys.json"))) ?? (await json<JudgeReport>(join(runDir, "journeys-before", "judge-journeys.json")));
   const critiqueAfter = lastReplay ? await json<JudgeReport>(join(runDir, lastReplay, "judge-journeys.json")) : null;
   const failingOf = (report: JudgeReport | null, slug: string) => report?.pages.find((p) => p.page === slug)?.verdicts.filter((v) => !v.pass).map((v) => v.principle) ?? null;
   const broke = (r: JourneyReport["journeys"][number] | undefined) => {
