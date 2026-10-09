@@ -1,0 +1,169 @@
+README.md
+  s_4ce34ec42d9105::t_11e18d0ba68eb1 83-84
+bench/README.md
+  s_4ce34ec42d9105::t_c78490c8bb065e 1-31
+bench/apps/atelier/.gitignore
+  s_00c131376e16bb::t_35b398201ece8b 1-3
+bench/apps/atelier/README.md
+  s_00c131376e16bb::t_409770bcb72f7f 1-41
+bench/apps/atelier/data/seed.json
+  s_97a431cfa65ca7::t_2d85bd7932b962 1-206
+bench/apps/atelier/public/app.js
+  s_97a431cfa65ca7::t_866aa5de39c7ab 1-53
+bench/apps/atelier/public/favicon.svg
+  s_97a431cfa65ca7::t_25d08d40ecc31b 1
+bench/apps/atelier/public/style.css
+  s_4ce34ec42d9105::t_3869e489804441 1-425
+bench/apps/atelier/reset.mjs
+  s_97a431cfa65ca7::t_567bbc95eb0761 1-13
+bench/apps/atelier/scripts/smoke.mjs
+  s_4ce34ec42d9105::t_2b66d1b3f93ad6 1-113
+bench/apps/atelier/server.mjs
+  s_97a431cfa65ca7::t_fc773f60826564 1-1061
+bench/apps/pret/.gitignore
+  s_4ce34ec42d9105::t_306c567e4a1556 1-3
+bench/apps/pret/README.md
+  s_97a431cfa65ca7::t_0a8e0e7874789b 1-58
+bench/apps/pret/data/initial.json
+  s_97a431cfa65ca7::t_806d10b0ba318a 1-292
+bench/apps/pret/fixtures/compte.json
+  s_4ce34ec42d9105::t_2e103b38a46b04 1-4
+bench/apps/pret/lib/dates.mjs
+  s_97a431cfa65ca7::t_a5e95bacab599e 1-65
+bench/apps/pret/lib/donnees.mjs
+  s_97a431cfa65ca7::t_b9a55c2d2db499 1-51
+bench/apps/pret/lib/html.mjs
+  s_97a431cfa65ca7::t_97ad78cc8ccd52 1-41
+bench/apps/pret/lib/regles.mjs
+  s_4ce34ec42d9105::t_44180c7749f281 1-116
+bench/apps/pret/lib/vues.mjs
+  s_4ce34ec42d9105::t_3de1d6125e4175 1-645
+bench/apps/pret/public/app.js
+  s_4ce34ec42d9105::t_6159c83f22dc51 1-35
+bench/apps/pret/public/favicon.svg
+  s_4ce34ec42d9105::t_7cdabb9a6a0b30 1
+bench/apps/pret/public/style.css
+  s_4ce34ec42d9105::t_b89f8ae2123a27 1-329
+bench/apps/pret/reset.mjs
+  s_4ce34ec42d9105::t_ae72733279daa6 1-9
+bench/apps/pret/server.mjs
+  s_4ce34ec42d9105::t_ad6e1307179223 1-297
+bench/apps/pret/verifier.mjs
+  s_00c131376e16bb::t_55252b5b170e0f 1-96
+bench/bench.json
+  s_4ce34ec42d9105::t_45028a2ca765a4 1-69
+bench/bench.test.mjs
+  s_4ce34ec42d9105::t_4eed595f0b09a2 1-54
+bench/defects/atelier.json
+  s_4ce34ec42d9105::t_12ba80ece26aa9 1-31
+bench/defects/demo.json
+  s_4ce34ec42d9105::t_e9716b5d2cea1b 1-119
+bench/defects/pret.json
+  s_4ce34ec42d9105::t_1ba496446f799e 1-24
+bench/journeys/atelier/book-a-seat.json
+  s_4ce34ec42d9105::t_dacbb991c26b84 1-9
+bench/journeys/atelier/cancel-a-booking.json
+  s_4ce34ec42d9105::t_e80d1509345641 1-10
+bench/journeys/atelier/join-the-waiting-list.json
+  s_4ce34ec42d9105::t_feb85f28568f2f 1-8
+bench/journeys/atelier/offer-a-gift-card.json
+  s_4ce34ec42d9105::t_92fc68748a29cf 1-9
+bench/journeys/demo/add-a-product-to-my-order.json
+  s_4ce34ec42d9105::t_b661d12fa0ff6d 1-4
+bench/journeys/demo/contact-the-shop.json
+  s_4ce34ec42d9105::t_dfe398b146ddc6 1-6
+bench/journeys/demo/get-help.json
+  s_4ce34ec42d9105::t_f94f566638d790 1-4
+bench/journeys/demo/see-my-orders.json
+  s_4ce34ec42d9105::t_3289bae0598b12 1-6
+bench/journeys/pret/borrow-an-object.json
+  s_4ce34ec42d9105::t_10c4c62522907b 1-6
+bench/journeys/pret/find-an-object.json
+  s_4ce34ec42d9105::t_6e3271848c7678 1-6
+bench/journeys/pret/give-an-object-back.json
+  s_4ce34ec42d9105::t_d6977b57349bcc 1-6
+bench/journeys/pret/lend-an-object.json
+  s_4ce34ec42d9105::t_5aa852edd59b45 1-10
+bench/prepare.mjs
+  s_4ce34ec42d9105::t_1e534474ef2e8d 1-41
+package.json
+  s_4ce34ec42d9105::t_5c5eb8f7b7293b 12
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_8e85f269ae76d1 55,59,68-69
+packages/cli/src/commands/bench.test.ts
+  s_4ce34ec42d9105::t_4ba7d95a983bcd 1-155
+packages/cli/src/commands/bench.ts
+  s_4ce34ec42d9105::t_6f72c73a6f0080 1-228
+packages/cli/src/commands/capture.ts
+  s_4ce34ec42d9105::t_5932a8d868eae1 14-16
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_1607250554da3e 14-17,20,44-49
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_200e6e1cd6c370 15,42-43,65-66
+packages/core/src/bench/bench.test.ts
+  s_4ce34ec42d9105::t_eb207886b86751 1-86
+packages/core/src/bench/bench.ts
+  s_4ce34ec42d9105::t_e524f23ccf1e26 1-134
+packages/core/src/bench/index.ts
+  s_4ce34ec42d9105::t_16b2842cdcc084 1-2
+packages/core/src/bench/tokens.ts
+  s_4ce34ec42d9105::t_2853159e99e920 1-63
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_07d55ee14f68d1 107-113
+packages/core/src/checks/run.ts
+  s_4ce34ec42d9105::t_7bdfdf1cb8e234 3,53,56
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_266b3ee78a964c 10
+packages/core/src/journey/journey.test.ts
+  s_4ce34ec42d9105::t_a07e890eafc7b5 28-29,89-104,257,263
+packages/core/src/journey/journey.ts
+  s_4ce34ec42d9105::t_4145897c2a5da6 16,39,68,74,124-125
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_bb78283fca02fc 158-164
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_944015c3e89d4f 16-17,53-57
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_04dd5058047573 88-91
+packages/core/src/run/verdict.test.ts
+  s_4ce34ec42d9105::t_d0e2fabf56868c 62
+packages/core/src/run/verdict.ts
+  s_4ce34ec42d9105::t_f8ec48372ef2ca 15-18,43,54,58,68,73
+site/pages/index.html
+  s_4ce34ec42d9105::t_339031a3fe3d09 221-222
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_fc7bc5869e482a 16,20
+skills/aeom/journeys.md
+  s_4ce34ec42d9105::t_9f8a398fa6a995 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9bdbc3b5860cc8a5d918dd339565fe51015da6e7",
+  "prompts": {},
+  "sessions": {
+    "s_00c131376e16bb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2a5e8019-4d46-4f58-b7f7-d342945bedfd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    },
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    },
+    "s_97a431cfa65ca7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0fb77bea-e470-4301-91e2-b9c67ca65e18",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
