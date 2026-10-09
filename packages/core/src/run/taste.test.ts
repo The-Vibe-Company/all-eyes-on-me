@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { addFeedback, agreementRates, readFeedback } from "./index.js";
+import { addFeedback, agreementRates, readFeedback, runKey } from "./index.js";
 
 test("feedback is kept in words on this machine, the latest per verdict, and counted by category", async () => {
   const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
@@ -22,5 +22,22 @@ test("feedback is kept in words on this machine, the latest per verdict, and cou
     assert.doesNotMatch(text, /\.png|data:image/);
   } finally {
     await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("a run is known by the project holding its folder, read through any link, wherever it is served from", async () => {
+  const dir = await realpath(await mkdtemp(join(tmpdir(), "aeom-key-")));
+  try {
+    await mkdir(join(dir, "shop", ".aeom", "runs", "run-1"), { recursive: true });
+    await symlink(join(dir, "shop"), join(dir, "link"));
+    await symlink(join(dir, "shop", ".aeom", "runs", "run-1"), join(dir, "shop", ".aeom", "runs", "latest"));
+    const key = { project: join(dir, "shop"), run: "run-1" };
+    assert.deepEqual(await runKey(join(dir, "shop", ".aeom", "runs", "run-1")), key);
+    assert.deepEqual(await runKey(join(dir, "link", ".aeom", "runs", "run-1")), key, "through a link to the project");
+    assert.deepEqual(await runKey(join(dir, "shop", ".aeom", "runs", "latest")), key, "through a link to the run");
+    await mkdir(join(dir, "elsewhere", "run-2"), { recursive: true });
+    assert.deepEqual(await runKey(join(dir, "elsewhere", "run-2")), { project: join(dir, "elsewhere"), run: "run-2" }, "a run outside .aeom/runs is known by its own folder");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
   }
 });

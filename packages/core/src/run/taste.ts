@@ -1,6 +1,6 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, realpath } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 /** Where AEOM keeps what is the person's, on their machine: `~/.aeom`, or `AEOM_HOME`. */
 export const aeomHome = () => process.env.AEOM_HOME || join(homedir(), ".aeom");
@@ -10,7 +10,7 @@ export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number];
 
 /** One gesture on one verdict of a result page: in words, never a capture. */
 export interface Feedback {
-  /** The project the run was on: its folder. */
+  /** The project the run was on: its folder, as `runKey` gives it. */
   project: string;
   run: string;
   /** The verdict, such as `screen:/produits` or `journey:see-my-orders`. */
@@ -21,6 +21,18 @@ export interface Feedback {
   agree: boolean;
   why?: string;
   at: string;
+}
+
+/**
+ * Which run a gesture is on: the project is the folder holding `.aeom/runs/<run>`,
+ * both read through any link, so the same run served from anywhere is counted once.
+ * A run folder elsewhere is known by the folder holding it.
+ */
+export async function runKey(runDir: string): Promise<{ project: string; run: string }> {
+  const real = await realpath(runDir);
+  const runs = dirname(real);
+  const inAeom = basename(runs) === "runs" && basename(dirname(runs)) === ".aeom";
+  return { project: inAeom ? dirname(dirname(runs)) : runs, run: basename(real) };
 }
 
 const file = (home: string) => join(home, "taste", "feedback.jsonl");
