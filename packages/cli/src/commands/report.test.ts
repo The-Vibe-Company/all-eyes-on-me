@@ -73,6 +73,11 @@ test("aeom report writes, in the run's folder, a page of what the run gave: the 
     assert.match(html, /See my orders[^]*Before the run, it broke at step 2: the page answered 500[^]*2 → 3 steps[^]*Mes commandes is in the menu\./);
     assert.match(html, /Still failing[^]*\/contact[^]*states on \/contact: the list is blank/);
     assert.match(html, /Still failing[^]*\/aide[^]*not measured after the run/);
+    assert.doesNotMatch(html, /Missing features/, "no section when the run named none");
+    await put(join(R, "features.json"), { entries: [{ slug: "orders", name: "See my orders", step: 2, capture: "journeys-end/orders@1280.png", why: "Ajouter adds nothing.", missing: "A way to put a product in the order." }], more: 1 });
+    await run(dir, ["report"]);
+    const withFeatures = await readFile(join(R, "report.html"), "utf8");
+    assert.match(withFeatures, /Missing features[^]*See my orders[^]*blocks at step 2[^]*A way to put a product in the order\.[^]*src="journeys-end\/orders@1280\.png"[^]*1 more blocked journey/);
     assert.doesNotMatch(html, /(src|href)="https?:/, "nothing loads from the network");
   } finally {
     await rm(dir, { recursive: true, force: true });

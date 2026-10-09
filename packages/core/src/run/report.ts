@@ -49,6 +49,8 @@ export interface ResultPage {
   stillFailing: Failure[];
   /** False when the run stopped before measuring its end: what still fails is then what failed before. */
   measuredAfter: boolean;
+  /** What blocked journeys would need, named by `aeom features`, never built. */
+  features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
 }
 
 /** A run folder without what the page needs. */
@@ -172,7 +174,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     // A page that did not load before the run and that the end did not measure: still broken, as far as anyone knows.
     for (const page of erroredBefore) if (!after?.pages.some((p) => p.path === page) && !erroredAfter.includes(page)) stillFailing.push({ kind: "page", where: page, what: "did not load before the run, and was not measured after the run" });
   } else if (verdict) stillFailing = verdict.failures;
-  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter };
+  const features = await json<ResultPage["features"]>(join(runDir, "features.json"));
+  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -185,7 +188,8 @@ const list = (label: string, items: string[]) => (items.length ? `<p><span class
 export function resultHtml(r: ResultPage): string {
   const nothing = r.verdict?.nothingToRedo === true;
   const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}</header>`;
-  const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a><a href="#still">Still failing</a></nav>`;
+  const named = r.features?.entries.length ? r.features : null;
+  const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 
   const direction = r.direction
     ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
@@ -205,9 +209,14 @@ export function resultHtml(r: ResultPage): string {
     r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
   }`;
 
+  const features = named
+    ? `<section id="features"><h2>Missing features</h2><p class="muted">What a key journey would need to reach its end. AEOM built none of it.</p>${named.entries
+        .map((f) => `<section class="feature" data-journey="${escape(f.slug)}"><h3>${escape(f.name)}</h3><p>blocks at step ${f.step}: <span class="muted">${escape(f.why)}</span></p><p><strong>${escape(f.missing)}</strong></p>${f.capture ? `<figure class="step">${img(f.capture, `${f.name}, step ${f.step}`)}</figure>` : ""}</section>`)
+        .join("")}${named.more ? `<p class="muted">${named.more} more blocked journey${named.more === 1 ? "" : "s"}, not named: three at most per run.</p>` : ""}</section>`
+    : "";
   const body = nothing
     ? `<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}`
-    : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}<section id="still"><h2>Still failing</h2>${still}</section>`;
+    : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${features}<section id="still"><h2>Still failing</h2>${still}</section>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -234,6 +243,7 @@ export function resultHtml(r: ResultPage): string {
   img { display: block; max-width: 100%; height: auto; border: 1px solid var(--rule); }
   .pair { margin: 12px 0 20px; } .pair > .label { margin: 0 0 4px; font-size: 13px; }
   .none { color: var(--muted); font-style: italic; }
+  figure.step { max-width: 520px; }
   ul { padding-left: 20px; } li { margin: 4px 0; }
   @media (max-width: 640px) { .sides { grid-template-columns: 1fr; } }
 </style>
