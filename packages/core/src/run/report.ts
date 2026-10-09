@@ -193,15 +193,75 @@ const href = (path: string) => path.split("/").map((segment) => encodeURI(segmen
 const img = (src: string | null, alt: string) => (src ? `<img src="${escape(href(src))}" alt="${escape(alt)}" loading="lazy">` : `<p class="none">No capture</p>`);
 const list = (label: string, items: string[]) => (items.length ? `<p><span class="label">${label}</span> ${items.map(escape).join(", ")}</p>` : "");
 
+/** One verdict the person can agree or disagree with, and say why. */
+const say = (id: string, category: string, verdict: string) =>
+  `<div class="say" data-verdict-id="${escape(id)}" data-category="${category}" data-verdict="${escape(verdict)}"><button type="button" data-agree="true">Agree</button><button type="button" data-agree="false">Disagree</button><input type="text" maxlength="500" placeholder="Why, if you disagree (optional)" aria-label="Why"><span class="said" role="status"></span></div>`;
+
+const CATEGORY_NAMES: Record<string, string> = { direction: "Direction", screens: "Screens", journeys: "Journeys", principles: "Principles" };
+
+/** How often the person agreed with AEOM, by category, or that they have not said yet. */
+const ratesHtml = (rates: Record<string, { agreed: number; total: number }> | undefined) => {
+  const given = rates ? Object.entries(rates).filter(([, r]) => r.total > 0) : [];
+  return `<p class="rates" id="rates">${given.length ? `How often you agreed with AEOM, over every run: ${given.map(([c, r]) => `${CATEGORY_NAMES[c] ?? c} <strong>${r.agreed} of ${r.total}</strong>`).join(" · ")}` : "No feedback yet: say on each verdict below whether you agree."}</p>`;
+};
+
+/** Sends each gesture to the server of `aeom report --serve` as it is made, and shows what was already said. */
+const FEEDBACK_SCRIPT = `
+(() => {
+  const served = location.protocol === "http:" || location.protocol === "https:";
+  const boxes = [...document.querySelectorAll(".say")];
+  if (!served) {
+    boxes.forEach((b) => (b.hidden = true));
+    const note = document.getElementById("feedback-note");
+    if (note) note.hidden = false;
+    return;
+  }
+  const names = ${JSON.stringify(CATEGORY_NAMES)};
+  const showRates = (rates) => {
+    const given = Object.entries(rates).filter(([, r]) => r.total > 0);
+    const el = document.getElementById("rates");
+    if (!given.length) return;
+    el.textContent = "How often you agreed with AEOM, over every run: ";
+    given.forEach(([c, r], i) => {
+      if (i) el.append(" · ");
+      el.append((names[c] || c) + " ");
+      const s = document.createElement("strong");
+      s.textContent = r.agreed + " of " + r.total;
+      el.append(s);
+    });
+  };
+  const mark = (box, agree, why) => {
+    box.dataset.agree = String(agree);
+    box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.agree === String(agree))));
+    if (why !== undefined) box.querySelector("input").value = why;
+    box.querySelector(".said").textContent = agree ? "You agree." : "You disagree.";
+  };
+  const send = async (box, agree) => {
+    const why = box.querySelector("input").value.trim();
+    const res = await fetch("api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: box.dataset.verdictId, category: box.dataset.category, verdict: box.dataset.verdict, agree, why: why || undefined }) });
+    if (!res.ok) { box.querySelector(".said").textContent = "Not saved: is aeom report --serve still running?"; return; }
+    mark(box, agree);
+    showRates((await res.json()).rates);
+  };
+  boxes.forEach((box) => {
+    box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => send(box, b.dataset.agree === "true")));
+    box.querySelector("input").addEventListener("change", () => { if (box.dataset.agree) send(box, box.dataset.agree === "true"); });
+  });
+  fetch("api/feedback").then((r) => r.json()).then(({ mine, rates }) => {
+    for (const f of mine) { const box = boxes.find((b) => b.dataset.verdictId === f.id); if (box) mark(box, f.agree, f.why || ""); }
+    showRates(rates);
+  }).catch(() => {});
+})();`;
+
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
-export function resultHtml(r: ResultPage): string {
+export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}</header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
   const named = r.features?.entries.length ? r.features : null;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 
   const direction = r.direction
-    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
+    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${say("direction", "direction", `Direction: ${r.direction.champion}`)}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
     : r.verdict?.keepStyle
       ? `<section id="direction"><h2>Style kept</h2><p class="muted">No new direction: the run fixed what failed on the app's own style.</p></section>`
       : "";
@@ -209,13 +269,13 @@ export function resultHtml(r: ResultPage): string {
   const pair = (w: { width: number; before: string | null; after: string | null }, what: string) =>
     `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Before</figcaption>${img(w.before, `${what} before, ${w.width} px`)}</figure>${nothing ? "" : `<figure><figcaption>After</figcaption>${img(w.after, `${what} after, ${w.width} px`)}</figure>`}</div></div>`;
   const screens = r.screens
-    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
+    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${nothing ? "" : say(`screen:${s.page}`, "screens", `${s.page} ${s.status}`)}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
     .join("");
   const journeys = r.journeys
-    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
+    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${nothing ? "" : say(`journey:${j.slug}`, "journeys", `${j.name} ${j.status}`)}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
     .join("");
   const still = `${r.measuredAfter ? "" : `<p class="muted">Not measured after the run: what failed before it.</p>`}${
-    r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
+    r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}${f.kind === "principle" || f.kind === "journey-principle" ? say(`fail:${f.where}:${f.what.split(":")[0]}`, "principles", `${f.where} fails ${f.what.split(":")[0]}`) : ""}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
   }`;
 
   const features = named
@@ -254,6 +314,12 @@ export function resultHtml(r: ResultPage): string {
   .none { color: var(--muted); font-style: italic; }
   figure.step { max-width: 520px; }
   ul { padding-left: 20px; } li { margin: 4px 0; }
+  .rates { margin: 8px 0 0; }
+  .say { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  .say button { font: inherit; font-size: 14px; padding: 4px 12px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .say button[aria-pressed="true"] { border-color: var(--ink); font-weight: 600; }
+  .say input { font: inherit; font-size: 14px; padding: 4px 8px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); flex: 1 1 220px; min-width: 0; }
+  .said { font-size: 13px; color: var(--muted); }
   @media (max-width: 640px) { .sides { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -261,6 +327,7 @@ export function resultHtml(r: ResultPage): string {
 ${head}
 ${nav}
 ${body}
+<script>${FEEDBACK_SCRIPT}</script>
 </body>
 </html>
 `;

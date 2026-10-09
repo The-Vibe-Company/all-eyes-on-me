@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -8,9 +8,10 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
+const HOME = join(tmpdir(), `aeom-home-${process.pid}`);
 const run = async (cwd: string, args: string[]) => {
   try {
-    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd });
+    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd, env: { ...process.env, AEOM_HOME: HOME } });
     return { code: 0, out: stdout + stderr };
   } catch (error) {
     const e = error as { code: number; stdout: string; stderr: string };
@@ -136,5 +137,52 @@ test("a run that stopped before measuring the end lists what failed before it, n
     assert.match(html, /data-page="\/" data-status="unchanged"/);
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("each verdict of the page takes « agree » or « disagree » and a reason; served, a gesture is kept at once, and the next page counts it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
+  const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
+  const R = join(dir, ".aeom", "runs", "run-5");
+  try {
+    await snapshot(join(R, "before"), { "/": ["grid"] });
+    await snapshot(join(R, "end"), { "/": ["states"] });
+    await put(join(R, "after", "compare.json"), [{ page: "/", verdict: "same" }]);
+    await put(join(R, "directions", "tournament.json"), { entrants: ["tissus", "plaid"], votesPerDuel: 3, duels: [{ id: 1, round: 1, a: "tissus", b: "plaid", winner: "tissus", reasons: ["Made for this shop."], votes: [] }] });
+    await replay(join(R, "journeys-before"), 4);
+    await replay(join(R, "journeys-end"), 3);
+    await put(join(R, "journeys-end", "ratchet.json"), [{ slug: "orders", name: "See my orders", kept: true, why: "Shorter.", steps: { before: 4, after: 3 }, cleared: [], remaining: [] }]);
+    await put(join(R, "verdict.json"), { nothingToRedo: false, line: "Measured: 1 screen.", failures: [] });
+
+    const env = { ...process.env, AEOM_HOME: home };
+    const served = spawn("node", [AEOM, "report", ".aeom/runs/run-5", "--serve", "--port", "0"], { cwd: dir, env });
+    const url = await new Promise<string>((resolve, reject) => {
+      let out = "";
+      served.stdout.on("data", (d) => { out += d; const m = out.match(/http:\/\/127\.0\.0\.1:\d+\//); if (m) resolve(m[0]); });
+      served.on("exit", () => reject(new Error(out)));
+    });
+    try {
+      const html = await (await fetch(url)).text();
+      for (const id of ["direction", "screen:/", "journey:orders", "fail:/:states"]) assert.match(html, new RegExp(`data-verdict-id="${id}"`), id);
+      assert.match(html, /No feedback yet/);
+      assert.equal((await fetch(url + "before/captures/index@390.png")).status, 200, "the captures are served from the run folder");
+      assert.equal((await fetch(url + "../../config.json")).status, 404, "nothing outside the run folder");
+      const saved = await fetch(url + "api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: "screen:/", category: "screens", verdict: "/ sent back", agree: false, why: "The new header is better." }) });
+      assert.equal(saved.status, 200);
+      const mine = await (await fetch(url + "api/feedback")).json() as { mine: { id: string; agree: boolean; why: string }[]; rates: Record<string, { agreed: number; total: number }> };
+      assert.deepEqual(mine.mine.map((f) => [f.id, f.agree, f.why]), [["screen:/", false, "The new header is better."]], "the reopened page shows what was said");
+      assert.deepEqual(mine.rates.screens, { agreed: 0, total: 1 });
+      assert.equal((await fetch(url + "api/feedback", { method: "POST", body: "{\"id\": 3}" })).status, 400);
+    } finally {
+      served.kill();
+    }
+    const R2 = join(dir, ".aeom", "runs", "run-6");
+    await snapshot(join(R2, "before"), { "/": [] });
+    await put(join(R2, "verdict.json"), { nothingToRedo: true, line: "Measured: 1 screen.", failures: [] });
+    await promisify(execFile)("node", [AEOM, "report", ".aeom/runs/run-6"], { cwd: dir, env });
+    assert.match(await readFile(join(R2, "report.html"), "utf8"), /Screens[^<]*<[^>]*>0 of 1/, "the next run's page shows how often AEOM agreed, by category");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
   }
 });
