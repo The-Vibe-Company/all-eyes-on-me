@@ -4,6 +4,7 @@ title: --garder-le-style : une app à charte est corrigée sans changer de DA
 milestone: 03-la-commande-unique
 depends_on: [01, 03]
 design: null
+status: done
 tracker: { tool: github, id: 50, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/50 }
 ---
 
