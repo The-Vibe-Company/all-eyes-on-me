@@ -1,0 +1,37 @@
+.veebee/autopilot/2026-10-09.md
+  s_4ce34ec42d9105::t_cbb7885dc3dc92 60-73
+.veebee/milestones/03-la-commande-unique/tickets/05-la-page-de-resultat.md
+  s_4ce34ec42d9105::t_12bdd148df10fd 7
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_3120f2f41495cd 40
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_950c1cec1d81e1 51-52
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_5dab18a61e6dda 26,29,31,34-35,44,46-48,51,69,72-73,75,114-129
+packages/cli/src/commands/report.ts
+  s_4ce34ec42d9105::t_e4369b1f3b8367 3,50-51,55-60
+packages/cli/src/commands/verdict.test.ts
+  s_4ce34ec42d9105::t_d740b3cb318788 181-182
+packages/cli/src/commands/verdict.ts
+  s_4ce34ec42d9105::t_9e65cc1c352d47 1-2,99
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_2e2926bec7c273 9,26,29-31,42-43,50-51,92-96,104-108,112,127-128,134-141,152,159-163,169,171-175,179-181,191,199,202,204-206,209,230
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_26a3b977bad7b3 41,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d005678f7ed9c9d7d5b74fe4fa9578020d8f34de",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
