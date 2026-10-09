@@ -1,0 +1,33 @@
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_cca916641a5bd8 3-4,10,28-59,140-141,179-190,196-197,203-204,206-209,211,213,218-365,367-369
+packages/cli/src/commands/report.ts
+  s_4ce34ec42d9105::t_7aa8917d7b92d9 2-5,7,18-20,25,36-45,55,57-59,74,86-87,89-121,125-126,133-134,137-143,147-149,152,157-172,174
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_dd03bad6f155d5 5,7
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_3a1c54f7c5f939 1-88
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_6dc5fd5b4531e1 12,197-220,222-223,227,230,244,265,267-268,270-271,273-274,277,279-285,296,301,309,312,315,337
+packages/core/src/run/taste.test.ts
+  s_4ce34ec42d9105::t_a0316af37012a1 2,6,27-43
+packages/core/src/run/taste.ts
+  s_4ce34ec42d9105::t_a97ad68835ec16 1,3,13,26-37
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_35d144f9b922ee 41,62-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "60bcd74079803f751cdc18b79f1e453c2a515978",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
