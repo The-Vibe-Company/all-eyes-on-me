@@ -133,3 +133,45 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
 
   return { text: join(merged), ...result };
 }
+
+/** What a direction may start from: the app's purpose, its users and its main loop, as far as they are known. */
+export interface ProductBrief {
+  /** The app's name, the sheet's `#` heading. */
+  name: string;
+  /** Each part, without its sources and without what is marked to confirm; a part left empty is not there. */
+  parts: { part: string; text: string }[];
+  /** What the sheet marks `(to confirm)`, by part: no direction rests on a guess. */
+  unconfirmed: string[];
+}
+
+const BRIEF_PARTS = PARTS.filter((p) => p !== JOURNEYS);
+/** One claim of a part: its words, then the source that says where they come from. */
+const CLAIM = /([^]*?)(\(seen: *[^)\s<][^)]*\)|\(to confirm\))/g;
+
+/**
+ * The brief of the directions, from the product sheet: what the app is for,
+ * who uses it and its main loop. A claim marked `(to confirm)` is left out
+ * and named; a claim with a source, or that the user wrote without one, stays.
+ */
+export function productBrief(text: string): ProductBrief {
+  const all = units(text);
+  const brief: ProductBrief = { name: all.find((u) => u.title)?.text.replace(/^# /, "") ?? "", parts: [], unconfirmed: [] };
+  for (const part of BRIEF_PARTS) {
+    const unit = all.find((u) => !u.journey && u.key === part);
+    if (!unit) continue;
+    const kept: string[] = [];
+    const words = body(unit);
+    let end = 0;
+    for (const [, claim, source] of words.matchAll(CLAIM)) {
+      const said = claim!.replace(/\s+/g, " ").trim();
+      if (source === "(to confirm)") brief.unconfirmed.push(`${part}: ${said}`);
+      else if (said) kept.push(said);
+      end += claim!.length + source!.length;
+    }
+    // What follows the last source, or a part with none: the user's own words.
+    const rest = words.slice(end).replace(/\s+/g, " ").trim();
+    if (rest) kept.push(rest);
+    if (kept.length) brief.parts.push({ part, text: kept.join(" ") });
+  }
+  return brief;
+}

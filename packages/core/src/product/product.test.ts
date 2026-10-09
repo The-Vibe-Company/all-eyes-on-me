@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mergeProduct, validateProduct } from "./index.js";
+import { mergeProduct, productBrief, validateProduct } from "./index.js";
 
 const journey = (name: string, source = "(seen: /)") => `### ${name}\nWhy: a visitor wants it. ${source}\n1. Open \`/\`.\n2. Click "${name}".\n`;
 
@@ -102,4 +102,20 @@ test("a renamed app gets its new name at the top of the sheet", () => {
   const result = mergeProduct({ base, current: base, proposed: product().replace("# Super boutique", "# Super Boutique en ligne") });
   assert.ok(result.text.startsWith("# Super Boutique en ligne\n"));
   assert.deepEqual(validateProduct(result.text), []);
+});
+
+test("the brief of the directions holds what the app is for, who uses it and its loop, and nothing marked to confirm", () => {
+  const brief = productBrief(product({ purpose: "A shop that sells mugs. (seen: /) It ships across France. (to confirm)" }));
+  assert.equal(brief.name, "Super boutique");
+  assert.deepEqual(brief.parts, [
+    { part: "What it is for", text: "A shop that sells mugs." },
+    { part: "The main loop", text: "Browse, order, check the order." },
+  ]);
+  assert.deepEqual(brief.unconfirmed, ["What it is for: It ships across France.", "Who uses it: People buying a gift."]);
+});
+
+test("what the user wrote in place of a guess goes in the brief, with or without a source", () => {
+  const brief = productBrief(product({ who: "Interior designers buying for their clients." }));
+  assert.deepEqual(brief.parts[1], { part: "Who uses it", text: "Interior designers buying for their clients." });
+  assert.deepEqual(brief.unconfirmed, []);
 });

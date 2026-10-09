@@ -5,6 +5,7 @@ export interface SheetItem {
   label: string;
   /** A PNG screenshot. A missing file shows as a cell saying it failed. */
   file: string;
+  /** One sentence read under the capture, such as what of the product a direction serves. */
   note?: string;
 }
 
@@ -30,7 +31,7 @@ export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640
         },
       );
       const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-      return `<figure data-label="${escape(label)}"><figcaption><b>${escape(label)}</b>${note ? ` ${escape(note)}` : ""}</figcaption>${image}</figure>`;
+      return `<figure data-label="${escape(label)}"><figcaption><b>${escape(label)}</b></figcaption>${image}${note ? `<p class="note">${escape(note)}</p>` : ""}</figure>`;
     }),
   );
   return `<!doctype html><meta charset="utf-8"><style>
@@ -39,6 +40,7 @@ export async function sheetHtml(items: SheetItem[], columns = 3, cellWidth = 640
     figure { margin: 0; } figcaption { margin-bottom: 8px; } b { font-size: 20px; margin-right: 8px; }
     img { display: block; width: ${cellWidth}px; height: auto; background: #fff; }
     .missing { height: 200px; display: grid; place-items: center; background: #3a2222; color: #ffb4b4; }
+    .note { margin: 10px 0 0; font-size: 18px; line-height: 1.4; color: #f2f2f2; }
   </style><main>${cells.join("")}</main>`;
 }
 

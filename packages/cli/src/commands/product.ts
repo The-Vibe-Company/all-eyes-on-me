@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { mergeProduct, validateProduct } from "@aeom/core";
+import { mergeProduct, productBrief, validateProduct } from "@aeom/core";
 
 const SHEET = join(".aeom", "product.md");
 /** What AEOM last proposed: it tells the user's corrections from AEOM's own words. */
@@ -17,11 +17,16 @@ const PENDING = join(".aeom", "product.pending.json");
 const LOCK = join(".aeom", "product.lock");
 
 const USAGE = `Usage: aeom product <draft.md>
+       aeom product --brief
 
 Writes the product sheet AEOM drafted to .aeom/product.md: what the app is for,
 who uses it, its main loop and three to five key journeys. A draft that misses
 any of it is refused and nothing is written. What the user corrected in the
-sheet since AEOM last wrote it stays as they wrote it.`;
+sheet since AEOM last wrote it stays as they wrote it.
+
+With --brief, prints what the art directions start from: what the app is for,
+who uses it and its main loop, without their sources, and names what the sheet
+marks (to confirm), which no direction may rest on.`;
 
 async function readIfThere(file: string): Promise<string | undefined> {
   try {
@@ -84,9 +89,22 @@ async function recover(): Promise<void> {
   await rm(PENDING, { force: true });
 }
 
+async function printBrief(): Promise<number> {
+  const sheet = await readIfThere(SHEET);
+  if (sheet === undefined) {
+    console.error(`No product sheet in ${SHEET}: run /aeom, which writes it before the directions.`);
+    return 1;
+  }
+  const { name, parts, unconfirmed } = productBrief(sheet);
+  console.log(`${name}\n\n${parts.map((p) => `${p.part}: ${p.text}`).join("\n")}`);
+  if (unconfirmed.length) console.log(`\nLeft out, to confirm:\n${unconfirmed.map((u) => `- ${u}`).join("\n")}`);
+  return 0;
+}
+
 export async function runProduct(argv: string[]): Promise<number> {
-  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { help: { type: "boolean", short: "h" } } });
-  if (values.help || positionals.length !== 1) {
+  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { brief: { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  if (values.brief && !values.help && positionals.length === 0) return printBrief();
+  if (values.help || values.brief || positionals.length !== 1) {
     console.log(USAGE);
     return values.help ? 0 : 1;
   }
