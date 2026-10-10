@@ -1,4 +1,5 @@
 import { route } from "../capture/capture.js";
+import { pairRoutes } from "../capture/shape.js";
 import type { CheckReport } from "../checks/run.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { JudgeReport } from "../judge/tally.js";
@@ -35,13 +36,18 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
   const failures: Failure[] = [];
   const keptWithStyle: Failure[] = [];
   const missing: string[] = [];
+  // A screen checked and judged under two routes of one shape, such as a record made at each visit, counts as one, named as judged.
+  const checked = new Set(check.pages.map(route));
+  const judged = new Set(judge.pages.map((p) => p.page));
+  const pairs = pairRoutes([...judged], [...checked]);
+  const named = (url: string) => pairs.get(route(url)) ?? route(url);
   // A page that does not load was neither checked nor judged, and is broken for whoever opens it.
   for (const e of check.errors) failures.push({ kind: "page", where: route(e.url), what: `does not load: ${e.reason}` });
   // A check failing at several widths on one screen is one thing to redo, each element named once.
   const byCheck = new Map<string, { where: string; check: string; elements: Set<string> }>();
   for (const f of check.findings) {
-    const key = `${route(f.url)} ${f.check}`;
-    const entry = byCheck.get(key) ?? { where: route(f.url), check: f.check, elements: new Set<string>() };
+    const key = `${named(f.url)} ${f.check}`;
+    const entry = byCheck.get(key) ?? { where: named(f.url), check: f.check, elements: new Set<string>() };
     entry.elements.add(f.element ? `${f.element}: ${f.message}` : f.message);
     byCheck.set(key, entry);
   }
@@ -69,11 +75,10 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "journey-principle", where: name(page.page), what: `${v.principle}: ${v.reasons[0] ?? ""}` });
   }
 
-  const checked = new Set(check.pages.map(route));
-  const judged = new Set(judge.pages.map((p) => p.page));
+  const partners = new Set(pairs.values());
   if (!checked.size) missing.push("no page was checked");
-  for (const page of checked) if (!judged.has(page)) missing.push(`${page} was checked but not judged`);
-  for (const page of judged) if (!checked.has(page)) missing.push(`${page} was judged but not checked`);
+  for (const page of checked) if (!pairs.has(page)) missing.push(`${page} was checked but not judged`);
+  for (const page of judged) if (!partners.has(page)) missing.push(`${page} was judged but not checked`);
   const replayed = new Set(journeys?.journeys.map((j) => j.slug));
   const critiqued = new Set(journeyJudge?.pages.map((p) => p.page));
   for (const slug of recorded) {

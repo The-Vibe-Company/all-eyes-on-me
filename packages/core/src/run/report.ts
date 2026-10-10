@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { CaptureManifest } from "../capture/capture.js";
 import type { CheckReport } from "../checks/run.js";
 import { applied, champion, type Tournament } from "../directions/tournament.js";
+import { pairRoutes } from "../capture/shape.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { RatchetVerdict } from "../journey/ratchet.js";
 import type { JudgeReport } from "../judge/tally.js";
@@ -108,10 +109,13 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const decided = (await json<{ page: string; verdict: string; before?: { total: number } | null; after?: { total: number } | null }[]>(join(runDir, "after", "compare.json"))) ?? null;
   const erroredBefore = before?.errors.map((e) => route(e.url)) ?? [];
   const erroredAfter = after?.errors.map((e) => route(e.url)) ?? [];
-  const pages = [...new Set([...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore, ...(after?.pages.map((p) => p.path) ?? []), ...erroredAfter])];
+  // A page after pairs with the page before of the same route, or of the same shape, such as a record made at each visit.
+  const paired = pairRoutes(before?.pages.map((p) => p.path) ?? [], after?.pages.map((p) => p.path) ?? []);
+  const nameAfter = (path: string) => paired.get(path) ?? path;
+  const pages = [...new Set([...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore, ...(after?.pages.map((p) => nameAfter(p.path)) ?? []), ...erroredAfter])];
   const screens: ResultPage["screens"] = pages.map((page) => {
     const b = before?.pages.find((p) => p.path === page);
-    const a = after?.pages.find((p) => p.path === page);
+    const a = after?.pages.find((p) => nameAfter(p.path) === page);
     const widths = [...new Set([...(b?.files ?? []), ...(a?.files ?? [])].map((f) => f.width))].sort((x, y) => x - y);
     const c = comparison.find((x) => x.page === page);
     const failingBefore = c?.before?.failing ?? [];
@@ -196,7 +200,10 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   let stillFailing: Failure[] = [];
   const measuredAfter = Boolean(now?.check && now.judge);
   if (now?.check && now.judge) {
-    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures;
+    // Named as the screens are, by their route before the run when it names the same record-made-at-each-visit screen.
+    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures.map((f) =>
+      f.kind === "journey" || f.kind === "journey-principle" ? f : { ...f, where: nameAfter(f.where) },
+    );
     // A page that did not load before the run and that the end did not measure: still broken, as far as anyone knows.
     for (const page of erroredBefore) if (!after?.pages.some((p) => p.path === page) && !erroredAfter.includes(page)) stillFailing.push({ kind: "page", where: page, what: "did not load before the run, and was not measured after the run" });
   } else if (verdict) stillFailing = verdict.failures;

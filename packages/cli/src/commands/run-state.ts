@@ -57,7 +57,9 @@ const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
  */
 async function update(runDir: string, change: (s: RunState) => RunState): Promise<void> {
   const lock = join(runDir, `${FILE}.lock`);
-  for (let tries = 0; ; tries++) {
+  // A mark holds the lock for a few milliseconds; many at once on a busy machine can wait their turn for long.
+  const until = Date.now() + 60_000;
+  for (;;) {
     try {
       await writeFile(lock, String(process.pid), { flag: "wx" });
       break;
@@ -71,7 +73,7 @@ async function update(runDir: string, change: (s: RunState) => RunState): Promis
         alive = false;
       }
       if (!alive && holder) await rm(lock, { force: true });
-      else if (tries > 300) throw new Error(`Another aeom run (process ${holder}) has been writing ${join(runDir, FILE)} for too long. Run again once it is done.`);
+      else if (Date.now() > until) throw new Error(`Another aeom run (process ${holder}) has been writing ${join(runDir, FILE)} for too long. Run again once it is done.`);
       else await sleep(20 + Math.random() * 30);
     }
   }

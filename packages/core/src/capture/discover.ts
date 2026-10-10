@@ -145,3 +145,4 @@ export async function visitPages(browser: Browser, baseUrl: string, paths: strin
   }
   return { pages, errors };
 }
+

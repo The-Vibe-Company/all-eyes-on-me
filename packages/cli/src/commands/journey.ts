@@ -75,6 +75,8 @@ export async function runJourney(argv: string[]): Promise<number> {
   return withApp({ ...values, url }, async () => {
     const session = await signInFromConfig(url);
     if (session === "failed") return 1;
+    // A saved session cannot be renewed: a reset that ends sessions leaves the next journeys signed out.
+    if (reset && session?.kind === "state") console.log(`With a reset, a saved session may end before the next journey: if the journeys land signed out, give "login" a "script" that prints a new one.`);
     let report: JourneyReport;
     try {
       report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}) });

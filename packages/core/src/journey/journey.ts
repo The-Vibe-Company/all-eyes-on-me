@@ -5,9 +5,12 @@ import { basename, join } from "node:path";
  * What a step acts on: an element by its accessible role and name, such as a
  * link "Commandes", or by its visible text when it has no role. When several
  * elements match, `within` names the container that holds the right one, such
- * as the row "Lampe": its name needs only to appear in the container's.
+ * as the row "Lampe": its name needs only to appear in the container's; or,
+ * with `top`, the one of that role drawn on top of the others, such as the
+ * last of two dialogs opened one over the other. When nothing names them
+ * apart, `nth` takes the nth of them on the screen, 1 for the first.
  */
-export type Target = ({ role: string; name: string } | { text: string }) & { within?: { role: string; name: string } };
+export type Target = ({ role: string; name: string } | { text: string }) & { within?: { role: string; name: string } | { role: string; top: true }; nth?: number };
 
 export type Step =
   | { do: "open"; path: string }
@@ -46,8 +49,10 @@ function targetProblem(target: unknown): string | null {
   if (text && (t.role !== undefined || t.name !== undefined)) return "a target is either a role and a name, or a text, not both";
   if (t.within !== undefined) {
     const w = t.within as Record<string, unknown> | null;
-    if (!w || typeof w.role !== "string" || typeof w.name !== "string" || !w.role || !w.name) return "within needs a role and a name";
+    const named = !!w && typeof w.name === "string" && !!w.name;
+    if (!w || typeof w.role !== "string" || !w.role || (!named && w.top !== true) || (named && w.top !== undefined)) return `within needs a role and a name, or "top": true for the one on top`;
   }
+  if (t.nth !== undefined && (!Number.isInteger(t.nth) || (t.nth as number) < 1)) return "nth counts from 1, for the first";
   return null;
 }
 
@@ -111,7 +116,11 @@ export async function loadJourneys(dir: string): Promise<Journey[]> {
 
 /** A step in words, as the report and the captures name it: `click link "Commandes"`. */
 export function describeStep(step: Step): string {
-  const target = (t: Target) => ("text" in t ? `"${t.text}"` : `${t.role} "${t.name}"`) + (t.within ? ` in ${t.within.role} "${t.within.name}"` : "");
+  const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+  const target = (t: Target) =>
+    (t.nth ? `the ${ordinal(t.nth)} ` : "") +
+    ("text" in t ? `"${t.text}"` : `${t.role} "${t.name}"`) +
+    (!t.within ? "" : "top" in t.within ? ` in the ${t.within.role} on top` : ` in ${t.within.role} "${t.within.name}"`);
   switch (step.do) {
     case "open":
       return `open ${step.path}`;
