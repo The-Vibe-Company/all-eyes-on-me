@@ -11,7 +11,10 @@ page at every width.
 Options:
 ${APP_OPTIONS_HELP}
   --out <dir>          Where to write the screenshots (default .aeom/captures)
-  --pages <list>       Capture only these routes, comma-separated, such as /,/produits`;
+  --pages <list>       Capture only these routes, comma-separated, such as /,/produits
+                       (default: pages in .aeom/config.json, or every page the
+                       links lead to). The routes "public" lists in the config
+                       are captured too, signed out.`;
 
 export async function runCapture(argv: string[]): Promise<number> {
   const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/captures" }, pages: { type: "string" } } }).values;
@@ -41,9 +44,10 @@ export async function runCapture(argv: string[]): Promise<number> {
       console.error(`--pages lists no route. Give at least one, such as --pages /.`);
       return 1;
     }
+    const signedOut = values.public?.split(",");
     const session = await signInFromConfig(url);
     if (session === "failed") return 1;
-    const { pages, errors } = await capture({ url, outDir: values.out, widths, ...(paths ? { paths } : {}), ...(session ? { signedIn: session.signedIn } : {}) });
+    const { pages, errors } = await capture({ url, outDir: values.out, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}) });
     if (pages.length === 0) {
       console.error(`\nNo page could be captured from ${url}.`);
       for (const error of errors) console.error(`  ✗ ${route(error.url)}  ${error.reason}`);

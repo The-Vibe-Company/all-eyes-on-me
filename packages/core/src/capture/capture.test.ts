@@ -9,7 +9,8 @@ import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
-import { AppStartError, capture, normalize, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { AppStartError, capture, normalize, pinFixed, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 const ACCOUNT: Record<string, string> = JSON.parse(readFileSync(new URL("../../../../examples/ugly-app/fixtures/compte.json", import.meta.url), "utf8"));
@@ -169,5 +170,146 @@ test("what loads on scroll, such as a lazy image far down, is loaded before the 
   } finally {
     server.close();
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+/** Serves pages from a table, each a function of the request. */
+async function serve(routes: Record<string, (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void>) {
+  const server = createHttpServer((req, res) => {
+    const handle = routes[(req.url ?? "/").split("?")[0]!];
+    if (handle) return handle(req, res);
+    res.writeHead(404, { "content-type": "text/plain" });
+    res.end("Not Found");
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  return { server, url: `http://localhost:${(server.address() as { port: number }).port}` };
+}
+const html = (body: string) => (_: unknown, res: import("node:http").ServerResponse) => {
+  res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+  res.end(`<!doctype html><title>t</title>${body}`);
+};
+
+/** The colour of one pixel of a PNG, read in a browser. */
+async function pixel(file: string, x: number, y: number): Promise<string> {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    const data = readFileSync(file).toString("base64");
+    return await page.evaluate(
+      async ({ data, x, y }) => {
+        const img = new Image();
+        img.src = `data:image/png;base64,${data}`;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const context = canvas.getContext("2d")!;
+        context.drawImage(img, 0, 0);
+        const [r, g, b] = context.getImageData(x, y, 1, 1).data;
+        return `${r},${g},${b}`;
+      },
+      { data, x, y },
+    );
+  } finally {
+    await browser.close();
+  }
+}
+
+test("a page whose network never goes quiet, as Next.js keeps it in development, is still captured and checked, after a bounded wait", async () => {
+  const { server, url } = await serve({
+    "/": html(`<p>Foyer</p><script>fetch('/stream')</script>`),
+    // Never answers: the network never goes quiet.
+    "/stream": () => {},
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-busy-"));
+  try {
+    const started = Date.now();
+    const manifest = await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
+    assert.deepEqual(manifest.pages.map((p) => p.path), ["/"]);
+    assert.deepEqual(manifest.errors, []);
+    const report = await checkSite({ url, widths: [390], paths: ["/"] });
+    assert.deepEqual(report.errors, []);
+    assert.ok(Date.now() - started < 25_000, "each page waits a few seconds at most");
+  } finally {
+    server.closeAllConnections();
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("in a full-page capture, a bar fixed to the bottom of the window is drawn at the end of the page, not in the middle", async () => {
+  const { server, url } = await serve({
+    "/": html(`<body style="margin:0"><div style="height:3000px;background:rgb(255,255,255)"></div><nav style="position:fixed;bottom:0;left:0;right:0;height:50px;background:rgb(255,0,0)">Onglets</nav></body>`),
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-fixed-"));
+  try {
+    await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
+    const file = join(dir, "index@390.png");
+    assert.equal(await pixel(file, 10, 3000 - 25), "255,0,0", "the bar is at the end of the page");
+    assert.equal(await pixel(file, 10, 844 - 25), "255,255,255", "and no longer where the window ended");
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("pages the config marks public are captured and checked signed out, the others signed in", async () => {
+  const signed = (req: import("node:http").IncomingMessage) => (req.headers.cookie ?? "").includes("session=ok");
+  const { server, url } = await serve({
+    "/": (req, res) => {
+      if (signed(req)) {
+        res.writeHead(303, { location: "/jeu" });
+        return res.end();
+      }
+      html(`<h1>Bestia, le jeu</h1><a href="/connexion">Se connecter</a>`)(req, res);
+    },
+    "/jeu": (req, res) => {
+      if (!signed(req)) {
+        res.writeHead(303, { location: "/" });
+        return res.end();
+      }
+      html(`<h1>Foyer</h1>`)(req, res);
+    },
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-public-"));
+  const signedIn = { cookies: [{ name: "session", value: "ok", domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" as const }], origins: [] };
+  try {
+    const manifest = await capture({ url, outDir: dir, widths: [390], paths: ["/jeu"], signedOut: ["/"], signedIn });
+    assert.deepEqual(manifest.pages.map((p) => [p.path, p.signedOut ?? false]), [["/jeu", false], ["/", true]]);
+    const found = await capture({ url, outDir: dir, widths: [390], signedOut: ["/"], signedIn });
+    assert.deepEqual(found.pages.map((p) => p.path).sort(), ["/", "/jeu"], "found by its links signed in, and the public page signed out");
+    assert.deepEqual(found.errors, []);
+    const report = await checkSite({ url, widths: [390], paths: ["/jeu"], signedOut: ["/"], signedIn });
+    assert.deepEqual(report.pages.map((p) => new URL(p).pathname), ["/jeu", "/"]);
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("only bars fixed to the bottom of the window move to the end of the page, as they were, and go back after", async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.setContent(`<body style="margin:0">
+      <div id="backdrop" style="position:fixed;inset:0;background:rgb(0,0,255)"></div>
+      <header id="top" style="position:fixed;top:0;left:0;right:0;padding:0 20px;height:40px"></header>
+      <nav id="bar" style="position:fixed;bottom:0;left:50%;width:200px;height:50px;translate:-50% 0;transform:scale(1)"><span id="inner" style="position:fixed;bottom:0;left:0;height:10px;width:10px"></span></nav>
+      <div style="transform:translateZ(0)"><div id="scrolls" style="position:fixed;bottom:0;height:20px;width:20px"></div></div>
+      <div style="height:3000px"></div></body>`);
+    const box = (id: string) => page.evaluate((id) => { const r = document.getElementById(id)!.getBoundingClientRect(); return { top: Math.round(r.top + scrollY), left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) }; }, id);
+    const before = { backdrop: await box("backdrop"), top: await box("top"), bar: await box("bar"), scrolls: await box("scrolls") };
+    const own = await page.evaluate(() => document.getElementById("bar")!.style.translate);
+    const unpin = await pinFixed(page);
+    assert.deepEqual(await box("bar"), { ...before.bar, top: 3000 - 50 }, "the bar is at the end of the page, centred and as wide as it was");
+    assert.deepEqual(await box("backdrop"), before.backdrop, "what covers the window stays");
+    assert.deepEqual(await box("top"), before.top, "a header fixed to the top stays, as wide as it was");
+    assert.deepEqual(await box("scrolls"), before.scrolls, "an element that scrolls with the page is not moved");
+    assert.equal((await page.evaluate(() => document.documentElement.scrollHeight)), 3000, "the page is no taller");
+    await unpin();
+    assert.deepEqual(await box("bar"), before.bar, "the bar goes back where it was");
+    assert.equal(await page.evaluate(() => document.getElementById("bar")!.style.translate), own, "with its own translate");
+  } finally {
+    await browser.close();
   }
 });

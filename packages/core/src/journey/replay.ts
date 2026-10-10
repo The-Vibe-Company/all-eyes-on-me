@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { chromium, type Locator, type Page, type Request } from "playwright";
 import { DEFAULT_WIDTHS, scrollThrough } from "../capture/capture.js";
-import type { SignedIn } from "../capture/sign-in.js";
+import { openPage, pinFixed, settle } from "../capture/open.js";
+import { signIn, type SignedIn, type SignIn } from "../capture/sign-in.js";
 import { contactSheet } from "../directions/sheet.js";
 import { describeStep, type Journey, type Step, type Target } from "./journey.js";
 
@@ -71,6 +72,8 @@ export interface ReplayOptions {
   reset?: string;
   /** What a signed-in browser keeps: every journey but those marked signedOut starts signed in. */
   signedIn?: SignedIn;
+  /** How to sign in again: after each reset, which may sign everyone out, journeys start from a new sign-in rather than from `signedIn`. */
+  login?: SignIn;
   /** The sign-in account's values by field label, for fill steps that take theirs from it. Never reported. */
   account?: Record<string, string>;
 }
@@ -143,7 +146,7 @@ const sameRoute = (route: string, lands: string) => (lands.includes("?") ? route
 async function act(page: Page, app: App, step: Step, account: Record<string, string>): Promise<Locator | null> {
   switch (step.do) {
     case "open":
-      await page.goto(app.origin + app.base + step.path, { waitUntil: "networkidle", timeout: 15_000 });
+      await openPage(page, app.origin + app.base + step.path, { timeout: 15_000 });
       return null;
     case "click":
       await (await resolve(page, step.target)).click({ timeout: STEP_TIMEOUT });
@@ -250,7 +253,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
       if (filled) secret.push(filled);
       if (lands) await page.waitForURL((u) => sameRoute(routeOf(app, u.href), lands), { timeout: STEP_TIMEOUT }).catch(() => {});
       else if (navigated) await navigated;
-      await page.waitForLoadState("networkidle", { timeout: STEP_TIMEOUT }).catch(() => {});
+      await settle(page);
     } catch (error) {
       reason = error instanceof StepFailure ? error.message : (error instanceof Error ? error.message : String(error)).split("\n")[0]!;
     }
@@ -264,7 +267,9 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     const capture = `${journey.slug}@${width}-${String(i + 1).padStart(2, "0")}.png`;
     await scrollThrough(page).catch(() => {});
     // A field filled from the sign-in account shows as a block, never its value.
+    const unpin = await pinFixed(page).catch(() => async () => {});
     const shot = await page.screenshot({ path: join(outDir, capture), fullPage: true, mask: secret }).then(() => capture, () => null);
+    await unpin().catch(() => {});
     const result: StepResult = { index: i + 1, action: describeStep(step), path, capture: shot };
     if (dialogs.length > heard) result.dialog = dialogs.slice(heard).join(" / ");
     steps.push(result);
@@ -286,7 +291,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
  * after every step, and stops a journey at the step it cannot take. Writes the
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
  */
-export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, account = {} }: ReplayOptions): Promise<JourneyReport> {
+export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, login, account = {} }: ReplayOptions): Promise<JourneyReport> {
   const root = new URL(url);
   const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
@@ -303,7 +308,11 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
             throw new ReplayError(`The reset command failed before "${journey.name}": ${(error.stderr || error.message || String(error)).trim().split("\n")[0]}`);
           });
         }
-        const state = signedIn && !journey.signedOut ? { storageState: signedIn } : {};
+        // A reset may sign everyone out: sign in again after it, rather than reuse the session from before.
+        const session = journey.signedOut ? undefined : reset && login ? await signIn(browser, url, login).catch((error: Error) => {
+          throw new ReplayError(`Signing in again after the reset failed before "${journey.name}": ${error.message.split("\n")[0]}`);
+        }) : signedIn;
+        const state = session ? { storageState: session } : {};
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...state });
         let run: Omit<JourneyRun, "sheet">;
         try {

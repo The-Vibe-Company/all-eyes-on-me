@@ -55,6 +55,25 @@ test("with a login in the config, aeom capture signs in first and captures the p
   }
 });
 
+test("pages the config marks public are captured and checked signed out, beside the pages behind the sign-in", async () => {
+  const dir = await project(ACCOUNT);
+  try {
+    const file = join(dir, ".aeom", "config.json");
+    await writeFile(file, JSON.stringify({ ...JSON.parse(await readFile(file, "utf8")), pages: ["/produits"], public: ["/commandes"] }));
+    const { code, out } = await run(dir, ["capture", "--widths", "390", "--out", join(dir, "captures")]);
+    assert.equal(code, 0, out);
+    const manifest = JSON.parse(await readFile(join(dir, "captures", "manifest.json"), "utf8"));
+    assert.deepEqual(manifest.pages.map((p: { path: string; signedOut?: boolean }) => [p.path, p.signedOut ?? false]), [["/produits", false], ["/connexion", true]], "signed out, the orders page leads to signing in");
+    const given = await run(dir, ["capture", "--widths", "390", "--pages", "/", "--out", join(dir, "given")]);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, "given", "manifest.json"), "utf8")).pages.map((p: { path: string }) => p.path), ["/"], "--pages alone says what is captured");
+    assert.equal(given.code, 0, given.out);
+    const checked = await run(dir, ["check", "--widths", "390", "--out", join(dir, "reports")]);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, "reports", "check.json"), "utf8")).pages.map((p: string) => new URL(p).pathname), ["/produits", "/connexion"], checked.out);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("a refused account stops aeom capture before anything is captured, without printing the account", async () => {
   const dir = await project("wrong.json");
   try {

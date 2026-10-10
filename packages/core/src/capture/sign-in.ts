@@ -1,4 +1,5 @@
 import { chromium, type Browser, type BrowserContext } from "playwright";
+import { openPage } from "./open.js";
 
 /** What a signed-in browser keeps, cookies and storage, so every capture starts signed in. */
 export type SignedIn = Awaited<ReturnType<BrowserContext["storageState"]>>;
@@ -32,7 +33,7 @@ export async function signIn(browser: Browser, url: string, { path, account, sub
     const target = new URL(path, origin);
     // The sign-in route by its path alone, so a route given with a query still compares.
     const route = target.pathname;
-    const response = await page.goto(target.href, { waitUntil: "networkidle" });
+    const response = await openPage(page, target.href);
     if (!response || response.status() >= 400) throw new SignInError(`Cannot sign in: ${path} answered ${response?.status() ?? "nothing"}.`);
     for (const label of Object.keys(account)) {
       const field = page.getByLabel(label, { exact: true });
@@ -48,7 +49,8 @@ export async function signIn(browser: Browser, url: string, { path, account, sub
     await Promise.race([left, refused]).catch(() => {});
     left.catch(() => {});
     refused.catch(() => {});
-    await page.waitForLoadState("networkidle").catch(() => {});
+    // A refused sign-in that reloads its page, then sends on from the browser, gets the whole timeout, never the short wait of a page.
+    await page.waitForLoadState("networkidle", { timeout: SIGN_IN_TIMEOUT }).catch(() => {});
     if (new URL(page.url()).pathname === route) throw new SignInError(`Signing in did not work: the app stayed on ${path} after "${submit}". Check the account AEOM was given.`);
     return await context.storageState();
   } finally {

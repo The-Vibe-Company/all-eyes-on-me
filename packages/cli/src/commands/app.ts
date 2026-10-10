@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, signInOnce, SignInError, startApp, type RunningApp, type SignedIn } from "@aeom/core";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, signInOnce, SignInError, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -52,11 +52,13 @@ export async function withApp(values: { url: string; start?: string; timeout?: s
 export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 /**
- * Fills --url and --start from .aeom/config.json. The config's start command
- * is used only when --url is not given either: an explicit --url means an app
+ * Fills --url, --start and --pages from .aeom/config.json, and the pages seen
+ * signed out, `public`: all of them when the pages come from the config or the
+ * links, only those --pages names otherwise. The config's start command is
+ * used only when --url is not given either: an explicit --url means an app
  * that is already running there.
  */
-export async function withConfig<T extends { url?: string; start?: string }>(values: T): Promise<T> {
+export async function withConfig<T extends { url?: string; start?: string; pages?: string }>(values: T): Promise<T & { public?: string }> {
   let config;
   try {
     config = await loadConfig();
@@ -65,6 +67,11 @@ export async function withConfig<T extends { url?: string; start?: string }>(val
     console.error(error.message);
     process.exit(1);
   }
+  // The config's pages hold however the app is reached: --pages alone replaces them.
+  const given = values.pages?.split(",").map((p) => p.trim());
+  const open = config.public?.filter((p) => !given || given.includes(p));
+  if (open?.length) values = { ...values, public: open.join(",") };
+  if (values.pages === undefined && config.pages) values = { ...values, pages: config.pages.join(",") };
   if (values.url !== undefined) return values;
   return { ...values, url: config.url, start: values.start ?? config.start };
 }
@@ -75,7 +82,7 @@ export async function withConfig<T extends { url?: string; start?: string }>(val
  * null when the app needs no sign-in. Prints why and returns "failed" when it
  * cannot sign in. No value of the account is ever printed.
  */
-export async function signInFromConfig(url: string): Promise<{ signedIn: SignedIn; account: Record<string, string> } | null | "failed"> {
+export async function signInFromConfig(url: string): Promise<{ signedIn: SignedIn; account: Record<string, string>; login: SignIn } | null | "failed"> {
   let login;
   try {
     login = (await loadConfig()).login;
@@ -98,9 +105,10 @@ export async function signInFromConfig(url: string): Promise<{ signedIn: SignedI
     return "failed";
   }
   try {
-    const signedIn = await signInOnce(url, { path: login.path, account, submit: login.submit });
+    const how: SignIn = { path: login.path, account, submit: login.submit };
+    const signedIn = await signInOnce(url, how);
     console.log(`Signed in on ${login.path} with the account in ${login.account}`);
-    return { signedIn, account };
+    return { signedIn, account, login: how };
   } catch (error) {
     if (!(error instanceof SignInError)) throw error;
     console.error(error.message);

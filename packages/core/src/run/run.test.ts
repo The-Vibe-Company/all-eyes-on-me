@@ -85,6 +85,16 @@ test("the project config gives the defaults for url and start, and is optional",
     assert.deepEqual(await loadConfig(dir), { style: "keep" }, "a brand charter AEOM keeps, run after run");
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "garder" }));
     await assert.rejects(loadConfig(dir), /"style" is "keep", to keep the existing style, or left out/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ pages: ["/", " /objets/perceuse "] }));
+    assert.deepEqual((await loadConfig(dir)).pages, ["/", "/objets/perceuse"], "one page of each kind, when the app has many of one");
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ public: ["/", "/connexion"], home: "/jeu" }));
+    assert.deepEqual(await loadConfig(dir), { public: ["/", "/connexion"], home: "/jeu" }, "pages seen signed out, and the page a signed-in user lands on");
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ public: "/" }));
+    await assert.rejects(loadConfig(dir), /"public" lists the routes to see signed out, such as \["\/", "\/connexion"\]/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ home: "jeu" }));
+    await assert.rejects(loadConfig(dir), /"home" is the route a signed-in user lands on, such as "\/jeu"/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ pages: ["objets"] }));
+    await assert.rejects(loadConfig(dir), /"pages" lists routes from the app's root, such as \["\/", "\/objets\/perceuse"\]/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
