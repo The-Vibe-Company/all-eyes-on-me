@@ -373,6 +373,8 @@ test("routes that name records pair by their shape, so a screen whose record cha
   assert.equal(pageShape("/sessions/play?id=42&tab=infos"), "/sessions/play?id=:id&tab=infos");
   assert.equal(pageShape("/connexion"), "/connexion");
   assert.equal(pageShape("/sessions/new"), "/sessions/new");
+  for (const slug of ["/web3-app", "/2fa-setup", "/produits/iphone-15", "/covid19"]) assert.equal(pageShape(slug), slug, `${slug} is a screen of its own`);
+  assert.equal(pageShape("/c/clx1abc2def3ghi4"), "/c/:id");
   const pairs = pairRoutes(["/", "/sessions/100", "/sessions/100/players", "/aide"], ["/", "/aide", "/sessions/101/players", "/sessions/101", "/autre/7"]);
   assert.deepEqual([...pairs], [["/", "/"], ["/aide", "/aide"], ["/sessions/101/players", "/sessions/100/players"], ["/sessions/101", "/sessions/100"]]);
 });
@@ -385,13 +387,17 @@ test("a field is found beside its label without crossing into another row, never
       <div class="float"><input id="floated"><label>Ville</label></div>
       <form><div><label>Code</label></div><input id="wrapped"><input name="code" id="trap" style="position:absolute;left:-9999px"></form>
       <table><tr id="r1"><td><label>Quantité</label></td><td><input id="q1"></td></tr><tr id="r2"><td><label>Quantité</label></td><td><input id="q2"></td></tr></table>
-      <label for="e1">Email</label><input id="e1"><label for="e2">Email</label><input id="e2">`);
+      <label for="e1">Email</label><input id="e1"><label for="e2">Email</label><input id="e2">
+      <section><div role="dialog" id="d"><label>Code postal</label></div><input id="outside"></section>
+      <div><label>Pays</label><div role="combobox" tabindex="0">France</div><input id="tel"></div>`);
     const id = async (label: string, scope: import("playwright").Page | import("playwright").Locator = page) => (await findField(scope, label))?.getAttribute("id") ?? null;
     assert.equal(await id("Ville"), "floated", "a label after its field, in the same box");
     assert.equal(await id("Code"), "wrapped", "a label in its own box, the field right after it; the hidden twin is not seen");
     assert.equal(await id("Quantité", page.locator("#r2")), "q2", "inside the row asked, not the one before");
     assert.equal(await id("Quantité"), null, "two rows: two fields, so none");
     assert.equal(await id("Email"), null, "two fields named Email: none is guessed");
+    assert.equal(await id("Code postal", page.locator("#d")), null, "never outside the dialog asked");
+    assert.equal(await id("Pays"), null, "a label whose own control is a custom list is not given its neighbour's field");
   } finally {
     await browser.close();
   }
@@ -405,6 +411,7 @@ test("cookies exported by a browser extension are made fit for a browser, and an
     { name: "__Secure-c", value: "3", sameSite: null },
   ]), "https://jeu.example.test/");
   assert.deepEqual(state.cookies.map((c) => [c.name, c.sameSite, c.secure, c.expires > 0]), [["a", "None", true, true], ["b", "Lax", true, false], ["__Secure-c", "Lax", true, false]]);
-  assert.throws(() => signedInFrom(JSON.stringify([{ name: "old", value: "1", expires: now - 60 }]), "http://x"), /has expired/);
+  assert.deepEqual(signedInFrom(JSON.stringify([{ name: "old", value: "1", expires: now - 60 }, { name: "session", value: "2" }]), "http://x").cookies.map((c) => c.name), ["session"], "an expired tracker is left out");
+  assert.throws(() => signedInFrom(JSON.stringify([{ name: "old", value: "1", expires: now - 60 }]), "http://x"), /Every cookie of the session given has expired/);
   assert.throws(() => signedInFrom("[]", "http://x"), /holds no cookie/);
 });

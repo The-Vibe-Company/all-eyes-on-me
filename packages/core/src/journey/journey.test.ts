@@ -341,6 +341,7 @@ test("a reset that signs everyone out is followed by a new sign-in, so every jou
 test("when two dialogs are stacked, the one on top is named, or the nth element when nothing else tells them apart", async () => {
   const server = createServer((req, res) => {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    if (req.url === "/tall") return res.end(`<p id="said">rien</p><div role="dialog" aria-label="Long" style="position:absolute;top:0;left:0;width:300px;height:3000px"><button onclick="said.textContent='validé'">Valider</button></div>`);
     res.end(`<p id="said">rien</p>
       <div role="dialog" aria-label="Nouveautés" style="position:fixed;top:0;left:0;width:220px;height:120px;background:#eee;z-index:10"><button onclick="said.textContent='dessous'">Plus tard</button></div>
       <div role="dialog" aria-label="Notifications" style="position:fixed;top:20px;left:20px;width:220px;height:120px;background:#ddd;z-index:20"><button onclick="said.textContent='dessus'">Plus tard</button></div>
@@ -355,9 +356,11 @@ test("when two dialogs are stacked, the one on top is named, or the nth element 
     const top: Journey = { slug: "top", name: "Top", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "button", name: "Plus tard", within: { role: "dialog", top: true } } }, { do: "see", text: "dessus" }] };
     const second: Journey = { slug: "nth", name: "Nth", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "Voir", nth: 2 } }, { do: "see", text: "deux" }] };
     const native: Journey = { slug: "native", name: "Native", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "button", name: "Ouvrir" } }, { do: "click", target: { role: "button", name: "Fermer", within: { role: "dialog", top: true } } }, { do: "see", text: "natif dessus" }] };
+    const tall: Journey = { slug: "tall", name: "Tall", steps: [{ do: "open", path: "/tall" }, { do: "click", target: { role: "button", name: "Valider", within: { role: "dialog", top: true } } }, { do: "see", text: "validé" }] };
     const twice: Journey = { slug: "twice", name: "Twice", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "button", name: "Plus tard" } }] };
-    const report = await replayJourneys({ url, journeys: [top, second, twice, native], outDir: dir, widths: [1280] });
-    const [t, n, w, d] = report.journeys.map((j) => j.runs[0]!.broken);
+    const report = await replayJourneys({ url, journeys: [top, second, twice, native, tall], outDir: dir, widths: [1280] });
+    const [t, n, w, d, l] = report.journeys.map((j) => j.runs[0]!.broken);
+    assert.equal(l, null, "one dialog alone is on top, even taller than the window");
     assert.equal(d, null, "the native dialog opened last is on top, though it comes first in the page");
     assert.equal(t, null, "the dialog on top");
     assert.equal(n, null, "the second link");

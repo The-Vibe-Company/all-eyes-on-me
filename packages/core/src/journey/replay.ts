@@ -100,16 +100,31 @@ async function resolve(page: Page, target: Target, { field = false } = {}): Prom
     const role = target.within.role;
     const all = page.getByRole(role as Parameters<Page["getByRole"]>[0]).filter({ visible: true });
     await all.first().waitFor({ state: "visible", timeout: STEP_TIMEOUT }).catch(() => {});
-    const hits = await all.evaluateAll((els) =>
+    // Where a click would land: points across the part of each one inside the window; what the browser finds there must be inside it.
+    const layers = await all.evaluateAll((els) =>
       els.map((el) => {
         const box = el.getBoundingClientRect();
-        const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-        return !!hit && el.contains(hit);
+        const left = Math.max(box.left, 0), right = Math.min(box.right, window.innerWidth);
+        const top = Math.max(box.top, 0), bottom = Math.min(box.bottom, window.innerHeight);
+        let hits = 0;
+        if (right > left && bottom > top)
+          for (const fx of [0.25, 0.5, 0.75])
+            for (const fy of [0.25, 0.5, 0.75]) {
+              const hit = document.elementFromPoint(left + (right - left) * fx, top + (bottom - top) * fy);
+              if (hit && el.contains(hit)) hits++;
+            }
+        let z = 0;
+        for (let node: Element | null = el; node && node !== document.body; node = node.parentElement) {
+          const value = parseInt(getComputedStyle(node).zIndex, 10);
+          if (!Number.isNaN(value)) z = Math.max(z, value);
+        }
+        return { hits, z };
       }),
     );
-    if (!hits.length) throw new StepFailure(`no ${role} on the screen to look in`);
-    const top = hits.lastIndexOf(true);
-    if (top === -1) throw new StepFailure(`no ${role} is on top of the others: name it with "within" and its name`);
+    if (!layers.length) throw new StepFailure(`no ${role} on the screen to look in`);
+    // One alone is on top; among several, the last a click reaches, or else the one the page stacks highest.
+    const reached = layers.map((l, i) => (l.hits ? i : -1)).filter((i) => i >= 0);
+    const top = layers.length === 1 ? 0 : reached.length ? reached.at(-1)! : layers.reduce((best, l, i) => (l.z >= layers[best]!.z ? i : best), 0);
     scope = all.nth(top);
   } else if (target.within) {
     // A container's name holds all its text, such as "Lampe Ajouter" for a row: match a part of it.

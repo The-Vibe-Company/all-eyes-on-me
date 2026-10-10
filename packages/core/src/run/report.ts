@@ -200,7 +200,10 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   let stillFailing: Failure[] = [];
   const measuredAfter = Boolean(now?.check && now.judge);
   if (now?.check && now.judge) {
-    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures;
+    // Named as the screens are, by their route before the run when it names the same record-made-at-each-visit screen.
+    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures.map((f) =>
+      f.kind === "journey" || f.kind === "journey-principle" ? f : { ...f, where: nameAfter(f.where) },
+    );
     // A page that did not load before the run and that the end did not measure: still broken, as far as anyone knows.
     for (const page of erroredBefore) if (!after?.pages.some((p) => p.path === page) && !erroredAfter.includes(page)) stillFailing.push({ kind: "page", where: page, what: "did not load before the run, and was not measured after the run" });
   } else if (verdict) stillFailing = verdict.failures;
