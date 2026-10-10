@@ -32,6 +32,8 @@ test("aeom estimate says what a run costs, phase by phase, from the screens and 
     assert.equal(judge.code, 0, judge.out);
     assert.match(judge.out, /^For 8 screens and 4 key journeys:/);
     assert.match(judge.out, /Total, at most +6 agents/);
+    assert.match((await run(dir, ["estimate", "--diagnostic"])).out, /Total, at most +6 agents/);
+    assert.match((await run(dir, ["estimate", "--ux"])).out, /Judge the journeys/);
     const full = await run(dir, ["estimate"]);
     assert.match(full.out, /Six directions and the knockout/);
     assert.match((await run(dir, ["estimate", "--directions", "3"])).out, /Three directions and the knockout/);

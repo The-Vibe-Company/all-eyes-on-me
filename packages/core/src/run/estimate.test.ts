@@ -8,7 +8,7 @@ test("judging alone, as on Road to Mastock, costs six judges, about 840k tokens 
   assert.equal(total.agents, 6);
   assert.ok(total.tokens > 750_000 && total.tokens < 950_000, String(total.tokens));
   const judge = phases[1]!;
-  assert.ok(judge.minutes >= 6 && judge.minutes <= 8, "the six judges run at once: the slowest decides");
+  assert.ok(judge.minutes >= 9 && judge.minutes <= 12, "the judges of the journeys, then those of the screens");
 });
 
 test("a full run with six directions is about sixty agents and several million tokens, phase by phase", () => {
@@ -18,6 +18,7 @@ test("a full run with six directions is about sixty agents and several million t
   assert.ok(total.tokens > 6_000_000 && total.tokens < 9_500_000, String(total.tokens));
   assert.ok(total.minutes > 120, "several hours");
   assert.equal(phases[2]!.agents, 6 + 3 + 5 * 3, "six workers, three screening judges, five duels of three votes");
+  assert.equal(phases[4]!.agents, 3 + 1 + 4 + 3 + 3 + 3, "the critique, the workers, the new version judged, the duels, the screens measured again");
 });
 
 test("fewer directions, no journeys, or the style kept cost less, and each says so", () => {
@@ -26,10 +27,13 @@ test("fewer directions, no journeys, or the style kept cost less, and each says 
   assert.equal(three.phases[2]!.agents, 3 + 3 + 2 * 3);
   const noJourneys = estimateRun({ screens: 5, journeys: 0, mode: "full", directions: 6 });
   assert.ok(!noJourneys.phases.some((p) => p.phase === "The journeys"));
-  assert.equal(noJourneys.phases[1]!.agents, 3, "no journey judges without journeys");
+  assert.deepEqual([noJourneys.phases[1]!.phase, noJourneys.phases[1]!.agents], ["Judge the screens", 3], "no journey judges without journeys");
   const kept = estimateRun({ screens: 8, journeys: 4, mode: "keep-style" });
   assert.equal(kept.phases[2]!.phase, "The kit, in the app's own style");
   assert.equal(kept.phases[2]!.agents, 1);
+  assert.equal(kept.phases[3]!.agents, 8 + 1 + 3 + 3, "every page, the promotion, the screens measured and the charter judged");
+  const small = estimateRun({ screens: 2, journeys: 0, mode: "full", directions: 3 });
+  assert.deepEqual([small.phases[3]!.agents, Math.round(small.phases[3]!.minutes)], [3, 3], "the direction rebuilt both screens: no page wave, only the measure");
   assert.ok(kept.total.agents < estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6 }).total.agents);
 });
 
@@ -40,4 +44,10 @@ test("the estimate reads as a table, phase by phase, with what is at most and th
   assert.match(text, /Total, at most +\d+ agents +≈ \d\.\d M tokens +≈ \d h \d\d/);
   assert.match(text, /only when the verdict finds something to redo/);
   assert.match(text, /the session that coordinates the run/);
+});
+
+test("/aeom --ux costs the journeys alone: no direction and no page wave", () => {
+  const { phases, total } = estimateRun({ screens: 8, journeys: 4, mode: "ux" });
+  assert.deepEqual(phases.map((p) => p.phase), ["Understand the product", "Judge the journeys", "The journeys", "The result page, the standard and the PR"]);
+  assert.equal(total.agents, 3 + 3 + 1 + 4 + 6 + 3);
 });

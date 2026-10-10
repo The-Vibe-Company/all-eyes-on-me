@@ -3,12 +3,12 @@
  * Calibrated on Road to Mastock (8 screens, 4 key journeys, 10 October 2026):
  * six judges took about 840,000 tokens, the judges of the screens 6 to 6.5
  * minutes each, those of the journeys 3 to 4.5; a worker takes about 130,000
- * tokens. Agents of one phase run at once, so a phase lasts as long as its
- * slowest agent, step after step. The tokens are the agents' own: the session
- * that coordinates the run is apart.
+ * tokens. Agents of one step run at once, so a step lasts as long as its
+ * slowest agent, and a phase as long as its steps one after the other. The
+ * tokens are the agents' own: the session that coordinates the run is apart.
  */
 
-export type RunMode = "judge" | "full" | "keep-style";
+export type RunMode = "judge" | "full" | "keep-style" | "ux";
 
 export interface Phase {
   phase: string;
@@ -32,8 +32,8 @@ const SCREENING_JUDGE = { tokens: 60_000, minutes: 2 };
 const DUEL_JUDGE = { tokens: 60_000, minutes: 2 };
 const JOURNEY_DUEL_JUDGE = { tokens: 80_000, minutes: 3 };
 const MINUTES = { understand: 25, direction: 25, kit: 15, page: 15, promotion: 10, journey: 15, end: 10 };
-/** The screens a direction is built on, which the page wave leaves. */
-const DIRECTION_SCREENS = 3;
+/** The screens a direction is built on, two or three, which the page wave leaves: two, to count at most. */
+const DIRECTION_SCREENS = 2;
 const VOTES = 3;
 
 const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
@@ -41,20 +41,35 @@ const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "E
 /**
  * The phases of a run and what each costs, at most: the phases after the
  * judges run only when the verdict finds something to redo, the journeys only
- * when a journey fails.
+ * when a journey fails. `ux` is `/aeom --ux`: the journeys alone, no direction
+ * and no page wave; `/aeom --directions` is a full run with no journey judged.
  */
 export function estimateRun({ screens, journeys, mode, directions = 6 }: { screens: number; journeys: number; mode: RunMode; directions?: number }): Estimate {
   const pj = pageJudge(screens);
   const jj = journeyJudge(journeys);
   const phases: Phase[] = [
     { phase: "Understand the product", agents: 0, tokens: 0, minutes: MINUTES.understand },
-    {
-      phase: "Judge the screens and the journeys",
-      agents: VOTES + (journeys ? VOTES : 0),
-      tokens: VOTES * pj.tokens + (journeys ? VOTES * jj.tokens : 0),
-      minutes: Math.max(pj.minutes, journeys ? jj.minutes : 0),
-    },
   ];
+  if (mode === "ux") {
+    // The journeys judged, then the pages measured before they change, the workers, both versions judged, the duels.
+    phases.push({ phase: "Judge the journeys", agents: journeys ? VOTES : 0, tokens: journeys ? VOTES * jj.tokens : 0, minutes: journeys ? jj.minutes : 0 });
+    if (journeys)
+      phases.push({
+        phase: "The journeys",
+        agents: VOTES + 1 + journeys + 2 * VOTES + VOTES,
+        tokens: VOTES * pj.tokens + SHARED_WORKER.tokens + journeys * WORKER.tokens + 2 * VOTES * jj.tokens + VOTES * JOURNEY_DUEL_JUDGE.tokens,
+        minutes: pj.minutes + MINUTES.journey + jj.minutes + JOURNEY_DUEL_JUDGE.minutes,
+      });
+    phases.push({ phase: "The result page, the standard and the PR", agents: 0, tokens: 0, minutes: MINUTES.end });
+    return withTotal(mode, phases);
+  }
+  // The journeys are judged first, then the screens, after a reset: one after the other.
+  phases.push({
+    phase: journeys ? "Judge the screens and the journeys" : "Judge the screens",
+    agents: VOTES + (journeys ? VOTES : 0),
+    tokens: VOTES * pj.tokens + (journeys ? VOTES * jj.tokens : 0),
+    minutes: pj.minutes + (journeys ? jj.minutes : 0),
+  });
   if (mode !== "judge") {
     let rebuilt = 0;
     if (mode === "full") {
@@ -71,23 +86,30 @@ export function estimateRun({ screens, journeys, mode, directions = 6 }: { scree
       phases.push({ phase: "The kit, in the app's own style", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit });
     }
     const pages = Math.max(screens - rebuilt, 0);
+    // The page workers, the one who promotes their kit candidates, the screens measured; with the style kept, the charter judged.
+    const workers = pages ? pages + 1 : 0;
+    const style = mode === "keep-style" ? VOTES : 0;
     phases.push({
       phase: "The pages",
-      agents: pages + 1 + VOTES,
-      tokens: (pages + 1) * WORKER.tokens + VOTES * pj.tokens,
-      minutes: (pages ? MINUTES.page : 0) + MINUTES.promotion + pj.minutes,
+      agents: workers + VOTES + style,
+      tokens: workers * WORKER.tokens + (VOTES + style) * pj.tokens,
+      minutes: (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (style ? pj.minutes : 0),
     });
     if (journeys) {
       phases.push({
         phase: "The journeys",
-        // Their critique on the new front, one shared worker and one per journey, both versions judged, the duels, the screens measured again.
-        agents: VOTES + 1 + journeys + 2 * VOTES + VOTES + VOTES,
-        tokens: VOTES * jj.tokens + SHARED_WORKER.tokens + journeys * WORKER.tokens + 2 * VOTES * jj.tokens + VOTES * JOURNEY_DUEL_JUDGE.tokens + VOTES * pj.tokens,
-        minutes: jj.minutes + MINUTES.journey + jj.minutes + JOURNEY_DUEL_JUDGE.minutes + pj.minutes,
+        // Their critique on the new front, one shared worker and one per journey, the new version judged, the duels, the screens measured again, and the charter with the style kept.
+        agents: VOTES + 1 + journeys + VOTES + VOTES + VOTES + style,
+        tokens: 2 * VOTES * jj.tokens + SHARED_WORKER.tokens + journeys * WORKER.tokens + VOTES * JOURNEY_DUEL_JUDGE.tokens + (VOTES + style) * pj.tokens,
+        minutes: jj.minutes + MINUTES.journey + jj.minutes + JOURNEY_DUEL_JUDGE.minutes + pj.minutes + (style ? pj.minutes : 0),
       });
     }
     phases.push({ phase: "The result page, the standard and the PR", agents: 0, tokens: 0, minutes: MINUTES.end });
   }
+  return withTotal(mode, phases);
+}
+
+function withTotal(mode: RunMode, phases: Phase[]): Estimate {
   const total = phases.reduce((t, p) => ({ agents: t.agents + p.agents, tokens: t.tokens + p.tokens, minutes: t.minutes + p.minutes }), { agents: 0, tokens: 0, minutes: 0 });
   return { mode, phases, total };
 }
