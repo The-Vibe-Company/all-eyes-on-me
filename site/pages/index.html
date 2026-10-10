@@ -183,7 +183,7 @@
     <ol class="steps">
       <li><strong>Understand.</strong> It reads your project's own words, then writes what kind of product it is, what it is for, who uses it and its main loop (for a game, its fiction and its illustrations), and replays three to five key journeys in a real browser.</li>
       <li><strong>Look.</strong> It captures every screen at phone and desktop width, measures pointer cursors, sideways scrolling, contrast and console errors, and three independent judges hold each page to eight principles.</li>
-      <li><strong>Decide.</strong> If nothing fails, it says « nothing to redo », writes the standard of the front as it is, and stops. <code>/aeom --diagnostic</code> stops here whatever the verdict: what fails, without redoing anything.</li>
+      <li><strong>Decide.</strong> If nothing fails, it says « nothing to redo », writes the standard of the front as it is, and stops. <code>/aeom --juger</code> stops here whatever the verdict: what fails, without redoing anything. Before its first judge, it says what the run will cost and waits for your go.</li>
       <li><strong>A new direction.</strong> Six art directions drawn from the product's own world, never from the looks AIs propose by default: things your users know, or a game's fiction and illustrations. A knockout keeps one, and you validate it or choose another before any page is rebuilt. A client's own style can be kept instead.</li>
       <li><strong>Pages, then journeys.</strong> One worker per page, then per journey, each in its own files. A guard refuses any change that adds a feature. Only what got better is kept.</li>
       <li><strong>Show.</strong> A result page on your machine, and the features a blocked journey would need, never built.</li>
@@ -218,6 +218,7 @@
 <li data-command="features"><code>aeom features</code> Name what a blocked journey would need, without building it</li>
 <li data-command="pr"><code>aeom pr</code> Push the run's branch and open a PR, in words, with no capture</li>
 <li data-command="standard"><code>aeom standard</code> Write the standard of the front, keeping the user's edits</li>
+<li data-command="estimate"><code>aeom estimate</code> Say what a run would cost, phase by phase, before it starts</li>
     </ul>
   </div>
 </section>
@@ -238,7 +239,7 @@
       <div class="film__head"><span><b class="film__tag">XR</b> Link it</span></div>
       <pre><code><span class="ln">mkdir -p ~/.local/bin ~/.claude/skills</span><span class="ln">export PATH="$HOME/.local/bin:$PATH"</span><span class="ln">ln -s "$PWD/packages/cli/dist/index.js" \</span><span class="ln ln--more">  ~/.local/bin/aeom</span><span class="ln">ln -s "$PWD/skills/aeom" \</span><span class="ln ln--more">  "$PWD/skills/aeom-judge" ~/.claude/skills/</span></code></pre>
     </div>
-    <p>Your project is a git repository with a clean tree, and your app starts locally with one command, on fake data: its journeys write to it. Type <code>/aeom</code> in Claude Code. A full run is long: on the demo app, about an hour and some sixty subagents.</p>
+    <p>Your project is a git repository with a clean tree, and your app starts locally with one command, on fake data: its journeys write to it. Type <code>/aeom</code> in Claude Code. A full run is long, some sixty subagents for eight screens: <code>aeom estimate</code> says what it costs for your project, <code>/aeom</code> asks before its first judge, and <code>/aeom --juger</code> stops at the verdict.</p>
   </div>
 </section>
 
