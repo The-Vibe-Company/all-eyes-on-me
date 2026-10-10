@@ -1,0 +1,47 @@
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_5b3134e32495ca 2-4,82-88,90,100-123,140
+packages/cli/src/commands/run-state.test.ts
+  s_4ce34ec42d9105::t_019a4b3cc30737 66-67
+packages/cli/src/commands/run-state.ts
+  s_4ce34ec42d9105::t_568e4e554f277f 60-62,76
+packages/cli/src/commands/sign-in.test.ts
+  s_4ce34ec42d9105::t_4810586c59de1d 103-147
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_120d8ad6c01069 12,335-394
+packages/core/src/capture/discover.ts
+  s_4ce34ec42d9105::t_86ef1c16b7b797 67,141-142,149-163
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_ea7314dccefdf5 5
+packages/core/src/capture/sign-in.ts
+  s_4ce34ec42d9105::t_dc7931b0cba610 1,39-40,70-122
+packages/core/src/journey/journey.test.ts
+  s_4ce34ec42d9105::t_972aabb59a2c5c 329-333,340-380
+packages/core/src/journey/journey.ts
+  s_4ce34ec42d9105::t_30bf7fd1af3f46 8-11,13,52-53,55,119-123
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_9dad5d5875d0bc 8,78,98-116,124-127,134-138,319,337
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_870ebd4faff55c 11,24-31,88-95,97
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_14c49d1158ce91 2
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_083ceb830a4318 15-16
+skills/aeom/journeys.md
+  s_4ce34ec42d9105::t_ec58540af4118c 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "170f0f9d5acedf81c63bfa777688bd83364b66cd",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
