@@ -194,3 +194,119 @@ test("aeom judge --style-kept counts the votes on whether each page kept the cha
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+/** Captures of two pages, and the votes of one voter: `failing` names what it fails. */
+async function stagedSetup(failing: Record<string, string[]> = {}) {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-judge-staged-"));
+  await mkdir(join(dir, "captures"));
+  await mkdir(join(dir, "votes"));
+  await writeFile(join(dir, "principles.md"), PRINCIPLES.map((id) => `- \`${id}\` — ${id} holds.`).join("\n") + "\n");
+  await writeFile(join(dir, "captures", "a@390.png"), "page a");
+  await writeFile(join(dir, "captures", "b@390.png"), "page b");
+  const page = (path: string, file: string) => ({ url: `http://x${path}`, path, files: [{ width: 390, file }] });
+  await writeFile(join(dir, "captures", "manifest.json"), JSON.stringify({ url: "x", capturedAt: "", widths: [390], pages: [page("/", "a@390.png"), page("/b", "b@390.png")], errors: [] }));
+  const verdicts = (path: string, voter: string, only?: string[]) =>
+    Object.fromEntries(PRINCIPLES.filter((id) => !only || only.includes(id)).map((id) => [id, { pass: !(failing[path] ?? []).includes(id) || voter === "3", reason: `${voter}: ${id}` }]));
+  const write = (voter: string, pages: Record<string, unknown>) => writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages }));
+  await write("1", { "/": verdicts("/", "1"), "/b": verdicts("/b", "1") });
+  const args = (...more: string[]) => ["judge", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out"), "--principles", join(dir, "principles.md"), ...more];
+  return { dir, args, write, verdicts };
+}
+
+test("aeom judge --to-confirm sends only what the first voter failed to two more voters, then counts", async () => {
+  const { dir, args, write, verdicts } = await stagedSetup({ "/b": ["states", "grid"] });
+  try {
+    const listed = await run(args("--to-confirm"));
+    assert.equal(listed.code, 0, listed.out);
+    assert.match(listed.out, /2 verdicts to confirm, on 1 page: \/b \(grid, states\)\. Launch voters 2 and 3 on them/);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, "votes", "to-confirm.json"), "utf8")), { "/b": ["grid", "states"] });
+    const early = await run(args());
+    assert.match(early.out, /Missing votes from voter 2, 3/);
+    for (const voter of ["2", "3"]) await write(voter, { "/b": verdicts("/b", voter, ["states", "grid"]) });
+    const { code, out } = await run(args());
+    assert.equal(code, 1, out);
+    assert.match(out, /states .* \(2\/3 fail\)/);
+    assert.match(out, /1 vote each, 3 on the 2 verdicts the first one failed/);
+    const report = JSON.parse(await readFile(join(dir, "out", "judge.json"), "utf8"));
+    assert.equal(report.pages.find((p: { page: string }) => p.page === "/").verdicts[0].votes, "1/1 pass");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a first vote that fails nothing is the verdict on its own", async () => {
+  const { dir, args } = await stagedSetup();
+  try {
+    assert.match((await run(args("--to-confirm"))).out, /Nothing to confirm: the first vote is the verdict\. Count it with aeom judge\./);
+    const { code, out } = await run(args());
+    assert.equal(code, 0, out);
+    assert.match(out, /1 vote each/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom judge --changed-since judges again only the pages whose captures changed, and keeps the others' verdicts", async () => {
+  const { dir, args, write, verdicts } = await stagedSetup();
+  const before = join(dir, "before");
+  try {
+    // The last measure: both pages, as they were, with a verdict that fails /b on grid.
+    await mkdir(join(before, "captures"), { recursive: true });
+    await mkdir(join(before, "reports"), { recursive: true });
+    await writeFile(join(before, "captures", "a@390.png"), "page a");
+    await writeFile(join(before, "captures", "b@390.png"), "page b, before");
+    await writeFile(join(before, "captures", "manifest.json"), await readFile(join(dir, "captures", "manifest.json"), "utf8"));
+    const old = (page: string, failing: string[]) => ({ page, verdicts: PRINCIPLES.map((principle) => ({ principle, pass: !failing.includes(principle), votes: "3/3", reasons: ["before"], dissent: [], steps: [] })) });
+    await writeFile(join(before, "reports", "judge.json"), JSON.stringify({ judgedAt: "", voters: ["1", "2", "3"], principles: [], pages: [old("/", ["density"]), old("/b", ["grid"])], failures: 2 }));
+    await rm(join(dir, "votes", "1.json"));
+    const changed = await run(args("--changed-since", before));
+    assert.equal(changed.code, 0, changed.out);
+    assert.match(changed.out, /1 page changed since .*before: \/b\. 1 page keeps its verdict: \//);
+    await write("1", { "/b": verdicts("/b", "1") });
+    assert.match((await run(args("--to-confirm"))).out, /Nothing to confirm/);
+    const { out } = await run(args());
+    assert.match(out, /density .*before/, "the unchanged page keeps its verdict");
+    const report = JSON.parse(await readFile(join(dir, "out", "judge.json"), "utf8"));
+    assert.deepEqual(report.reused, ["/"]);
+    assert.equal(report.failures, 1);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a first vote that changed since --to-confirm is refused, never counted on one vote", async () => {
+  const { dir, args, write, verdicts } = await stagedSetup({ "/b": ["states"] });
+  try {
+    await run(args("--to-confirm"));
+    for (const voter of ["2", "3"]) await write(voter, { "/b": verdicts("/b", voter, ["states"]) });
+    // Voter 1 relaunched, and now fails more than it did.
+    const failing = { "/b": ["states", "grid"] };
+    const again = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: !failing["/b"].includes(id), reason: `1: ${id}` }]));
+    await write("1", { "/": verdicts("/", "1"), "/b": again });
+    const { code, out } = await run(args());
+    assert.equal(code, 1);
+    assert.match(out, /Voter 1's vote no longer fails what .*to-confirm\.json lists: run aeom judge --to-confirm again/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("pages that should keep a verdict the snapshot no longer holds are refused, not dropped", async () => {
+  const { dir, args } = await stagedSetup();
+  const before = join(dir, "before");
+  try {
+    await mkdir(join(before, "captures"), { recursive: true });
+    await mkdir(join(before, "reports"), { recursive: true });
+    for (const f of ["a@390.png", "b@390.png", "manifest.json"]) await writeFile(join(before, "captures", f), await readFile(join(dir, "captures", f)));
+    const old = (page: string) => ({ page, verdicts: PRINCIPLES.map((principle) => ({ principle, pass: true, votes: "3/3", reasons: ["before"], dissent: [], steps: [] })) });
+    await writeFile(join(before, "reports", "judge.json"), JSON.stringify({ judgedAt: "", voters: ["1", "2", "3"], principles: [], pages: [old("/"), old("/b")], failures: 0 }));
+    assert.match((await run(args("--changed-since", before))).out, /No page changed/);
+    assert.equal(JSON.parse(await readFile(join(dir, "votes", "to-judge.json"), "utf8")).since, before, "kept by its full path");
+    await rm(join(before, "reports", "judge.json"));
+    const { code, out } = await run(args());
+    assert.equal(code, 1);
+    assert.match(out, /\/, \/b should keep the verdict of .*before, which does not hold it any more/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
