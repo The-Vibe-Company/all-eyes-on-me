@@ -1,0 +1,35 @@
+packages/core/src/directions/index.ts
+  s_4ce34ec42d9105::t_790918b4553e6b 2
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_7e2f22edaa30ff 34
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_248e5678798906 4,67-69,71-73,97-98,117,136-137,196
+packages/core/src/directions/directions.test.ts
+  s_4ce34ec42d9105::t_e28a0c2aee83ea 134-155
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_563daf52ed9d4b 3,29,48,82,123,125,127-128,130-133,138
+README.md
+  s_4ce34ec42d9105::t_0a5d40849874db 16,74
+site/pages/index.html
+  s_4ce34ec42d9105::t_594efd3cb45031 187,212
+packages/core/src/directions/tournament.ts
+  s_4ce34ec42d9105::t_0da2d17348550a 15-16,38-39,50-51,53,55-56,59-63,65,68,89,101
+skills/aeom/directions.md
+  s_4ce34ec42d9105::t_2db321c6858ab2 3,26-27,36,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f2934681a35d50433641cd16fb3345dc92f7aaf",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
