@@ -1,0 +1,43 @@
+packages/cli/src/commands/judge.test.ts
+  s_4ce34ec42d9105::t_af9d1de625e167 197-275
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_14f77b3647da4a 1,5,31-43,56-57,65-71,83-84,88-121,127,129,182-183,192,210,224,255,283-359
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_3b6ea6e391b2df 12,316-334
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_4f562a4c1c6073 3,10-16,21-22,90-91,159-173
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_88b68551b8c298 1
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_86ad73b6c149db 6,271
+packages/core/src/judge/index.ts
+  s_4ce34ec42d9105::t_b14bef55ae3c68 2
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_753581abfb5641 6,174-204
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_7f3662939520fb 47-49,53-65,70-74,76,80-83,90-91,94,96,101-102,115,145-146
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_aee7adf0ec2f54 5,9,11,18,36
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_bb5b5e27e557e4 4-6,27-35
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_b0ae789f45c972 3,8,13-20,29,32,47-60,67-70
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_d846a433d9e900 59,157,228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b29886a6c7d351e0c2fe88da132c26fbf353966d",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
