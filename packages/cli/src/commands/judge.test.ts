@@ -273,3 +273,40 @@ test("aeom judge --changed-since judges again only the pages whose captures chan
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a first vote that changed since --to-confirm is refused, never counted on one vote", async () => {
+  const { dir, args, write, verdicts } = await stagedSetup({ "/b": ["states"] });
+  try {
+    await run(args("--to-confirm"));
+    for (const voter of ["2", "3"]) await write(voter, { "/b": verdicts("/b", voter, ["states"]) });
+    // Voter 1 relaunched, and now fails more than it did.
+    const failing = { "/b": ["states", "grid"] };
+    const again = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: !failing["/b"].includes(id), reason: `1: ${id}` }]));
+    await write("1", { "/": verdicts("/", "1"), "/b": again });
+    const { code, out } = await run(args());
+    assert.equal(code, 1);
+    assert.match(out, /Voter 1's vote no longer fails what .*to-confirm\.json lists: run aeom judge --to-confirm again/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("pages that should keep a verdict the snapshot no longer holds are refused, not dropped", async () => {
+  const { dir, args } = await stagedSetup();
+  const before = join(dir, "before");
+  try {
+    await mkdir(join(before, "captures"), { recursive: true });
+    await mkdir(join(before, "reports"), { recursive: true });
+    for (const f of ["a@390.png", "b@390.png", "manifest.json"]) await writeFile(join(before, "captures", f), await readFile(join(dir, "captures", f)));
+    const old = (page: string) => ({ page, verdicts: PRINCIPLES.map((principle) => ({ principle, pass: true, votes: "3/3", reasons: ["before"], dissent: [], steps: [] })) });
+    await writeFile(join(before, "reports", "judge.json"), JSON.stringify({ judgedAt: "", voters: ["1", "2", "3"], principles: [], pages: [old("/"), old("/b")], failures: 0 }));
+    assert.match((await run(args("--changed-since", before))).out, /No page changed/);
+    assert.equal(JSON.parse(await readFile(join(dir, "votes", "to-judge.json"), "utf8")).since, before, "kept by its full path");
+    await rm(join(before, "reports", "judge.json"));
+    const { code, out } = await run(args());
+    assert.equal(code, 1);
+    assert.match(out, /\/, \/b should keep the verdict of .*before, which does not hold it any more/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -92,7 +92,8 @@ export async function runJudge(argv: string[]): Promise<number> {
     if (kept === null) return 1;
     const changed = all.filter((p) => !kept.includes(p));
     await mkdir(votesDir, { recursive: true });
-    await writeFile(join(votesDir, "to-judge.json"), JSON.stringify({ since, pages: changed }, null, 2) + "\n");
+    // The snapshot by its full path: the count may run from elsewhere.
+    await writeFile(join(votesDir, "to-judge.json"), JSON.stringify({ since: resolve(since), pages: changed }, null, 2) + "\n");
     console.log(
       changed.length
         ? `${s(changed.length, "page")} changed since ${since}: ${changed.join(", ")}.${kept.length ? ` ${s(kept.length, "page")} keeps its verdict: ${kept.join(", ")}.` : ""} The voters judge only the pages of ${join(votesDir, "to-judge.json")}.`
@@ -107,7 +108,13 @@ export async function runJudge(argv: string[]): Promise<number> {
   let reused: JudgeReport["pages"] = [];
   if (stage) {
     const previous = await readStage<JudgeReport>(join(stage.since, "reports", "judge.json"));
-    reused = all.filter((p) => !pages.includes(p)).map((page) => previous?.pages.find((p) => p.page === page)).filter((p): p is JudgeReport["pages"][number] => !!p);
+    const kept = all.filter((p) => !pages.includes(p));
+    reused = kept.map((page) => previous?.pages.find((p) => p.page === page)).filter((p): p is JudgeReport["pages"][number] => !!p);
+    const lost = kept.filter((page) => !reused.some((p) => p.page === page));
+    if (lost.length) {
+      console.error(`${lost.join(", ")} should keep the verdict of ${stage.since}, which does not hold it any more: run aeom judge --changed-since again, or judge every page.`);
+      return 1;
+    }
   }
   const counted = pages.length ? await countVotes({ votesDir, out: values.out, voters: values.voters, keys: pages, principles }) : { judgedAt: new Date().toISOString(), voters: [], principles, pages: [], failures: 0 };
   if (counted === null) return 1;
@@ -179,13 +186,25 @@ async function countVotes({ votesDir, out, voters: votersText, keys, principles,
     console.error(`No vote in ${votesDir}. The judge subagents write one JSON file each there.`);
     return null;
   }
-  const confirm = await readStage<ToConfirm>(join(votesDir, "to-confirm.json"));
+  const asked = await readStage<ToConfirm>(join(votesDir, "to-confirm.json"));
+  // What to confirm is what voter 1's vote fails now, never only what a file says: a vote relaunched, or a file left from an earlier judging, would let a failure through on one vote.
+  const first = votes.find((v) => v.voter === "1");
+  const confirm = asked && first ? toConfirm(first, keys, principles) : asked;
+  if (asked && confirm && JSON.stringify(sorted(asked)) !== JSON.stringify(sorted(confirm))) {
+    console.error(`Voter 1's vote no longer fails what ${join(votesDir, "to-confirm.json")} lists: run aeom judge --to-confirm again, then relaunch voters 2 and 3 on what it writes.`);
+    return null;
+  }
   const expected = Array.from({ length: confirm && !Object.keys(confirm).length ? 1 : voters }, (_, i) => String(i + 1));
   const missing = expected.filter((n) => !votes.some((v) => v.voter === n));
   const unexpected = votes.map((v) => v.voter).filter((n) => !expected.includes(n));
   if (missing.length || unexpected.length) {
     if (missing.length) console.error(`Missing votes from voter ${missing.join(", ")}: expected ${missing.map((n) => join(votesDir, `${n}.json`)).join(", ")}. Relaunch those voters.`);
-    if (unexpected.length) console.error(`Unexpected voter ${unexpected.join(", ")}: voters are numbered 1 to ${voters}.`);
+    if (unexpected.length)
+      console.error(
+        confirm && !Object.keys(confirm).length
+          ? `Unexpected voter ${unexpected.join(", ")}: the first vote failed nothing, so it is counted alone. Their votes are left from an earlier judging: delete them, then count again.`
+          : `Unexpected voter ${unexpected.join(", ")}: voters are numbered 1 to ${voters}.`,
+      );
     return null;
   }
   try {
@@ -357,3 +376,6 @@ async function unchangedPages(captures: string, manifest: CaptureManifest, since
   }
   return same;
 }
+
+/** The same pages and principles in the same order, to compare two lists of what to confirm. */
+const sorted = (c: ToConfirm) => Object.keys(c).sort().map((k) => [k, [...c[k]!].sort()]);

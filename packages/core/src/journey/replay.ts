@@ -16,6 +16,8 @@ export interface StepResult {
   action: string;
   /** The route the page is on after the step. */
   path: string;
+  /** The page's full height, when the screenshot stops at MAX_CAPTURE_HEIGHT. */
+  cut?: number;
   /** The screenshot after the step, relative to the output folder. */
   capture: string | null;
   /** What the page said in a dialog during the step, such as an alert. */
@@ -268,9 +270,10 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     await scrollThrough(page).catch(() => {});
     // A field filled from the sign-in account shows as a block, never its value.
     const unpin = await pinFixed(page).catch(() => async () => {});
-    const shot = await screenshotCapped(page, join(outDir, capture), { mask: secret }).then(() => capture, () => null);
+    let cut: number | undefined;
+    const shot = await screenshotCapped(page, join(outDir, capture), { mask: secret }).then((height) => ((cut = height), capture), () => null);
     await unpin().catch(() => {});
-    const result: StepResult = { index: i + 1, action: describeStep(step), path, capture: shot };
+    const result: StepResult = { index: i + 1, action: describeStep(step), path, capture: shot, ...(cut ? { cut } : {}) };
     if (dialogs.length > heard) result.dialog = dialogs.slice(heard).join(" / ");
     steps.push(result);
     if (reason) {

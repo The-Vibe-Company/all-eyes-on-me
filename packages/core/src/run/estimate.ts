@@ -31,7 +31,8 @@ export interface Estimate {
  */
 const CONFIRM_SHARE = 0.5;
 const staged = ({ tokens, minutes }: { tokens: number; minutes: number }) => ({ tokens: (tokens * (1 + 2 * CONFIRM_SHARE)) / 3, minutes: minutes * (1 + CONFIRM_SHARE) });
-const pageJudge = (screens: number) => staged({ tokens: 40_000 + 15_000 * screens, minutes: 1.5 + 0.6 * screens });
+const fullPageJudge = (screens: number) => ({ tokens: 40_000 + 15_000 * screens, minutes: 1.5 + 0.6 * screens });
+const pageJudge = (screens: number) => staged(fullPageJudge(screens));
 const journeyJudge = (journeys: number) => staged({ tokens: 40_000 + 20_000 * journeys, minutes: 1 + 0.75 * journeys });
 const WORKER = { tokens: 130_000 };
 const SHARED_WORKER = { tokens: 150_000 };
@@ -53,6 +54,8 @@ const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "E
  */
 export function estimateRun({ screens, journeys, mode, directions = 6 }: { screens: number; journeys: number; mode: RunMode; directions?: number }): Estimate {
   const pj = pageJudge(screens);
+  // The judges of a kept charter compare each page before and after: three full votes.
+  const sj = fullPageJudge(screens);
   const jj = journeyJudge(journeys);
   const phases: Phase[] = [
     { phase: "Understand the product", agents: 0, tokens: 0, minutes: MINUTES.understand },
@@ -99,16 +102,16 @@ export function estimateRun({ screens, journeys, mode, directions = 6 }: { scree
     phases.push({
       phase: "The pages",
       agents: workers + VOTES + style,
-      tokens: workers * WORKER.tokens + (VOTES + style) * pj.tokens,
-      minutes: (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (style ? pj.minutes : 0),
+      tokens: workers * WORKER.tokens + VOTES * pj.tokens + style * sj.tokens,
+      minutes: (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (style ? sj.minutes : 0),
     });
     if (journeys) {
       phases.push({
         phase: "The journeys",
         // Their critique on the new front, one shared worker and one per journey, the new version judged, the duels, the screens measured again, and the charter with the style kept.
         agents: VOTES + 1 + journeys + VOTES + VOTES + VOTES + style,
-        tokens: 2 * VOTES * jj.tokens + SHARED_WORKER.tokens + journeys * WORKER.tokens + VOTES * JOURNEY_DUEL_JUDGE.tokens + (VOTES + style) * pj.tokens,
-        minutes: jj.minutes + MINUTES.journey + jj.minutes + JOURNEY_DUEL_JUDGE.minutes + pj.minutes + (style ? pj.minutes : 0),
+        tokens: 2 * VOTES * jj.tokens + SHARED_WORKER.tokens + journeys * WORKER.tokens + VOTES * JOURNEY_DUEL_JUDGE.tokens + VOTES * pj.tokens + style * sj.tokens,
+        minutes: jj.minutes + MINUTES.journey + jj.minutes + JOURNEY_DUEL_JUDGE.minutes + pj.minutes + (style ? sj.minutes : 0),
       });
     }
     phases.push({ phase: "The result page, the standard and the PR", agents: 0, tokens: 0, minutes: MINUTES.end });

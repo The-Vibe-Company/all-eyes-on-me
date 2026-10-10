@@ -167,7 +167,8 @@ export async function screenshotCapped(page: Page, path: string, options: { mask
     await page.screenshot({ path, fullPage: true, ...options });
     return undefined;
   }
-  const width = page.viewportSize()?.width ?? (await page.evaluate(() => document.documentElement.clientWidth));
+  // As wide as the page draws, so what overflows sideways is still seen.
+  const width = Math.max(page.viewportSize()?.width ?? 0, await page.evaluate(() => document.documentElement.scrollWidth));
   await page.screenshot({ path, fullPage: true, clip: { x: 0, y: 0, width, height: MAX_CAPTURE_HEIGHT }, ...options });
   return height;
 }

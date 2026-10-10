@@ -17,7 +17,7 @@ You run the judge on the latest captures. One subagent votes on everything first
 6. **Count.** Run `aeom judge`. It writes `.aeom/reports/judge.json`, prints what fails, and exits with 1 when anything fails.
 7. **Votes missing or refused.** If `aeom judge` names missing voters or votes it cannot count, relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
 
-Pass the same `--captures`, `--votes` and `--out` to every `aeom judge` of one judging, `--changed-since` and `--to-confirm` included, when the run points the judge at its own folders.
+Pass the same `--captures`, `--votes` and `--out` to every `aeom judge` of one judging, `--changed-since` and `--to-confirm` included, when the run points the judge at its own folders. Step 2 clears that votes folder, whichever it is: a folder judged before, such as a replay's `votes` judged again after a send-back, still holds the last round's votes and lists, and `aeom judge` refuses them. The briefs then name that folder in place of `.aeom/reports/judge/`.
 
 ## The voter brief
 
@@ -60,10 +60,10 @@ Give each of voters 2 and 3 this, with `<N>` replaced by its number:
 
 ## Judging journeys
 
-The same three votes, on the key journeys instead of the pages, after `aeom journey`:
+The same, one vote first and three on what it fails, on the key journeys instead of the pages, after `aeom journey`:
 
 1. **Fresh replays.** Run `aeom journey` right before judging.
-2. **Clear the last verdict.** Delete `.aeom/reports/judge-journeys.json` and the `*.json` files of `.aeom/reports/judge-journeys/`, creating the folder if needed.
+2. **Clear the last verdict.** Delete `.aeom/reports/judge-journeys.json` and the `*.json` files of `.aeom/reports/judge-journeys/` (or of the votes folder the run passes), creating the folder if needed.
 3. **One voter first**, with the journey brief below and the number 1, on the lighter model. Nothing else.
 4. **Two more on what it failed**: `aeom judge --journeys --to-confirm` writes `to-confirm.json` in the journeys' votes folder. When there is something to confirm, launch voters 2 and 3 at once with the journey brief, told to judge only the journeys and principles `to-confirm.json` lists, without reading what voter 1 said.
 5. **Count**: `aeom judge --journeys`. A journey that broke on replay is a failure on its own, with no vote needed; the voters still judge what its steps show.
@@ -74,7 +74,7 @@ The same three votes, on the key journeys instead of the pages, after `aeom jour
 > You are judge number <N> for AEOM. You decide, for each key journey of a web app and for each journey principle, whether the journey passes or fails, as the person who wants what the journey is named after.
 >
 > 1. Run `aeom principles --journeys` to read the journey principles.
-> 2. Read `.aeom/captures/journeys/report.json`. Each journey (`slug`, `name`) was replayed at each width (`runs`); each run lists its steps in order, with the action, the route after it, the capture (`capture`, in `.aeom/captures/journeys/`), what the page said in a dialog, and where it broke, if it did. Each run also has a sheet of all its steps (`sheet`).
+> 2. Read `.aeom/captures/journeys/report.json`. Each journey (`slug`, `name`) was replayed at each width (`runs`); each run lists its steps in order, with the action, the route after it, the capture (`capture`, in `.aeom/captures/journeys/`; with `cut`, it stops at the top of a longer page, whose full height `cut` gives), what the page said in a dialog, and where it broke, if it did. Each run also has a sheet of all its steps (`sheet`).
 > 3. Look at every journey's sheets and step captures, at every width, before deciding anything.
 > 4. For each journey and each principle, decide `pass` or `fail`, with one sentence that says what the user lives, naming what you see, and the number of the step where it shows (`step`). When in doubt, fail.
 > 5. Write `.aeom/reports/judge-journeys/<N>.json`, exactly in this shape, with every journey and every principle:
