@@ -292,3 +292,44 @@ test("an app served under a path keeps it, and lands can name a query", async ()
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a reset that signs everyone out is followed by a new sign-in, so every journey starts signed in", async () => {
+  const sessions = new Set<string>();
+  let next = 0;
+  const server = createServer(async (req, res) => {
+    const cookie = (req.headers.cookie ?? "").match(/session=(\w+)/)?.[1];
+    if (req.url === "/__reset") {
+      sessions.clear();
+      return res.end("ok");
+    }
+    if (req.url === "/login" && req.method === "POST") {
+      const token = `t${next++}`;
+      sessions.add(token);
+      res.writeHead(303, { location: "/account", "set-cookie": `session=${token}; Path=/` });
+      return res.end();
+    }
+    if (req.url === "/account" && !(cookie && sessions.has(cookie))) {
+      res.writeHead(303, { location: "/login" });
+      return res.end();
+    }
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(req.url === "/account" ? "<h1>My account</h1>" : `<form method="post" action="/login"><label>Email <input name="email"></label><button>Sign in</button></form>`);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}`;
+  const dir = await mkdtemp(join(tmpdir(), "aeom-relogin-"));
+  try {
+    const login = { path: "/login", account: { Email: "ana@example.test" }, submit: "Sign in" };
+    const browser = await chromium.launch();
+    const signedIn = await signIn(browser, url, login).finally(() => browser.close());
+    const mine: Journey = { slug: "my-account", name: "My account", steps: [{ do: "open", path: "/account" }, { do: "see", text: "My account" }] };
+    const reset = `node -e "fetch('${url}/__reset')"`;
+    const lost = await replayJourneys({ url, journeys: [mine], outDir: join(dir, "lost"), widths: [1280], reset, signedIn });
+    assert.notEqual(lost.journeys[0]!.runs[0]!.broken, null, "the session kept from before the reset no longer opens the account");
+    const kept = await replayJourneys({ url, journeys: [mine], outDir: join(dir, "kept"), widths: [390, 1280], reset, signedIn, login });
+    assert.deepEqual(kept.journeys[0]!.runs.map((r) => r.broken), [null, null], "signed in again after each reset");
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});

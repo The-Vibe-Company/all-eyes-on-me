@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -74,6 +75,23 @@ describe("console", () => {
   });
 });
 
+test("contrast is measured on a page whose Content-Security-Policy forbids inline scripts", async () => {
+  const server = createHttpServer((_, res) => {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": "script-src 'self'" });
+    res.end('<!doctype html><title>t</title><p style="color:#ccc;background:#fff">Pâle</p>');
+  });
+  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  const page = await browser.newPage();
+  try {
+    await page.goto(`http://127.0.0.1:${(server.address() as { port: number }).port}/`);
+    const issues = await checkContrast(page);
+    assert.equal(issues.length, 1, "the faint paragraph is found, though the page forbids inline scripts");
+  } finally {
+    await page.close();
+    await new Promise((done) => server.close(done));
+  }
+});
+
 describe("on the ugly app", () => {
   let app: RunningApp;
   let url: string;
@@ -103,5 +121,12 @@ describe("on the ugly app", () => {
     assert.deepEqual(where("contrast"), ["/", "/produits"], "white on the pink button, and the faint price note");
     assert.deepEqual(where("console"), ["/commandes"]);
     assert.equal(report.errors.length, 1, "the broken link is reported, not checked");
+  });
+
+  test("checks only the pages it is given, and still says which do not load", async () => {
+    const report = await checkSite({ url, paths: ["/produits", "/aide"] });
+    assert.deepEqual(report.pages.map((p) => new URL(p).pathname), ["/produits"]);
+    assert.deepEqual(report.errors.map((e) => new URL(e.url).pathname), ["/aide"]);
+    assert.ok(report.findings.every((f) => new URL(f.url).pathname === "/produits"));
   });
 });

@@ -1,4 +1,5 @@
 import type { Browser, Response } from "playwright";
+import { openPage } from "./open.js";
 import type { SignedIn } from "./sign-in.js";
 
 export interface PageError {
@@ -43,7 +44,7 @@ export async function discoverPages(browser: Browser, startUrl: string, { maxPag
       const url = queue.shift()!;
       let response;
       try {
-        response = await page.goto(url, { waitUntil: "networkidle", timeout: 15_000 });
+        response = await openPage(page, url, { timeout: 15_000 });
       } catch (error) {
         if (isDownload(error)) continue;
         errors.push({ url, reason: error instanceof Error ? error.message.split("\n")[0]! : String(error) });
@@ -117,7 +118,7 @@ export async function visitPages(browser: Browser, baseUrl: string, paths: strin
       visited.add(url);
       let response;
       try {
-        response = await page.goto(url, { waitUntil: "networkidle", timeout: 15_000 });
+        response = await openPage(page, url, { timeout: 15_000 });
       } catch (error) {
         errors.push({ url, reason: isDownload(error) ? "not a page: a download" : error instanceof Error ? error.message.split("\n")[0]! : String(error) });
         continue;

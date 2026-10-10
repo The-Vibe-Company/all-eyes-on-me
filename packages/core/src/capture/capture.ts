@@ -1,7 +1,8 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium, type Page } from "playwright";
-import { discoverPages, visitPages, type PageError } from "./discover.js";
+import { chromium, type Browser, type Page } from "playwright";
+import { discoverPages, normalize, visitPages, type PageError } from "./discover.js";
+import { openPage, pinFixed } from "./open.js";
 import type { SignedIn } from "./sign-in.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
@@ -12,6 +13,8 @@ export interface CapturedPage {
   path: string;
   /** One screenshot per width, relative to the output folder. */
   files: { width: number; file: string }[];
+  /** Captured signed out, as a page the config marks public. */
+  signedOut?: true;
 }
 
 export interface CaptureManifest {
@@ -29,8 +32,28 @@ export interface CaptureOptions {
   maxPages?: number;
   /** Capture only these routes, such as `["/"]`, instead of following links. */
   paths?: string[];
-  /** What a signed-in browser keeps: every page is visited signed in. */
+  /** What a signed-in browser keeps: every page is visited signed in, but those of `signedOut`. */
   signedIn?: SignedIn;
+  /** Routes seen signed out, such as a public home page that sends a signed-in visitor elsewhere: captured too, signed out. */
+  signedOut?: string[];
+}
+
+/**
+ * The pages to visit, signed in and signed out: the routes given, or every page
+ * reachable from `url`, signed in when `signedIn` is given; then the routes of
+ * `signedOut`, signed out. A page found both ways is kept signed out.
+ */
+export async function findPages(
+  browser: Browser,
+  { url, paths, maxPages, signedIn, signedOut = [] }: { url: string; paths?: string[]; maxPages?: number; signedIn?: SignedIn; signedOut?: string[] },
+): Promise<{ pages: { url: string; signedOut?: true }[]; errors: PageError[] }> {
+  const out = signedOut.map((p) => normalize(new URL(p, url).toString()));
+  const inside = paths ? await visitPages(browser, url, paths.filter((p) => !out.includes(normalize(new URL(p, url).toString()))), { signedIn }) : await discoverPages(browser, url, { maxPages, signedIn });
+  const outside = signedOut.length ? await visitPages(browser, url, signedOut) : { pages: [], errors: [] };
+  return {
+    pages: [...inside.pages.filter((p) => !outside.pages.includes(p)).map((p) => ({ url: p })), ...outside.pages.map((p) => ({ url: p, signedOut: true as const }))],
+    errors: [...inside.errors, ...outside.errors],
+  };
 }
 
 /**
@@ -38,30 +61,31 @@ export interface CaptureOptions {
  * at every width. Writes the screenshots and `manifest.json` to `outDir`,
  * replacing the files of the previous capture.
  */
-export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, paths, signedIn }: CaptureOptions): Promise<CaptureManifest> {
+export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, paths, signedIn, signedOut }: CaptureOptions): Promise<CaptureManifest> {
   const browser = await chromium.launch();
   try {
-    const { pages, errors } = paths ? await visitPages(browser, url, paths, { signedIn }) : await discoverPages(browser, url, { maxPages, signedIn });
+    const { pages, errors } = await findPages(browser, { url, paths, maxPages, signedIn, signedOut });
     await clearPrevious(outDir);
     await mkdir(outDir, { recursive: true });
 
     const captured: CapturedPage[] = [];
-    for (const pageUrl of pages) {
+    for (const { url: pageUrl, signedOut: out } of pages) {
       const files: CapturedPage["files"] = [];
       for (const width of widths) {
-        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
+        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn && !out ? { storageState: signedIn } : {}) });
         try {
           const page = await context.newPage();
-          await page.goto(pageUrl, { waitUntil: "networkidle" });
+          await openPage(page, pageUrl);
           await scrollThrough(page);
           const file = `${slug(pageUrl)}@${width}.png`;
+          await pinFixed(page);
           await page.screenshot({ path: join(outDir, file), fullPage: true });
           files.push({ width, file });
         } finally {
           await context.close();
         }
       }
-      captured.push({ url: pageUrl, path: route(pageUrl), files });
+      captured.push({ url: pageUrl, path: route(pageUrl), files, ...(out ? { signedOut: true as const } : {}) });
     }
 
     const manifest: CaptureManifest = { url, capturedAt: new Date().toISOString(), widths, pages: captured, errors };

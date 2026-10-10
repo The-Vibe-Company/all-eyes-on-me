@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
 import { AppStartError, capture, normalize, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 const ACCOUNT: Record<string, string> = JSON.parse(readFileSync(new URL("../../../../examples/ugly-app/fixtures/compte.json", import.meta.url), "utf8"));
@@ -166,6 +167,119 @@ test("what loads on scroll, such as a lazy image far down, is loaded before the 
   try {
     await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
     assert.ok(asked.includes("/far.svg"), "the lazy image was requested");
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+/** Serves pages from a table, each a function of the request. */
+async function serve(routes: Record<string, (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void>) {
+  const server = createHttpServer((req, res) => {
+    const handle = routes[(req.url ?? "/").split("?")[0]!];
+    if (handle) return handle(req, res);
+    res.writeHead(404, { "content-type": "text/plain" });
+    res.end("Not Found");
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  return { server, url: `http://localhost:${(server.address() as { port: number }).port}` };
+}
+const html = (body: string) => (_: unknown, res: import("node:http").ServerResponse) => {
+  res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+  res.end(`<!doctype html><title>t</title>${body}`);
+};
+
+/** The colour of one pixel of a PNG, read in a browser. */
+async function pixel(file: string, x: number, y: number): Promise<string> {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    const data = readFileSync(file).toString("base64");
+    return await page.evaluate(
+      async ({ data, x, y }) => {
+        const img = new Image();
+        img.src = `data:image/png;base64,${data}`;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const context = canvas.getContext("2d")!;
+        context.drawImage(img, 0, 0);
+        const [r, g, b] = context.getImageData(x, y, 1, 1).data;
+        return `${r},${g},${b}`;
+      },
+      { data, x, y },
+    );
+  } finally {
+    await browser.close();
+  }
+}
+
+test("a page whose network never goes quiet, as Next.js keeps it in development, is still captured and checked, after a bounded wait", async () => {
+  const { server, url } = await serve({
+    "/": html(`<p>Foyer</p><script>fetch('/stream')</script>`),
+    // Never answers: the network never goes quiet.
+    "/stream": () => {},
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-busy-"));
+  try {
+    const started = Date.now();
+    const manifest = await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
+    assert.deepEqual(manifest.pages.map((p) => p.path), ["/"]);
+    assert.deepEqual(manifest.errors, []);
+    const report = await checkSite({ url, widths: [390], paths: ["/"] });
+    assert.deepEqual(report.errors, []);
+    assert.ok(Date.now() - started < 25_000, "each page waits a few seconds at most");
+  } finally {
+    server.closeAllConnections();
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("in a full-page capture, a bar fixed to the bottom of the window is drawn at the end of the page, not in the middle", async () => {
+  const { server, url } = await serve({
+    "/": html(`<body style="margin:0"><div style="height:3000px;background:rgb(255,255,255)"></div><nav style="position:fixed;bottom:0;left:0;right:0;height:50px;background:rgb(255,0,0)">Onglets</nav></body>`),
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-fixed-"));
+  try {
+    await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
+    const file = join(dir, "index@390.png");
+    assert.equal(await pixel(file, 10, 3000 - 25), "255,0,0", "the bar is at the end of the page");
+    assert.equal(await pixel(file, 10, 844 - 25), "255,255,255", "and no longer where the window ended");
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("pages the config marks public are captured and checked signed out, the others signed in", async () => {
+  const signed = (req: import("node:http").IncomingMessage) => (req.headers.cookie ?? "").includes("session=ok");
+  const { server, url } = await serve({
+    "/": (req, res) => {
+      if (signed(req)) {
+        res.writeHead(303, { location: "/jeu" });
+        return res.end();
+      }
+      html(`<h1>Bestia, le jeu</h1><a href="/connexion">Se connecter</a>`)(req, res);
+    },
+    "/jeu": (req, res) => {
+      if (!signed(req)) {
+        res.writeHead(303, { location: "/" });
+        return res.end();
+      }
+      html(`<h1>Foyer</h1>`)(req, res);
+    },
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-public-"));
+  const signedIn = { cookies: [{ name: "session", value: "ok", domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" as const }], origins: [] };
+  try {
+    const manifest = await capture({ url, outDir: dir, widths: [390], paths: ["/jeu"], signedOut: ["/"], signedIn });
+    assert.deepEqual(manifest.pages.map((p) => [p.path, p.signedOut ?? false]), [["/jeu", false], ["/", true]]);
+    const found = await capture({ url, outDir: dir, widths: [390], signedOut: ["/"], signedIn });
+    assert.deepEqual(found.pages.map((p) => p.path).sort(), ["/", "/jeu"], "found by its links signed in, and the public page signed out");
+    const report = await checkSite({ url, widths: [390], paths: ["/jeu"], signedOut: ["/"], signedIn });
+    assert.deepEqual(report.pages.map((p) => new URL(p).pathname), ["/jeu", "/"]);
   } finally {
     server.close();
     await rm(dir, { recursive: true, force: true });
