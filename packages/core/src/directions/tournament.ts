@@ -109,7 +109,9 @@ export function applied(t: Tournament): string | null {
  * choose another direction (any built one, `directions`, the ones the screening
  * took out included), or drop some. Dropping the champion without choosing
  * decides nothing: `rerun` names the knockout's directions left for a new
- * knockout, and when one alone is left, it is their choice.
+ * knockout, and when one alone is left, it is their choice. A later decision
+ * keeps what they dropped and what they applied before, unless it drops or
+ * chooses again.
  */
 export function decideDirection(
   t: Tournament,
@@ -120,9 +122,12 @@ export function decideDirection(
   const known = [...new Set([...t.entrants, ...directions])];
   for (const name of [...(choose ? [choose] : []), ...drop]) if (!known.includes(name)) throw new Error(`${name} is not one of the directions: ${known.join(", ")}.`);
   if (choose && drop.includes(choose)) throw new Error(`${choose} is both chosen and dropped.`);
-  const left = t.entrants.filter((name) => !drop.includes(name));
-  const pick = choose ?? (!drop.includes(judges) ? judges : left.length === 1 ? left[0]! : null);
+  // What they dropped before stays dropped, unless they now choose it.
+  const dropped = [...new Set([...(t.decision?.dropped ?? []), ...drop])].filter((name) => name !== choose);
+  const left = t.entrants.filter((name) => !dropped.includes(name));
+  const kept = t.decision && !dropped.includes(t.decision.applied) ? t.decision.applied : null;
+  const pick = choose ?? kept ?? (!dropped.includes(judges) ? judges : left.length === 1 ? left[0]! : null);
   if (pick === null) return { tournament: t, rerun: left };
-  const decision: Decision = { applied: pick, judges, dropped: [...new Set(drop)], ...(why?.trim() ? { why: why.trim() } : {}), at };
+  const decision: Decision = { applied: pick, judges, dropped, ...(why?.trim() ? { why: why.trim() } : {}), at };
   return { tournament: { ...t, decision }, rerun: null };
 }

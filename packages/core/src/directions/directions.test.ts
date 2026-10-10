@@ -121,3 +121,13 @@ test("one direction left after the screening is champion without a duel, and the
   assert.equal(decideDirection(t, { at: AT }).tournament.decision!.applied, "grotte");
   assert.throws(() => createTournament([]), /at least one direction/);
 });
+
+test("a later decision keeps what the person dropped before, unless they now choose it", () => {
+  let t = crowned();
+  t = decideDirection(t, { drop: ["topo"], choose: "grotte", at: AT, directions: [...t.entrants, "grotte"] }).tournament;
+  const again = decideDirection(t, { drop: ["grotte"], at: AT, directions: [...t.entrants, "grotte"] });
+  assert.deepEqual(again.rerun, ["balisage", "brume", "bivouac"], "topo stays dropped: it is not applied back");
+  const back = decideDirection(t, { choose: "topo", at: AT, directions: [...t.entrants, "grotte"] });
+  assert.deepEqual(back.tournament.decision!.dropped, [], "choosing a direction they dropped takes it back");
+  assert.equal(back.tournament.decision!.applied, "topo");
+});

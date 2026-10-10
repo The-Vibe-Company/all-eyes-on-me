@@ -89,7 +89,7 @@ test("the result page says when the person chose the direction over the judges' 
     assert.equal(code, 0, out);
     const html = await readFile(join(R, "report.html"), "utf8");
     assert.match(html, /<h2>Direction: plaid<\/h2><p>Sert le contact\.<\/p>/);
-    assert.match(html, /Chosen by you among tissus, plaid; the judges had picked tissus\./);
+    assert.match(html, /Chosen by you; the judges' knockout among tissus, plaid had picked tissus\./);
     assert.match(html, /<blockquote>Le plaid prolonge les photos\.<\/blockquote>/);
     assert.doesNotMatch(html, /swatch book/, "the judges' reasons were for another direction");
   } finally {

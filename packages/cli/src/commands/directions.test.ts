@@ -51,6 +51,11 @@ test("aeom sheet --width sets the width of each capture, so a direction's strip 
     assert.equal((await run(dir, ["sheet", "--out", "wide.png", "--columns", "1", "--width", "1600", "a=a.png"])).code, 0);
     assert.equal(await width("narrow.png"), 640 + 48);
     assert.equal(await width("wide.png"), 1600 + 48);
+    assert.equal((await run(dir, ["sheet", "--out", "query.png", "--columns", "1", "/?vue=carte=" + join(dir, "wide.png")])).code, 0);
+    assert.equal((await run(dir, ["sheet", "--out", "lost.png", "--columns", "1", "/?vue=carte=" + join(dir, "nowhere.png")])).code, 0);
+    const height = async (file: string) => (await readFile(join(dir, file))).readUInt32BE(20);
+    assert.notEqual(await height("query.png"), await height("lost.png"), "a route with a query keeps its capture: the label ends at the last =");
+    assert.match((await run(dir, ["tournament", "--help"])).out, /<start\|next\|vote\|status\|decide>/);
     const bad = await run(dir, ["sheet", "--out", "x.png", "--width", "0", "a=a.png"]);
     assert.equal(bad.code, 1);
     assert.match(bad.out, /--width must be a positive whole number of pixels/);

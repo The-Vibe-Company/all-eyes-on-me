@@ -182,6 +182,8 @@ test("a sheet written before AEOM said the kind is read as a tool's brief, and t
   assert.deepEqual(brief.missing, []);
   const result = mergeProduct({ base: old, current: old, proposed: product() });
   assert.deepEqual(result.added, ["What kind of product"]);
+  assert.match(result.text, /^# Super boutique\n\n## What kind of product\n/, "the kind comes first, under the app's name");
+  assert.deepEqual(validateProduct(product({ kind: "`tool`: an online shop. (seen:/)" })), [], "a source without a space is a source");
   assert.deepEqual(validateProduct(result.text), []);
   assert.equal(productBrief(product()).kind, "tool");
 });

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { mergeProduct, productBrief, validateProduct } from "@aeom/core";
+import { mergeProduct, PARTS, productBrief, validateProduct } from "@aeom/core";
 import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
 
 const PRODUCT = sheetFile("product");
@@ -35,11 +35,11 @@ async function printBrief(): Promise<number> {
     console.error(`${SHEET} has no ${missing.map((m) => `"${m}"`).join(", ")}: put the heading back as it was, or write the part, then run aeom product --brief again.`);
     return 1;
   }
-  if (!parts.length) {
+  if (!parts.some((p) => (PARTS as readonly string[]).includes(p.part))) {
     console.error(`Nothing in ${SHEET} is confirmed: what the app is for, who uses it and its loop are all marked (to confirm) or have no source. Look at the app again (read its code, capture its screens) and write what you saw, with its source.`);
     return 1;
   }
-  const said = kind === "game" || kind === "creative" ? `${kind}: the directions start from its world, its visual assets and its genre's interface, not from the real things it names` : kind ?? "not said yet, read as a tool";
+  const said = kind === "game" || kind === "creative" ? `${kind}: the directions start from its world, its visual assets and its genre's interface, not from the real things it names` : kind ?? "not said: the sheet was written before AEOM said it, so it reads as a tool's. Draft the sheet again and write it with aeom product, so it says the kind first.";
   console.log(`${name ? `${name}\n` : ""}Kind: ${said}\n\n${parts.map((p) => `${p.part}: ${p.text}`).join("\n")}`);
   if (unconfirmed.length) console.log(`\nLeft out, to confirm:\n${unconfirmed.map((u) => `- ${u}`).join("\n")}`);
   return 0;

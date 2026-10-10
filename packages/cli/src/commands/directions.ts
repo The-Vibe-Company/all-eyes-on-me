@@ -24,7 +24,8 @@ Options:
     return values.help ? 0 : 1;
   }
   const items: { label: string; file: string; note?: string }[] = positionals.map((arg) => {
-    const at = arg.indexOf("=");
+    // The label ends at the last =, so a route with a query keeps its capture.
+    const at = arg.lastIndexOf("=");
     return at > 0 ? { label: arg.slice(0, at), file: arg.slice(at + 1) } : { label: arg, file: arg };
   });
   for (const note of values.note ?? []) {
@@ -61,7 +62,7 @@ Options:
   return 0;
 }
 
-const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status> --dir <dir> [...]
+const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status|decide> --dir <dir> [...]
 
 A knockout between directions, two by two, three votes per duel. The state
 lives in <dir>/tournament.json; each direction's capture is <dir>/<name>.png.

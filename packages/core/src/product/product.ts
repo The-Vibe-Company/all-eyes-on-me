@@ -74,7 +74,7 @@ export function validateProduct(text: string): string[] {
   if (!kindPart) problems.push(`missing "${KIND}": say whether the app is a \`tool\`, a \`game\` or a \`creative\` product, and where you saw it`);
   else if (!kind) problems.push(`"${KIND}" starts with \`tool\`, \`game\` or \`creative\`, in backticks, then says it in a few words`);
   else if (!SOURCED.test(body(kindPart))) problems.push(`"${KIND}" does not say where it comes from: add (seen: <screen or file>)`);
-  else if (!/\(seen: /i.test(body(kindPart))) problems.push(`"${KIND}" is never a guess: say it from what you read or saw, (seen: <screen or file>)`);
+  else if (!/\(seen:/i.test(body(kindPart))) problems.push(`"${KIND}" is never a guess: say it from what you read or saw, (seen: <screen or file>)`);
   const world = kind === "game" || kind === "creative" ? WORLD_PARTS : [];
   for (const name of [...PARTS, ...world]) {
     const part = all.find((u) => !u.journey && u.key === name);
@@ -111,7 +111,8 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
     current: units(current),
     proposed: next,
     place: (merged, unit) => {
-      let at = unit.title ? 0 : merged.findIndex((u) => u.key === JOURNEYS);
+      // The kind comes first, under the app's name.
+      let at = unit.title ? 0 : unit.key === KIND ? (merged[0]?.title ? 1 : 0) : merged.findIndex((u) => u.key === JOURNEYS);
       if (unit.journey) merged.forEach((u, i) => (u.journey || u.key === JOURNEYS) && (at = i + 1));
       return at === -1 ? merged.length : at;
     },

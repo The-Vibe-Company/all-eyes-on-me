@@ -316,15 +316,15 @@ const FEEDBACK_SCRIPT = `
   }).catch(() => {});
 })();`;
 
-/** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 /** Who chose the direction, in one sentence: the judges' knockout, then the person at the checkpoint when they decided. */
 function chosenBy(d: NonNullable<ResultPage["direction"]>): string {
   const among = d.entrants.map(escape).join(", ");
   if (!d.decision) return `Chosen by knockout among ${among}.`;
   if (d.decision.judges === d.champion) return `Chosen by knockout among ${among}, and validated by you.`;
-  return `Chosen by you among ${among}; the judges had picked ${escape(d.decision.judges)}.`;
+  return `Chosen by you; the judges' knockout among ${among} had picked ${escape(d.decision.judges)}.`;
 }
 
+/** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
   const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;

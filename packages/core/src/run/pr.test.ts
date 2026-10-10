@@ -95,7 +95,7 @@ test("a direction the person chose over the judges' champion says so, with their
   const chosen = { ...page, direction: { ...page.direction!, champion: "plaid", reasons: [], decision: { judges: "tissus", dropped: ["tissus"], why: "Le plaid prolonge les photos de la boutique." } } };
   const { title, body } = prBody(chosen, ".aeom/runs/run-1/report.html");
   assert.equal(title, "AEOM: a new direction, plaid (run-1)");
-  assert.match(body, /\*\*plaid\*\*, chosen by the person over the judges' tissus, among tissus, plaid\./);
+  assert.match(body, /\*\*plaid\*\*, chosen by the person; the judges' knockout among tissus, plaid had picked tissus\./);
   assert.match(body, /> Le plaid prolonge les photos de la boutique\./);
   const validated = prBody({ ...page, direction: { ...page.direction!, decision: { judges: "tissus", dropped: [] } } }, "r.html").body;
   assert.match(validated, /\*\*tissus\*\*, chosen by knockout among tissus, plaid, and validated by the person\./);
