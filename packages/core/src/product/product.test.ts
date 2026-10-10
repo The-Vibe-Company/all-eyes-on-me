@@ -4,8 +4,16 @@ import { mergeProduct, productBrief, validateProduct } from "./index.js";
 
 const journey = (name: string, source = "(seen: /)") => `### ${name}\nWhy: a visitor wants it. ${source}\n1. Open \`/\`.\n2. Click "${name}".\n`;
 
-const product = ({ purpose = "A shop that sells mugs. (seen: /)", who = "People buying a gift. (to confirm)", journeys = ["See the products", "See my orders", "Contact the shop"] } = {}) =>
-  `# Super boutique\n\n## What it is for\n${purpose}\n\n## Who uses it\n${who}\n\n## The main loop\nBrowse, order, check the order. (seen: /produits, /commandes)\n\n## Key journeys\n\n${journeys.map((j) => journey(j)).join("\n")}`;
+const product = ({ kind = "`tool`: an online shop. (seen: /)", purpose = "A shop that sells mugs. (seen: /)", who = "People buying a gift. (to confirm)", world = "", journeys = ["See the products", "See my orders", "Contact the shop"] } = {}) =>
+  `# Super boutique\n\n## What kind of product\n${kind}\n\n## What it is for\n${purpose}\n\n## Who uses it\n${who}\n\n## The main loop\nBrowse, order, check the order. (seen: /produits, /commandes)\n\n${world}## Key journeys\n\n${journeys.map((j) => journey(j)).join("\n")}`;
+
+/** The four parts a game's sheet adds, each with what AEOM read. */
+const WORLD = [
+  "## Genre and fiction\nA persistent strategy game on a wild planet, where tamed beasts take the place of spaceships. (seen: README.md)",
+  "## The feeling it aims for\nThe pride of a tribe chief coming back to see what the beasts brought home. (seen: docs/ordre-d-attaque.md) A cosy evening by the fire. (to confirm)",
+  "## References\nPainted illustrations between Clash Royale and Hearthstone. (seen: README.md) Also like Ogame. (to confirm)",
+  "## Visual assets\n- `public/illustrations/especes/`: warm painted beasts, heroic and cute, in golden light. (seen: public/illustrations/especes/souris.webp)\n- The logo: a flat ink wolf head on lemon. (seen: src/components/Logo.tsx)",
+].join("\n\n") + "\n\n";
 
 test("a product sheet says what the app is for, who uses it, its loop, and three to five journeys", () => {
   assert.deepEqual(validateProduct(product()), []);
@@ -37,7 +45,7 @@ test("a first run writes the proposal, spaced as every later run will write it",
   const result = mergeProduct({ proposed: product() });
   assert.equal(mergeProduct({ base: product(), current: result.text, proposed: product() }).text, result.text, "a second run over an untouched sheet changes nothing");
   assert.match(result.text, /\(seen: \/\)\n1\. Open/);
-  assert.deepEqual(result.added, ["Super boutique", "What it is for", "Who uses it", "The main loop", "Key journeys", 'journey "See the products"', 'journey "See my orders"', 'journey "Contact the shop"']);
+  assert.deepEqual(result.added, ["Super boutique", "What kind of product", "What it is for", "Who uses it", "The main loop", "Key journeys", 'journey "See the products"', 'journey "See my orders"', 'journey "Contact the shop"']);
 });
 
 test("what the user corrected stays as they wrote it; the rest takes what AEOM learned", () => {
@@ -137,4 +145,45 @@ test("a part the sheet does not hold under its heading, such as one the user ren
   const brief = productBrief(product().replace("## What it is for", "## What it's for"));
   assert.deepEqual(brief.missing, ["What it is for"]);
   assert.deepEqual(brief.parts.map((p) => p.part), ["The main loop"]);
+});
+
+test("a sheet says what kind of product the app is, a tool, a game or a creative product, from what AEOM saw", () => {
+  assert.match(validateProduct(product().replace(/## What kind of product\n.*\n\n/, "")).join("\n"), /missing "What kind of product"/);
+  assert.match(validateProduct(product({ kind: "An online shop. (seen: /)" })).join("\n"), /"What kind of product" starts with `tool`, `game` or `creative`/);
+  assert.match(validateProduct(product({ kind: "`tool`: an online shop." })).join("\n"), /"What kind of product" does not say where it comes from/);
+  assert.match(validateProduct(product({ kind: "`game`: a strategy game. (to confirm)" })).join("\n"), /"What kind of product" is never a guess/);
+});
+
+test("a game's sheet adds its genre and fiction, the feeling it aims for, its references and its visual assets; a tool's does not need them", () => {
+  const game = product({ kind: "`game`: a strategy game in the browser. (seen: README.md)", world: WORLD });
+  assert.deepEqual(validateProduct(game), []);
+  const bare = validateProduct(product({ kind: "`game`: a strategy game in the browser. (seen: README.md)" })).join("\n");
+  for (const part of ["Genre and fiction", "The feeling it aims for", "References", "Visual assets"]) assert.match(bare, new RegExp(`missing "${part}": a game's sheet says it`));
+  assert.match(validateProduct(product({ kind: "`creative`: a label's catalogue. (seen: /)" })).join("\n"), /missing "Visual assets": a creative product's sheet says it/);
+  assert.match(validateProduct(product({ kind: "`game`: a game. (seen: /)", world: WORLD.replace("(seen: README.md)\n", "\n") })).join("\n"), /"Genre and fiction" does not say where it comes from/);
+  assert.deepEqual(validateProduct(product({ world: WORLD })), [], "a tool may describe its assets too");
+});
+
+test("the brief of a game gives its kind and its world, and leaves out the references and feelings to confirm", () => {
+  const brief = productBrief(product({ kind: "`game`: a strategy game in the browser. (seen: README.md)", world: WORLD }));
+  assert.equal(brief.kind, "game");
+  assert.deepEqual(brief.parts.map((p) => p.part), ["What it is for", "The main loop", "Genre and fiction", "The feeling it aims for", "References", "Visual assets"]);
+  assert.equal(brief.parts.find((p) => p.part === "References")!.text, "Painted illustrations between Clash Royale and Hearthstone.");
+  assert.match(brief.parts.find((p) => p.part === "Visual assets")!.text, /^`public\/illustrations\/especes\/`: warm painted beasts.* The logo: a flat ink wolf head on lemon\.$/);
+  assert.ok(brief.unconfirmed.includes("References: Also like Ogame."));
+  assert.ok(brief.unconfirmed.includes("The feeling it aims for: A cosy evening by the fire."));
+  assert.deepEqual(productBrief(product({ kind: "`game`: a game. (seen: /)", world: WORLD.replace("## References", "## Refs") })).missing, ["References"]);
+});
+
+test("a sheet written before AEOM said the kind is read as a tool's brief, and the next run adds the kind", () => {
+  const old = product().replace(/## What kind of product\n.*\n\n/, "");
+  const brief = productBrief(old);
+  assert.equal(brief.kind, null);
+  assert.deepEqual(brief.missing, []);
+  const result = mergeProduct({ base: old, current: old, proposed: product() });
+  assert.deepEqual(result.added, ["What kind of product"]);
+  assert.match(result.text, /^# Super boutique\n\n## What kind of product\n/, "the kind comes first, under the app's name");
+  assert.deepEqual(validateProduct(product({ kind: "`tool`: an online shop. (seen:/)" })), [], "a source without a space is a source");
+  assert.deepEqual(validateProduct(result.text), []);
+  assert.equal(productBrief(product()).kind, "tool");
 });

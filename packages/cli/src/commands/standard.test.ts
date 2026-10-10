@@ -57,6 +57,9 @@ test("aeom standard --draft takes the tokens and the kit from the shared files, 
     assert.match(stdout, /^- `\.bouton` in `shared\/kit\.css`$/m);
     assert.match(stdout, /^- `shared\/header\.html`$/m, "a path given in full is said from the project's root");
     assert.match(stdout, /## Direction\nnuancier: Sert la boucle principale\.\n/);
+    await writeFile(join(runDir, "tournament.json"), JSON.stringify({ ...tournament, decision: { applied: "guichet", judges: "nuancier", dropped: [], at: "2026-10-10T09:00:00.000Z" } }));
+    const decided = await run(p.dir, ["standard", "--draft", "shared/kit.css", "--run", ".aeom/runs/run-1"]);
+    assert.match(decided.stdout, /## Direction\nguichet: Sert la commande\.\n/, "the direction the person decided on, not the judges' champion");
   } finally {
     await rm(p.dir, { recursive: true, force: true });
   }

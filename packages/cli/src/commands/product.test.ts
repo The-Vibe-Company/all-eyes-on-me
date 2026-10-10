@@ -22,7 +22,7 @@ const run = async (cwd: string, args: string[]) => {
 
 const journey = (name: string) => `### ${name}\nWhy: a visitor wants it. (seen: /)\n1. Open \`/\`.\n2. Click "${name}".\n`;
 const sheet = (who = "People buying a gift. (to confirm)", journeys = ["See the products", "See my orders", "Contact the shop"]) =>
-  `# Super boutique\n\n## What it is for\nA shop that sells mugs. (seen: /)\n\n## Who uses it\n${who}\n\n## The main loop\nBrowse, order, check. (seen: /produits)\n\n## Key journeys\n\n${journeys.map(journey).join("\n")}`;
+  `# Super boutique\n\n## What kind of product\n\`tool\`: an online shop. (seen: /)\n\n## What it is for\nA shop that sells mugs. (seen: /)\n\n## Who uses it\n${who}\n\n## The main loop\nBrowse, order, check. (seen: /produits)\n\n## Key journeys\n\n${journeys.map(journey).join("\n")}`;
 
 async function project() {
   const dir = await mkdtemp(join(tmpdir(), "aeom-product-"));
@@ -35,7 +35,7 @@ test("aeom product writes the sheet AEOM drafted into .aeom/product.md", async (
     await writeFile(p.draft, sheet());
     const { code, out } = await run(p.dir, ["product", p.draft]);
     assert.equal(code, 0, out);
-    assert.match(await readFile(p.sheet, "utf8"), /^# Super boutique\n\n## What it is for\n/);
+    assert.match(await readFile(p.sheet, "utf8"), /^# Super boutique\n\n## What kind of product\n`tool`: an online shop\. \(seen: \/\)\n\n## What it is for\n/);
     assert.match(out, /Wrote \.aeom\/product\.md, a first sheet with 3 key journeys/);
   } finally {
     await rm(p.dir, { recursive: true, force: true });
@@ -191,17 +191,27 @@ test("aeom product --brief gives the directions what the app is for, who uses it
     await writeFile(file, sheet());
     const { code, out } = await run(dir, ["product", "--brief"]);
     assert.equal(code, 0, out);
-    assert.match(out, /^Super boutique\n\nWhat it is for: A shop that sells mugs\.\nThe main loop: Browse, order, check\.\n/);
+    assert.match(out, /^Super boutique\nKind: tool\n\nWhat it is for: A shop that sells mugs\.\nThe main loop: Browse, order, check\.\n/);
     assert.doesNotMatch(out, /\(seen:/);
     assert.match(out, /Left out, to confirm:\n- Who uses it: People buying a gift\./);
+    await writeFile(file, sheet().replace("`tool`: an online shop.", "`game`: a strategy game.").replace("## Key journeys", "## Genre and fiction\nTamed beasts on a wild planet. (seen: README.md)\n\n## The feeling it aims for\nPride. (seen: README.md)\n\n## References\nHearthstone. (to confirm)\n\n## Visual assets\nPainted beasts. (seen: public/illustrations/)\n\n## Key journeys"));
+    const game = await run(dir, ["product", "--brief"]);
+    assert.equal(game.code, 0, game.out);
+    assert.match(game.out, /^Super boutique\nKind: game: the directions start from its world, its visual assets and its genre's interface, not from the real things it names\n/);
+    assert.match(game.out, /Genre and fiction: Tamed beasts on a wild planet\.\nThe feeling it aims for: Pride\.\nVisual assets: Painted beasts\./);
+    assert.match(game.out, /- References: Hearthstone\./);
+    await writeFile(file, sheet().replace(/## What kind of product\n.*\n\n/, ""));
+    assert.match((await run(dir, ["product", "--brief"])).out, /^Super boutique\nKind: not said: the sheet was written before AEOM said it, so it reads as a tool's\. Draft the sheet again and write it with aeom product, so it says the kind first\.\n/);
     await writeFile(file, sheet().replace("## What it is for", "## What it's for"));
     const renamed = await run(dir, ["product", "--brief"]);
     assert.equal(renamed.code, 1);
     assert.match(renamed.out, /has no "What it is for": put the heading back/);
-    await writeFile(file, sheet().replace("(seen: /)", "(to confirm)").replace("(seen: /produits)", "(to confirm)"));
+    await writeFile(file, sheet().replace("mugs. (seen: /)", "mugs. (to confirm)").replace("(seen: /produits)", "(to confirm)"));
     const guessed = await run(dir, ["product", "--brief"]);
     assert.equal(guessed.code, 1);
     assert.match(guessed.out, /Nothing in \.aeom\/product\.md is confirmed/);
+    await writeFile(file, sheet().replace("mugs. (seen: /)", "mugs. (to confirm)").replace("(seen: /produits)", "(to confirm)").replace("`tool`: an online shop.", "`game`: a game.").replace("## Key journeys", "## Genre and fiction\nBeasts. (seen: README.md)\n\n## The feeling it aims for\nPride. (to confirm)\n\n## References\nNone. (to confirm)\n\n## Visual assets\nPaintings. (seen: public/)\n\n## Key journeys"));
+    assert.equal((await run(dir, ["product", "--brief"])).code, 1, "a world confirmed is not enough when what the app is for, who uses it and its loop are all guesses");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

@@ -1,9 +1,12 @@
 /**
  * The product sheet, `.aeom/product.md`: what AEOM understood of the app on
- * its own, for the user to correct. It has four parts (what the app is for,
- * who uses it, its main loop, its key journeys), and each journey is a list of
- * numbered steps. Every part and journey says where it comes from, `(seen: …)`,
- * or that it is a guess, `(to confirm)`. Every `###` heading under the key
+ * its own, for the user to correct. It says what kind of product the app is (a
+ * tool, a game or a creative product), then has four parts (what the app is
+ * for, who uses it, its main loop, its key journeys), and each journey is a
+ * list of numbered steps. A game or a creative product adds its world: its
+ * genre and fiction, the feeling it aims for, its references and its visual
+ * assets. Every part and journey says where it comes from, `(seen: …)`, or
+ * that it is a guess, `(to confirm)`. Every `###` heading under the key
  * journeys is a journey.
  */
 
@@ -11,6 +14,14 @@ import { threeWay, type SheetMerge } from "../sheet/merge.js";
 
 export const PARTS = ["What it is for", "Who uses it", "The main loop", "Key journeys"] as const;
 const JOURNEYS = "Key journeys";
+const KIND = "What kind of product";
+export const KINDS = ["tool", "game", "creative"] as const;
+export type ProductKind = (typeof KINDS)[number];
+/** What a game's or a creative product's sheet adds: the world its users enter, which its directions start from. */
+export const WORLD_PARTS = ["Genre and fiction", "The feeling it aims for", "References", "Visual assets"] as const;
+const KIND_NAMES: Record<ProductKind, string> = { tool: "a tool's", game: "a game's", creative: "a creative product's" };
+/** The kind a part says, its first word in backticks; null when it says none. */
+const kindOf = (text: string): ProductKind | null => (text.match(/^`(tool|game|creative)`/i)?.[1]?.toLowerCase() as ProductKind | undefined) ?? null;
 /** A source: `(seen: …)`, which may hold a path with one level of parentheses such as `src/app/(shop)/page.tsx`, or `(to confirm)`. */
 const SOURCE = String.raw`\(seen: *[^()\s<](?:[^()]|\([^()]*\))*\)|\(to confirm\)`;
 const SOURCED = new RegExp(SOURCE, "i");
@@ -58,10 +69,17 @@ export function validateProduct(text: string): string[] {
     if (seen.has(unit.key)) problems.push(`${unit.journey ? unit.key : `"${unit.key}"`} appears more than once`);
     seen.add(unit.key);
   }
-  for (const name of PARTS) {
+  const kindPart = all.find((u) => !u.journey && u.key === KIND);
+  const kind = kindPart ? kindOf(body(kindPart)) : null;
+  if (!kindPart) problems.push(`missing "${KIND}": say whether the app is a \`tool\`, a \`game\` or a \`creative\` product, and where you saw it`);
+  else if (!kind) problems.push(`"${KIND}" starts with \`tool\`, \`game\` or \`creative\`, in backticks, then says it in a few words`);
+  else if (!SOURCED.test(body(kindPart))) problems.push(`"${KIND}" does not say where it comes from: add (seen: <screen or file>)`);
+  else if (!/\(seen:/i.test(body(kindPart))) problems.push(`"${KIND}" is never a guess: say it from what you read or saw, (seen: <screen or file>)`);
+  const world = kind === "game" || kind === "creative" ? WORLD_PARTS : [];
+  for (const name of [...PARTS, ...world]) {
     const part = all.find((u) => !u.journey && u.key === name);
     if (!part) {
-      problems.push(`missing "${name}"`);
+      problems.push(`missing "${name}"${(world as readonly string[]).includes(name) ? `: ${KIND_NAMES[kind!]} sheet says it` : ""}`);
       continue;
     }
     if (name === JOURNEYS) continue;
@@ -93,7 +111,8 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
     current: units(current),
     proposed: next,
     place: (merged, unit) => {
-      let at = unit.title ? 0 : merged.findIndex((u) => u.key === JOURNEYS);
+      // The kind comes first, under the app's name.
+      let at = unit.title ? 0 : unit.key === KIND ? (merged[0]?.title ? 1 : 0) : merged.findIndex((u) => u.key === JOURNEYS);
       if (unit.journey) merged.forEach((u, i) => (u.journey || u.key === JOURNEYS) && (at = i + 1));
       return at === -1 ? merged.length : at;
     },
@@ -101,10 +120,12 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
   return { text: join(pieces), ...result };
 }
 
-/** What a direction may start from: the app's purpose, its users and its main loop, as far as they are known. */
+/** What a direction may start from: the app's purpose, its users and its main loop, as far as they are known, and a game's world. */
 export interface ProductBrief {
   /** The app's name, the sheet's `#` heading. */
   name: string;
+  /** What kind of product the sheet says the app is; null for a sheet written before AEOM said it, read as a tool's. */
+  kind: ProductKind | null;
   /** Each part, without its sources and without what is not confirmed; a part left empty is not there. */
   parts: { part: string; text: string }[];
   /** What the sheet marks `(to confirm)` or gives no source for, by part: no direction rests on a guess. */
@@ -113,25 +134,30 @@ export interface ProductBrief {
   missing: string[];
 }
 
-const BRIEF_PARTS = PARTS.filter((p) => p !== JOURNEYS);
+const BRIEF_PARTS: string[] = PARTS.filter((p) => p !== JOURNEYS);
 /** One claim of a part: its words, then the source that covers them, since the previous source. */
 const CLAIM = new RegExp(String.raw`([^]*?)(${SOURCE})`, "gi");
 const flat = (text: string) => text.replace(/^\s*[-*] +/gm, "").replace(/\s+/g, " ").trim();
 
 /**
- * The brief of the directions, from the product sheet: what the app is for,
- * who uses it and its main loop. Only claims with a `(seen: …)` source stay,
+ * The brief of the directions, from the product sheet: what kind of product
+ * the app is, what it is for, who uses it and its main loop, and for a game or
+ * a creative product its world. Only claims with a `(seen: …)` source stay,
  * the user's own included (`(seen: <their name>)`): a claim marked `(to
- * confirm)`, or words with no source after them, are left out and named.
+ * confirm)`, or words with no source after them, are left out and named. A
+ * tool's sheet that describes its visual assets passes them on too.
  */
 export function productBrief(text: string): ProductBrief {
   const all = units(text);
   const title = all.find((u) => u.title);
-  const brief: ProductBrief = { name: title ? title.text.split("\n")[0]!.replace(/^# /, "").trim() : "", parts: [], unconfirmed: [], missing: [] };
-  for (const part of BRIEF_PARTS) {
+  const kindPart = all.find((u) => !u.journey && u.key === KIND);
+  const kind = kindPart ? kindOf(body(kindPart)) : null;
+  const brief: ProductBrief = { name: title ? title.text.split("\n")[0]!.replace(/^# /, "").trim() : "", kind, parts: [], unconfirmed: [], missing: [] };
+  const world: readonly string[] = kind === "game" || kind === "creative" ? WORLD_PARTS : [];
+  for (const part of [...BRIEF_PARTS, ...WORLD_PARTS]) {
     const unit = all.find((u) => !u.journey && u.key === part);
     if (!unit) {
-      brief.missing.push(part);
+      if (BRIEF_PARTS.includes(part) || world.includes(part)) brief.missing.push(part);
       continue;
     }
     const kept: string[] = [];

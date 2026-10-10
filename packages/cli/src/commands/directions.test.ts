@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -8,9 +8,9 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
-const run = async (cwd: string, args: string[]) => {
+const run = async (cwd: string, args: string[], env: NodeJS.ProcessEnv = {}) => {
   try {
-    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd });
+    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd, env: { ...process.env, ...env } });
     return { code: 0, out: stdout + stderr };
   } catch (error) {
     const e = error as { code: number; stdout: string; stderr: string };
@@ -40,5 +40,89 @@ test("aeom sheet puts each direction's note under its capture, and refuses a not
     assert.deepEqual(JSON.parse(await readFile(join(dir, "noted.json"), "utf8")), [{ label: "tissus", note: "Serves the main loop: choose a piece, add it, follow the order." }], "the sentences stay beside the sheet, for the result page");
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom sheet --width sets the width of each capture, so a direction's strip of screens stays readable on the sheet of all six", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-sheet-"));
+  try {
+    const width = async (file: string) => (await readFile(join(dir, file))).readUInt32BE(16);
+    assert.equal((await run(dir, ["sheet", "--out", "narrow.png", "--columns", "1", "a=a.png"])).code, 0);
+    assert.equal((await run(dir, ["sheet", "--out", "wide.png", "--columns", "1", "--width", "1600", "a=a.png"])).code, 0);
+    assert.equal(await width("narrow.png"), 640 + 48);
+    assert.equal(await width("wide.png"), 1600 + 48);
+    assert.equal((await run(dir, ["sheet", "--out", "query.png", "--columns", "1", "/?vue=carte=" + join(dir, "wide.png")])).code, 0);
+    assert.equal((await run(dir, ["sheet", "--out", "lost.png", "--columns", "1", "/?vue=carte=" + join(dir, "nowhere.png")])).code, 0);
+    const height = async (file: string) => (await readFile(join(dir, file))).readUInt32BE(20);
+    assert.notEqual(await height("query.png"), await height("lost.png"), "a route with a query keeps its capture: the label ends at the last =");
+    assert.match((await run(dir, ["tournament", "--help"])).out, /<start\|next\|vote\|status\|decide>/);
+    const bad = await run(dir, ["sheet", "--out", "x.png", "--width", "0", "a=a.png"]);
+    assert.equal(bad.code, 1);
+    assert.match(bad.out, /--width must be a positive whole number of pixels/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom tournament decide keeps what the person decided on the knockout, in the run and in their taste", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-decide-"));
+  const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  const env = { AEOM_HOME: home };
+  try {
+    await mkdir(D, { recursive: true });
+    for (const name of ["topo", "bivouac", "grotte"]) await writeFile(join(D, `${name}.png`), "");
+    assert.equal((await run(dir, ["tournament", "start", "--dir", D, "topo", "bivouac"])).code, 0);
+    const early = await run(dir, ["tournament", "decide", "--dir", D], env);
+    assert.equal(early.code, 1);
+    assert.match(early.out, /The knockout is not over/);
+    let last = { code: 0, out: "" };
+    for (const voter of ["1", "2", "3"]) last = await run(dir, ["tournament", "vote", "--dir", D, "--duel", "1", "--voter", voter, "--winner", "topo", "--reason", "map legend"]);
+    assert.match(last.out, /Champion: topo\. Show the person the directions and ask them: aeom tournament decide/);
+    assert.match((await run(dir, ["tournament", "status", "--dir", D])).out, /Champion: topo, waiting for the person's decision/);
+
+    const dropped = await run(dir, ["tournament", "decide", "--dir", D, "--drop", "topo", "--why", "Une carte de randonnée, pas un jeu."], env);
+    assert.equal(dropped.code, 0, dropped.out);
+    assert.match(dropped.out, /bivouac is the one direction left of the knockout: the run applies it/);
+    const chosen = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "grotte", "--why", "Elle prolonge les illustrations peintes."], env);
+    assert.equal(chosen.code, 0, chosen.out);
+    assert.match(chosen.out, /The run applies grotte, chosen by the person over the judges' topo\./);
+    const t = JSON.parse(await readFile(join(D, "tournament.json"), "utf8"));
+    assert.equal(t.decision.applied, "grotte");
+    assert.equal(t.decision.judges, "topo");
+    assert.match((await run(dir, ["tournament", "status", "--dir", D])).out, /Champion of the judges: topo\nApplied: grotte, the person's decision: Elle prolonge les illustrations peintes\./);
+    const taste = (await readFile(join(home, "taste", "feedback.jsonl"), "utf8")).trim().split("\n").map((l) => JSON.parse(l));
+    assert.equal(taste.length, 2);
+    assert.deepEqual(
+      taste.map((f: { id: string; category: string; agree: boolean; why: string }) => [f.id, f.category, f.agree, f.why]),
+      [
+        ["direction-choice:topo", "direction", false, "Dropped topo. Une carte de randonnée, pas un jeu."],
+        ["direction-choice:topo", "direction", false, "Chose grotte. Elle prolonge les illustrations peintes."],
+      ],
+    );
+    const unknown = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "plage"], env);
+    assert.equal(unknown.code, 1);
+    assert.match(unknown.out, /plage is not one of the directions: topo, bivouac, grotte/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("dropping the judges' champion with several directions left asks for a new knockout, and decides nothing", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-decide-"));
+  const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  try {
+    await mkdir(D, { recursive: true });
+    assert.equal((await run(dir, ["tournament", "start", "--dir", D, "topo", "bivouac", "grotte"])).code, 0);
+    for (const duel of ["1", "3"]) for (const voter of ["1", "2", "3"]) await run(dir, ["tournament", "vote", "--dir", D, "--duel", duel, "--voter", voter, "--winner", "topo", "--reason", "map"]);
+    const { code, out } = await run(dir, ["tournament", "decide", "--dir", D, "--drop", "topo"], { AEOM_HOME: home });
+    assert.equal(code, 0, out);
+    assert.match(out, /The person dropped the judges' champion, topo\. Run a new knockout among bivouac, grotte: aeom tournament start --reset --dir .* bivouac grotte/);
+    assert.equal(JSON.parse(await readFile(join(D, "tournament.json"), "utf8")).decision, undefined);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
   }
 });

@@ -72,6 +72,31 @@ const replay = async (dir: string, steps: number, broken: { step: number; reason
   await put(join(dir, "judge-journeys.json"), { judgedAt: "", voters: ["1", "2", "3"], principles: [{ id: "short", text: "short" }], failures: 0, pages: [{ page: "orders", verdicts: [{ principle: "short", pass: steps < 4, votes: "", reasons: ["a detour through the products"], dissent: [], steps: [2] }] }] });
 };
 
+test("the result page says when the person chose the direction over the judges' champion, and why", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
+  const R = join(dir, ".aeom", "runs", "run-1");
+  try {
+    await snapshot(join(R, "before"), { "/": ["grid"] });
+    await put(join(R, "directions", "sheet.json"), [{ label: "tissus", note: "Sert la boucle principale." }, { label: "plaid", note: "Sert le contact." }]);
+    await put(join(R, "directions", "tournament.json"), {
+      entrants: ["tissus", "plaid"],
+      votesPerDuel: 3,
+      duels: [{ id: 1, round: 1, a: "tissus", b: "plaid", winner: "tissus", reasons: ["Tissus reads as a swatch book."], votes: [] }],
+      decision: { applied: "plaid", judges: "tissus", dropped: [], why: "Le plaid prolonge les photos.", at: "2026-10-10T09:00:00.000Z" },
+    });
+    await put(join(R, "verdict.json"), { nothingToRedo: false, line: "Measured: 1 screen.", failures: [] });
+    const { code, out } = await run(dir, ["report"]);
+    assert.equal(code, 0, out);
+    const html = await readFile(join(R, "report.html"), "utf8");
+    assert.match(html, /<h2>Direction: plaid<\/h2><p>Sert le contact\.<\/p>/);
+    assert.match(html, /Chosen by you; the judges' knockout among tissus, plaid had picked tissus\./);
+    assert.match(html, /<blockquote>Le plaid prolonge les photos\.<\/blockquote>/);
+    assert.doesNotMatch(html, /swatch book/, "the judges' reasons were for another direction");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("aeom report writes, in the run's folder, a page of what the run gave: the direction, each screen and journey before and after, and what still fails", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
   const R = join(dir, ".aeom", "runs", "run-1");

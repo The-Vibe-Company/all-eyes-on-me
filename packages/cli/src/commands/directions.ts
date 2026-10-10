@@ -1,13 +1,13 @@
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { champion, contactSheet, createTournament, nextDuel, voteDuel, type Tournament } from "@aeom/core";
+import { addFeedback, aeomHome, champion, contactSheet, createTournament, decideDirection, nextDuel, runKey, voteDuel, type Tournament } from "@aeom/core";
 
 export async function runSheet(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { out: { type: "string" }, columns: { type: "string", default: "3" }, note: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } },
+    options: { out: { type: "string" }, columns: { type: "string", default: "3" }, width: { type: "string", default: "640" }, note: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || !values.out || positionals.length === 0) {
     console.log(`Usage: aeom sheet --out <sheet.png> <label>=<capture.png>... [--note <label>=<sentence>]...
@@ -17,12 +17,15 @@ as a cell saying the direction did not build.
 
 Options:
   --columns <n>             How many captures per row (default 3)
+  --width <px>              How wide each capture is drawn (default 640), such as
+                            1600 for a sheet of directions each shown on several screens
   --note <label>=<sentence> One sentence read under that capture, such as the
                             part of the product sheet a direction serves`);
     return values.help ? 0 : 1;
   }
   const items: { label: string; file: string; note?: string }[] = positionals.map((arg) => {
-    const at = arg.indexOf("=");
+    // The label ends at the last =, so a route with a query keeps its capture.
+    const at = arg.lastIndexOf("=");
     return at > 0 ? { label: arg.slice(0, at), file: arg.slice(at + 1) } : { label: arg, file: arg };
   });
   for (const note of values.note ?? []) {
@@ -47,14 +50,19 @@ Options:
     console.error(`--columns must be a positive whole number.`);
     return 1;
   }
-  await contactSheet({ out: values.out, items, columns });
+  const cellWidth = Number(values.width);
+  if (!Number.isInteger(cellWidth) || cellWidth < 1) {
+    console.error(`--width must be a positive whole number of pixels.`);
+    return 1;
+  }
+  await contactSheet({ out: values.out, items, columns, cellWidth });
   // The sentences stay beside the sheet, so the result page can say what each direction serves.
   if (items.some((i) => i.note)) await writeFile(values.out.replace(/\.png$/i, "") + ".json", JSON.stringify(items.map(({ label, note }) => ({ label, note })), null, 2) + "\n");
   console.log(`Sheet of ${items.length} captures: ${values.out}`);
   return 0;
 }
 
-const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status> --dir <dir> [...]
+const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status|decide> --dir <dir> [...]
 
 A knockout between directions, two by two, three votes per duel. The state
 lives in <dir>/tournament.json; each direction's capture is <dir>/<name>.png.
@@ -62,7 +70,15 @@ lives in <dir>/tournament.json; each direction's capture is <dir>/<name>.png.
   start <name>... [--reset]             Draw the first round (--reset replaces a tournament already there)
   next                                  Print the next duel and its two captures
   vote --duel <n> --voter <v> --winner <name> --reason "<why>"
-  status                                Print every duel, and the champion when there is one`;
+  status                                Print every duel, the champion, and what the person decided
+  decide [--choose <name>] [--drop <name>]... [--why "<their words>"]
+                                        Keep the person's decision once there is a champion:
+                                        without --choose or --drop they validate it; --choose
+                                        takes any direction captured in <dir>; dropping the
+                                        champion without choosing asks for a new knockout.
+                                        Their decision also goes to their taste, in ~/.aeom/taste.`;
+
+const ASK = "Show the person the directions and ask them: aeom tournament decide (it validates), --choose <name> or --drop <name>; with /aeom --autonome, the champion applies as it is.";
 
 export async function runTournament(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -75,11 +91,14 @@ export async function runTournament(argv: string[]): Promise<number> {
       winner: { type: "string" },
       reason: { type: "string" },
       reset: { type: "boolean" },
+      choose: { type: "string" },
+      drop: { type: "string", multiple: true },
+      why: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
   const [action, ...names] = positionals;
-  if (values.help || !action || !values.dir || !["start", "next", "vote", "status"].includes(action)) {
+  if (values.help || !action || !values.dir || !["start", "next", "vote", "status", "decide"].includes(action)) {
     console.log(TOURNAMENT_HELP);
     return values.help ? 0 : 1;
   }
@@ -98,7 +117,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       }
       await mkdir(values.dir, { recursive: true });
       await save(t);
-      console.log(`${names.length} directions, first round drawn. Run: aeom tournament next --dir ${values.dir}`);
+      console.log(names.length === 1 ? `${names[0]} alone: champion without a duel. ${ASK}` : `${names.length} directions, first round drawn. Run: aeom tournament next --dir ${values.dir}`);
       return 0;
     }
     const t = await load();
@@ -106,6 +125,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       const duel = nextDuel(t);
       if (!duel) {
         console.log(`No duel left. Champion: ${champion(t)}`);
+        if (!t.decision) console.log(ASK);
         return 0;
       }
       const missing = t.votesPerDuel - duel.votes.length;
@@ -125,7 +145,42 @@ export async function runTournament(argv: string[]): Promise<number> {
       const decided = updated.duels.find((d) => d.id === Number(duel))!;
       console.log(decided.winner ? `Duel ${duel} goes to ${decided.winner}.` : `Vote recorded on duel ${duel}.`);
       const won = champion(updated);
-      if (won) console.log(`Champion: ${won}`);
+      if (won) console.log(`Champion: ${won}. ${ASK}`);
+      return 0;
+    }
+    if (action === "decide") {
+      // Any direction built and captured can be chosen, the ones the screening took out included.
+      const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png").map((f) => f.slice(0, -4));
+      const drop = values.drop ?? [];
+      const { tournament, rerun } = decideDirection(t, { choose: values.choose, drop, why: values.why, at: new Date().toISOString(), directions: captured });
+      const judges = champion(t)!;
+      const applied = tournament.decision?.applied;
+      const said = [values.choose && values.choose !== judges ? `Chose ${values.choose}.` : "", drop.length ? `Dropped ${drop.join(", ")}.` : "", values.why?.trim() ?? ""].filter(Boolean).join(" ");
+      await addFeedback(aeomHome(), {
+        ...(await runKey(dirname(values.dir))),
+        id: `direction-choice:${judges}`,
+        category: "direction",
+        verdict: `The judges' champion: ${judges}`,
+        agree: applied === judges,
+        ...(said ? { why: said } : {}),
+        at: new Date().toISOString(),
+      });
+      if (!applied) {
+        console.log(
+          rerun!.length
+            ? `The person dropped the judges' champion, ${judges}. Run a new knockout among ${rerun!.join(", ")}: aeom tournament start --reset --dir ${values.dir} ${rerun!.join(" ")}, then ask them again.`
+            : `The person dropped every direction of the knockout: build new ones, or let them choose one with --choose.`,
+        );
+        return 0;
+      }
+      await save(tournament);
+      console.log(
+        applied === judges
+          ? `The run applies ${applied}, the judges' champion, as the person decided.`
+          : values.choose
+            ? `The run applies ${applied}, chosen by the person over the judges' ${judges}.`
+            : `${applied} is the one direction left of the knockout: the run applies it.`,
+      );
       return 0;
     }
     if (action === "status") {
@@ -137,7 +192,8 @@ export async function runTournament(argv: string[]): Promise<number> {
         }
       }
       const won = champion(t);
-      console.log(won ? `\nChampion: ${won}` : `\nNo champion yet.`);
+      const d = t.decision;
+      console.log(!won ? `\nNo champion yet.` : !d ? `\nChampion: ${won}, waiting for the person's decision.` : `\nChampion of the judges: ${d.judges}\nApplied: ${d.applied}, the person's decision${d.why ? `: ${d.why}` : ""}${d.dropped.length ? ` (dropped: ${d.dropped.join(", ")})` : ""}`);
       return 0;
     }
   } catch (error) {

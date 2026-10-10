@@ -2,7 +2,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
-import { champion, draftStandard, mergeStandard, productBrief, standardProblems, type Tournament } from "@aeom/core";
+import { applied, champion, draftStandard, mergeStandard, productBrief, standardProblems, type Tournament } from "@aeom/core";
 import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
 
 const STANDARD = sheetFile("standard");
@@ -70,7 +70,7 @@ async function printDraft(paths: string[], runDir: string | undefined): Promise<
   }
   const sheet = await readIfThere(join(".aeom", "product.md"));
   const tournament = runDir ? await json<Tournament>(join(runDir, "directions", "tournament.json")) : null;
-  const winner = tournament ? champion(tournament) : null;
+  const winner = tournament ? (applied(tournament) ?? champion(tournament)) : null;
   const notes = runDir ? ((await json<{ label: string; note?: string }[]>(join(runDir, "directions", "sheet.json"))) ?? []) : [];
   const direction = winner ? { champion: winner, sentence: notes.find((n) => n.label === winner)?.note ?? null } : null;
   // AEOM's last words first: what the user changed in the direction stays theirs when the drafts are merged.

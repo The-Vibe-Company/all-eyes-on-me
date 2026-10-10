@@ -71,8 +71,14 @@ export function prBody(page: ResultPage, reportPath: string): { title: string; b
 
   if (page.direction) {
     const d = page.direction;
-    lines.push("## Direction", "", `**${words(d.champion)}**, chosen by knockout among ${d.entrants.map(words).join(", ")}.${d.sentence ? ` ${words(d.sentence)}` : ""}`, "");
-    for (const reason of d.reasons.slice(0, MAX_ENTRIES)) lines.push(`> ${words(reason)}`, "");
+    const among = d.entrants.map(words).join(", ");
+    const chosen = !d.decision
+      ? `chosen by knockout among ${among}`
+      : d.decision.judges === d.champion
+        ? `chosen by knockout among ${among}, and validated by the person`
+        : `chosen by the person; the judges' knockout among ${among} had picked ${words(d.decision.judges)}`;
+    lines.push("## Direction", "", `**${words(d.champion)}**, ${chosen}.${d.sentence ? ` ${words(d.sentence)}` : ""}`, "");
+    for (const reason of [...d.reasons, ...(d.decision?.why ? [d.decision.why] : [])].slice(0, MAX_ENTRIES)) lines.push(`> ${words(reason)}`, "");
   } else if (page.verdict?.keepStyle) {
     lines.push("## Style kept", "", "No new direction: the run fixed what failed on the app's own style.", "");
   }
