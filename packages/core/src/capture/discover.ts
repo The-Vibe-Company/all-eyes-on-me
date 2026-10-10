@@ -64,7 +64,7 @@ export async function discoverPages(browser: Browser, startUrl: string, { maxPag
       }
       if (landed !== url && seen.has(landed)) continue;
       seen.add(landed);
-      pages.push(landed);
+      pages.push(createsResource(url, landed) ? url : landed);
 
       const hrefs = await page.$$eval("a[href]", (links) => links.map((a) => (a as HTMLAnchorElement).href));
       for (const href of hrefs) {
@@ -138,10 +138,26 @@ export async function visitPages(browser: Browser, baseUrl: string, paths: strin
         errors.push({ url, reason: `redirects off ${origin}, to ${landed}` });
         continue;
       }
-      if (!pages.includes(landed)) pages.push(landed);
+      const kept = createsResource(url, landed) ? url : landed;
+      if (!pages.includes(kept)) pages.push(kept);
     }
   } finally {
     await context.close();
   }
   return { pages, errors };
+}
+
+/** A segment of a route that names one record: a number, a UUID, a long hexadecimal or random string. */
+const isId = (segment: string) =>
+  /^\d+$/.test(segment) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) || /^[0-9a-f]{12,}$/i.test(segment) || (/^[A-Za-z0-9_-]{16,}$/.test(segment) && /\d/.test(segment) && /[a-z]/i.test(segment));
+
+/**
+ * Whether a route sent on to a record it just made, such as /sessions/new to
+ * /sessions/123: the page is then named by the route asked, since every visit
+ * lands on a new one and capture and check would never name it alike.
+ */
+export function createsResource(asked: string, landed: string): boolean {
+  if (asked === landed) return false;
+  const from = new URL(asked).pathname.split("/");
+  return new URL(landed).pathname.split("/").some((segment) => segment && isId(segment) && !from.includes(segment));
 }

@@ -8,7 +8,7 @@ export interface ProjectConfig {
   /** A command that puts the app's data back as it was, run before each journey. */
   reset?: string;
   /** How to sign in with a fake account: the sign-in route, a JSON file of the account's fields by label, the button's name. */
-  login?: { path: string; account: string; submit: string };
+  login?: LoginConfig;
   /** The files that hold the app's data or logic, as globs: a change to one is a feature, refused by aeom guard. */
   protected?: string[];
   /** "keep": the app has a style to keep, such as a client's brand charter; AEOM fixes it rather than proposing a new direction. */
@@ -20,6 +20,14 @@ export interface ProjectConfig {
   /** The route a signed-in user lands on, when `/` sends them elsewhere: the first screen the directions are built and judged on. */
   home?: string;
 }
+
+/**
+ * How AEOM signs in to the app, with a fake account only: a form it fills (the
+ * sign-in route, a JSON file of the account's fields by label, the button), a
+ * session saved in a file (a browser state, or a list of cookies), or a
+ * command that prints such a session, run with AEOM_URL set.
+ */
+export type LoginConfig = { path: string; account: string; submit: string } | { state: string } | { script: string };
 
 /** `.aeom/config.json` exists but cannot be used. */
 export class ConfigError extends Error {}
@@ -77,8 +85,16 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
   const login = (parsed as Record<string, unknown>).login;
   if (login !== undefined) {
     const l = (login ?? {}) as Record<string, unknown>;
+    const ways = [["path", "account", "submit"].some((k) => k in l), "state" in l, "script" in l].filter(Boolean).length;
+    if (typeof login !== "object" || ways > 1) throw new ConfigError(`${file}: "login" is one of three: a form ("path", "account", "submit"), a saved session ("state"), or a script that prints one ("script").`);
+    for (const key of ["state", "script"] as const) {
+      if (!(key in l)) continue;
+      if (typeof l[key] !== "string" || !(l[key] as string).trim()) throw new ConfigError(`${file}: "login.${key}" is ${key === "state" ? "the file of a saved session" : "the command that prints a session"}.`);
+      config.login = key === "state" ? { state: l.state as string } : { script: l.script as string };
+      return config;
+    }
     const missing = (["path", "account", "submit"] as const).filter((k) => typeof l[k] !== "string" || !(l[k] as string).trim());
-    if (typeof login !== "object" || missing.length) {
+    if (missing.length) {
       throw new ConfigError(`${file}: "login" needs "path" (the sign-in route), "account" (a JSON file of the fake account's fields by label) and "submit" (the button's name); missing ${missing.join(", ")}.`);
     }
     if (!(l.path as string).startsWith("/")) throw new ConfigError(`${file}: "login.path" is the sign-in route from the app's root, such as "/connexion".`);

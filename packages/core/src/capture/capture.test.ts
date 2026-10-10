@@ -9,7 +9,7 @@ import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
-import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, pinFixed, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, pinFixed, signedInFrom, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
 import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
@@ -327,6 +327,66 @@ test("a very long page is captured down to a cap, and the manifest says how tall
     const file = manifest.pages[0]!.files[0]!;
     assert.equal(readFileSync(join(dir, file.file)).readUInt32BE(20), MAX_CAPTURE_HEIGHT);
     assert.equal(file.cut, 24000);
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a sign-in form whose labels name no field is still filled, by the label's text, its placeholder or the field's name", async () => {
+  let posted = "";
+  const server = createHttpServer(async (req, res) => {
+    if (req.method === "POST") {
+      for await (const chunk of req) posted += chunk;
+      res.writeHead(303, { location: "/jeu", "set-cookie": "session=ok; Path=/" });
+      return res.end();
+    }
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(req.url === "/login" ? `<form method="post"><label>Email</label><input name="email"><div><label>Mot de passe</label></div><input type="password" name="password"><input name="code" placeholder="Code"><button>Entrer</button></form>` : "<p>Jeu</p>");
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}`;
+  const browser = await chromium.launch();
+  try {
+    const signed = await signIn(browser, url, { path: "/login", account: { Email: "ana@example.test", "Mot de passe": "fake-pass", Code: "1234" }, submit: "Entrer" });
+    assert.ok(signed.cookies.some((c) => c.name === "session"));
+    assert.equal(posted, "email=ana%40example.test&password=fake-pass&code=1234");
+  } finally {
+    await browser.close();
+    server.close();
+  }
+});
+
+test("a session given as a browser state, a list of cookies or what a script prints is read as a signed-in browser", () => {
+  const state = { cookies: [{ name: "session", value: "abc", domain: "localhost", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" as const }], origins: [] };
+  assert.deepEqual(signedInFrom(JSON.stringify(state), "http://localhost:4000"), state);
+  const fromList = signedInFrom(JSON.stringify([{ name: "session", value: "abc" }]), "http://localhost:4000/app");
+  assert.deepEqual(fromList.cookies.map((c) => [c.name, c.value, c.domain, c.path]), [["session", "abc", "localhost", "/"]]);
+  assert.deepEqual(signedInFrom(JSON.stringify({ cookies: [{ name: "s", value: "1" }] }), "http://127.0.0.1:1").cookies[0]!.domain, "127.0.0.1");
+  assert.throws(() => signedInFrom("not json", "http://x"), /not JSON/);
+  assert.throws(() => signedInFrom(JSON.stringify([{ name: "s" }]), "http://x"), /every cookie needs a name and a value/);
+});
+
+test("a link that creates a resource and sends to it, such as /sessions/new, keeps the name of the link, in capture as in check", async () => {
+  let next = 100;
+  const server = createHttpServer((req, res) => {
+    if (req.url === "/sessions/new") {
+      res.writeHead(303, { location: `/sessions/${next++}` });
+      return res.end();
+    }
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(req.url === "/" ? `<a href="/sessions/new">Nouvelle séance</a><a href="/aide">Aide</a><a href="/old">Ancien</a>` : req.url === "/old" ? "" : `<p>${req.url}</p>`);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}`;
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-new-"));
+  try {
+    const manifest = await capture({ url, outDir: dir, widths: [390] });
+    assert.deepEqual(manifest.pages.map((p) => p.path).sort(), ["/", "/aide", "/old", "/sessions/new"]);
+    const report = await checkSite({ url, widths: [390] });
+    assert.deepEqual(report.pages.map((p) => new URL(p).pathname).sort(), ["/", "/aide", "/old", "/sessions/new"]);
+    const given = await capture({ url, outDir: dir, widths: [390], paths: ["/sessions/new"] });
+    assert.deepEqual(given.pages.map((p) => p.path), ["/sessions/new"]);
   } finally {
     server.close();
     await rm(dir, { recursive: true, force: true });

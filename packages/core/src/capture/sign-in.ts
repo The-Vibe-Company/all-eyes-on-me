@@ -1,4 +1,4 @@
-import { chromium, type Browser, type BrowserContext } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright";
 import { openPage } from "./open.js";
 
 /** What a signed-in browser keeps, cookies and storage, so every capture starts signed in. */
@@ -36,8 +36,8 @@ export async function signIn(browser: Browser, url: string, { path, account, sub
     const response = await openPage(page, target.href);
     if (!response || response.status() >= 400) throw new SignInError(`Cannot sign in: ${path} answered ${response?.status() ?? "nothing"}.`);
     for (const label of Object.keys(account)) {
-      const field = page.getByLabel(label, { exact: true });
-      if ((await field.count()) !== 1) throw new SignInError(`Cannot sign in: ${path} has no single field labelled "${label}".`);
+      const field = await findField(page, label);
+      if (!field) throw new SignInError(`Cannot sign in: ${path} has no single field labelled "${label}", by a label, a label beside it, a placeholder or a name.`);
       await field.fill(account[label]!);
     }
     const button = page.getByRole("button", { name: submit, exact: true });
@@ -66,4 +66,57 @@ export async function signInOnce(url: string, login: SignIn): Promise<SignedIn> 
   } finally {
     await browser.close();
   }
+}
+
+/** A string as an XPath literal, whatever quotes it holds. */
+function xpathLiteral(text: string): string {
+  if (!text.includes("'")) return `'${text}'`;
+  if (!text.includes('"')) return `"${text}"`;
+  return `concat(${text.split("'").map((part) => `'${part}'`).join(`, "'", `)})`;
+}
+
+/**
+ * The one visible field a person would fill under this label: the field the
+ * label names; else, when the label names none (no `for`, the field not
+ * inside it), the first field after a label with this text; else the field
+ * whose placeholder, then whose name, is this text. Null when none of these
+ * finds exactly one.
+ */
+export async function findField(scope: Page | Locator, label: string): Promise<Locator | null> {
+  const fields = "self::input[not(@type='hidden') and not(@type='submit') and not(@type='button')] or self::textarea or self::select";
+  const tries = [
+    scope.getByLabel(label, { exact: true }),
+    scope.locator(`xpath=.//label[normalize-space(.)=${xpathLiteral(label.trim())}]/following::*[${fields}][1]`),
+    scope.getByPlaceholder(label, { exact: true }),
+    scope.locator(`input[name="${label.replace(/["\\]/g, "\\$&")}" i], textarea[name="${label.replace(/["\\]/g, "\\$&")}" i], select[name="${label.replace(/["\\]/g, "\\$&")}" i]`),
+  ];
+  for (const found of tries) {
+    const visible = found.filter({ visible: true });
+    if ((await visible.count()) === 1) return visible;
+  }
+  return null;
+}
+
+type Cookie = SignedIn["cookies"][number];
+
+/**
+ * A signed-in browser from what the user gives instead of an account: a
+ * browser's state as Playwright saves it, a list of cookies, or an object
+ * holding one, `[{ "name": "session", "value": "…" }]`. A cookie without a
+ * domain is the app's. Never says a value.
+ */
+export function signedInFrom(text: string, url: string): SignedIn {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new SignInError("The session given is not JSON: give a browser state, or a list of cookies with their name and value.");
+  }
+  const raw = Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" ? (parsed as { cookies?: unknown }).cookies : undefined;
+  if (!Array.isArray(raw)) throw new SignInError("The session given holds no cookies: give a browser state, or a list of cookies with their name and value.");
+  if (raw.some((c) => !c || typeof c !== "object" || typeof (c as Cookie).name !== "string" || typeof (c as Cookie).value !== "string")) throw new SignInError("In the session given, every cookie needs a name and a value.");
+  const host = new URL(url).hostname;
+  const cookies = (raw as Partial<Cookie>[]).map((c) => ({ path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" as const, ...c, domain: c.domain ?? host }) as Cookie);
+  const origins = !Array.isArray(parsed) && Array.isArray((parsed as SignedIn).origins) ? (parsed as SignedIn).origins : [];
+  return { cookies, origins };
 }

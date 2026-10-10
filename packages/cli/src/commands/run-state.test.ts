@@ -63,7 +63,8 @@ test("aeom run keeps where a run is, and says to a new session how to take it up
     assert.match(outside.out, /topo +direction worker +stopped with 1 commit:/, "read from the run's project, wherever it is called from");
     assert.match(outside.out, /^run-1: "directions"/);
     assert.match(resume.out, /aeom\/run-1 does not exist/);
-    await Promise.all(Array.from({ length: 8 }, (_, i) => run(dir, ["run", "agent", R, "--name", `judge-${i}`, "--kind", "page judge", "--status", "launched"])));
+    const marks = await Promise.all(Array.from({ length: 8 }, (_, i) => run(dir, ["run", "agent", R, "--name", `judge-${i}`, "--kind", "page judge", "--status", "launched"])));
+    for (const mark of marks) assert.equal(mark.code, 0, mark.out);
     assert.equal(JSON.parse(await readFile(join(dir, R, "state.json"), "utf8")).agents.length, 2 + 8, "marks made at once lose none");
     await git(dir, "branch", "aeom/run-1");
     assert.equal((await run(dir, ["run", "mark", R, "--phase", "pages", "--option", "sans-pr"])).code, 0);

@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { chromium, type Locator, type Page, type Request } from "playwright";
 import { DEFAULT_WIDTHS, screenshotCapped, scrollThrough } from "../capture/capture.js";
 import { openPage, pinFixed, settle } from "../capture/open.js";
-import { signIn, type SignedIn, type SignIn } from "../capture/sign-in.js";
+import { findField, type SignedIn } from "../capture/sign-in.js";
 import { contactSheet } from "../directions/sheet.js";
 import { describeStep, type Journey, type Step, type Target } from "./journey.js";
 
@@ -75,7 +75,7 @@ export interface ReplayOptions {
   /** What a signed-in browser keeps: every journey but those marked signedOut starts signed in. */
   signedIn?: SignedIn;
   /** How to sign in again: after each reset, which may sign everyone out, journeys start from a new sign-in rather than from `signedIn`. */
-  login?: SignIn;
+  relogin?: () => Promise<SignedIn>;
   /** The sign-in account's values by field label, for fill steps that take theirs from it. Never reported. */
   account?: Record<string, string>;
 }
@@ -95,7 +95,25 @@ function describeTarget(target: Target): string {
 /** The one element a target names, or a StepFailure saying there is none or several. */
 async function resolve(page: Page, target: Target, { field = false } = {}): Promise<Locator> {
   let scope: Page | Locator = page;
-  if (target.within) {
+  if (target.within && "top" in target.within) {
+    // Of the visible containers of that role, the one drawn on top: the highest stacking order, the last when they tie.
+    const role = target.within.role;
+    const all = page.getByRole(role as Parameters<Page["getByRole"]>[0]).filter({ visible: true });
+    await all.first().waitFor({ state: "visible", timeout: STEP_TIMEOUT }).catch(() => {});
+    const layers = await all.evaluateAll((els) =>
+      els.map((el) => {
+        let z = 0;
+        for (let node: Element | null = el; node && node !== document.body; node = node.parentElement) {
+          const value = parseInt(getComputedStyle(node).zIndex, 10);
+          if (!Number.isNaN(value)) z = Math.max(z, value);
+        }
+        return z;
+      }),
+    );
+    if (!layers.length) throw new StepFailure(`no ${role} on the screen to look in`);
+    const top = layers.reduce((best, z, i) => (z >= layers[best]! ? i : best), 0);
+    scope = all.nth(top);
+  } else if (target.within) {
     // A container's name holds all its text, such as "Lampe Ajouter" for a row: match a part of it.
     const container = page.getByRole(target.within.role as Parameters<Page["getByRole"]>[0], { name: target.within.name });
     await container.first().waitFor({ state: "attached", timeout: STEP_TIMEOUT }).catch(() => {});
@@ -103,17 +121,21 @@ async function resolve(page: Page, target: Target, { field = false } = {}): Prom
     if (n !== 1) throw new StepFailure(n === 0 ? `no ${target.within.role} "${target.within.name}" to look in` : `${n} elements match ${target.within.role} "${target.within.name}"`);
     scope = container;
   }
-  // A field is named by its label's text: take the field that label names when there is exactly one.
-  if (field && "text" in target) {
-    const labelled = scope.getByLabel(target.text, { exact: true }).filter({ visible: true });
-    if ((await labelled.count()) === 1) return labelled;
+  // A field is named by its label's text: the field that label names, the one after a label beside it, its placeholder or its name.
+  if (field && "text" in target && !target.nth) {
+    const labelled = await findField(scope, target.text);
+    if (labelled) return labelled;
   }
   // Text can match hidden copies, such as a menu kept for another width: only what is visible counts.
   const found = "text" in target ? scope.getByText(target.text, { exact: true }).filter({ visible: true }) : scope.getByRole(target.role as Parameters<Page["getByRole"]>[0], { name: target.name, exact: true });
   await found.first().waitFor({ state: "attached", timeout: STEP_TIMEOUT }).catch(() => {});
   const n = await found.count();
   if (n === 0) throw new StepFailure(`no ${describeTarget(target)} on the screen`);
-  if (n > 1) throw new StepFailure(`${n} elements match ${describeTarget(target)}: name its container with "within"`);
+  if (target.nth) {
+    if (n < target.nth) throw new StepFailure(`${n} element${n === 1 ? "" : "s"} match ${describeTarget(target)}, not ${target.nth}`);
+    return found.nth(target.nth - 1);
+  }
+  if (n > 1) throw new StepFailure(`${n} elements match ${describeTarget(target)}: name its container with "within", the dialog on top with "within": { "role": "dialog", "top": true }, or one of them with "nth"`);
   return found;
 }
 
@@ -294,7 +316,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
  * after every step, and stops a journey at the step it cannot take. Writes the
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
  */
-export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, login, account = {} }: ReplayOptions): Promise<JourneyReport> {
+export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, relogin, account = {} }: ReplayOptions): Promise<JourneyReport> {
   const root = new URL(url);
   const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
@@ -312,7 +334,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
           });
         }
         // A reset may sign everyone out: sign in again after it, rather than reuse the session from before.
-        const session = journey.signedOut ? undefined : reset && login ? await signIn(browser, url, login).catch((error: Error) => {
+        const session = journey.signedOut ? undefined : reset && relogin ? await relogin().catch((error: Error) => {
           throw new ReplayError(`Signing in again after the reset failed before "${journey.name}": ${error.message.split("\n")[0]}`);
         }) : signedIn;
         const state = session ? { storageState: session } : {};
