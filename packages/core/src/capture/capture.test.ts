@@ -9,7 +9,7 @@ import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
-import { AppStartError, capture, normalize, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { AppStartError, capture, normalize, pinFixed, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
 import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
@@ -278,10 +278,38 @@ test("pages the config marks public are captured and checked signed out, the oth
     assert.deepEqual(manifest.pages.map((p) => [p.path, p.signedOut ?? false]), [["/jeu", false], ["/", true]]);
     const found = await capture({ url, outDir: dir, widths: [390], signedOut: ["/"], signedIn });
     assert.deepEqual(found.pages.map((p) => p.path).sort(), ["/", "/jeu"], "found by its links signed in, and the public page signed out");
+    assert.deepEqual(found.errors, []);
     const report = await checkSite({ url, widths: [390], paths: ["/jeu"], signedOut: ["/"], signedIn });
     assert.deepEqual(report.pages.map((p) => new URL(p).pathname), ["/jeu", "/"]);
   } finally {
     server.close();
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("only bars fixed to the bottom of the window move to the end of the page, as they were, and go back after", async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.setContent(`<body style="margin:0">
+      <div id="backdrop" style="position:fixed;inset:0;background:rgb(0,0,255)"></div>
+      <header id="top" style="position:fixed;top:0;left:0;right:0;padding:0 20px;height:40px"></header>
+      <nav id="bar" style="position:fixed;bottom:0;left:50%;width:200px;height:50px;translate:-50% 0;transform:scale(1)"><span id="inner" style="position:fixed;bottom:0;left:0;height:10px;width:10px"></span></nav>
+      <div style="transform:translateZ(0)"><div id="scrolls" style="position:fixed;bottom:0;height:20px;width:20px"></div></div>
+      <div style="height:3000px"></div></body>`);
+    const box = (id: string) => page.evaluate((id) => { const r = document.getElementById(id)!.getBoundingClientRect(); return { top: Math.round(r.top + scrollY), left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) }; }, id);
+    const before = { backdrop: await box("backdrop"), top: await box("top"), bar: await box("bar"), scrolls: await box("scrolls") };
+    const own = await page.evaluate(() => document.getElementById("bar")!.style.translate);
+    const unpin = await pinFixed(page);
+    assert.deepEqual(await box("bar"), { ...before.bar, top: 3000 - 50 }, "the bar is at the end of the page, centred and as wide as it was");
+    assert.deepEqual(await box("backdrop"), before.backdrop, "what covers the window stays");
+    assert.deepEqual(await box("top"), before.top, "a header fixed to the top stays, as wide as it was");
+    assert.deepEqual(await box("scrolls"), before.scrolls, "an element that scrolls with the page is not moved");
+    assert.equal((await page.evaluate(() => document.documentElement.scrollHeight)), 3000, "the page is no taller");
+    await unpin();
+    assert.deepEqual(await box("bar"), before.bar, "the bar goes back where it was");
+    assert.equal(await page.evaluate(() => document.getElementById("bar")!.style.translate), own, "with its own translate");
+  } finally {
+    await browser.close();
   }
 });

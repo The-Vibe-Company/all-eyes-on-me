@@ -52,7 +52,8 @@ export async function findPages(
   const outside = signedOut.length ? await visitPages(browser, url, signedOut) : { pages: [], errors: [] };
   return {
     pages: [...inside.pages.filter((p) => !outside.pages.includes(p)).map((p) => ({ url: p })), ...outside.pages.map((p) => ({ url: p, signedOut: true as const }))],
-    errors: [...inside.errors, ...outside.errors],
+    // A public route that fails signed in, such as one that sends a signed-in visitor away, is not in error when it loads signed out.
+    errors: [...inside.errors.filter((e) => !out.includes(normalize(e.url)) && !outside.pages.includes(e.url)), ...outside.errors],
   };
 }
 

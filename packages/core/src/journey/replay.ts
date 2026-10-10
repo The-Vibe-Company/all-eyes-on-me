@@ -310,7 +310,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
         }
         // A reset may sign everyone out: sign in again after it, rather than reuse the session from before.
         const session = journey.signedOut ? undefined : reset && login ? await signIn(browser, url, login).catch((error: Error) => {
-          throw new ReplayError(`Signing in again after the reset failed before "${journey.name}": ${error.message}`);
+          throw new ReplayError(`Signing in again after the reset failed before "${journey.name}": ${error.message.split("\n")[0]}`);
         }) : signedIn;
         const state = session ? { storageState: session } : {};
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...state });

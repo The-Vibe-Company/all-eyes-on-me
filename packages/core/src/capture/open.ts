@@ -20,50 +20,54 @@ export async function settle(page: Page): Promise<void> {
 }
 
 /**
- * A full-page screenshot draws an element fixed to the window where the
- * window was: a tab bar fixed to its bottom lands in the middle of a long page.
- * Pins each fixed element to the end of the page it sticks to, the top or the
- * bottom, where a visitor sees it at the top and at the end of the page.
- * Returns how to put them back, for a page that goes on being used.
+ * A full-page screenshot draws an element fixed to the window where the window
+ * was: a tab bar fixed to its bottom lands in the middle of a long page. Moves
+ * each bar fixed to the bottom of the window down to the end of the page,
+ * where a visitor sees it once they scrolled there, with its `translate` alone:
+ * its size and its place in the layout stay as they were. What is fixed to the
+ * top, or covers the window, is drawn at the top already and is left alone, as
+ * is an element only called fixed that scrolls with the page (under a
+ * transformed ancestor). Returns how to put the bars back, for a page that goes
+ * on being used: their `translate` as it was, nothing else.
  */
 export async function pinFixed(page: Page): Promise<() => Promise<void>> {
   const pinned = await page.evaluate(() => {
-    const doc = document.documentElement;
-    const height = Math.max(doc.scrollHeight, document.body?.scrollHeight ?? 0);
+    const height = Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight ?? 0);
     const view = window.innerHeight;
-    const fixed = [...document.querySelectorAll<HTMLElement>("body *")].filter((el) => getComputedStyle(el).position === "fixed");
-    const placed = fixed.map((el) => ({ el, rect: el.getBoundingClientRect(), width: el.offsetWidth, style: el.getAttribute("style") }));
-    const kept: { el: HTMLElement; style: string | null }[] = [];
+    const kept: { el: HTMLElement; value: string; priority: string }[] = [];
     (window as unknown as { __aeomPinned: typeof kept }).__aeomPinned = kept;
-    for (const { el, rect, width, style } of placed) {
-      if (!rect.width && !rect.height) continue;
-      kept.push({ el, style });
-      // Where it sits on the page: at the top as at scroll 0, or as far from the end as it was from the window's bottom.
-      const top = rect.top >= view / 2 ? height - (view - rect.top) : rect.top;
-      const set = (name: string, value: string) => el.style.setProperty(name, value, "important");
-      set("position", "absolute");
-      set("margin", "0");
-      set("transform", "none");
-      set("bottom", "auto");
-      set("right", "auto");
-      set("width", `${width}px`);
-      // Placed from its containing block: the page itself, unless an ancestor is positioned.
-      const parent = el.offsetParent as HTMLElement | null;
-      const fromPage = !parent || (parent === document.body && getComputedStyle(parent).position === "static");
-      const origin = fromPage ? { top: 0, left: 0 } : (() => {
-        const box = parent.getBoundingClientRect();
-        return { top: box.top + window.scrollY + parent.clientTop, left: box.left + window.scrollX + parent.clientLeft };
-      })();
-      set("top", `${top - origin.top}px`);
-      set("left", `${rect.left + window.scrollX - origin.left}px`);
+    if (height <= view + 1) return 0;
+    const fixed = [...document.querySelectorAll<HTMLElement>("body *")].filter((el) => getComputedStyle(el).position === "fixed");
+    if (!fixed.length) return 0;
+    const from = window.scrollY;
+    window.scrollTo(0, 0);
+    const top = fixed.map((el) => el.getBoundingClientRect());
+    window.scrollTo(0, height);
+    const end = fixed.map((el) => el.getBoundingClientRect());
+    window.scrollTo(0, 0);
+    const bars = fixed.filter((el, i) => {
+      const r = top[i]!;
+      // Fixed to the window: it does not move when the page scrolls.
+      const still = Math.abs(end[i]!.top - r.top) < 1;
+      // A bar at the bottom: in the lower half, touching the window's bottom edge.
+      return still && r.height > 0 && r.top >= view / 2 && r.bottom >= view - 2;
+    });
+    const shift = height - view;
+    for (const el of bars) {
+      // A bar inside another moves with it.
+      if (bars.some((other) => other !== el && other.contains(el))) continue;
+      kept.push({ el, value: el.style.getPropertyValue("translate"), priority: el.style.getPropertyPriority("translate") });
+      const [x = "0px", y = "0px", z] = getComputedStyle(el).translate === "none" ? [] : getComputedStyle(el).translate.split(" ");
+      el.style.setProperty("translate", `${x} calc(${y} + ${shift}px)${z ? ` ${z}` : ""}`, "important");
     }
+    if (!kept.length) window.scrollTo(0, from);
     return kept.length;
   });
   return async () => {
     if (!pinned) return;
     await page.evaluate(() => {
-      const kept = (window as unknown as { __aeomPinned?: { el: HTMLElement; style: string | null }[] }).__aeomPinned ?? [];
-      for (const { el, style } of kept) style === null ? el.removeAttribute("style") : el.setAttribute("style", style);
+      const kept = (window as unknown as { __aeomPinned?: { el: HTMLElement; value: string; priority: string }[] }).__aeomPinned ?? [];
+      for (const { el, value, priority } of kept) value ? el.style.setProperty("translate", value, priority) : el.style.removeProperty("translate");
     });
   };
 }
