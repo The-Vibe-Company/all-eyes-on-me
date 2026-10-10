@@ -1,9 +1,9 @@
 /**
  * What a run costs before it starts: agents, tokens and time, phase by phase.
  * Calibrated on Road to Mastock (8 screens, 4 key journeys, 10 October 2026):
- * six judges took about 840,000 tokens, the judges of the screens 6 to 6.5
- * minutes each, those of the journeys 3 to 4.5; a worker takes about 130,000
- * tokens. Agents of one step run at once, so a step lasts as long as its
+ * six judges voting on everything took about 840,000 tokens, the judges of the
+ * screens 6 to 6.5 minutes each, those of the journeys 3 to 4.5; a worker
+ * takes about 130,000 tokens. Agents of one step run at once, so a step lasts as long as its
  * slowest agent, and a phase as long as its steps one after the other. The
  * tokens are the agents' own: the session that coordinates the run is apart.
  */
@@ -24,8 +24,15 @@ export interface Estimate {
 }
 
 /** One agent: what it costs in tokens, and how long it takes, in minutes. */
-const pageJudge = (screens: number) => ({ tokens: 40_000 + 15_000 * screens, minutes: 1.5 + 0.6 * screens });
-const journeyJudge = (journeys: number) => ({ tokens: 40_000 + 20_000 * journeys, minutes: 1 + 0.75 * journeys });
+/**
+ * A judging is one vote on everything first, then two on what it failed, the
+ * one after the other: counted here as three voters of the same average cost,
+ * the two later ones judging about half as much.
+ */
+const CONFIRM_SHARE = 0.5;
+const staged = ({ tokens, minutes }: { tokens: number; minutes: number }) => ({ tokens: (tokens * (1 + 2 * CONFIRM_SHARE)) / 3, minutes: minutes * (1 + CONFIRM_SHARE) });
+const pageJudge = (screens: number) => staged({ tokens: 40_000 + 15_000 * screens, minutes: 1.5 + 0.6 * screens });
+const journeyJudge = (journeys: number) => staged({ tokens: 40_000 + 20_000 * journeys, minutes: 1 + 0.75 * journeys });
 const WORKER = { tokens: 130_000 };
 const SHARED_WORKER = { tokens: 150_000 };
 const SCREENING_JUDGE = { tokens: 60_000, minutes: 2 };

@@ -1,19 +1,23 @@
 ---
 name: aeom-judge
-description: Judge every captured page of a web app against the AEOM base principles, or every replayed key journey against the journey principles, with three independent votes and a majority count. Use after `aeom capture` or `aeom journey`, when AEOM needs to know which principles each page or journey passes or fails.
+description: Judge every captured page of a web app against the AEOM base principles, or every replayed key journey against the journey principles, with one vote first and three independent votes on what it fails, counted by majority; on a new measure, only the pages whose captures changed. Use after `aeom capture` or `aeom journey`, when AEOM needs to know which principles each page or journey passes or fails.
 ---
 
 # AEOM judge
 
-You run the judge on the latest captures. Three subagents vote independently, then `aeom judge` counts the votes. The model doing the judging is the one running this session: nothing calls an API.
+You run the judge on the latest captures. One subagent votes on everything first; two more vote, independently, only on what it failed; then `aeom judge` counts. What the first one passed stands on its vote: most of a front passes, and three votes on all of it cost three times as much for little. Launch every voter on the lighter model the session offers (in Claude Code, the Agent tool's `model: "sonnet"`): judging against written principles does not need the model that coordinates the run. Nothing calls an API.
 
 ## Steps
 
 1. **Fresh captures.** Run `aeom capture` right before judging, every time, so the judges never see an older state of the app. It reads `url` and `start` from `.aeom/config.json`; without that file, pass `--url` and `--start`.
-2. **Clear the last verdict.** Delete `.aeom/reports/judge.json`, create `.aeom/reports/judge/` if it does not exist, and delete the `*.json` files in it, so neither an old verdict nor old votes can pass for this run's.
-3. **Three voters, in parallel.** Launch three subagents at once, in the background, each with the voter brief below and its number (1, 2, 3). Give them nothing else: no earlier verdicts, no opinion of yours. Independent votes are the whole point.
-4. **Count.** When all three have written their file, run `aeom judge`. It writes `.aeom/reports/judge.json`, prints what fails, and exits with 1 when anything fails.
-5. **Votes missing or refused.** If `aeom judge` names missing voters or votes it cannot count, relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
+2. **Clear the last verdict.** Delete `.aeom/reports/judge.json`, create `.aeom/reports/judge/` if it does not exist, and delete the `*.json` files in it, so neither an old verdict nor old votes, nor an old list of what to judge, can pass for this run's.
+3. **Measuring again?** When the pages were judged before in this run and a snapshot holds that verdict (`before`, `after`…), run `aeom judge --changed-since <that snapshot>`: it writes in the votes folder `to-judge.json`, the pages whose captures changed. The voters judge only those; the others keep the snapshot's verdict. When none changed, go to step 6.
+4. **One voter first.** Launch one subagent, with the voter brief below and the number 1. Give it nothing else: no earlier verdict, no opinion of yours.
+5. **Two more on what it failed.** Run `aeom judge --to-confirm`: it writes in the votes folder `to-confirm.json`, what voter 1 failed. When it says there is nothing to confirm, go to step 6. Otherwise launch two subagents at once, in the background, each with the confirm brief below and its number (2, 3), and nothing else: independent votes are the whole point.
+6. **Count.** Run `aeom judge`. It writes `.aeom/reports/judge.json`, prints what fails, and exits with 1 when anything fails.
+7. **Votes missing or refused.** If `aeom judge` names missing voters or votes it cannot count, relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
+
+Pass the same `--captures`, `--votes` and `--out` to every `aeom judge` of one judging, `--changed-since` and `--to-confirm` included, when the run points the judge at its own folders.
 
 ## The voter brief
 
@@ -22,10 +26,10 @@ Give each voter this, with `<N>` replaced by its number:
 > You are judge number <N> for AEOM. You decide, for each captured page of a web app and for each principle, whether the page passes or fails.
 >
 > 1. Run `aeom principles` to read the principles: an id, then what it asks for.
-> 2. Read `.aeom/captures/manifest.json`. It lists the pages (`path`) and their screenshots (`files`, one per width, in `.aeom/captures/`).
+> 2. Read `.aeom/captures/manifest.json`. It lists the pages (`path`) and their screenshots (`files`, one per width, in `.aeom/captures/`). A screenshot with `cut` stops at the top of a longer page, whose full height `cut` gives: judge what it shows. If the votes folder holds `to-judge.json`, judge only the pages it lists, and look at the others only to compare.
 > 3. Look at every screenshot of every page, at every width, before deciding anything. Principles such as `consistent-chrome` and `one-direction` compare pages with each other.
 > 4. For each page and each principle, decide `pass` or `fail`, with one sentence that names what you see on the screenshot. Judge only what is visible. When in doubt, fail: a page that is only acceptable does not pass.
-> 5. Write `.aeom/reports/judge/<N>.json`, exactly in this shape, with every page and every principle:
+> 5. Write `.aeom/reports/judge/<N>.json`, exactly in this shape, with every page you judge and every principle:
 >
 > ```json
 > {
@@ -40,15 +44,30 @@ Give each voter this, with `<N>` replaced by its number:
 >
 > Do not read other judges' votes. Do not change any file other than yours.
 
+## The confirm brief
+
+Give each of voters 2 and 3 this, with `<N>` replaced by its number:
+
+> You are judge number <N> for AEOM. Another judge failed some pages of a web app on some principles; you decide on your own, without reading what it said, whether each of those pages passes or fails each of those principles.
+>
+> 1. Run `aeom principles` to read the principles: an id, then what it asks for.
+> 2. Read `.aeom/reports/judge/to-confirm.json`: for each page, the principles to decide. Read `.aeom/captures/manifest.json` for the screenshots of each page (`files`, one per width, in `.aeom/captures/`; `cut` when the screenshot stops at the top of a longer page).
+> 3. Look at every screenshot of those pages, at every width, and of the other pages when a principle compares pages (`consistent-chrome`, `one-direction`).
+> 4. For each page and each principle listed, decide `pass` or `fail`, with one sentence that names what you see. When in doubt, fail.
+> 5. Write `.aeom/reports/judge/<N>.json` in the voter brief's shape, with only the pages and principles listed.
+>
+> Do not read other judges' votes. Do not change any file other than yours.
+
 ## Judging journeys
 
 The same three votes, on the key journeys instead of the pages, after `aeom journey`:
 
 1. **Fresh replays.** Run `aeom journey` right before judging.
 2. **Clear the last verdict.** Delete `.aeom/reports/judge-journeys.json` and the `*.json` files of `.aeom/reports/judge-journeys/`, creating the folder if needed.
-3. **Three voters, in parallel**, each with the journey brief below and its number. Nothing else.
-4. **Count**: `aeom judge --journeys`. A journey that broke on replay is a failure on its own, with no vote needed; the voters still judge what its steps show.
-5. **Votes missing or refused**: relaunch only those voters, then count again.
+3. **One voter first**, with the journey brief below and the number 1, on the lighter model. Nothing else.
+4. **Two more on what it failed**: `aeom judge --journeys --to-confirm` writes `to-confirm.json` in the journeys' votes folder. When there is something to confirm, launch voters 2 and 3 at once with the journey brief, told to judge only the journeys and principles `to-confirm.json` lists, without reading what voter 1 said.
+5. **Count**: `aeom judge --journeys`. A journey that broke on replay is a failure on its own, with no vote needed; the voters still judge what its steps show.
+6. **Votes missing or refused**: relaunch only those voters, then count again.
 
 ### The journey brief
 

@@ -9,7 +9,7 @@ import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
-import { AppStartError, capture, normalize, pinFixed, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, pinFixed, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
 import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
@@ -311,5 +311,24 @@ test("only bars fixed to the bottom of the window move to the end of the page, a
     assert.equal(await page.evaluate(() => document.getElementById("bar")!.style.translate), own, "with its own translate");
   } finally {
     await browser.close();
+  }
+});
+
+test("a very long page is captured down to a cap, and the manifest says how tall it was", async () => {
+  const server = createHttpServer((_, res) => {
+    res.writeHead(200, { "content-type": "text/html" });
+    res.end(`<body style="margin:0"><div style="height:24000px;background:linear-gradient(red, blue)">Trophées</div></body>`);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const url = `http://localhost:${(server.address() as { port: number }).port}`;
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-long-"));
+  try {
+    const manifest = await capture({ url, outDir: dir, widths: [390], paths: ["/"] });
+    const file = manifest.pages[0]!.files[0]!;
+    assert.equal(readFileSync(join(dir, file.file)).readUInt32BE(20), MAX_CAPTURE_HEIGHT);
+    assert.equal(file.cut, 24000);
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
   }
 });

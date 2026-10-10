@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, type Vote } from "./index.js";
+import { DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, type Vote } from "./index.js";
 
 const refuses = (fn: () => unknown, pattern: RegExp) =>
   assert.throws(fn, (error: unknown) => error instanceof JudgeVoteError && pattern.test(error.message));
@@ -170,4 +170,35 @@ test("a journey's verdict keeps the steps the winning side pointed at", () => {
   // A journey's failure points at a step, or nobody can see where it shows; a page vote has no step.
   refuses(() => tally([v("1", false), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }), /voter 1, see-my-orders: no step for result-shown/);
   assert.equal(tally([v("1", false, 3), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }).pages[0]!.verdicts[0]!.pass, false, "a passing verdict needs no step");
+});
+
+/** A vote only on some pages and principles, as the voters who confirm the first one's failures give it. */
+const partial = (voter: string, on: Record<string, Record<string, boolean>>): Vote => ({
+  voter,
+  pages: Object.fromEntries(Object.entries(on).map(([page, verdicts]) => [page, Object.fromEntries(Object.entries(verdicts).map(([id, pass]) => [id, { pass, reason: `${voter} on ${id}` }]))])),
+});
+
+test("one vote first: what it passes stands, and only what it fails goes to two more voters", () => {
+  const first = vote("1", { "/commandes": ["states"], "/": ["hierarchy"] });
+  const confirm = toConfirm(first, pages, principles);
+  assert.deepEqual(confirm, { "/": ["hierarchy"], "/commandes": ["states"] });
+  const report = tally([first, partial("2", { "/commandes": { states: false }, "/": { hierarchy: true } }), partial("3", { "/commandes": { states: false }, "/": { hierarchy: true } })], pages, principles, { confirm });
+  const verdict = (page: string, id: string) => report.pages.find((p) => p.page === page)!.verdicts.find((v) => v.principle === id)!;
+  assert.deepEqual([verdict("/commandes", "states").pass, verdict("/commandes", "states").votes], [false, "3/3 fail"]);
+  assert.deepEqual([verdict("/", "hierarchy").pass, verdict("/", "hierarchy").votes], [true, "2/3 pass"], "the two others overturn a failure the first one alone saw");
+  assert.deepEqual([verdict("/", "states").pass, verdict("/", "states").votes], [true, "1/1 pass"]);
+  assert.equal(report.failures, 1);
+});
+
+test("a first vote that fails nothing is counted alone; a confirming vote that skips what it was asked is refused", () => {
+  const clean = vote("1");
+  assert.deepEqual(toConfirm(clean, pages, principles), {});
+  assert.equal(tally([clean], pages, principles, { confirm: {} }).failures, 0);
+  const first = vote("1", { "/commandes": ["states"] });
+  const confirm = toConfirm(first, pages, principles);
+  refuses(() => tally([first, partial("2", { "/commandes": { states: false } })], pages, principles, { confirm }), /expected 3 votes, found 2/);
+  refuses(() => tally([first, partial("2", { "/": { hierarchy: true } }), partial("3", { "/commandes": { states: true } })], pages, principles, { confirm }), /voter 2: no verdict for \/commandes, whose states voter 1 failed/);
+  refuses(() => tally([first, partial("2", { "/commandes": { hierarchy: true } }), partial("3", { "/commandes": { states: true } })], pages, principles, { confirm }), /voter 2, \/commandes: no verdict for states, which voter 1 failed/);
+  const extra = tally([first, partial("2", { "/commandes": { states: true }, "/": { hierarchy: false } }), partial("3", { "/commandes": { states: true }, "/": { hierarchy: false } })], pages, principles, { confirm });
+  assert.equal(extra.pages.find((p) => p.page === "/")!.verdicts.find((v) => v.principle === "hierarchy")!.votes, "1/1 pass", "what the first vote passed is not reopened");
 });

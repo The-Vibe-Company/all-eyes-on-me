@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { chromium, type Locator, type Page, type Request } from "playwright";
-import { DEFAULT_WIDTHS, scrollThrough } from "../capture/capture.js";
+import { DEFAULT_WIDTHS, screenshotCapped, scrollThrough } from "../capture/capture.js";
 import { openPage, pinFixed, settle } from "../capture/open.js";
 import { signIn, type SignedIn, type SignIn } from "../capture/sign-in.js";
 import { contactSheet } from "../directions/sheet.js";
@@ -268,7 +268,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
     await scrollThrough(page).catch(() => {});
     // A field filled from the sign-in account shows as a block, never its value.
     const unpin = await pinFixed(page).catch(() => async () => {});
-    const shot = await page.screenshot({ path: join(outDir, capture), fullPage: true, mask: secret }).then(() => capture, () => null);
+    const shot = await screenshotCapped(page, join(outDir, capture), { mask: secret }).then(() => capture, () => null);
     await unpin().catch(() => {});
     const result: StepResult = { index: i + 1, action: describeStep(step), path, capture: shot };
     if (dialogs.length > heard) result.dialog = dialogs.slice(heard).join(" / ");

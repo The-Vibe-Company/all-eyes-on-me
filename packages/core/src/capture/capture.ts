@@ -1,18 +1,25 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium, type Browser, type Page } from "playwright";
+import { chromium, type Browser, type Locator, type Page } from "playwright";
 import { discoverPages, normalize, visitPages, type PageError } from "./discover.js";
 import { openPage, pinFixed } from "./open.js";
 import type { SignedIn } from "./sign-in.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
 
+/**
+ * How tall a capture may be, in pixels: a page of 24,000 px is more than a
+ * judge can read in one image, and its top is what tells its look. A longer
+ * page is captured down to here, and its manifest entry says how tall it was.
+ */
+export const MAX_CAPTURE_HEIGHT = 6000;
+
 export interface CapturedPage {
   url: string;
   /** The route, such as `/produits`. */
   path: string;
-  /** One screenshot per width, relative to the output folder. */
-  files: { width: number; file: string }[];
+  /** One screenshot per width, relative to the output folder; `cut`, the page's full height when the capture stops at MAX_CAPTURE_HEIGHT. */
+  files: { width: number; file: string; cut?: number }[];
   /** Captured signed out, as a page the config marks public. */
   signedOut?: true;
 }
@@ -80,8 +87,8 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
           await scrollThrough(page);
           const file = `${slug(pageUrl)}@${width}.png`;
           await pinFixed(page);
-          await page.screenshot({ path: join(outDir, file), fullPage: true });
-          files.push({ width, file });
+          const cut = await screenshotCapped(page, join(outDir, file));
+          files.push({ width, file, ...(cut ? { cut } : {}) });
         } finally {
           await context.close();
         }
@@ -148,4 +155,19 @@ export function slug(url: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return name || "index";
+}
+
+/**
+ * A full-page screenshot, down to MAX_CAPTURE_HEIGHT at most. Returns the
+ * page's full height when it was cut, undefined otherwise.
+ */
+export async function screenshotCapped(page: Page, path: string, options: { mask?: Locator[] } = {}): Promise<number | undefined> {
+  const height = await page.evaluate(() => Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight ?? 0));
+  if (height <= MAX_CAPTURE_HEIGHT) {
+    await page.screenshot({ path, fullPage: true, ...options });
+    return undefined;
+  }
+  const width = page.viewportSize()?.width ?? (await page.evaluate(() => document.documentElement.clientWidth));
+  await page.screenshot({ path, fullPage: true, clip: { x: 0, y: 0, width, height: MAX_CAPTURE_HEIGHT }, ...options });
+  return height;
 }
