@@ -134,7 +134,7 @@ export async function runTournament(argv: string[]): Promise<number> {
         return 0;
       }
       const missing = votesNeeded(t, duel) - duel.votes.length;
-      console.log(`Duel ${duel.id} (round ${duel.round}${duel.needs ? ", the final" : ""}): ${duel.a} against ${duel.b}, ${missing} vote${missing > 1 ? "s" : ""} missing`);
+      console.log(`Duel ${duel.id} (round ${duel.round}${t.duels.filter((d) => d.round === duel.round).length === 1 ? ", the final" : ""}): ${duel.a} against ${duel.b}, ${missing} vote${missing > 1 ? "s" : ""} missing`);
       console.log(`  ${duel.a}: ${capturePath(duel.a)}`);
       console.log(`  ${duel.b}: ${capturePath(duel.b!)}`);
       return 0;
