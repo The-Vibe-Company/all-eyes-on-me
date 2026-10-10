@@ -2,7 +2,7 @@ import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CaptureManifest } from "../capture/capture.js";
 import type { CheckReport } from "../checks/run.js";
-import { champion, type Tournament } from "../directions/tournament.js";
+import { applied, champion, type Tournament } from "../directions/tournament.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { RatchetVerdict } from "../journey/ratchet.js";
 import type { JudgeReport } from "../judge/tally.js";
@@ -24,8 +24,15 @@ export interface SavedVerdict {
 export interface ResultPage {
   run: string;
   verdict: SavedVerdict | null;
-  /** The direction the knockout chose, when the run built directions. */
-  direction: { champion: string; sentence: string | null; entrants: string[]; reasons: string[]; sheet: string | null } | null;
+  /** The direction the run applied, when it built directions: `decision` when the person decided at the checkpoint. */
+  direction: {
+    champion: string;
+    sentence: string | null;
+    entrants: string[];
+    reasons: string[];
+    sheet: string | null;
+    decision?: { judges: string; dropped: string[]; why?: string };
+  } | null;
   screens: {
     page: string;
     status: "kept" | "sent back" | "new" | "missing" | "unchanged" | "does not load";
@@ -132,10 +139,21 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   });
 
   const tournament = await json<Tournament>(join(runDir, "directions", "tournament.json"));
-  const winner = tournament ? champion(tournament) : null;
-  const final = tournament?.duels.filter((d) => d.winner === winner).sort((x, y) => y.round - x.round)[0];
+  const decision = tournament?.decision;
+  const winner = tournament ? (applied(tournament) ?? champion(tournament)) : null;
+  // The judges' reasons, only for the direction they crowned.
+  const final = decision && decision.applied !== decision.judges ? undefined : tournament?.duels.filter((d) => d.winner === winner).sort((x, y) => y.round - x.round)[0];
   const notes = (await json<{ label: string; note?: string }[]>(join(runDir, "directions", "sheet.json"))) ?? [];
-  const direction = tournament && winner ? { champion: winner, sentence: notes.find((n) => n.label === winner)?.note ?? null, entrants: tournament.entrants, reasons: final?.reasons ?? [], sheet: (await exists(join(runDir, "directions", "sheet.png"))) ? "directions/sheet.png" : null } : null;
+  const direction = tournament && winner
+    ? {
+        champion: winner,
+        sentence: notes.find((n) => n.label === winner)?.note ?? null,
+        entrants: tournament.entrants,
+        reasons: final?.reasons ?? [],
+        sheet: (await exists(join(runDir, "directions", "sheet.png"))) ? "directions/sheet.png" : null,
+        ...(decision ? { decision: { judges: decision.judges, dropped: decision.dropped, ...(decision.why ? { why: decision.why } : {}) } } : {}),
+      }
+    : null;
 
   const lastReplay = await first(runDir, ["journeys-end", "journeys-after"], "report.json");
   const replayAfter = lastReplay ? await json<JourneyReport>(join(runDir, lastReplay, "report.json")) : null;
@@ -299,6 +317,14 @@ const FEEDBACK_SCRIPT = `
 })();`;
 
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
+/** Who chose the direction, in one sentence: the judges' knockout, then the person at the checkpoint when they decided. */
+function chosenBy(d: NonNullable<ResultPage["direction"]>): string {
+  const among = d.entrants.map(escape).join(", ");
+  if (!d.decision) return `Chosen by knockout among ${among}.`;
+  if (d.decision.judges === d.champion) return `Chosen by knockout among ${among}, and validated by you.`;
+  return `Chosen by you among ${among}; the judges had picked ${escape(d.decision.judges)}.`;
+}
+
 export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
   const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
@@ -306,7 +332,7 @@ export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { 
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 
   const direction = r.direction
-    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">Chosen by knockout among ${r.direction.entrants.map(escape).join(", ")}.</p>${r.direction.reasons.map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${say(ofDirection(r.direction))}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
+    ? `<section id="direction"><h2>Direction: ${escape(r.direction.champion)}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">${chosenBy(r.direction)}</p>${[...r.direction.reasons, ...(r.direction.decision?.why ? [r.direction.decision.why] : [])].map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${say(ofDirection(r.direction))}${r.direction.sheet ? `<figure>${img(r.direction.sheet, "The directions, side by side")}</figure>` : ""}</section>`
     : r.verdict?.keepStyle
       ? `<section id="direction"><h2>Style kept</h2><p class="muted">No new direction: the run fixed what failed on the app's own style.</p></section>`
       : "";

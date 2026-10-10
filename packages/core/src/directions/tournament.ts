@@ -17,18 +17,34 @@ export interface Duel {
   reasons?: string[];
 }
 
+/** What the person decided at the checkpoint, once the knockout crowned its champion. */
+export interface Decision {
+  /** The direction the run applies. */
+  applied: string;
+  /** The judges' champion, which the person validated or replaced. */
+  judges: string;
+  /** The directions the person dropped. */
+  dropped: string[];
+  /** Their words, when they gave any. */
+  why?: string;
+  at: string;
+}
+
 export interface Tournament {
   entrants: string[];
   votesPerDuel: number;
   duels: Duel[];
+  /** The person's decision, once they made it. */
+  decision?: Decision;
 }
 
 /**
  * A knockout between directions: they meet two by two, in order; with an odd
- * number, the last one goes through to the next round without a duel.
+ * number, the last one goes through to the next round without a duel. A
+ * direction alone, the only one the screening left, is champion at once.
  */
 export function createTournament(entrants: string[], { votesPerDuel = 3 } = {}): Tournament {
-  if (entrants.length < 2) throw new Error("A tournament needs at least two directions.");
+  if (entrants.length < 1) throw new Error("A tournament needs at least one direction: a direction alone is champion without a duel.");
   if (!Number.isInteger(votesPerDuel) || votesPerDuel < 1 || votesPerDuel % 2 === 0) throw new Error("Votes per duel must be a positive odd number, so every duel has a majority.");
   if (new Set(entrants).size !== entrants.length) throw new Error("Each direction can enter only once.");
   return { entrants, votesPerDuel, duels: pair(entrants, 1, 1) };
@@ -81,4 +97,32 @@ export function champion(t: Tournament): string | null {
   const lastRound = Math.max(...t.duels.map((d) => d.round));
   const final = t.duels.filter((d) => d.round === lastRound);
   return final.length === 1 && final[0]!.winner !== undefined ? final[0]!.winner : null;
+}
+
+/** The direction the run applies: the one the person decided on, null until they do. */
+export function applied(t: Tournament): string | null {
+  return t.decision?.applied ?? null;
+}
+
+/**
+ * The person's decision on the knockout: they validate the judges' champion,
+ * choose another direction (any built one, `directions`, the ones the screening
+ * took out included), or drop some. Dropping the champion without choosing
+ * decides nothing: `rerun` names the knockout's directions left for a new
+ * knockout, and when one alone is left, it is their choice.
+ */
+export function decideDirection(
+  t: Tournament,
+  { choose, drop = [], why, at, directions = t.entrants }: { choose?: string; drop?: string[]; why?: string; at: string; directions?: string[] },
+): { tournament: Tournament; rerun: string[] | null } {
+  const judges = champion(t);
+  if (judges === null) throw new Error("The knockout is not over: there is no champion to show the person yet.");
+  const known = [...new Set([...t.entrants, ...directions])];
+  for (const name of [...(choose ? [choose] : []), ...drop]) if (!known.includes(name)) throw new Error(`${name} is not one of the directions: ${known.join(", ")}.`);
+  if (choose && drop.includes(choose)) throw new Error(`${choose} is both chosen and dropped.`);
+  const left = t.entrants.filter((name) => !drop.includes(name));
+  const pick = choose ?? (!drop.includes(judges) ? judges : left.length === 1 ? left[0]! : null);
+  if (pick === null) return { tournament: t, rerun: left };
+  const decision: Decision = { applied: pick, judges, dropped: [...new Set(drop)], ...(why?.trim() ? { why: why.trim() } : {}), at };
+  return { tournament: { ...t, decision }, rerun: null };
 }

@@ -90,3 +90,13 @@ test("a PR whose entries are too long is cut under 60,000 characters, between tw
   assert.match(body, /…cut here: the rest is on the result page, `\.aeom\/runs\/run-1\/report\.html`\.\n\n---\nOpened by All Eyes On Me/);
   assert.ok(body.split("\n").every((l) => !l.startsWith("- `/page-") || /(\.|disagree)$/.test(l)), "no line cut in the middle");
 });
+
+test("a direction the person chose over the judges' champion says so, with their words", () => {
+  const chosen = { ...page, direction: { ...page.direction!, champion: "plaid", reasons: [], decision: { judges: "tissus", dropped: ["tissus"], why: "Le plaid prolonge les photos de la boutique." } } };
+  const { title, body } = prBody(chosen, ".aeom/runs/run-1/report.html");
+  assert.equal(title, "AEOM: a new direction, plaid (run-1)");
+  assert.match(body, /\*\*plaid\*\*, chosen by the person over the judges' tissus, among tissus, plaid\./);
+  assert.match(body, /> Le plaid prolonge les photos de la boutique\./);
+  const validated = prBody({ ...page, direction: { ...page.direction!, decision: { judges: "tissus", dropped: [] } } }, "r.html").body;
+  assert.match(validated, /\*\*tissus\*\*, chosen by knockout among tissus, plaid, and validated by the person\./);
+});

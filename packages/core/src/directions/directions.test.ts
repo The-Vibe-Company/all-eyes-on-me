@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { champion, createTournament, nextDuel, voteDuel, type Tournament } from "./index.js";
+import { applied, champion, createTournament, decideDirection, nextDuel, voteDuel, type Tournament } from "./index.js";
 
 const decide = (t: Tournament, winnerOf: (a: string, b: string) => string) => {
   for (let duel = nextDuel(t); duel; duel = nextDuel(t)) {
@@ -75,4 +75,49 @@ test("a contact sheet lays the captures side by side, and marks a direction that
 
 test("a tournament needs an odd number of votes per duel", () => {
   for (const votesPerDuel of [0, 2, -1, 1.5]) assert.throws(() => createTournament(["a", "b"], { votesPerDuel }), /positive odd number/);
+});
+
+const crowned = () => decide(createTournament(["topo", "balisage", "brume", "bivouac"]), (a, b) => ([a, b].includes("topo") ? "topo" : a < b ? a : b));
+const AT = "2026-10-10T09:00:00.000Z";
+
+test("the person validates the judges' champion, or chooses another direction, and the run applies what they decided", () => {
+  const t = crowned();
+  assert.equal(champion(t), "topo");
+  assert.equal(applied(t), null, "nothing is applied before the person decides");
+  const ok = decideDirection(t, { at: AT });
+  assert.deepEqual(ok.tournament.decision, { applied: "topo", judges: "topo", dropped: [], at: AT });
+  assert.equal(applied(ok.tournament), "topo");
+  assert.equal(ok.rerun, null);
+  const other = decideDirection(t, { choose: "bivouac", drop: ["topo"], why: "Topo reads like a hiking map, not a game.", at: AT });
+  assert.deepEqual(other.tournament.decision, { applied: "bivouac", judges: "topo", dropped: ["topo"], why: "Topo reads like a hiking map, not a game.", at: AT });
+  assert.equal(applied(other.tournament), "bivouac");
+  assert.equal(decideDirection(t, { choose: "grotte", at: AT, directions: [...t.entrants, "grotte"] }).tournament.decision!.applied, "grotte", "a direction the screening took out can still be chosen");
+});
+
+test("dropping the judges' champion without choosing asks for a new knockout among the directions left", () => {
+  const t = crowned();
+  const dropped = decideDirection(t, { drop: ["topo", "balisage"], at: AT });
+  assert.deepEqual(dropped.rerun, ["brume", "bivouac"]);
+  assert.equal(dropped.tournament.decision, undefined);
+  assert.equal(applied(dropped.tournament), null);
+  const one = decideDirection(t, { drop: ["topo", "balisage", "brume"], at: AT });
+  assert.equal(one.tournament.decision!.applied, "bivouac", "the one direction left is the person's choice");
+  assert.deepEqual(decideDirection(t, { drop: ["topo", "balisage", "brume", "bivouac"], at: AT }).rerun, []);
+  const kept = decideDirection(t, { drop: ["brume"], at: AT });
+  assert.equal(kept.tournament.decision!.applied, "topo", "dropping another direction validates the champion");
+});
+
+test("a decision before the knockout ends, or on a direction that does not exist, is refused", () => {
+  assert.throws(() => decideDirection(createTournament(["a", "b"]), { at: AT }), /The knockout is not over/);
+  assert.throws(() => decideDirection(crowned(), { choose: "plage", at: AT }), /plage is not one of the directions: topo, balisage, brume, bivouac/);
+  assert.throws(() => decideDirection(crowned(), { drop: ["plage"], at: AT }), /plage is not one of the directions/);
+  assert.throws(() => decideDirection(crowned(), { choose: "brume", drop: ["brume"], at: AT }), /brume is both chosen and dropped/);
+});
+
+test("one direction left after the screening is champion without a duel, and the person still decides on it", () => {
+  const t = createTournament(["grotte"]);
+  assert.equal(nextDuel(t), null);
+  assert.equal(champion(t), "grotte");
+  assert.equal(decideDirection(t, { at: AT }).tournament.decision!.applied, "grotte");
+  assert.throws(() => createTournament([]), /at least one direction/);
 });

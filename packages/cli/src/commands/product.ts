@@ -9,14 +9,19 @@ const SHEET = PRODUCT.sheet;
 const USAGE = `Usage: aeom product <draft.md>
        aeom product --brief
 
-Writes the product sheet AEOM drafted to .aeom/product.md: what the app is for,
-who uses it, its main loop and three to five key journeys. A draft that misses
-any of it is refused and nothing is written. What the user corrected in the
-sheet since AEOM last wrote it stays as they wrote it.
+Writes the product sheet AEOM drafted to .aeom/product.md: what kind of
+product the app is (a tool, a game or a creative product), what it is for, who
+uses it, its main loop and three to five key journeys, and for a game or a
+creative product its world. A draft that misses any of it is refused and
+nothing is written. What the user corrected in the sheet since AEOM last wrote
+it stays as they wrote it.
 
-With --brief, prints what the art directions start from: what the app is for,
-who uses it and its main loop, without their sources, and names what the sheet
-marks (to confirm) or gives no source for, which no direction may rest on.
+With --brief, prints what the art directions start from: what kind of product
+the app is, what it is for, who uses it and its main loop, and for a game or a
+creative product its genre and fiction, the feeling it aims for, its
+references and its visual assets, without their sources. It names what the
+sheet marks (to confirm) or gives no source for, which no direction may rest
+on.
 Exits with 1 when a part is missing or nothing is confirmed.`;
 
 async function printBrief(): Promise<number> {
@@ -25,7 +30,7 @@ async function printBrief(): Promise<number> {
     console.error(`No product sheet in ${SHEET}: run /aeom, which writes it before the directions.`);
     return 1;
   }
-  const { name, parts, unconfirmed, missing } = productBrief(sheet);
+  const { name, kind, parts, unconfirmed, missing } = productBrief(sheet);
   if (missing.length) {
     console.error(`${SHEET} has no ${missing.map((m) => `"${m}"`).join(", ")}: put the heading back as it was, or write the part, then run aeom product --brief again.`);
     return 1;
@@ -34,7 +39,8 @@ async function printBrief(): Promise<number> {
     console.error(`Nothing in ${SHEET} is confirmed: what the app is for, who uses it and its loop are all marked (to confirm) or have no source. Look at the app again (read its code, capture its screens) and write what you saw, with its source.`);
     return 1;
   }
-  console.log(`${name ? `${name}\n\n` : ""}${parts.map((p) => `${p.part}: ${p.text}`).join("\n")}`);
+  const said = kind === "game" || kind === "creative" ? `${kind}: the directions start from its world, its visual assets and its genre's interface, not from the real things it names` : kind ?? "not said yet, read as a tool";
+  console.log(`${name ? `${name}\n` : ""}Kind: ${said}\n\n${parts.map((p) => `${p.part}: ${p.text}`).join("\n")}`);
   if (unconfirmed.length) console.log(`\nLeft out, to confirm:\n${unconfirmed.map((u) => `- ${u}`).join("\n")}`);
   return 0;
 }
