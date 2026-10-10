@@ -68,7 +68,7 @@ ${state("after", "After.", "Rebuilt by AEOM", after)}
     <ol class="specimens">
 ${tournament.entrants.map((slug) => specimen(slug, slug === champion)).join("\n")}
     </ol>
-    <h3>The knockout, ${words(tournament.votesPerDuel)} judges a duel</h3>
+    <h3>The knockout, ${tournament.finalVotes && tournament.finalVotes !== tournament.votesPerDuel ? `${words(tournament.votesPerDuel)} judge${tournament.votesPerDuel === 1 ? "" : "s"} a duel, ${words(tournament.finalVotes)} the final` : `${words(tournament.votesPerDuel)} judges a duel`}</h3>
     <ol class="bouts">
 ${tournament.duels.map((d) => bout(d, last)).join("\n")}
     </ol>

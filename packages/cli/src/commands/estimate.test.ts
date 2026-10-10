@@ -35,8 +35,8 @@ test("aeom estimate says what a run costs, phase by phase, from the screens and 
     assert.match((await run(dir, ["estimate", "--diagnostic"])).out, /Total, at most +6 agents/);
     assert.match((await run(dir, ["estimate", "--ux"])).out, /Judge the journeys/);
     const full = await run(dir, ["estimate"]);
-    assert.match(full.out, /Six directions and the knockout/);
-    assert.match((await run(dir, ["estimate", "--directions", "3"])).out, /Three directions and the knockout/);
+    assert.match(full.out, /Three directions and the knockout/, "three by default");
+    assert.match((await run(dir, ["estimate", "--directions", "6"])).out, /Six directions and the knockout/);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:1", pages: ["/", "/jeu"], public: ["/connexion"], style: "keep" }));
     const kept = await run(dir, ["estimate"]);
     assert.match(kept.out, /^For 3 screens and 4 key journeys:/, "the config's pages, public ones included");

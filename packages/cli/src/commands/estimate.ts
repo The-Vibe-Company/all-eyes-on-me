@@ -14,7 +14,7 @@ journeys, the files in .aeom/journeys.
   --garder-le-style  Keep the app's style, as the config's "style": "keep" does
   --ux               The journeys alone, as /aeom --ux: no direction, no page
                      wave (/aeom --directions is a run with --journeys 0)
-  --directions <n>   Build this many directions (default 6); with a style
+  --directions <n>   Build this many directions (default 3); with a style
                      kept in the config, build them anyway
   --screens <n>      Count this many screens instead
   --journeys <n>     Count this many key journeys instead`;
@@ -57,7 +57,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
   }
   const journeys = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
   const mode: RunMode = values.juger || values.diagnostic ? "judge" : values.ux ? "ux" : values["garder-le-style"] || (config.style === "keep" && given.directions === undefined) ? "keep-style" : "full";
-  const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 6 });
+  const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 3 });
   console.log(estimateText(estimate, { screens, journeys }));
   return 0;
 }

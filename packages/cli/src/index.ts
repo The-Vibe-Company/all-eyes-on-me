@@ -31,7 +31,7 @@ Commands:
   snapshot    Keep a copy of the captures and reports, such as before a fleet run
   compare     Compare two snapshots page by page
   sheet       Lay captures side by side in one image
-  tournament  Run a knockout between directions, three votes per duel
+  tournament  Run a knockout between directions, one vote per duel, three for the final
   product     Write the product sheet AEOM drafted, keeping the user's edits
   journey     Replay each key journey and capture every step
   guard       Refuse a change that adds a feature instead of fixing a journey

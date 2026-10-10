@@ -16,9 +16,9 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 ## Judging
 
 - **Check** (contrôle): a rule with a pass or fail answer. **Measurable checks** are computed from the page (cursor, overflow, contrast). **Judged checks** are decided by the judge on screenshots (hierarchy, alignment, density). Every check is **blocking**: a screen that fails one is not merged.
-- **Judge** (juge): the model that decides judged checks and compares versions. It votes three times; the majority wins.
+- **Judge** (juge): the model that decides judged checks and compares versions. It votes once on everything, then twice more on what that vote fails; the majority wins.
 - **Pairwise comparison** (comparaison par paires): the judge picks the better of two versions. AEOM never asks it for a score.
-- **Tournament** (tournoi): a knockout between directions, two by two, three votes per duel, until one wins. Its shared files become the kit.
+- **Tournament** (tournoi): a knockout between directions, two by two, one vote per duel and three for the final, until one wins. Its shared files become the kit.
 - **Ratchet** (cliquet): a new version of a screen, or of a journey, is merged only if the judge prefers it to the current one, so quality never goes down. A journey also has to go to its end wherever the old one did, at every width, and pass the feature guard.
 - **Finding** (constat): something wrong that the audit reports. A finding is shown only once a second pass confirms it.
 - **Audit** (état des lieux): capturing and checking every screen to list findings before or between waves.
@@ -26,7 +26,7 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 ## Building
 
 - **Mode**: **redesign** (refonte) on a project that already has a frontend, **launch** (lancement) on one that does not yet. V1 has redesign only.
-- **Direction**: one art direction, built in real code on the home page. With `/aeom --directions`, AEOM builds six per run and keeps one.
+- **Direction**: one art direction, built in real code on the home page. AEOM builds three per run by default (`/aeom --directions <n>` for another number), and keeps one; `/aeom --forcer-directions` builds them without waiting for the verdict.
 - **Source** (source): where a direction starts: something from the product's own world that its customers know (an object, a document, a place, a trade). Never a design movement.
 - **Banned looks** (liste noire): the looks an AI proposes by default when asked to be bold, listed in `skills/aeom/directions.md`. A direction one of them describes is removed before the tournament.
 - **Kit** (couche design): the tokens and shared components (header, buttons, layout) every screen uses.

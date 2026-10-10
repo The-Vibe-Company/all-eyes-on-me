@@ -11,20 +11,20 @@ test("judging alone, as on Road to Mastock, costs six judges at most, two thirds
   assert.ok(judge.minutes >= 13 && judge.minutes <= 17, "one vote then two on what it failed, on the journeys then the screens");
 });
 
-test("a full run with six directions is about sixty agents and several million tokens, phase by phase", () => {
+test("a full run with six directions is about fifty agents and several million tokens, phase by phase", () => {
   const { phases, total } = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6 });
   assert.deepEqual(phases.map((p) => p.phase), ["Understand the product", "Judge the screens and the journeys", "Six directions and the knockout", "The pages", "The journeys", "The result page, the standard and the PR"]);
-  assert.ok(total.agents >= 55 && total.agents <= 65, String(total.agents));
+  assert.ok(total.agents >= 45 && total.agents <= 55, String(total.agents));
   assert.ok(total.tokens > 4_500_000 && total.tokens < 8_000_000, String(total.tokens));
   assert.ok(total.minutes > 120, "several hours");
-  assert.equal(phases[2]!.agents, 6 + 3 + 5 * 3, "six workers, three screening judges, five duels of three votes");
+  assert.equal(phases[2]!.agents, 6 + 3 + 4 + 3, "six workers, three screening judges, four duels of one vote and a final of three");
   assert.equal(phases[4]!.agents, 3 + 1 + 4 + 3 + 3 + 3, "the critique, the workers, the new version judged, the duels, the screens measured again");
 });
 
 test("fewer directions, no journeys, or the style kept cost less, and each says so", () => {
   const three = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 3 });
   assert.equal(three.phases[2]!.phase, "Three directions and the knockout");
-  assert.equal(three.phases[2]!.agents, 3 + 3 + 2 * 3);
+  assert.equal(three.phases[2]!.agents, 3 + 3 + 1 + 3, "three workers, three screening judges, one duel of one vote, a final of three");
   const noJourneys = estimateRun({ screens: 5, journeys: 0, mode: "full", directions: 6 });
   assert.ok(!noJourneys.phases.some((p) => p.phase === "The journeys"));
   assert.deepEqual([noJourneys.phases[1]!.phase, noJourneys.phases[1]!.agents], ["Judge the screens", 3], "no journey judges without journeys");
