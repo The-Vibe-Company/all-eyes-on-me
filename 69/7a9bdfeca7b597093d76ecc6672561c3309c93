@@ -1,0 +1,55 @@
+README.md
+  s_4ce34ec42d9105::t_b3b01328437b81 13,16
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_588f318953870f 3,11,13,45-123
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_8b397ccdfb0f6c 1-2,4,10,20-21,52-57,72-80,93-95,100,119,127,147-182,194-195
+packages/cli/src/commands/product.test.ts
+  s_4ce34ec42d9105::t_0e61fa0237cc3b 25,38,194,197-204,209
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_4cacc1aabea3d6 12-17,19-24,33,42-43
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_808b09b7be089e 75-99
+packages/cli/src/commands/standard.ts
+  s_4ce34ec42d9105::t_3025322fa4d6ad 5,73
+packages/core/src/directions/directions.test.ts
+  s_4ce34ec42d9105::t_5ec369afb14902 3,79-123
+packages/core/src/directions/index.ts
+  s_4ce34ec42d9105::t_edd87af9387796 2
+packages/core/src/directions/tournament.ts
+  s_4ce34ec42d9105::t_b023360309b837 20-32,37-38,43-44,47,101-128
+packages/core/src/product/product.test.ts
+  s_4ce34ec42d9105::t_6c8f324793e205 7-16,48,149-187
+packages/core/src/product/product.ts
+  s_4ce34ec42d9105::t_522fc4e8d8612c 3-9,17-24,72-79,82,122,126-127,136,142-144,146-147,152-156,159
+packages/core/src/run/pr.test.ts
+  s_4ce34ec42d9105::t_6c8ee939ee6dbd 93-102
+packages/core/src/run/pr.ts
+  s_4ce34ec42d9105::t_381fd7d8c0d9cb 74-81
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_63d742ff21a4f4 5,27-35,142-145,147-156,320-327,335
+site/pages/index.html
+  s_4ce34ec42d9105::t_cddf553a79857c 184,187
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_71eb1070114069 3,27,75-76,120-129,131,133,135,137,146,148
+skills/aeom/directions.md
+  s_4ce34ec42d9105::t_2cd18397edd005 18,24,31-49
+skills/aeom/product.md
+  s_4ce34ec42d9105::t_648b6de82e8a09 3-7,14-16,26-39,49,51-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "697a9bdfeca7b597093d76ecc6672561c3309c93",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
