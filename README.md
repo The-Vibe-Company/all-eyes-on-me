@@ -104,6 +104,7 @@ None of this is done yet:
 State lives in files:
 - `.aeom/` in the project's repository: the product sheet, the standard of the front, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
 - `~/.aeom/taste/` on your machine: your feedback on each verdict.
+- `.aeom-worktrees/<project>/`, next to the project: the workers' copies during a run, kept out of the project so its own tools never walk into them.
 
 The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
 
