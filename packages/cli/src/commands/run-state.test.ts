@@ -51,7 +51,7 @@ test("aeom run keeps where a run is, and says to a new session how to take it up
     const status = await run(dir, ["run", "status"]);
     assert.equal(status.code, 0, status.out);
     assert.match(status.out, /^run-1: "directions", at step 2b\.4 of the skill/);
-    assert.match(status.out, /topo +direction worker +stopped with 1 commit/);
+    assert.match(status.out, /topo +direction worker +stopped with 1 commit:/);
     assert.match(status.out, /brume +direction worker +stopped with nothing committed/);
 
     const resume = await run(dir, ["run", "resume", R]);
@@ -59,6 +59,22 @@ test("aeom run keeps where a run is, and says to a new session how to take it up
     assert.match(resume.out, new RegExp(`export MAIN=${dir.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}`));
     assert.match(resume.out, /Go on at step 2b\.4\.$/m);
 
+    const outside = await run(wt, ["run", "status", join(dir, R)]);
+    assert.match(outside.out, /topo +direction worker +stopped with 1 commit:/, "read from the run's project, wherever it is called from");
+    assert.match(outside.out, /^run-1: "directions"/);
+    assert.match(resume.out, /aeom\/run-1 does not exist/);
+    await Promise.all(Array.from({ length: 8 }, (_, i) => run(dir, ["run", "agent", R, "--name", `judge-${i}`, "--kind", "page judge", "--status", "launched"])));
+    assert.equal(JSON.parse(await readFile(join(dir, R, "state.json"), "utf8")).agents.length, 2 + 8, "marks made at once lose none");
+    await git(dir, "branch", "aeom/run-1");
+    assert.equal((await run(dir, ["run", "mark", R, "--phase", "pages", "--option", "sans-pr"])).code, 0);
+    await git(dir, "checkout", "-q", "aeom/run-1");
+    await writeFile(join(dir, "b.txt"), "b");
+    await git(dir, "add", "b.txt");
+    await git(dir, "commit", "-qm", "by hand");
+    assert.match((await run(dir, ["run", "resume", R])).out, /It was asked with --sans-pr: take it up with the same options\.\nThe run branch moved since/);
+    assert.equal((await run(dir, ["run", "mark", R, "--phase", "pages"])).code, 0);
+    assert.match((await run(dir, ["run", "resume", R])).out, /Check out aeom\/run-1\./, "the options stay, and the branch noted is where it is");
+    assert.match((await run(dir, ["run", "mark", R, "--phase", "x", "extra"])).out, /takes one run folder, not 2/);
     const never = await run(dir, ["run", "agent", R, "--name", "grotte", "--status", "done"]);
     assert.equal(never.code, 1);
     assert.match(never.out, /grotte was never launched in this run/);

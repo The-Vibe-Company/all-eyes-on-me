@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { markAgent, markRun, newRunState, resumePlan, type RunState } from "./index.js";
+import { markAgent, markRun, newRunState, readRunState, resumePlan, type RunState } from "./index.js";
 
 const AT = "2026-10-10T19:00:00.000Z";
 
@@ -43,11 +43,32 @@ test("the plan to resume says what to set again, what each agent left, and where
   });
   assert.match(plan, /^run-1 stopped in "directions", at step 2b\.4 of the skill\./);
   assert.match(plan, /export RUN=run-1\nexport MAIN=\/p\nexport WT=\/wt/);
-  assert.match(plan, /topo +direction worker +done, 3 commits: check it and go on with it/);
-  assert.match(plan, /brume +direction worker +stopped with 2 commits: its work is there; check that it stays in its files, commit what is left, and go on with it/);
-  assert.match(plan, /grotte +direction worker +stopped with nothing committed: launch it again in \/wt\/grotte/);
+  assert.match(plan, /topo +direction worker +done, 3 commits: check it as its step says, then go on with it/);
+  assert.match(plan, /brume +direction worker +stopped with 2 commits: its work may be unfinished; check that it stays in its files, commit what is left, run its checks as its step says, then go on with it/);
+  assert.match(plan, /grotte +direction worker +stopped with nothing committed: if its worktree holds work in its files, commit it and check it; otherwise launch it again in \/wt\/grotte/);
   assert.match(plan, /bivouac +direction worker +its worktree and its branch are gone: create them again from abc and launch it again/);
   assert.match(plan, /balisage +direction worker +merged/);
   assert.match(plan, /juge-2 +screening judge +launched, not done: launch it again/);
   assert.match(plan, /Go on at step 2b\.4\.$/);
+});
+
+test("a run taken up keeps its options, and says when its branch does not exist yet or moved since", () => {
+  const s = markRun(newRunState("run-1", AT), { phase: "pages", step: "4", options: ["--sans-pr", "--garder-le-style"], branchAt: "aaaaaaa1", at: AT });
+  assert.match(resumePlan(s, { worktrees: {}, commits: {}, runBranch: "aaaaaaa1" }), /It was asked with --sans-pr --garder-le-style: take it up with the same options\.\nCheck out aeom\/run-1\./);
+  assert.match(resumePlan(s, { worktrees: {}, commits: {}, runBranch: "bbbbbbb2" }), /The run branch moved since the run last noted where it was \(aaaaaaa → bbbbbbb\)/);
+  assert.match(resumePlan(markRun(newRunState("run-2", AT), { phase: "cost", at: AT }), { worktrees: {}, commits: {}, runBranch: null }), /aeom\/run-2 does not exist: the run stopped before it changed the project/);
+});
+
+test("a worker whose branch the run branch already holds is merged; one whose commits cannot be counted says so", () => {
+  let s = markAgent(newRunState("run-1", AT), { name: "kit", kind: "kit worker", status: "launched", worktree: "/wt/kit", branch: "aeom/run-1-kit", from: "abc", at: AT });
+  s = markAgent(s, { name: "page", kind: "page worker", status: "launched", worktree: "/wt/page", branch: "aeom/run-1-page", from: "zzz", at: AT });
+  const plan = resumePlan(s, { worktrees: { "/wt/kit": true, "/wt/page": true }, commits: { "aeom/run-1-kit": 2, "aeom/run-1-page": "unknown" }, merged: { "aeom/run-1-kit": true } });
+  assert.match(plan, /kit +kit worker +its branch is already in the run branch: mark it merged/);
+  assert.match(plan, /page +page worker +its commits cannot be counted from zzz/);
+});
+
+test("an older or partial state file is read with what it leaves out filled in", () => {
+  const s = readRunState({ run: "run-1", phase: "pages" }, "run-1")!;
+  assert.deepEqual([s.agents, s.vars, s.options, s.history], [[], {}, [], []]);
+  assert.equal(readRunState([], "run-1"), null);
 });
