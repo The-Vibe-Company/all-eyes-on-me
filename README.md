@@ -58,7 +58,7 @@ Then, in your project:
 - for the pull request at the end, the repository has a remote and `gh` is signed in;
 - type `/aeom` in Claude Code.
 
-A full run is long and spawns many agents: some sixty subagents (judges, workers) and several million tokens for eight screens and four journeys. `aeom estimate` says it for your project before anything starts, and `/aeom` asks before its first judge. For a first look at a project, `/aeom --juger` stops at the verdict.
+A full run is long and spawns many agents: some sixty subagents (judges, workers) and several million tokens for eight screens and four journeys. `aeom estimate` says it for your project before anything starts, and `/aeom` asks before its first judge. For a first look at a project, `/aeom --juger` stops at the verdict. If the session closes in the middle, `/aeom --reprendre` takes the run up where it stopped: every run keeps its state in `.aeom/runs/<run>/state.json`.
 
 ## Commands
 
@@ -81,6 +81,7 @@ A full run is long and spawns many agents: some sixty subagents (judges, workers
 | `aeom pr` | Push the run's branch and open a PR, in words, with no capture |
 | `aeom standard` | Write the standard of the front, keeping the user's edits |
 | `aeom estimate` | Say what a run would cost, phase by phase, before it starts |
+| `aeom run` | Keep where a run is, and say how to take it up after a stop |
 
 ## What comes next
 
