@@ -131,3 +131,25 @@ test("a later decision keeps what the person dropped before, unless they now cho
   assert.deepEqual(back.tournament.decision!.dropped, [], "choosing a direction they dropped takes it back");
   assert.equal(back.tournament.decision!.applied, "topo");
 });
+
+test("one vote decides a duel, and three the final", () => {
+  let t = createTournament(["a", "b", "c", "d"], { votesPerDuel: 1, finalVotes: 3 });
+  t = voteDuel(t, { duel: 1, voter: "1", winner: "a", reason: "calmer" });
+  assert.equal(t.duels[0]!.winner, "a", "one vote decides a duel of the first round");
+  t = voteDuel(t, { duel: 2, voter: "1", winner: "d", reason: "bolder" });
+  const final = nextDuel(t)!;
+  assert.deepEqual([final.a, final.b, final.needs], ["a", "d", 3]);
+  t = voteDuel(t, { duel: final.id, voter: "1", winner: "d", reason: "more specific" });
+  assert.equal(champion(t), null, "the final waits for its three votes");
+  t = voteDuel(t, { duel: final.id, voter: "2", winner: "a", reason: "calmer" });
+  t = voteDuel(t, { duel: final.id, voter: "3", winner: "d", reason: "made for it" });
+  assert.equal(champion(t), "d");
+  assert.throws(() => createTournament(["a", "b"], { votesPerDuel: 1, finalVotes: 2 }), /odd number/);
+});
+
+test("three directions: one duel of one vote, then a final of three", () => {
+  let t = createTournament(["a", "b", "c"], { votesPerDuel: 1, finalVotes: 3 });
+  assert.deepEqual(t.duels.map((d) => [d.a, d.b, d.needs ?? t.votesPerDuel]), [["a", "b", 1], ["c", null, 1]]);
+  t = voteDuel(t, { duel: 1, voter: "1", winner: "b", reason: "x" });
+  assert.equal(nextDuel(t)!.needs, 3);
+});

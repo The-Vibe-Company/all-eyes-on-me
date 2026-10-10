@@ -12,6 +12,8 @@ export interface Duel {
   /** null when `a` has no opponent this round and goes through. */
   b: string | null;
   votes: DuelVote[];
+  /** How many votes decide it, when not the tournament's: three for the final. */
+  needs?: number;
   winner?: string;
   /** The reasons given by the votes for the winner. */
   reasons?: string[];
@@ -33,6 +35,8 @@ export interface Decision {
 export interface Tournament {
   entrants: string[];
   votesPerDuel: number;
+  /** How many votes decide the final, when not votesPerDuel. */
+  finalVotes?: number;
   duels: Duel[];
   /** The person's decision, once they made it. */
   decision?: Decision;
@@ -43,18 +47,25 @@ export interface Tournament {
  * number, the last one goes through to the next round without a duel. A
  * direction alone, the only one the screening left, is champion at once.
  */
-export function createTournament(entrants: string[], { votesPerDuel = 3 } = {}): Tournament {
+export function createTournament(entrants: string[], { votesPerDuel = 3, finalVotes }: { votesPerDuel?: number; finalVotes?: number } = {}): Tournament {
+  finalVotes ??= votesPerDuel;
   if (entrants.length < 1) throw new Error("A tournament needs at least one direction: a direction alone is champion without a duel.");
-  if (!Number.isInteger(votesPerDuel) || votesPerDuel < 1 || votesPerDuel % 2 === 0) throw new Error("Votes per duel must be a positive odd number, so every duel has a majority.");
+  for (const n of [votesPerDuel, finalVotes]) if (!Number.isInteger(n) || n < 1 || n % 2 === 0) throw new Error("Votes per duel must be a positive odd number, so every duel has a majority.");
   if (new Set(entrants).size !== entrants.length) throw new Error("Each direction can enter only once.");
-  return { entrants, votesPerDuel, duels: pair(entrants, 1, 1) };
+  const t: Tournament = { entrants, votesPerDuel, ...(finalVotes !== votesPerDuel ? { finalVotes } : {}), duels: [] };
+  return { ...t, duels: pair(t, entrants, 1, 1) };
 }
 
-function pair(names: string[], round: number, firstId: number): Duel[] {
+/** How many votes decide a duel: the final, the one duel between the last two, takes finalVotes. */
+export const votesNeeded = (t: Tournament, d: Duel) => d.needs ?? t.votesPerDuel;
+const needed = votesNeeded;
+
+function pair(t: Tournament, names: string[], round: number, firstId: number): Duel[] {
   const duels: Duel[] = [];
+  const final = names.length === 2 && t.finalVotes !== undefined;
   for (let i = 0; i < names.length; i += 2) {
     const b = names[i + 1] ?? null;
-    duels.push({ id: firstId + duels.length, round, a: names[i]!, b, votes: [], ...(b === null ? { winner: names[i]! } : {}) });
+    duels.push({ id: firstId + duels.length, round, a: names[i]!, b, votes: [], ...(b === null ? { winner: names[i]! } : {}), ...(final && b !== null ? { needs: t.finalVotes } : {}) });
   }
   return duels;
 }
@@ -75,7 +86,7 @@ export function voteDuel(t: Tournament, { duel: id, voter, winner, reason }: Due
 
   const votes = [...duel.votes, { voter, winner, reason }];
   let decided: Duel = { ...duel, votes };
-  if (votes.length === t.votesPerDuel) {
+  if (votes.length === needed(t, duel)) {
     const forA = votes.filter((v) => v.winner === duel.a).length;
     const won = forA * 2 > votes.length ? duel.a : duel.b;
     decided = { ...decided, winner: won, reasons: votes.filter((v) => v.winner === won).map((v) => v.reason) };
@@ -87,7 +98,7 @@ export function voteDuel(t: Tournament, { duel: id, voter, winner, reason }: Due
   const roundOver = thisRound.every((d) => d.winner !== undefined);
   const nextExists = duels.some((d) => d.round === round + 1);
   if (roundOver && !nextExists && thisRound.length > 1) {
-    duels = [...duels, ...pair(thisRound.map((d) => d.winner!), round + 1, duels.length + 1)];
+    duels = [...duels, ...pair(t, thisRound.map((d) => d.winner!), round + 1, duels.length + 1)];
   }
   return { ...t, duels };
 }

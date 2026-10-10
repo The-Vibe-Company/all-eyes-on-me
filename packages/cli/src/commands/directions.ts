@@ -1,7 +1,7 @@
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { addFeedback, aeomHome, champion, contactSheet, createTournament, decideDirection, nextDuel, runKey, voteDuel, type Tournament } from "@aeom/core";
+import { addFeedback, aeomHome, champion, contactSheet, createTournament, decideDirection, nextDuel, runKey, voteDuel, votesNeeded, type Tournament } from "@aeom/core";
 
 export async function runSheet(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -64,10 +64,13 @@ Options:
 
 const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status|decide> --dir <dir> [...]
 
-A knockout between directions, two by two, three votes per duel. The state
-lives in <dir>/tournament.json; each direction's capture is <dir>/<name>.png.
+A knockout between directions, two by two: one vote decides a duel, three
+the final. The state lives in <dir>/tournament.json; each direction's capture
+is <dir>/<name>.png.
 
-  start <name>... [--reset]             Draw the first round (--reset replaces a tournament already there)
+  start <name>... [--reset] [--votes <n>] [--final-votes <n>]
+                                        Draw the first round (--reset replaces a tournament already there);
+                                        --votes per duel (default 1), --final-votes for the final (default 3)
   next                                  Print the next duel and its two captures
   vote --duel <n> --voter <v> --winner <name> --reason "<why>"
   status                                Print every duel, the champion, and what the person decided
@@ -91,6 +94,8 @@ export async function runTournament(argv: string[]): Promise<number> {
       winner: { type: "string" },
       reason: { type: "string" },
       reset: { type: "boolean" },
+      votes: { type: "string", default: "1" },
+      "final-votes": { type: "string", default: "3" },
       choose: { type: "string" },
       drop: { type: "string", multiple: true },
       why: { type: "string" },
@@ -109,7 +114,7 @@ export async function runTournament(argv: string[]): Promise<number> {
 
   try {
     if (action === "start") {
-      const t = createTournament(names);
+      const t = createTournament(names, { votesPerDuel: Number(values.votes), finalVotes: Number(values["final-votes"]) });
       const exists = await access(file).then(() => true, () => false);
       if (exists && !values.reset) {
         console.error(`${file} already holds a tournament. Pass --reset to replace it and its votes.`);
@@ -128,8 +133,8 @@ export async function runTournament(argv: string[]): Promise<number> {
         if (!t.decision) console.log(ASK);
         return 0;
       }
-      const missing = t.votesPerDuel - duel.votes.length;
-      console.log(`Duel ${duel.id} (round ${duel.round}): ${duel.a} against ${duel.b}, ${missing} vote${missing > 1 ? "s" : ""} missing`);
+      const missing = votesNeeded(t, duel) - duel.votes.length;
+      console.log(`Duel ${duel.id} (round ${duel.round}${duel.needs ? ", the final" : ""}): ${duel.a} against ${duel.b}, ${missing} vote${missing > 1 ? "s" : ""} missing`);
       console.log(`  ${duel.a}: ${capturePath(duel.a)}`);
       console.log(`  ${duel.b}: ${capturePath(duel.b!)}`);
       return 0;
@@ -188,7 +193,7 @@ export async function runTournament(argv: string[]): Promise<number> {
         if (d.b === null) console.log(`Round ${d.round}: ${d.a} goes through without a duel`);
         else {
           const reasons = d.reasons ?? d.votes.map((v) => `${v.winner}: ${v.reason}`);
-          console.log(`Round ${d.round}, duel ${d.id}: ${d.a} against ${d.b} → ${d.winner ?? `${d.votes.length}/${t.votesPerDuel} votes`}${reasons.length ? `\n    ${reasons.join("\n    ")}` : ""}`);
+          console.log(`Round ${d.round}, duel ${d.id}: ${d.a} against ${d.b} → ${d.winner ?? `${d.votes.length}/${votesNeeded(t, d)} votes`}${reasons.length ? `\n    ${reasons.join("\n    ")}` : ""}`);
         }
       }
       const won = champion(t);
