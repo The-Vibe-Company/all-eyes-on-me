@@ -13,6 +13,7 @@ import { runPr } from "./commands/pr.js";
 import { runReport } from "./commands/report.js";
 import { runStandard } from "./commands/standard.js";
 import { runEstimate } from "./commands/estimate.js";
+import { runRunState } from "./commands/run-state.js";
 import { runVerdict } from "./commands/verdict.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -40,6 +41,7 @@ Commands:
   pr          Push the run's branch and open a PR, in words, with no capture
   standard    Write the standard of the front, keeping the user's edits
   estimate    Say what a run would cost, phase by phase, before it starts
+  run         Keep where a run is, and say how to take it up after a stop
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#what-comes-next`;
@@ -61,6 +63,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   features: runFeatures,
   pr: runPr,
   estimate: runEstimate,
+  run: runRunState,
   standard: runStandard,
 };
 
