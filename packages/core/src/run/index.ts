@@ -6,3 +6,4 @@ export { pageVerdicts, readRun, resultHtml, RunReportError, type PageVerdict, ty
 export { BLOCKING_PRINCIPLES, blockedJourneys, type BlockedJourney } from "./features.js";
 export { addFeedback, aeomHome, agreementRates, FEEDBACK_CATEGORIES, readFeedback, runKey, type Feedback, type FeedbackCategory } from "./taste.js";
 export { prBody } from "./pr.js";
+export { estimateRun, estimateText, type Estimate, type Phase, type RunMode } from "./estimate.js";
