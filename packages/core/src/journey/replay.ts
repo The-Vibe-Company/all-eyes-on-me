@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { chromium, type Locator, type Page, type Request } from "playwright";
 import { DEFAULT_WIDTHS, screenshotCapped, scrollThrough } from "../capture/capture.js";
 import { openPage, pinFixed, settle } from "../capture/open.js";
-import { findField, type SignedIn } from "../capture/sign-in.js";
+import { findFields, type SignedIn } from "../capture/sign-in.js";
 import { contactSheet } from "../directions/sheet.js";
 import { describeStep, type Journey, type Step, type Target } from "./journey.js";
 
@@ -96,22 +96,20 @@ function describeTarget(target: Target): string {
 async function resolve(page: Page, target: Target, { field = false } = {}): Promise<Locator> {
   let scope: Page | Locator = page;
   if (target.within && "top" in target.within) {
-    // Of the visible containers of that role, the one drawn on top: the highest stacking order, the last when they tie.
+    // Of the visible containers of that role, the one drawn on top: the one the browser finds at its own centre, as a click would.
     const role = target.within.role;
     const all = page.getByRole(role as Parameters<Page["getByRole"]>[0]).filter({ visible: true });
     await all.first().waitFor({ state: "visible", timeout: STEP_TIMEOUT }).catch(() => {});
-    const layers = await all.evaluateAll((els) =>
+    const hits = await all.evaluateAll((els) =>
       els.map((el) => {
-        let z = 0;
-        for (let node: Element | null = el; node && node !== document.body; node = node.parentElement) {
-          const value = parseInt(getComputedStyle(node).zIndex, 10);
-          if (!Number.isNaN(value)) z = Math.max(z, value);
-        }
-        return z;
+        const box = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        return !!hit && el.contains(hit);
       }),
     );
-    if (!layers.length) throw new StepFailure(`no ${role} on the screen to look in`);
-    const top = layers.reduce((best, z, i) => (z >= layers[best]! ? i : best), 0);
+    if (!hits.length) throw new StepFailure(`no ${role} on the screen to look in`);
+    const top = hits.lastIndexOf(true);
+    if (top === -1) throw new StepFailure(`no ${role} is on top of the others: name it with "within" and its name`);
     scope = all.nth(top);
   } else if (target.within) {
     // A container's name holds all its text, such as "Lampe Ajouter" for a row: match a part of it.
@@ -121,18 +119,26 @@ async function resolve(page: Page, target: Target, { field = false } = {}): Prom
     if (n !== 1) throw new StepFailure(n === 0 ? `no ${target.within.role} "${target.within.name}" to look in` : `${n} elements match ${target.within.role} "${target.within.name}"`);
     scope = container;
   }
-  // A field is named by its label's text: the field that label names, the one after a label beside it, its placeholder or its name.
-  if (field && "text" in target && !target.nth) {
-    const labelled = await findField(scope, target.text);
-    if (labelled) return labelled;
+  // A field is named by its label's text: the field that label names, the one beside a label, its placeholder or its name.
+  if (field && "text" in target) {
+    const found = await findFields(scope, target.text);
+    if (found) {
+      const n = found.onScreen.length;
+      if (target.nth) {
+        if (n < target.nth) throw new StepFailure(`only ${n} field${n === 1 ? "" : "s"} under "${target.text}", not ${target.nth}`);
+        return found.fields.nth(found.onScreen[target.nth - 1]!);
+      }
+      if (n === 1) return found.fields.nth(found.onScreen[0]!);
+      throw new StepFailure(`${n} fields under "${target.text}": name their container with "within", or one of them with "nth"`);
+    }
   }
   // Text can match hidden copies, such as a menu kept for another width: only what is visible counts.
   const found = "text" in target ? scope.getByText(target.text, { exact: true }).filter({ visible: true }) : scope.getByRole(target.role as Parameters<Page["getByRole"]>[0], { name: target.name, exact: true });
   await found.first().waitFor({ state: "attached", timeout: STEP_TIMEOUT }).catch(() => {});
   const n = await found.count();
-  if (n === 0) throw new StepFailure(`no ${describeTarget(target)} on the screen`);
+  if (n === 0) throw new StepFailure(`no ${describeTarget({ ...target, nth: undefined })} on the screen`);
   if (target.nth) {
-    if (n < target.nth) throw new StepFailure(`${n} element${n === 1 ? "" : "s"} match ${describeTarget(target)}, not ${target.nth}`);
+    if (n < target.nth) throw new StepFailure(`only ${n} ${n === 1 ? "element matches" : "elements match"} ${describeTarget({ ...target, nth: undefined })}, not ${target.nth}`);
     return found.nth(target.nth - 1);
   }
   if (n > 1) throw new StepFailure(`${n} elements match ${describeTarget(target)}: name its container with "within", the dialog on top with "within": { "role": "dialog", "top": true }, or one of them with "nth"`);

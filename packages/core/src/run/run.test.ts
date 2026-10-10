@@ -193,3 +193,12 @@ test("a config that cannot be read is a config error", async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("pages are scored and compared across a record that changes at every visit", () => {
+  const check: CheckReport = { url: "http://x", checkedAt: "", widths: [390], checks: ["contrast"], pages: ["http://x/sessions/8"], errors: [], findings: [{ check: "contrast", url: "http://x/sessions/8", width: 390, message: "pale" }] };
+  const judge: JudgeReport = { judgedAt: "", voters: ["1"], principles: [], failures: 1, pages: [{ page: "/sessions/7", verdicts: [{ principle: "states", pass: false, votes: "", reasons: [], dissent: [], steps: [] }] }] };
+  const scores = scorePages(check, judge);
+  assert.deepEqual(scores.map((s) => [s.page, s.total]), [["/sessions/7", 2]], "one screen, its check and its principle together");
+  const after = scorePages({ ...check, pages: ["http://x/sessions/9"], findings: [] }, { ...judge, pages: [{ page: "/sessions/10", verdicts: [] }] });
+  assert.deepEqual(comparePages(scores, after).map((c) => [c.page, c.verdict]), [["/sessions/7", "better"]]);
+});

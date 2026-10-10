@@ -2,4 +2,5 @@ export { capture, DEFAULT_WIDTHS, findPages, MAX_CAPTURE_HEIGHT, route, screensh
 export { openPage, pinFixed, QUIET_MS, settle } from "./open.js";
 export { discoverPages, normalize, visitPages, type Discovery, type PageError } from "./discover.js";
 export { AppStartError, startApp, type RunningApp, type StartAppOptions } from "./start-app.js";
-export { findField, signedInFrom, signIn, signInOnce, SignInError, type SignIn, type SignedIn } from "./sign-in.js";
+export { findField, findFields, signedInFrom, signIn, signInOnce, SignInError, usableSession, type SignIn, type SignedIn } from "./sign-in.js";
+export { pageShape, pairRoutes } from "./shape.js";

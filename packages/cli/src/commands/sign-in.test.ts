@@ -139,8 +139,14 @@ test("a login given as a saved browser state signs in with it; a login that mixe
     assert.match(mixed.out, /"login" is one of three: a form \("path", "account", "submit"\), a saved session \("state"\), or a script that prints one \("script"\)/);
     await writeFile(file, JSON.stringify({ ...config, login: { state: join(dir, "state.json") } }));
     const empty = await run(dir, ["capture", "--widths", "390", "--out", join(dir, "captures")]);
-    assert.match(empty.out, /Signed in with the session in .*state\.json/);
-    assert.equal(empty.code, 0, empty.out);
+    assert.equal(empty.code, 1);
+    assert.match(empty.out, /holds no cookie/, "an empty session would capture signed out");
+    await writeFile(join(dir, "state.json"), JSON.stringify([{ name: "session", value: "x", path: "jeu" }]));
+    const broken = await run(dir, ["capture", "--widths", "390", "--out", join(dir, "captures")]);
+    assert.equal(broken.code, 1);
+    assert.match(broken.out, /cannot be set in a browser/);
+    await writeFile(file, JSON.stringify({ ...config, login: "/connexion" }));
+    assert.match((await run(dir, ["capture", "--out", join(dir, "captures")])).out, /"login" is one of three/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

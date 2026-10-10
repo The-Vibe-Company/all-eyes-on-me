@@ -9,7 +9,7 @@ import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
-import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, pinFixed, signedInFrom, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, findField, pageShape, pairRoutes, pinFixed, signedInFrom, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
 import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
@@ -367,28 +367,44 @@ test("a session given as a browser state, a list of cookies or what a script pri
   assert.throws(() => signedInFrom(JSON.stringify([{ name: "s" }]), "http://x"), /every cookie needs a name and a value/);
 });
 
-test("a link that creates a resource and sends to it, such as /sessions/new, keeps the name of the link, in capture as in check", async () => {
-  let next = 100;
-  const server = createHttpServer((req, res) => {
-    if (req.url === "/sessions/new") {
-      res.writeHead(303, { location: `/sessions/${next++}` });
-      return res.end();
-    }
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-    res.end(req.url === "/" ? `<a href="/sessions/new">Nouvelle séance</a><a href="/aide">Aide</a><a href="/old">Ancien</a>` : req.url === "/old" ? "" : `<p>${req.url}</p>`);
-  });
-  await new Promise<void>((resolve) => server.listen(0, resolve));
-  const url = `http://localhost:${(server.address() as { port: number }).port}`;
-  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-new-"));
+test("routes that name records pair by their shape, so a screen whose record changes at every visit is still one screen", () => {
+  assert.equal(pageShape("/sessions/123"), "/sessions/:id");
+  assert.equal(pageShape("/sessions/c72d9f1e-0b1a-4c4e-9a8e-1f2d3c4b5a69/players"), "/sessions/:id/players");
+  assert.equal(pageShape("/sessions/play?id=42&tab=infos"), "/sessions/play?id=:id&tab=infos");
+  assert.equal(pageShape("/connexion"), "/connexion");
+  assert.equal(pageShape("/sessions/new"), "/sessions/new");
+  const pairs = pairRoutes(["/", "/sessions/100", "/sessions/100/players", "/aide"], ["/", "/aide", "/sessions/101/players", "/sessions/101", "/autre/7"]);
+  assert.deepEqual([...pairs], [["/", "/"], ["/aide", "/aide"], ["/sessions/101/players", "/sessions/100/players"], ["/sessions/101", "/sessions/100"]]);
+});
+
+test("a field is found beside its label without crossing into another row, never off screen, and two fields under one label are no field", async () => {
+  const browser = await chromium.launch();
   try {
-    const manifest = await capture({ url, outDir: dir, widths: [390] });
-    assert.deepEqual(manifest.pages.map((p) => p.path).sort(), ["/", "/aide", "/old", "/sessions/new"]);
-    const report = await checkSite({ url, widths: [390] });
-    assert.deepEqual(report.pages.map((p) => new URL(p).pathname).sort(), ["/", "/aide", "/old", "/sessions/new"]);
-    const given = await capture({ url, outDir: dir, widths: [390], paths: ["/sessions/new"] });
-    assert.deepEqual(given.pages.map((p) => p.path), ["/sessions/new"]);
+    const page = await browser.newPage();
+    await page.setContent(`
+      <div class="float"><input id="floated"><label>Ville</label></div>
+      <form><div><label>Code</label></div><input id="wrapped"><input name="code" id="trap" style="position:absolute;left:-9999px"></form>
+      <table><tr id="r1"><td><label>Quantité</label></td><td><input id="q1"></td></tr><tr id="r2"><td><label>Quantité</label></td><td><input id="q2"></td></tr></table>
+      <label for="e1">Email</label><input id="e1"><label for="e2">Email</label><input id="e2">`);
+    const id = async (label: string, scope: import("playwright").Page | import("playwright").Locator = page) => (await findField(scope, label))?.getAttribute("id") ?? null;
+    assert.equal(await id("Ville"), "floated", "a label after its field, in the same box");
+    assert.equal(await id("Code"), "wrapped", "a label in its own box, the field right after it; the hidden twin is not seen");
+    assert.equal(await id("Quantité", page.locator("#r2")), "q2", "inside the row asked, not the one before");
+    assert.equal(await id("Quantité"), null, "two rows: two fields, so none");
+    assert.equal(await id("Email"), null, "two fields named Email: none is guessed");
   } finally {
-    server.close();
-    await rm(dir, { recursive: true, force: true });
+    await browser.close();
   }
+});
+
+test("cookies exported by a browser extension are made fit for a browser, and an expired one is refused", () => {
+  const now = Math.floor(Date.now() / 1000);
+  const state = signedInFrom(JSON.stringify([
+    { name: "a", value: "1", sameSite: "no_restriction", expirationDate: now + 3600 },
+    { name: "b", value: "2", sameSite: "lax", session: true },
+    { name: "__Secure-c", value: "3", sameSite: null },
+  ]), "https://jeu.example.test/");
+  assert.deepEqual(state.cookies.map((c) => [c.name, c.sameSite, c.secure, c.expires > 0]), [["a", "None", true, true], ["b", "Lax", true, false], ["__Secure-c", "Lax", true, false]]);
+  assert.throws(() => signedInFrom(JSON.stringify([{ name: "old", value: "1", expires: now - 60 }]), "http://x"), /has expired/);
+  assert.throws(() => signedInFrom("[]", "http://x"), /holds no cookie/);
 });

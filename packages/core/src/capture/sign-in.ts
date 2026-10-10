@@ -75,26 +75,46 @@ function xpathLiteral(text: string): string {
   return `concat(${text.split("'").map((part) => `'${part}'`).join(`, "'", `)})`;
 }
 
+/** What a person fills: a text field, a text area, a list; never a hidden, disabled, checkbox, radio, file or button input. */
+const FIELD = "self::input[not(@disabled)][not(@type) or not(contains(' hidden submit button checkbox radio file image reset ', concat(' ', translate(@type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), ' ')))] or self::textarea[not(@disabled)] or self::select[not(@disabled)]";
+
 /**
- * The one visible field a person would fill under this label: the field the
- * label names; else, when the label names none (no `for`, the field not
- * inside it), the first field after a label with this text; else the field
- * whose placeholder, then whose name, is this text. Null when none of these
- * finds exactly one.
+ * The fields a person would fill under this label, by the first of these
+ * that finds any on the screen: the field the label names; the only field in
+ * the box that holds a label with this text (a label after its field
+ * included), or the field right after that label or its box; the field whose
+ * placeholder, then whose name, is this text. It never reaches beyond the
+ * label's box and its next sibling, and never counts a field off the screen,
+ * such as a trap for robots. Null when none finds any.
  */
-export async function findField(scope: Page | Locator, label: string): Promise<Locator | null> {
-  const fields = "self::input[not(@type='hidden') and not(@type='submit') and not(@type='button')] or self::textarea or self::select";
+export async function findFields(scope: Page | Locator, label: string): Promise<{ fields: Locator; onScreen: number[] } | null> {
+  const text = xpathLiteral(label.trim());
+  const name = label.replace(/["\\]/g, "\\$&");
   const tries = [
     scope.getByLabel(label, { exact: true }),
-    scope.locator(`xpath=.//label[normalize-space(.)=${xpathLiteral(label.trim())}]/following::*[${fields}][1]`),
+    scope.locator(`xpath=.//label[normalize-space(.)=${text}]/ancestor::*[position()<=3][count(.//*[${FIELD}])=1][1]//*[${FIELD}]`),
+    scope.locator(`xpath=.//label[normalize-space(.)=${text}]/ancestor-or-self::*[position()<=2][following-sibling::*[1][${FIELD}]][1]/following-sibling::*[1]`),
     scope.getByPlaceholder(label, { exact: true }),
-    scope.locator(`input[name="${label.replace(/["\\]/g, "\\$&")}" i], textarea[name="${label.replace(/["\\]/g, "\\$&")}" i], select[name="${label.replace(/["\\]/g, "\\$&")}" i]`),
+    scope.locator(`input[name="${name}" i], textarea[name="${name}" i], select[name="${name}" i]`),
   ];
   for (const found of tries) {
-    const visible = found.filter({ visible: true });
-    if ((await visible.count()) === 1) return visible;
+    const onScreen = await found.evaluateAll((els) =>
+      els.flatMap((el, i) => {
+        const box = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        const seen = box.width > 0 && box.height > 0 && box.right > 0 && box.bottom > -window.scrollY && box.left < document.documentElement.scrollWidth && style.visibility !== "hidden" && !el.closest("[aria-hidden='true']");
+        return seen ? [i] : [];
+      }),
+    );
+    if (onScreen.length) return { fields: found, onScreen };
   }
   return null;
+}
+
+/** The one field a person would fill under this label, as findFields finds them; null when there is none, or more than one to tell apart. */
+export async function findField(scope: Page | Locator, label: string): Promise<Locator | null> {
+  const found = await findFields(scope, label);
+  return found && found.onScreen.length === 1 ? found.fields.nth(found.onScreen[0]!) : null;
 }
 
 type Cookie = SignedIn["cookies"][number];
@@ -115,8 +135,31 @@ export function signedInFrom(text: string, url: string): SignedIn {
   const raw = Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" ? (parsed as { cookies?: unknown }).cookies : undefined;
   if (!Array.isArray(raw)) throw new SignInError("The session given holds no cookies: give a browser state, or a list of cookies with their name and value.");
   if (raw.some((c) => !c || typeof c !== "object" || typeof (c as Cookie).name !== "string" || typeof (c as Cookie).value !== "string")) throw new SignInError("In the session given, every cookie needs a name and a value.");
-  const host = new URL(url).hostname;
-  const cookies = (raw as Partial<Cookie>[]).map((c) => ({ path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" as const, ...c, domain: c.domain ?? host }) as Cookie);
+  const { hostname, protocol } = new URL(url);
+  const now = Date.now() / 1000;
+  // As browser extensions export them too: sameSite in any case or "no_restriction", expirationDate in seconds.
+  const SAME_SITE: Record<string, Cookie["sameSite"]> = { lax: "Lax", strict: "Strict", none: "None", no_restriction: "None" };
+  const cookies = (raw as (Partial<Cookie> & { expirationDate?: number; sameSite?: string | null })[]).map((c) => {
+    const sameSite = SAME_SITE[String(c.sameSite ?? "").toLowerCase()] ?? "Lax";
+    const expires = typeof c.expires === "number" && c.expires > 0 ? c.expires : typeof c.expirationDate === "number" && c.expirationDate > 0 ? c.expirationDate : -1;
+    if (expires > 0 && expires < now) throw new SignInError(`A cookie of the session given has expired: save a new session.`);
+    const secure = c.secure === true || protocol === "https:" || sameSite === "None" || /^__(Secure|Host)-/.test(c.name!);
+    return { name: c.name!, value: c.value!, domain: c.domain ?? hostname, path: c.path ?? "/", expires, httpOnly: c.httpOnly === true, secure, sameSite };
+  });
   const origins = !Array.isArray(parsed) && Array.isArray((parsed as SignedIn).origins) ? (parsed as SignedIn).origins : [];
+  if (!cookies.length && !origins.length) throw new SignInError("The session given holds no cookie and no storage: AEOM would capture signed out.");
   return { cookies, origins };
+}
+
+/** The session, once a browser has taken it; a SignInError that names no value when a browser refuses one of its cookies, its domain or its path. */
+export async function usableSession(signedIn: SignedIn): Promise<SignedIn> {
+  const browser = await chromium.launch();
+  try {
+    await (await browser.newContext({ storageState: signedIn })).close();
+    return signedIn;
+  } catch {
+    throw new SignInError("A cookie of the session given cannot be set in a browser: check its domain, its path and its sameSite.");
+  } finally {
+    await browser.close();
+  }
 }

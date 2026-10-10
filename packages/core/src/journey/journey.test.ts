@@ -344,6 +344,8 @@ test("when two dialogs are stacked, the one on top is named, or the nth element 
     res.end(`<p id="said">rien</p>
       <div role="dialog" aria-label="Nouveautés" style="position:fixed;top:0;left:0;width:220px;height:120px;background:#eee;z-index:10"><button onclick="said.textContent='dessous'">Plus tard</button></div>
       <div role="dialog" aria-label="Notifications" style="position:fixed;top:20px;left:20px;width:220px;height:120px;background:#ddd;z-index:20"><button onclick="said.textContent='dessus'">Plus tard</button></div>
+      <dialog id="first"><button onclick="said.textContent='natif dessus'">Fermer</button></dialog><dialog id="second"><button onclick="said.textContent='natif dessous'">Fermer</button></dialog>
+      <button style="position:absolute;top:300px;left:300px" onclick="second.showModal();first.showModal()">Ouvrir</button>
       <ul style="margin-top:400px"><li><a href="#a" onclick="said.textContent='un'">Voir</a></li><li><a href="#b" onclick="said.textContent='deux'">Voir</a></li></ul>`);
   });
   await new Promise<void>((resolve) => server.listen(0, resolve));
@@ -352,9 +354,11 @@ test("when two dialogs are stacked, the one on top is named, or the nth element 
   try {
     const top: Journey = { slug: "top", name: "Top", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "button", name: "Plus tard", within: { role: "dialog", top: true } } }, { do: "see", text: "dessus" }] };
     const second: Journey = { slug: "nth", name: "Nth", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "Voir", nth: 2 } }, { do: "see", text: "deux" }] };
+    const native: Journey = { slug: "native", name: "Native", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "button", name: "Ouvrir" } }, { do: "click", target: { role: "button", name: "Fermer", within: { role: "dialog", top: true } } }, { do: "see", text: "natif dessus" }] };
     const twice: Journey = { slug: "twice", name: "Twice", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "button", name: "Plus tard" } }] };
-    const report = await replayJourneys({ url, journeys: [top, second, twice], outDir: dir, widths: [1280] });
-    const [t, n, w] = report.journeys.map((j) => j.runs[0]!.broken);
+    const report = await replayJourneys({ url, journeys: [top, second, twice, native], outDir: dir, widths: [1280] });
+    const [t, n, w, d] = report.journeys.map((j) => j.runs[0]!.broken);
+    assert.equal(d, null, "the native dialog opened last is on top, though it comes first in the page");
     assert.equal(t, null, "the dialog on top");
     assert.equal(n, null, "the second link");
     assert.match(w!.reason, /2 elements match button "Plus tard": name its container with "within", the dialog on top with "within": \{ "role": "dialog", "top": true \}, or one of them with "nth"/);

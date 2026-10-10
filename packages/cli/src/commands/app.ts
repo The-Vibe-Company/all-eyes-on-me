@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, signedInFrom, signInOnce, SignInError, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -87,7 +87,7 @@ export async function withConfig<T extends { url?: string; start?: string; pages
  * returns "failed" when it cannot sign in. No value of the account or the
  * session is ever printed.
  */
-export async function signInFromConfig(url: string): Promise<{ signedIn: SignedIn; account: Record<string, string>; relogin: () => Promise<SignedIn> } | null | "failed"> {
+export async function signInFromConfig(url: string): Promise<{ signedIn: SignedIn; account: Record<string, string>; relogin: () => Promise<SignedIn>; kind: "form" | "state" | "script" } | null | "failed"> {
   let login;
   try {
     login = (await loadConfig()).login;
@@ -103,18 +103,18 @@ export async function signInFromConfig(url: string): Promise<{ signedIn: SignedI
         const text = await readFile(login.state, "utf8").catch((error: NodeJS.ErrnoException) => {
           throw new SignInError(`Cannot read the saved session ${login.state}: ${error.code === "ENOENT" ? "the file does not exist" : "the file cannot be read"}.`);
         });
-        return signedInFrom(text, url);
+        return usableSession(signedInFrom(text, url));
       }
       const printed = await promisify(exec)(login.script, { env: { ...process.env, AEOM_URL: url }, timeout: 60_000, maxBuffer: 1 << 20 }).catch((error: { code?: number | string }) => {
         // What the script printed may hold a secret: only its exit is said.
         throw new SignInError(`The login script exited with ${error.code ?? "an error"}: run it by hand to see why.`);
       });
-      return signedInFrom(printed.stdout, url);
+      return usableSession(signedInFrom(printed.stdout, url));
     };
     try {
       const signedIn = await read();
       console.log("state" in login ? `Signed in with the session in ${login.state}` : "Signed in with what the login script printed");
-      return { signedIn, account: {}, relogin: read };
+      return { signedIn, account: {}, relogin: read, kind: "state" in login ? "state" : "script" };
     } catch (error) {
       if (!(error instanceof SignInError)) throw error;
       console.error(error.message);
@@ -137,10 +137,11 @@ export async function signInFromConfig(url: string): Promise<{ signedIn: SignedI
     const how: SignIn = { path: login.path, account, submit: login.submit };
     const signedIn = await signInOnce(url, how);
     console.log(`Signed in on ${login.path} with the account in ${login.account}`);
-    return { signedIn, account, relogin: () => signInOnce(url, how) };
+    return { signedIn, account, relogin: () => signInOnce(url, how), kind: "form" };
   } catch (error) {
     if (!(error instanceof SignInError)) throw error;
     console.error(error.message);
     return "failed";
   }
 }
+

@@ -70,3 +70,12 @@ test("a screen or journey one report has and another leaves out is missing, and 
   assert.deepEqual(v.missing, ["/commandes was checked but not judged", "/contact was judged but not checked", "the journey help was not replayed", 'the journey "See my orders" was not judged']);
   assert.deepEqual(verdictOf({ check: { ...check(), pages: [] }, judge: judge({}) }).missing, ["no page was checked"]);
 });
+
+test("a screen whose record changes at every visit, checked as /sessions/124 and judged as /sessions/123, is one screen: the verdict decides", () => {
+  const checked: CheckReport = { ...check([{ check: "contrast", url: "http://x/sessions/124", width: 1280, message: "pale" }]), pages: ["http://x/", "http://x/sessions/124"] };
+  const v = verdictOf({ check: checked, judge: judge({ "/": [], "/sessions/123": ["states"] }) });
+  assert.deepEqual(v.missing, []);
+  assert.deepEqual(v.failures.map((f) => f.where).sort(), ["/sessions/123", "/sessions/123"], "named once, as the judges saw it");
+  const other: CheckReport = { ...check(), pages: ["http://x/", "http://x/autre"] };
+  assert.match(verdictOf({ check: other, judge: judge({ "/": [], "/sessions/123": [] }) }).missing.join("\n"), /\/autre was checked but not judged/);
+});

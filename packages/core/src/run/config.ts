@@ -84,13 +84,14 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
   }
   const login = (parsed as Record<string, unknown>).login;
   if (login !== undefined) {
-    const l = (login ?? {}) as Record<string, unknown>;
+    if (!login || typeof login !== "object" || Array.isArray(login)) throw new ConfigError(`${file}: "login" is one of three: a form ("path", "account", "submit"), a saved session ("state"), or a script that prints one ("script").`);
+    const l = login as Record<string, unknown>;
     const ways = [["path", "account", "submit"].some((k) => k in l), "state" in l, "script" in l].filter(Boolean).length;
-    if (typeof login !== "object" || ways > 1) throw new ConfigError(`${file}: "login" is one of three: a form ("path", "account", "submit"), a saved session ("state"), or a script that prints one ("script").`);
+    if (ways > 1) throw new ConfigError(`${file}: "login" is one of three: a form ("path", "account", "submit"), a saved session ("state"), or a script that prints one ("script").`);
     for (const key of ["state", "script"] as const) {
       if (!(key in l)) continue;
       if (typeof l[key] !== "string" || !(l[key] as string).trim()) throw new ConfigError(`${file}: "login.${key}" is ${key === "state" ? "the file of a saved session" : "the command that prints a session"}.`);
-      config.login = key === "state" ? { state: l.state as string } : { script: l.script as string };
+      config.login = key === "state" ? { state: (l.state as string).trim() } : { script: (l.script as string).trim() };
       return config;
     }
     const missing = (["path", "account", "submit"] as const).filter((k) => typeof l[k] !== "string" || !(l[k] as string).trim());
