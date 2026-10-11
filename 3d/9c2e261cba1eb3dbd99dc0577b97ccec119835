@@ -1,0 +1,35 @@
+site/pages/index.html
+  s_4ce34ec42d9105::t_780c4fd32f5128 14-16,18,22-25,27,31,36,39-40,49-50,55,58
+site/shared/kit.css
+  s_4ce34ec42d9105::t_e3a827a625bf6e 1-38,41-275,277-324
+site/shared/kit.js
+  s_4ce34ec42d9105::t_3ddee7c2a6a329 73-89
+site/shared/footer.html
+  s_33bf329e20a00a::t_20c0a10772f518 2
+site/shared/head.html
+  s_33bf329e20a00a::t_95638f00dc8781 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d9c2e261cba1eb3dbd99dc0577b97ccec119835",
+  "prompts": {},
+  "sessions": {
+    "s_33bf329e20a00a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a1f61cd5b543b8ba8",
+        "model": "unknown"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    },
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
