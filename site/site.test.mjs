@@ -151,13 +151,10 @@ test("the build refuses any folder whose emptying would delete the site", () => 
   }
 });
 
-test("the page shows one run: the demo shop before and after, at phone and desktop width", () => {
-  for (const side of ["before", "after"]) {
-    for (const width of [390, 1280]) {
-      assert.ok(existsSync(new URL(`site/shared/demo/${side}@${width}.webp`, root)), `${side} at ${width} px is missing`);
-      assert.match(page, new RegExp(`/shared/demo/${side}@${width}\\.webp`));
-    }
-  }
+test("the page says the three things AEOM does, the one not built yet marked as coming", () => {
+  for (const what of ["It judges.", "It redesigns.", "It keeps it."]) assert.ok(page.includes(what), `${what} is missing`);
+  assert.match(page.split("It keeps it.")[0].split("It redesigns.")[1] ?? "", /class="soon"/, "keeping every pull request is not built yet: it says so");
+  assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
   const words = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  assert.ok(words.length < 1600, `the page stays short, ${words.length} characters of text: what does not fit is in the README`);
+  assert.ok(words.length < 1000, `the page stays short, ${words.length} characters of text: what does not fit is in the README`);
 });

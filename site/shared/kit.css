@@ -1,16 +1,137 @@
-/* The landing's first version, bare: no art direction yet. AEOM draws one on it. */
-body { margin: 0 auto; max-width: 960px; padding: 0 16px; font-family: system-ui, sans-serif; line-height: 1.5; color: #111; background: #fff; }
-.skip { position: absolute; left: -9999px; }
-.skip:focus { left: 16px; top: 16px; }
-.masthead, .colophon { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; }
-img { max-width: 100%; height: auto; display: block; }
-.before-after { display: grid; gap: 16px; }
-@media (min-width: 701px) { .before-after { grid-template-columns: 1fr 1fr; } }
-figure { margin: 0; }
-a, button { cursor: pointer; }
-pre { overflow-x: auto; background: #f4f4f4; padding: 12px; }
-.btn { display: inline-block; padding: 8px 14px; border: 1px solid #111; color: #111; text-decoration: none; }
-.btn--primary { background: #111; color: #fff; }
-.btn__count:not([hidden])::before { content: " · "; }
-.ln { display: block; }
-.film__head { display: flex; justify-content: space-between; align-items: center; }
+/* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
+   Pages link this file and include head, header and footer.
+   Classes: .btn (.btn--hot), .eye (.eye--small, .eye--giant), .kicker, .feature (--judge, --redesign, --keep) with .mock, .pin, .trio, .look, .pr, .soon, .sk (skeleton lines), .try, .film (copy block). */
+
+:root {
+  --sun: #ffd84d;
+  --ink: #16130f;
+  --hot: #ff5a3c;
+  --sky: #9ed8ff;
+  --pink: #ffbfd8;
+  --paper: #fffaf0;
+  --gutter: clamp(16px, 4vw, 48px);
+  --radius: 18px;
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--sun); color: var(--ink); font: 500 18px/1.45 var(--display); -webkit-font-smoothing: antialiased; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; cursor: pointer; }
+a:hover { color: var(--hot); }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
+h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip { position: absolute; left: -9999px; top: 12px; background: var(--ink); color: var(--sun); padding: 8px 14px; border-radius: 10px; z-index: 10; }
+.skip:focus { left: 12px; }
+
+/* The eye: a white ball with an ink rim, its pupil moved by kit.js toward the pointer. */
+.eye { display: inline-block; position: relative; width: 0.78em; height: 0.78em; border-radius: 50%; background: #fff; border: 0.07em solid var(--ink); vertical-align: -0.06em; margin-right: 0.02em; }
+.eye i { position: absolute; width: 44%; height: 44%; left: 28%; top: 28%; border-radius: 50%; background: var(--ink); transform: translate(var(--px, 18%), var(--py, 4%)); transition: transform 0.12s ease-out; }
+.eye i::after { content: ""; position: absolute; width: 28%; height: 28%; left: 18%; top: 18%; border-radius: 50%; background: #fff; }
+.eye--small { width: 1.1em; height: 1.1em; border-width: 2px; margin-right: 8px; vertical-align: -0.2em; }
+.eye--giant { width: min(36vw, 420px); height: min(36vw, 420px); border-width: clamp(10px, 1.6vw, 22px); box-shadow: 0 30px 60px rgba(22, 19, 15, 0.18); }
+.eye i { transition: transform 0.45s cubic-bezier(.3, 1.4, .5, 1); }
+.eye.is-following i { transition-duration: 0.12s; }
+/* A blink: the eye closes from top and bottom, fast, then opens. */
+.eye.is-blinking { animation: blink 0.18s ease-in-out; }
+@keyframes blink { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.08); } }
+
+/* Header and footer */
+.masthead { display: flex; justify-content: space-between; align-items: center; padding: 20px var(--gutter); }
+.brand { font-weight: 800; font-size: 20px; letter-spacing: 0.02em; text-decoration: none; display: inline-flex; align-items: center; }
+.masthead__repo { font-weight: 700; }
+.colophon { display: flex; align-items: center; gap: 12px; padding: 28px var(--gutter); background: var(--ink); color: var(--paper); font-size: 15px; }
+.colophon p { margin: 0; }
+.colophon a:hover { color: var(--sun); }
+
+/* Buttons: one style, chunky and friendly. */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border: 2px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); font: 800 17px/1 var(--display); text-decoration: none; box-shadow: 3px 3px 0 var(--ink); cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.btn:hover { color: var(--ink); transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); }
+.btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+.btn--hot { background: var(--hot); }
+.btn__count:not([hidden])::before { content: "★ "; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 0; }
+
+/* Hero: the title and its eye, and a fan of looks. */
+.hero { display: grid; gap: 32px; padding: 24px var(--gutter) 72px; align-items: center; overflow: hidden; }
+.kicker { display: inline-block; margin: 0 0 20px; padding: 6px 14px; border-radius: 999px; background: var(--ink); color: var(--sun); font-size: 15px; font-weight: 700; }
+.hero h1 { font-size: clamp(68px, 13.5vw, 184px); line-height: 0.86; letter-spacing: -0.05em; }
+.hero__line { display: block; white-space: nowrap; }
+.hero__lede { font-size: clamp(20px, 2vw, 24px); max-width: 26ch; margin: 24px 0 0; }
+.hero__eye { display: none; }
+@media (min-width: 980px) {
+  .hero { grid-template-columns: 1.4fr 1fr; min-height: calc(100vh - 80px); padding-top: 8px; }
+  .hero__eye { display: grid; place-items: center; }
+}
+
+/* The three things AEOM does, each a block with its drawing. */
+.feature { display: grid; gap: 40px; align-items: center; padding: 104px var(--gutter); overflow-x: clip; }
+.feature h2 { font-size: clamp(52px, 8vw, 120px); line-height: 0.9; }
+.feature__text p:not(.feature__num) { font-size: clamp(20px, 1.9vw, 24px); max-width: 30ch; margin: 20px 0 0; }
+.feature__num { margin: 0 0 12px; font: 800 18px/1 var(--display); display: flex; align-items: center; gap: 10px; }
+.soon { padding: 5px 10px; border-radius: 999px; background: var(--hot); color: var(--ink); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+.feature--judge { background: var(--sun); }
+.feature--redesign { background: var(--ink); color: var(--paper); }
+.feature--redesign h2, .feature--redesign .feature__num { color: var(--sun); }
+.feature--keep { background: var(--sky); }
+@media (min-width: 980px) {
+  .feature { grid-template-columns: 1fr 1.1fr; gap: 72px; }
+  .feature--redesign .feature__text { order: 2; }
+}
+
+/* Skeleton lines: a screen drawn without words. */
+.sk { display: block; height: 14px; border-radius: 7px; background: rgba(22, 19, 15, 0.16); margin-bottom: 12px; }
+.sk--title { height: 26px; width: 62%; background: var(--ink); margin-bottom: 18px; }
+.sk--short { width: 44%; }
+.sk--pale { background: rgba(22, 19, 15, 0.07); }
+.sk--button { width: 34%; height: 40px; border-radius: 10px; background: #e7e2d8; margin-top: 20px; }
+.sk--empty { height: 90px; margin-top: 22px; border-radius: 12px; background: transparent; border: 2px dashed rgba(22, 19, 15, 0.22); }
+
+/* 01: a screen with numbered pins on what fails. */
+.mock { position: relative; background: #fff; border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: 0 24px 48px rgba(22, 19, 15, 0.18); max-width: 560px; justify-self: center; width: 100%; }
+.mock__bar { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 2px solid var(--ink); }
+.mock__bar i { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); opacity: 0.25; }
+.mock__body { padding: 28px 28px 32px; }
+.pin { position: absolute; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border: 2px solid var(--ink); border-radius: 999px; background: var(--hot); font: 800 14px/1 var(--display); box-shadow: 3px 3px 0 var(--ink); white-space: nowrap; }
+.pin b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--sun); font-size: 13px; }
+.pin--1 { right: -6px; top: 33%; transform: rotate(3deg); }
+@media (min-width: 980px) { .pin--1 { right: -18px; } }
+.pin--2 { left: 30%; top: 56%; transform: rotate(-3deg); }
+.pin--3 { right: 8%; bottom: -16px; transform: rotate(2deg); }
+
+/* 02: three looks of one screen, the picked one raised. */
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: center; max-width: 620px; justify-self: center; width: 100%; }
+.look { position: relative; aspect-ratio: 3 / 4; border-radius: var(--radius); padding: 18px 16px; border: 2px solid var(--paper); }
+.look .sk--title { width: 80%; height: 18px; }
+.look .sk { height: 10px; }
+.look .sk--button { width: 56%; height: 28px; }
+.look--forest { background: #1f4d3a; } .look--forest .sk { background: rgba(255, 250, 240, 0.35); } .look--forest .sk--title { background: #f3e9d2; } .look--forest .sk--button { background: #e9b949; }
+.look--coral { background: var(--paper); transform: translateY(-18px) scale(1.06); box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35); border-color: var(--sun); } .look--coral .sk { background: rgba(22, 19, 15, 0.15); } .look--coral .sk--title { background: var(--ink); } .look--coral .sk--button { background: var(--hot); }
+.look--night { background: #232a5c; } .look--night .sk { background: rgba(255, 255, 255, 0.3); } .look--night .sk--title { background: var(--pink); } .look--night .sk--button { background: var(--sky); }
+.sticker { position: absolute; top: -14px; right: -12px; padding: 6px 12px; border-radius: 999px; background: var(--sun); color: var(--ink); font: 800 14px/1 var(--display); transform: rotate(6deg); border: 2px solid var(--ink); }
+
+/* 03: a pull request and its checks against the standard. */
+.pr { background: #fff; border: 2px solid var(--ink); border-radius: var(--radius); padding: 24px 26px; box-shadow: 0 24px 48px rgba(22, 19, 15, 0.18); max-width: 520px; justify-self: center; width: 100%; }
+.pr__title { margin: 0 0 18px; font-weight: 800; font-size: 22px; }
+.pr__title span { color: rgba(22, 19, 15, 0.7); font-weight: 600; }
+.pr ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pr li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 17px; }
+.pr li::before { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-weight: 800; flex: none; }
+.pr .ok { background: #e3f6e9; } .pr .ok::before { content: "✓"; background: #1f8a4c; color: #fff; }
+.pr .ko { background: #ffe3dc; } .pr .ko::before { content: "✕"; background: var(--hot); color: var(--ink); }
+
+/* Try it */
+.try { background: var(--paper); padding: 96px var(--gutter) 104px; }
+.try h2 { font-size: clamp(44px, 7vw, 104px); line-height: 0.92; margin-bottom: 32px; }
+.film { background: var(--ink); color: var(--paper); border-radius: var(--radius); max-width: 860px; overflow: hidden; }
+.film__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px 0 20px; font-weight: 700; font-size: 14px; color: var(--sun); }
+.film pre { margin: 0; padding: 16px 20px 22px; overflow-x: auto; font: 500 15px/1.7 var(--mono); }
+.ln { display: block; white-space: pre; }
+.ln::before { content: "$ "; color: var(--hot); }
+.copy { padding: 8px 14px; border: 2px solid var(--sun); border-radius: 10px; background: var(--sun); color: var(--ink); font: 800 14px/1 var(--display); cursor: pointer; }
+.copy:hover { background: transparent; color: var(--sun); }
+.try p { font-size: 20px; margin: 24px 0 0; }
+.try code, .hero code { font: 500 0.9em var(--mono); background: var(--ink); color: var(--sun); padding: 2px 7px; border-radius: 6px; }

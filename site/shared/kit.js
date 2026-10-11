@@ -1,16 +1,51 @@
 // AEOM landing kit: the small behaviours the kit's components need.
 
-// A plate with two views: the slider moves the line between them.
-for (const plate of document.querySelectorAll("[data-compare]")) {
-  const view = plate.querySelector(".plate__view");
-  const input = plate.querySelector(".compare__input");
-  if (!view || !input) continue;
-  const move = () => {
-    view.style.setProperty("--split", `${input.value}%`);
-    input.setAttribute("aria-valuetext", `${input.value}% visible light, ${100 - Number(input.value)}% infrared`);
+// The eyes are alive: they follow the pointer while it moves, look around on
+// their own when it rests (and on a phone), and blink now and then. Nothing
+// moves for a visitor who asks for less motion.
+const eyes = [...document.querySelectorAll(".eye")];
+if (eyes.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const look = (eye, x, y) => {
+    const pupil = eye.querySelector("i");
+    pupil.style.setProperty("--px", `${x}%`);
+    pupil.style.setProperty("--py", `${y}%`);
   };
-  input.addEventListener("input", move);
-  move();
+  let resting;
+  const wander = () => {
+    for (const eye of eyes) {
+      eye.classList.remove("is-following");
+      const angle = Math.random() * Math.PI * 2;
+      const reach = 10 + Math.random() * 20;
+      look(eye, Math.cos(angle) * reach, Math.sin(angle) * reach);
+    }
+    resting = setTimeout(wander, 900 + Math.random() * 1600);
+  };
+  addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch") return;
+    clearTimeout(resting);
+    for (const eye of eyes) {
+      eye.classList.add("is-following");
+      const box = eye.getBoundingClientRect();
+      const dx = event.clientX - (box.left + box.width / 2);
+      const dy = event.clientY - (box.top + box.height / 2);
+      const far = Math.hypot(dx, dy) || 1;
+      const reach = Math.min(1, far / 300) * 28;
+      look(eye, (dx / far) * reach, (dy / far) * reach);
+    }
+    resting = setTimeout(wander, 2500);
+  });
+  wander();
+  const blink = () => {
+    for (const eye of eyes) {
+      eye.classList.remove("is-blinking");
+      void eye.offsetWidth;
+      eye.classList.add("is-blinking");
+    }
+    // Now and then, a second blink right after the first.
+    const twice = Math.random() < 0.25;
+    setTimeout(blink, twice ? 260 : 2200 + Math.random() * 3800);
+  };
+  setTimeout(blink, 1600);
 }
 
 // Copies text with the Clipboard API, which needs a secure page and the
