@@ -24,9 +24,9 @@ test("the commands in the README are exactly the CLI's, with its words", () => {
 });
 
 test("the README and the page say what AEOM is in one sentence, then what works today, apart from what comes", () => {
-  const sentence = "All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.";
+  const sentence = "All Eyes On Me is the designer of a product coded by agents: it walks its screens and journeys like a user, redesigns what gets in the way, and holds every pull request to the standard it sets.";
   assert.ok(readme.split("\n").slice(0, 4).join(" ").includes(sentence), "the README opens on the sentence");
-  assert.match(page, /the art director of a product coded by agents/i, "the page says what AEOM is, in short");
+  assert.match(page, /the designer of a product coded by agents/i, "the page says what AEOM is, in short");
   const today = readme.split("## What it does today")[1]?.split("\n## ")[0] ?? "";
   const next = readme.split("## What comes next")[1]?.split("\n## ")[0] ?? "";
   assert.ok(today && next, "the README has « What it does today » and « What comes next »");
@@ -152,8 +152,8 @@ test("the build refuses any folder whose emptying would delete the site", () => 
 });
 
 test("the page says the three things AEOM does, the one not built yet marked as coming", () => {
-  for (const what of ["It judges your front.", "It redesigns your front.", "It checks every PR against it."]) assert.ok(page.includes(what), `${what} is missing`);
-  assert.match(page.split("It checks every PR against it.")[0].split("It redesigns your front.")[1] ?? "", /class="soon"/, "checking every pull request is not built yet: it says so");
+  for (const what of ["It walks your product like a user.", "It redesigns what gets in the way.", "It keeps the line."]) assert.ok(page.includes(what), `${what} is missing`);
+  assert.match(page.split("It keeps the line.")[0].split("It redesigns what gets in the way.")[1] ?? "", /class="soon"/, "keeping every pull request to the standard is not built yet: it says so");
   assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
   // The prose only: what a drawing shows, such as a terminal's lines, is not read as text to wade through.
   let prose = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "");
