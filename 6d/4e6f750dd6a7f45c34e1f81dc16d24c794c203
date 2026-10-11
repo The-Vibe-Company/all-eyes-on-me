@@ -1,0 +1,25 @@
+README.md
+  s_4ce34ec42d9105::t_9f208238c44577 3
+site/pages/index.html
+  s_4ce34ec42d9105::t_cd8f587f5ab268 7,16,18,21-33,41-42,44-50,57-58,60-67,74-75,78-82
+site/shared/kit.css
+  s_4ce34ec42d9105::t_759cea8b58b55a 3,64-68,88-108,110-125
+site/site.test.mjs
+  s_4ce34ec42d9105::t_d08bf18ee37be7 27,29,155-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6d4e6f750dd6a7f45c34e1f81dc16d24c794c203",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
