@@ -18,16 +18,16 @@
     <p class="hero__lede">Your agents ship features. AEOM makes them look and work like someone designed them.</p>
     <p class="actions"><a class="btn btn--hot" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it</a></p>
   </div>
-  <div class="crowd" data-visual aria-hidden="true">
-    <span class="eye" style="--s:170px;--x:34%;--y:30%"><i></i></span>
-    <span class="eye eye--sky" style="--s:96px;--x:76%;--y:14%"><i></i></span>
-    <span class="eye eye--hot" style="--s:74px;--x:10%;--y:8%"><i></i></span>
-    <span class="eye" style="--s:58px;--x:86%;--y:52%"><i></i></span>
-    <span class="eye eye--pink" style="--s:118px;--x:66%;--y:74%"><i></i></span>
-    <span class="eye eye--sky" style="--s:52px;--x:16%;--y:70%"><i></i></span>
-    <span class="eye" style="--s:84px;--x:36%;--y:88%"><i></i></span>
-    <span class="eye eye--hot" style="--s:40px;--x:56%;--y:4%"><i></i></span>
-    <span class="eye" style="--s:34px;--x:94%;--y:86%"><i></i></span>
+  <div class="walk walk--hero" data-visual aria-hidden="true">
+    <svg viewBox="0 0 600 470" class="walk__map">
+      <rect x="20" y="40" width="160" height="250" rx="24"/>
+      <rect x="220" y="170" width="160" height="250" rx="24"/>
+      <rect x="420" y="40" width="160" height="250" rx="24"/>
+      <path id="hero-path" class="walk__path" d="M100 160 C 160 160, 190 300, 300 295 S 430 150, 500 165"/>
+      <g class="walk__knot walk__knot--1" transform="translate(300 295)"><circle r="24"/><path class="walk__x" d="M-8 -8 L8 8 M8 -8 L-8 8"/><path class="walk__v" d="M-10 0 L-3 8 L11 -8"/></g>
+      <g class="walk__knot walk__knot--2" transform="translate(500 165)"><circle r="24"/><path class="walk__x" d="M-8 -8 L8 8 M8 -8 L-8 8"/><path class="walk__v" d="M-10 0 L-3 8 L11 -8"/></g>
+      <g class="walk__eye"><circle r="26" class="walk__ball"/><circle r="11" cx="5" class="walk__pupil"/><circle r="3.5" cx="2" cy="-4" fill="#fff"/><animateMotion dur="8s" repeatCount="indefinite" keyPoints="0;0.5;0.5;1;1" keyTimes="0;0.33;0.45;0.75;1" calcMode="linear"><mpath href="#hero-path"/></animateMotion></g>
+    </svg>
   </div>
 </section>
 
@@ -37,15 +37,18 @@
     <h2 id="judge-title">It walks your product like a user.</h2>
     <p>It replays your key journeys on phone and desktop, judges every screen and every step, and says plainly what gets in the way.</p>
   </div>
-  <div class="walk" data-visual aria-hidden="true">
+  <div class="gaze" data-visual aria-hidden="true">
     <svg viewBox="0 0 600 380" class="walk__map">
-      <rect x="20" y="40" width="150" height="230" rx="22"/>
-      <rect x="225" y="110" width="150" height="230" rx="22"/>
-      <rect x="430" y="40" width="150" height="230" rx="22"/>
-      <path id="walk-path" class="walk__path" d="M95 150 C 150 150, 180 230, 300 225 S 420 120, 505 150"/>
-      <g class="walk__knot" transform="translate(300 225)"><circle r="20"/><path d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
-      <g class="walk__knot" transform="translate(505 150)"><circle r="20"/><path d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
-      <g class="walk__eye"><circle r="22" class="walk__ball"/><circle r="9" cx="4" class="walk__pupil"/><circle r="3" cx="1" cy="-3" fill="#fff"/><animateMotion dur="7s" repeatCount="indefinite" keyPoints="0;0.5;0.5;1;1" keyTimes="0;0.42;0.55;0.92;1" calcMode="linear"><mpath href="#walk-path"/></animateMotion></g>
+      <rect x="250" y="40" width="330" height="220" rx="18"/>
+      <rect x="270" y="58" width="290" height="12" rx="6" class="gaze__bar"/>
+      <rect x="120" y="150" width="110" height="200" rx="20"/>
+      <g class="gaze__eye" transform="translate(70 70)"><circle r="40" class="walk__ball"/><circle r="17" cx="12" cy="6" class="walk__pupil"/><circle r="5" cx="8" cy="0" fill="#fff"/></g>
+      <path class="walk__path" d="M110 80 L 410 150"/>
+      <path class="walk__path" d="M100 105 L 175 300"/>
+      <path class="walk__path" d="M110 90 L 520 210"/>
+      <g class="walk__knot" transform="translate(410 150)"><circle r="20"/><path d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
+      <g class="walk__knot" transform="translate(175 300)"><circle r="20"/><path d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
+      <g class="walk__knot walk__knot--ok" transform="translate(520 210)"><circle r="20"/><path d="M-9 0 L-3 7 L10 -7"/></g>
     </svg>
   </div>
 </section>

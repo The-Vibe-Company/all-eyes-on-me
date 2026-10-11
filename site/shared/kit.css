@@ -1,6 +1,6 @@
 /* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
    Pages link this file and include head, header and footer.
-   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .crowd, .feature (--judge, --redesign, --keep) with .walk, .tidy, .line, .soon, .try, .film (copy block). */
+   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --redesign, --keep) with .gaze, .tidy, .line, .soon, .try, .film (copy block). */
 
 :root {
   --sun: #ffd84d;
@@ -61,15 +61,24 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .hero h1 { font-size: clamp(68px, 13.5vw, 184px); line-height: 0.86; letter-spacing: -0.05em; }
 .hero__line { display: block; white-space: nowrap; }
 .hero__lede { font-size: clamp(20px, 2vw, 24px); max-width: 26ch; margin: 24px 0 0; }
-/* The hero's crowd: eyes of every size, all on you. */
-.crowd { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; justify-self: center; }
-.crowd .eye { position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); border-width: max(3px, calc(var(--s) * 0.06)); transform: translate(-50%, -50%); margin: 0; box-shadow: 0 calc(var(--s) * 0.12) calc(var(--s) * 0.24) rgba(22, 19, 15, 0.16); }
-.crowd .eye.is-blinking { animation-name: blink-crowd; }
-@keyframes blink-crowd { 0%, 100% { transform: translate(-50%, -50%) scaleY(1); } 50% { transform: translate(-50%, -50%) scaleY(0.08); } }
-.eye--sky i { background: radial-gradient(circle, var(--ink) 46%, #3d8fd1 48%); }
-.eye--hot i { background: radial-gradient(circle, var(--ink) 46%, var(--hot) 48%); }
-.eye--pink i { background: radial-gradient(circle, var(--ink) 46%, #e0679b 48%); }
-@media (max-width: 979px) { .crowd { max-width: 420px; margin: 0 auto; } }
+/* The hero's walk: the eye goes through the product, stops at each knot, and the knot comes undone. */
+.walk--hero { max-width: 600px; }
+.walk__v { opacity: 0; }
+.walk--hero .walk__knot circle { animation: knot-fill 8s linear infinite; }
+.walk--hero .walk__knot--2 circle { animation-name: knot-fill-2; }
+.walk--hero .walk__knot--1 .walk__x { animation: knot-x 8s linear infinite; }
+.walk--hero .walk__knot--2 .walk__x { animation: knot-x-2 8s linear infinite; }
+.walk--hero .walk__knot--1 .walk__v { animation: knot-v 8s linear infinite; }
+.walk--hero .walk__knot--2 .walk__v { animation: knot-v-2 8s linear infinite; }
+.walk__v { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes knot-fill { 0%, 38% { fill: var(--hot); } 42%, 96% { fill: #1f8a4c; } 100% { fill: var(--hot); } }
+@keyframes knot-fill-2 { 0%, 70% { fill: var(--hot); } 74%, 96% { fill: #1f8a4c; } 100% { fill: var(--hot); } }
+@keyframes knot-x { 0%, 38% { opacity: 1; } 42%, 96% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes knot-x-2 { 0%, 70% { opacity: 1; } 74%, 96% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes knot-v { 0%, 38% { opacity: 0; } 42%, 96% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes knot-v-2 { 0%, 70% { opacity: 0; } 74%, 96% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .walk--hero .walk__knot circle, .walk--hero .walk__x, .walk--hero .walk__v { animation: none; } }
+
 @media (min-width: 980px) {
   .hero { grid-template-columns: 1.15fr 1fr; min-height: calc(100vh - 80px); padding-top: 8px; }
 }
@@ -98,6 +107,12 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .walk__knot path { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
 .walk__ball { fill: #fff; stroke: var(--ink); stroke-width: 4; }
 .walk__pupil { fill: var(--ink); }
+
+/* 01: the eye's gaze on a phone and a desktop, knots where it catches. */
+.gaze { max-width: 600px; width: 100%; justify-self: center; }
+.gaze__bar { fill: var(--ink) !important; stroke: none !important; opacity: 0.85; }
+.walk__knot--ok circle { fill: #1f8a4c; }
+.walk__knot--ok path { stroke: #fff; fill: none; stroke-linejoin: round; }
 
 /* 02: shapes that do not go together, then put in order when seen. */
 .tidy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 420px; width: 100%; justify-self: center; }
