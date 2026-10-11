@@ -4,260 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>All Eyes On Me</title>
-<meta name="description" content="The art director of a product coded by agents. Type /aeom: it takes your front and makes a better one, on an art direction drawn from your product. Open source.">
+<meta name="description" content="The art director of a product coded by agents. Type /aeom: it judges every screen, redraws your front on a direction drawn from your product, and opens a pull request.">
 <!-- include: head -->
 </head>
 <body>
 <!-- include: header -->
 <main id="main">
 
-<section class="wrap grid hero" aria-labelledby="title">
-  <div class="hero__text">
-    <p class="kicker"><span class="kicker__ref">01</span> Open-source CLI and Claude Code skills</p>
-    <h1 id="title">All Eyes On Me</h1>
-    <p class="lede">All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.</p>
-    <p>Today, the first works. You type <code>/aeom</code> in Claude Code on your app: it says what the run will cost, then takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.</p>
-    <p>It has been run on two real projects, besides demo apps and this page, rebuilt by an earlier version: a strategy game in the browser, end to end, and a workout tracker, up to its art directions. What they taught it is in: it knows a game from a tool, asks before its costly waves, and takes up a run its session lost.</p>
-    <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it from source</a></p>
-  </div>
-
-  <figure class="plate" data-compare aria-labelledby="fig-1">
-    <div class="plate__head">
-      <span><b>Fig. 1</b> One screen, two views</span>
-      <span class="plate__bands">VIS / IRR</span>
-    </div>
-    <div class="plate__frame">
-      <div class="scale scale--x" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
-      <div class="scale scale--y" aria-hidden="true"><span>1</span><span>2</span><span>3</span></div>
-      <div class="plate__view">
-        <svg class="view view--vis" viewBox="0 0 400 300" aria-hidden="true" focusable="false">
-          <rect class="v-bg" width="400" height="300"/>
-          <rect class="v-head" width="400" height="36"/>
-          <circle class="v-accent" cx="22" cy="18" r="7"/>
-          <rect class="v-head-ink" x="34" y="15" width="40" height="6"/>
-          <rect class="v-head-ink" x="244" y="15" width="26" height="6"/>
-          <rect class="v-head-ink" x="280" y="15" width="26" height="6"/>
-          <rect class="v-head-ink" x="316" y="15" width="26" height="6"/>
-          <rect class="v-accent" x="352" y="10" width="36" height="16"/>
-          <rect class="v-title" x="28" y="60" width="200" height="15"/>
-          <rect class="v-title" x="28" y="81" width="150" height="15"/>
-          <rect class="v-line" x="28" y="110" width="210" height="5"/>
-          <rect class="v-line" x="28" y="121" width="196" height="5"/>
-          <rect class="v-line" x="28" y="132" width="168" height="5"/>
-          <rect class="v-button" x="28" y="152" width="88" height="24"/>
-          <rect class="v-button-ink" x="44" y="162" width="56" height="5"/>
-          <rect class="v-image" x="262" y="56" width="112" height="120"/>
-          <path class="v-image-2" d="M262 176 L300 122 L328 150 L350 130 L374 154 L374 176 Z"/>
-          <rect class="v-card" x="28" y="200" width="104" height="80"/>
-          <rect class="v-card-a" x="28" y="200" width="104" height="34"/>
-          <rect class="v-line" x="38" y="244" width="70" height="5"/>
-          <rect class="v-line" x="38" y="255" width="52" height="5"/>
-          <rect class="v-card" x="150" y="205" width="104" height="80"/>
-          <rect class="v-card-b" x="150" y="205" width="104" height="34"/>
-          <rect class="v-line" x="160" y="249" width="74" height="5"/>
-          <rect class="v-line" x="160" y="260" width="48" height="5"/>
-          <rect class="v-card" x="270" y="200" width="104" height="80"/>
-          <rect class="v-card-c" x="270" y="200" width="104" height="34"/>
-          <rect class="v-line" x="280" y="244" width="66" height="5"/>
-          <rect class="v-line" x="280" y="255" width="56" height="5"/>
-          <path class="v-cursor" d="M100 165 v15 l3.6 -3.4 l3 6.2 l2.6 -1.2 l-3 -6 h5 Z"/>
-        </svg>
-        <svg class="view view--irr" viewBox="0 0 400 300" aria-hidden="true" focusable="false">
-          <defs>
-            <filter id="irr-grain" x="0" y="0" width="100%" height="100%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
-              <feColorMatrix type="saturate" values="0"/>
-            </filter>
-          </defs>
-          <rect class="i-bg" width="400" height="300"/>
-          <g class="i-tiles">
-            <rect x="80" y="0" width="80" height="75"/><rect x="240" y="0" width="80" height="75"/>
-            <rect x="0" y="75" width="80" height="75"/><rect x="160" y="75" width="80" height="75"/><rect x="320" y="75" width="80" height="75"/>
-            <rect x="80" y="150" width="80" height="75"/><rect x="240" y="150" width="80" height="75"/>
-            <rect x="0" y="225" width="80" height="75"/><rect x="160" y="225" width="80" height="75"/><rect x="320" y="225" width="80" height="75"/>
-          </g>
-          <rect class="i-head" width="400" height="36"/>
-          <circle class="i-mid" cx="22" cy="18" r="7"/>
-          <rect class="i-head-ink" x="34" y="15" width="40" height="6"/>
-          <rect class="i-head-ink" x="244" y="15" width="26" height="6"/>
-          <rect class="i-head-ink" x="280" y="15" width="26" height="6"/>
-          <rect class="i-head-ink" x="316" y="15" width="26" height="6"/>
-          <rect class="i-mid" x="352" y="10" width="36" height="16"/>
-          <g class="i-ghost">
-            <line x1="0" y1="52" x2="400" y2="52"/>
-            <rect x="214" y="41" width="30" height="6"/>
-            <rect x="254" y="41" width="30" height="6"/>
-            <rect x="294" y="41" width="30" height="6"/>
-            <rect x="334" y="41" width="30" height="6"/>
-            <rect class="i-ghost-outline" x="28" y="60" width="268" height="15"/>
-          </g>
-          <rect class="i-title" x="28" y="60" width="200" height="15"/>
-          <rect class="i-title" x="28" y="81" width="150" height="15"/>
-          <rect class="i-line" x="28" y="110" width="210" height="5"/>
-          <rect class="i-line" x="28" y="121" width="196" height="5"/>
-          <rect class="i-line" x="28" y="132" width="168" height="5"/>
-          <rect class="i-button" x="28" y="152" width="88" height="24"/>
-          <rect class="i-button-ink" x="44" y="162" width="56" height="5"/>
-          <rect class="i-image" x="262" y="56" width="112" height="120"/>
-          <path class="i-image-2" d="M262 176 L300 122 L328 150 L350 130 L374 154 L374 176 Z"/>
-          <rect class="i-card" x="28" y="200" width="104" height="80"/>
-          <rect class="i-card-a" x="28" y="200" width="104" height="34"/>
-          <rect class="i-line" x="38" y="244" width="70" height="5"/>
-          <rect class="i-line" x="38" y="255" width="52" height="5"/>
-          <rect class="i-card" x="150" y="205" width="104" height="80"/>
-          <rect class="i-card-b" x="150" y="205" width="104" height="34"/>
-          <rect class="i-line" x="160" y="249" width="74" height="5"/>
-          <rect class="i-line" x="160" y="260" width="48" height="5"/>
-          <rect class="i-card" x="270" y="200" width="104" height="80"/>
-          <rect class="i-card-c" x="270" y="200" width="104" height="34"/>
-          <rect class="i-line" x="280" y="244" width="66" height="5"/>
-          <rect class="i-line" x="280" y="255" width="56" height="5"/>
-          <g class="i-under">
-            <line x1="28" y1="44" x2="28" y2="292"/>
-            <line x1="374" y1="44" x2="374" y2="292"/>
-            <line x1="16" y1="200" x2="386" y2="200"/>
-            <line x1="262" y1="56" x2="374" y2="176"/>
-            <line x1="374" y1="56" x2="262" y2="176"/>
-            <line x1="141" y1="190" x2="141" y2="292"/>
-            <line x1="261" y1="190" x2="261" y2="292"/>
-          </g>
-          <path class="i-cursor" d="M100 165 v15 l3.6 -3.4 l3 6.2 l2.6 -1.2 l-3 -6 h5 Z"/>
-          <rect class="i-grain" width="400" height="300" filter="url(#irr-grain)"/>
-        </svg>
-        <svg class="view view--marks" viewBox="0 0 400 300" aria-hidden="true" focusable="false">
-          <g class="m-grid">
-            <line x1="100" y1="0" x2="100" y2="300"/><line x1="200" y1="0" x2="200" y2="300"/><line x1="300" y1="0" x2="300" y2="300"/>
-            <line x1="0" y1="100" x2="400" y2="100"/><line x1="0" y1="200" x2="400" y2="200"/>
-          </g>
-          <g class="m-area">
-            <rect x="206" y="3" width="190" height="54"/>
-            <rect x="22" y="146" width="100" height="40"/>
-            <rect x="144" y="196" width="116" height="94"/>
-          </g>
-          <g class="m-tag">
-            <circle cx="300" cy="57" r="10"/><text x="300" y="61">1</text>
-            <circle cx="122" cy="166" r="10"/><text x="122" y="170">2</text>
-            <circle cx="260" cy="196" r="10"/><text x="260" y="200">3</text>
-          </g>
-        </svg>
-        <span class="plate__label plate__label--vis" aria-hidden="true">VIS</span>
-        <span class="plate__label plate__label--irr" aria-hidden="true">IRR</span>
-        <span class="plate__divider" aria-hidden="true"></span>
-      </div>
-    </div>
-    <figcaption class="plate__under">
-      <label class="compare">
-        <span class="compare__end" aria-hidden="true">Visible</span>
-        <input class="compare__input" type="range" min="0" max="100" value="50" step="1" aria-label="Move the line between the visible-light view and the infrared view">
-        <span class="compare__end" aria-hidden="true">Infrared</span>
-      </label>
-      <div class="target" aria-hidden="true">
-        <div class="target__grey"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="target__colour"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="target__scale"><span>0</span><span>640</span><span>1280 px</span></div>
-      </div>
-      <p id="fig-1" class="plate__caption">One screen in visible light and in infrared. The surface looks finished; underneath, the marks show what an agent improvised.</p>
-      <ol class="notes">
-        <li><span class="notes__ref">C1&ndash;D1</span> A different header on every page.</li>
-        <li><span class="notes__ref">A2</span> A button that does not look clickable.</li>
-        <li><span class="notes__ref">B3&ndash;C3</span> A generic screen, off its own grid.</li>
-      </ol>
-    </figcaption>
-  </figure>
-
-  <dl class="record">
-    <div><dt>Object</dt><dd>A web app's frontend</dd></div>
-    <div><dt>Examined</dt><dd>Every page, at phone and desktop width</dd></div>
-    <div><dt>Judged by</dt><dd>One judge, then two more on what it fails; the majority decides</dd></div>
-    <div><dt>Status</dt><dd>Pre-alpha: run on two real projects, not on npm yet</dd></div>
-    <div><dt>Licence</dt><dd>MIT, open source</dd></div>
-  </dl>
+<section class="hero" aria-labelledby="title">
+  <h1 id="title">All Eyes On Me</h1>
+  <p class="lede">The art director of a product coded by agents.</p>
+  <p>Your agents ship features. AEOM makes the front look like someone cared: type <code>/aeom</code>, it judges every screen, redraws the front on a direction drawn from your product, and opens a pull request.</p>
+  <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it</a></p>
 </section>
 
-<section id="how" class="wrap grid section" aria-labelledby="how-title">
-  <div class="section__head">
-    <p class="kicker"><span class="kicker__ref">02</span> Method</p>
-    <h2 id="how-title">How it works</h2>
+<section id="proof" aria-labelledby="proof-title">
+  <h2 id="proof-title">One run</h2>
+  <div class="before-after">
+    <figure>
+      <picture><source media="(max-width: 700px)" srcset="/shared/demo/before@390.webp"><img src="/shared/demo/before@1280.webp" alt="A shop's product page before AEOM: a bare table of three products on white, green links in a black bar." width="1280" height="800"></picture>
+      <figcaption>Before</figcaption>
+    </figure>
+    <figure>
+      <picture><source media="(max-width: 700px)" srcset="/shared/demo/after@390.webp"><img src="/shared/demo/after@1280.webp" alt="The same page after one run: warm oiled wood, three cards with a drawn lamp, chair and rug, prices and Add buttons." width="1280" height="800"></picture>
+      <figcaption>After</figcaption>
+    </figure>
   </div>
-  <div class="section__body">
-    <ol class="steps">
-      <li><strong>Understand.</strong> <span>It reads your project's own words, then writes what kind of product it is, what it is for, who uses it and its main loop (for a game, its fiction and its illustrations), and replays three to five key journeys in a real browser. Then it says what the run will cost, phase by phase, and waits for your go.</span></li>
-      <li><strong>Look.</strong> <span>It captures every screen at phone and desktop width, measures pointer cursors, sideways scrolling, contrast and console errors, and holds each page to eight principles: one judge on everything, two more on what it fails.</span></li>
-      <li><strong>Decide.</strong> <span>If nothing fails, it says « nothing to redo », writes the standard of the front as it is, and stops. <code>/aeom --juger</code> stops here whatever the verdict: what fails, without redoing anything.</span></li>
-      <li><strong>A new direction.</strong> <span>Three art directions drawn from the product's own world, never from the looks AIs propose by default: things your users know, or a game's fiction and illustrations. A knockout keeps one, and you validate it or choose another before any page is rebuilt. A client's own style can be kept instead.</span></li>
-      <li><strong>Pages, then journeys.</strong> <span>One worker per page, then per journey, each in its own files. A guard refuses any change that adds a feature. Only what got better is kept. If your session closes on the way, <code>/aeom --reprendre</code> takes the run up where it stopped.</span></li>
-      <li><strong>Show.</strong> <span>A result page on your machine, and the features a blocked journey would need, never built.</span></li>
-      <li><strong>The standard, then the PR.</strong> <span>The standard of your front, in words: its direction, every token and component with the file it lives in, its own rules. What you correct in it by hand stays. Then a pull request in words, with no capture.</span></li>
-    </ol>
-    <p>On the demo app, the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0; the measurable checks from 10 to 0; the journeys' failures from 14 to 7; « See my orders » from four steps to three. No feature was added.</p>
-  </div>
+  <p>A deliberately ugly shop, and the same shop after one run. Same pages, same buttons, no feature added.</p>
 </section>
 
-<!-- include: run -->
-
-<section id="commands" class="wrap grid section" aria-labelledby="commands-title">
-  <div class="section__head">
-    <p class="kicker"><span class="kicker__ref">04</span> Legend</p>
-    <h2 id="commands-title">Commands</h2>
-  </div>
-  <div class="section__body">
-    <ul class="legend">
-<li data-command="capture"><code>aeom capture</code> Find every page of a web app and screenshot it</li>
-<li data-command="check"><code>aeom check</code> Run the measurable checks on every page</li>
-<li data-command="judge"><code>aeom judge</code> Count the judges' votes on the captures</li>
-<li data-command="principles"><code>aeom principles</code> Print the principles the judge uses</li>
-<li data-command="snapshot"><code>aeom snapshot</code> Keep a copy of the captures and reports, such as before a fleet run</li>
-<li data-command="compare"><code>aeom compare</code> Compare two snapshots page by page</li>
-<li data-command="sheet"><code>aeom sheet</code> Lay captures side by side in one image</li>
-<li data-command="tournament"><code>aeom tournament</code> Run a knockout between directions, one vote per duel, three for the final</li>
-<li data-command="product"><code>aeom product</code> Write the product sheet AEOM drafted, keeping the user's edits</li>
-<li data-command="journey"><code>aeom journey</code> Replay each key journey and capture every step</li>
-<li data-command="guard"><code>aeom guard</code> Refuse a change that adds a feature instead of fixing a journey</li>
-<li data-command="verdict"><code>aeom verdict</code> Say whether the front needs redoing, from what AEOM measured</li>
-<li data-command="report"><code>aeom report</code> Write the page of what a run gave, in the run's folder</li>
-<li data-command="features"><code>aeom features</code> Name what a blocked journey would need, without building it</li>
-<li data-command="pr"><code>aeom pr</code> Push the run's branch and open a PR, in words, with no capture</li>
-<li data-command="standard"><code>aeom standard</code> Write the standard of the front, keeping the user's edits</li>
-<li data-command="estimate"><code>aeom estimate</code> Say what a run would cost, phase by phase, before it starts</li>
-<li data-command="run"><code>aeom run</code> Keep where a run is, and say how to take it up after a stop</li>
-    </ul>
-  </div>
+<section id="how" aria-labelledby="how-title">
+  <h2 id="how-title">One command</h2>
+  <ol class="steps">
+    <li><strong>It understands your product.</strong> What it is for, who uses it, the journeys that matter.</li>
+    <li><strong>It judges every screen.</strong> At phone and desktop width, against eight principles.</li>
+    <li><strong>You pick a direction.</strong> Three, drawn from your product's own world, never from the looks AIs reach for.</li>
+    <li><strong>It rebuilds, and keeps what got better.</strong> Then a pull request, and the standard your next ones follow.</li>
+  </ol>
 </section>
 
-<section id="try" class="wrap grid section" aria-labelledby="try-title">
-  <div class="section__head">
-    <p class="kicker"><span class="kicker__ref">05</span> Procedure</p>
-    <h2 id="try-title">Try it</h2>
+<section id="try" aria-labelledby="try-title">
+  <h2 id="try-title">Try it</h2>
+  <div class="film" data-copy>
+    <div class="film__head"><span>From the source</span></div>
+    <pre><code><span class="ln">git clone https://github.com/The-Vibe-Company/all-eyes-on-me</span><span class="ln">cd all-eyes-on-me &amp;&amp; pnpm install &amp;&amp; pnpm build</span></code></pre>
   </div>
-  <div class="section__body">
-    <p>AEOM is not on npm yet. From the source, with Node 22 and pnpm:</p>
-    <div class="film" data-copy>
-      <div class="film__head"><span><b class="film__tag">XR</b> From the source</span></div>
-      <pre><code><span class="ln">git clone \</span><span class="ln ln--more">  https://github.com/The-Vibe-Company/all-eyes-on-me</span><span class="ln">cd all-eyes-on-me</span><span class="ln">pnpm install</span><span class="ln">pnpm build</span><span class="ln">pnpm <span class="nw">--filter</span> @aeom/core exec \</span><span class="ln ln--more">  playwright install chromium</span><span class="ln">node packages/cli/dist/index.js <span class="nw">--help</span></span></code></pre>
-    </div>
-    <p>Then put <code>aeom</code> on your <code>PATH</code> and the two skills where Claude Code finds them:</p>
-    <div class="film" data-copy>
-      <div class="film__head"><span><b class="film__tag">XR</b> Link it</span></div>
-      <pre><code><span class="ln">mkdir -p ~/.local/bin ~/.claude/skills</span><span class="ln">export PATH="$HOME/.local/bin:$PATH"</span><span class="ln">ln -s "$PWD/packages/cli/dist/index.js" \</span><span class="ln ln--more">  ~/.local/bin/aeom</span><span class="ln">ln -s "$PWD/skills/aeom" \</span><span class="ln ln--more">  "$PWD/skills/aeom-judge" ~/.claude/skills/</span></code></pre>
-    </div>
-    <p>Your project is a git repository with a clean tree, and your app starts locally with one command, on fake data: its journeys write to it. Type <code>/aeom</code> in Claude Code. A full run is long, some forty subagents for eight screens: <code>aeom estimate</code> says what it costs for your project, <code>/aeom</code> asks before its first judge, and <code>/aeom --juger</code> stops at the verdict.</p>
-  </div>
-</section>
-
-<section id="roadmap" class="wrap grid section" aria-labelledby="roadmap-title">
-  <div class="section__head">
-    <p class="kicker"><span class="kicker__ref">06</span> Layers, first to last</p>
-    <h2 id="roadmap-title">Roadmap</h2>
-  </div>
-  <div class="section__body">
-    <ol class="strata">
-      <li data-stage="done"><strong>Done.</strong> Level 1, run on two real projects: <code>/aeom</code> understands the product, games included, says what the run will cost, judges every screen and journey, rebuilds the front on a direction you validate, or keeps a client's style, writes the standard of the front, and takes up a run its session lost.</li>
-      <li data-stage="now"><strong>Now.</strong> A bench of apps with known defects, measuring what AEOM finds and fixes.</li>
-      <li data-stage="next"><strong>Next, level 2: keep.</strong> Every pull request held to the standard: what can be measured blocks the CI check, the judges comment on whether it is still the same product.</li>
-      <li data-stage="then"><strong>Then, level 3: build.</strong> Build what is asked, or a front from scratch, inside the standard, front only.</li>
-      <li data-stage="later"><strong>Later.</strong> The judges learn your taste from your feedback, a spend cap, the npm package, Codex, mobile.</li>
-    </ol>
-  </div>
+  <p>Then <code>/aeom</code> in Claude Code, in your project. The rest is in the <a href="https://github.com/The-Vibe-Company/all-eyes-on-me#readme">README</a>.</p>
 </section>
 
 </main>
