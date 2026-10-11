@@ -35,18 +35,34 @@ if (eyes.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     resting = setTimeout(wander, 2500);
   });
   wander();
-  const blink = () => {
-    for (const eye of eyes) {
+  // Each eye blinks on its own time, and now and then twice in a row.
+  for (const eye of eyes) {
+    const blink = () => {
       eye.classList.remove("is-blinking");
       void eye.offsetWidth;
       eye.classList.add("is-blinking");
-    }
-    // Now and then, a second blink right after the first.
-    const twice = Math.random() < 0.25;
-    setTimeout(blink, twice ? 260 : 2200 + Math.random() * 3800);
-  };
-  setTimeout(blink, 1600);
+      setTimeout(blink, Math.random() < 0.2 ? 260 : 2000 + Math.random() * 5000);
+    };
+    setTimeout(blink, 600 + Math.random() * 3000);
+  }
 }
+
+// Shapes that do not go together fall in order when they come into view;
+// without motion, they are shown in order from the start.
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+for (const tidy of document.querySelectorAll(".tidy")) {
+  if (reduced || !("IntersectionObserver" in window)) {
+    tidy.classList.add("is-tidy");
+    continue;
+  }
+  new IntersectionObserver(([entry], watch) => {
+    if (!entry.isIntersecting) return;
+    setTimeout(() => tidy.classList.add("is-tidy"), 300);
+    watch.disconnect();
+  }, { threshold: 0.6 }).observe(tidy);
+}
+// The eye that walks the journey stands still for a visitor who asks for less motion.
+if (reduced) for (const motion of document.querySelectorAll("animateMotion")) motion.remove();
 
 // Copies text with the Clipboard API, which needs a secure page and the
 // permission, or else with the older copy command. Says whether it worked.

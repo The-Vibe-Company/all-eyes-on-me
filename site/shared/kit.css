@@ -1,6 +1,6 @@
 /* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
    Pages link this file and include head, header and footer.
-   Classes: .btn (.btn--hot), .eye (.eye--small), .kicker, .duo, .feature (--judge, --redesign, --keep), .journey with .phone (.ph__*, .step-n, .pin), .diff, .soon, .try, .film (copy block). */
+   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .crowd, .feature (--judge, --redesign, --keep) with .walk, .tidy, .line, .soon, .try, .film (copy block). */
 
 :root {
   --sun: #ffd84d;
@@ -61,11 +61,15 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .hero h1 { font-size: clamp(68px, 13.5vw, 184px); line-height: 0.86; letter-spacing: -0.05em; }
 .hero__line { display: block; white-space: nowrap; }
 .hero__lede { font-size: clamp(20px, 2vw, 24px); max-width: 26ch; margin: 24px 0 0; }
-/* The hero's pair: one screen of a journey, as AEOM found it and as it left it. */
-.duo { display: flex; align-items: center; justify-content: center; gap: 18px; }
-.duo .phone { width: min(42vw, 220px); }
-.duo__arrow { font: 800 40px/1 var(--display); }
-.ok-tag { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%) rotate(-3deg); white-space: nowrap; padding: 6px 12px; border-radius: 999px; background: var(--sun); border: 2px solid var(--ink); font: 800 13px/1 var(--display); }
+/* The hero's crowd: eyes of every size, all on you. */
+.crowd { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; justify-self: center; }
+.crowd .eye { position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); border-width: max(3px, calc(var(--s) * 0.06)); transform: translate(-50%, -50%); margin: 0; box-shadow: 0 calc(var(--s) * 0.12) calc(var(--s) * 0.24) rgba(22, 19, 15, 0.16); }
+.crowd .eye.is-blinking { animation-name: blink-crowd; }
+@keyframes blink-crowd { 0%, 100% { transform: translate(-50%, -50%) scaleY(1); } 50% { transform: translate(-50%, -50%) scaleY(0.08); } }
+.eye--sky i { background: radial-gradient(circle, var(--ink) 46%, #3d8fd1 48%); }
+.eye--hot i { background: radial-gradient(circle, var(--ink) 46%, var(--hot) 48%); }
+.eye--pink i { background: radial-gradient(circle, var(--ink) 46%, #e0679b 48%); }
+@media (max-width: 979px) { .crowd { max-width: 420px; margin: 0 auto; } }
 @media (min-width: 980px) {
   .hero { grid-template-columns: 1.15fr 1fr; min-height: calc(100vh - 80px); padding-top: 8px; }
 }
@@ -85,57 +89,31 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
   .feature--redesign .feature__text { order: 2; }
 }
 
-/* A phone screen drawn in a few strokes: the steps of a journey. */
-.phone { position: relative; background: #fff; border: 2px solid var(--ink); border-radius: 24px; padding: 30px 14px 16px; aspect-ratio: 9 / 15; box-shadow: 0 18px 36px rgba(22, 19, 15, 0.18); }
-.phone::before { content: ""; position: absolute; top: 10px; left: 50%; width: 34%; height: 6px; border-radius: 3px; background: var(--ink); opacity: 0.85; transform: translateX(-50%); }
-.ph__top { margin: 0 0 10px; font: 800 14px/1.2 var(--display); }
-.ph__line { display: block; height: 8px; border-radius: 4px; background: rgba(22, 19, 15, 0.14); margin: 8px 0; }
-.ph__line--short { width: 60%; }
-.ph__row { display: block; height: 24px; border-radius: 8px; background: #f2efe8; margin: 8px 0; }
-.ph__link { display: inline-block; margin-top: 14px; font-size: 12px; color: #a3a9b5; text-decoration: underline; }
-.ph__btn { display: block; margin-top: 16px; padding: 9px 6px; border-radius: 999px; background: #1f4fbf; color: #fff; text-align: center; font: 800 12px/1.1 var(--display); }
-.ph__blank { display: block; height: 72px; margin-top: 10px; border-radius: 10px; border: 2px dashed rgba(22, 19, 15, 0.2); }
-.ph__done { display: grid; place-items: center; width: 44px; height: 44px; margin: 18px auto 10px; border-radius: 50%; background: #1d8a5a; color: #fff; font-weight: 800; font-size: 22px; }
-.ph__note { margin: 0; text-align: center; font: 700 12px/1.3 var(--display); color: #16213d; }
-.step-n { position: absolute; top: -13px; left: -13px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--sun); font: 800 14px/1 var(--display); }
-.pin { position: absolute; left: 10px; right: -26px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border: 2px solid var(--ink); border-radius: 999px; background: var(--hot); font: 800 12px/1.15 var(--display); box-shadow: 2px 2px 0 var(--ink); }
-.pin b { display: grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--sun); font-size: 11px; }
-.pin--a { bottom: 26%; transform: rotate(-3deg); }
-.pin--b { bottom: 14%; transform: rotate(2deg); }
-/* The look picked, on the screens AEOM redrew. */
-.phone--after, .journey--after .phone { background: #e8ebef; }
-.phone--after .ph__top, .journey--after .ph__top { color: #16213d; }
-.ph__row--hot { background: #1f4fbf; }
+/* 01: a walk through empty frames, an eye on it, knots where it catches. */
+.walk { max-width: 600px; width: 100%; justify-self: center; }
+.walk__map { display: block; width: 100%; height: auto; overflow: visible; }
+.walk__map rect { fill: rgba(255, 255, 255, 0.55); stroke: var(--ink); stroke-width: 3; }
+.walk__path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-dasharray: 2 12; stroke-linecap: round; }
+.walk__knot circle { fill: var(--hot); stroke: var(--ink); stroke-width: 3; }
+.walk__knot path { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.walk__ball { fill: #fff; stroke: var(--ink); stroke-width: 4; }
+.walk__pupil { fill: var(--ink); }
 
-/* 01 and 02: a journey, step by step. */
-.journey { max-width: 600px; width: 100%; justify-self: center; }
-.journey__name { margin: 0 0 22px; display: flex; align-items: center; gap: 10px; font: 800 22px/1.2 var(--display); }
-.journey__name span { padding: 5px 10px; border-radius: 999px; background: var(--ink); color: var(--sun); font-size: 13px; }
-.feature--redesign .journey__name span, .feature--redesign .step-n { background: var(--sun); color: var(--ink); }
-.journey__steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
-.journey__tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; }
-.journey__tags span { padding: 7px 12px; border-radius: 999px; background: var(--paper); color: var(--ink); font: 800 14px/1 var(--display); border: 2px solid var(--sun); }
-@media (max-width: 560px) {
-  .journey__steps { gap: 12px; }
-  .phone { padding: 24px 8px 10px; border-radius: 16px; }
-  .ph__top { font-size: 11px; }
-  .pin { left: 4px; right: -8px; font-size: 10px; padding: 3px 7px 3px 3px; }
-  .pin b { width: 16px; height: 16px; font-size: 9px; }
-  .ph__btn { font-size: 10px; }
-}
+/* 02: shapes that do not go together, then put in order when seen. */
+.tidy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 420px; width: 100%; justify-self: center; }
+.tidy span { aspect-ratio: 1; background: var(--c); border: 3px solid var(--paper); border-radius: var(--br); transform: translate(var(--x), var(--y)) rotate(var(--r)); transition: transform 0.9s cubic-bezier(.3, 1.3, .5, 1), border-radius 0.9s ease, background-color 0.9s ease, border-color 0.9s ease; transition-delay: calc(var(--i) * 70ms); }
+.tidy.is-tidy span { transform: none; border-radius: 22px; border-color: var(--ink); }
+.tidy.is-tidy span:nth-child(3n + 1) { background: var(--sun); } .tidy.is-tidy span:nth-child(3n + 2) { background: var(--paper); } .tidy.is-tidy span:nth-child(3n) { background: var(--hot); }
 
-/* 03: a pull request line checked against the standard. */
-.diff { background: #fff; border: 2px solid var(--ink); border-radius: var(--radius); overflow: hidden; box-shadow: 0 24px 48px rgba(22, 19, 15, 0.18); max-width: 580px; justify-self: center; width: 100%; font: 500 15px/1.5 var(--mono); transform: rotate(1deg); }
-.diff p { margin: 0; padding: 10px 18px; }
-.diff__head { font: 800 20px/1.3 var(--display); padding: 18px 18px 12px !important; }
-.diff__head span { color: rgba(22, 19, 15, 0.7); font-weight: 600; }
-.diff__file { background: #f3f1ec; border-top: 2px solid var(--ink); border-bottom: 1px solid #e2ded4; color: rgba(22, 19, 15, 0.75); }
-.diff__line--add { background: #eaf7ee; white-space: pre-wrap; }
-.diff mark { background: #ffd3c9; color: var(--ink); border-radius: 4px; padding: 0 3px; }
-.diff__verdict { font: 700 15px/1.4 var(--display); display: flex; gap: 10px; align-items: center; }
-.diff__verdict::before { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; font-weight: 800; }
-.diff__verdict--ko { background: #ffe3dc; } .diff__verdict--ko::before { content: "✕"; background: var(--hot); }
-.diff__verdict--ok { background: #e3f6e9; } .diff__verdict--ok::before { content: "✓"; background: #1f8a4c; color: #fff; }
+/* 03: alike on one line, and the odd one kept out. */
+.line { position: relative; max-width: 560px; width: 100%; justify-self: center; padding-top: 40px; }
+.line__row { display: flex; gap: 14px; align-items: flex-end; }
+.line__row span { flex: 1; aspect-ratio: 3 / 4; border-radius: 18px; background: var(--paper); border: 3px solid var(--ink); }
+.line__odd { position: relative; background: var(--hot) !important; border-radius: 50% !important; aspect-ratio: 1 !important; transform: translate(10px, -70px) rotate(18deg); }
+.line__odd b { position: absolute; top: -12px; right: -12px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--sun); font-size: 15px; }
+.line__rule { display: block; height: 6px; margin-top: 0; background: var(--ink); border-radius: 3px; }
+@media (prefers-reduced-motion: no-preference) { .line__odd { animation: bounce 2.4s cubic-bezier(.3, 1.4, .5, 1) infinite; } }
+@keyframes bounce { 0%, 100% { transform: translate(10px, -70px) rotate(18deg); } 50% { transform: translate(10px, -46px) rotate(4deg); } }
 
 /* Try it */
 .try { background: var(--paper); padding: 96px var(--gutter) 104px; }

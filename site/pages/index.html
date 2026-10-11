@@ -18,20 +18,16 @@
     <p class="hero__lede">Your agents ship features. AEOM makes them look and work like someone designed them.</p>
     <p class="actions"><a class="btn btn--hot" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it</a></p>
   </div>
-  <div class="duo" data-visual aria-hidden="true">
-    <div class="phone phone--before">
-      <p class="ph__top">Vinyasa, Tuesday 7pm</p>
-      <span class="ph__line"></span><span class="ph__line ph__line--short"></span>
-      <span class="ph__link">book</span>
-      <span class="pin pin--a"><b>✗</b>Does not look clickable</span>
-    </div>
-    <span class="duo__arrow">→</span>
-    <div class="phone phone--after">
-      <p class="ph__top">Vinyasa, Tuesday 7pm</p>
-      <span class="ph__line"></span><span class="ph__line ph__line--short"></span>
-      <span class="ph__btn">Book this class</span>
-      <span class="ok-tag">✓ Picked look: Enamel</span>
-    </div>
+  <div class="crowd" data-visual aria-hidden="true">
+    <span class="eye" style="--s:170px;--x:34%;--y:30%"><i></i></span>
+    <span class="eye eye--sky" style="--s:96px;--x:76%;--y:14%"><i></i></span>
+    <span class="eye eye--hot" style="--s:74px;--x:10%;--y:8%"><i></i></span>
+    <span class="eye" style="--s:58px;--x:86%;--y:52%"><i></i></span>
+    <span class="eye eye--pink" style="--s:118px;--x:66%;--y:74%"><i></i></span>
+    <span class="eye eye--sky" style="--s:52px;--x:16%;--y:70%"><i></i></span>
+    <span class="eye" style="--s:84px;--x:36%;--y:88%"><i></i></span>
+    <span class="eye eye--hot" style="--s:40px;--x:56%;--y:4%"><i></i></span>
+    <span class="eye" style="--s:34px;--x:94%;--y:86%"><i></i></span>
   </div>
 </section>
 
@@ -41,13 +37,16 @@
     <h2 id="judge-title">It walks your product like a user.</h2>
     <p>It replays your key journeys on phone and desktop, judges every screen and every step, and says plainly what gets in the way.</p>
   </div>
-  <div class="journey" data-visual aria-label="A journey, Book a class, judged step by step">
-    <p class="journey__name">Book a class <span>stuck at step 3</span></p>
-    <div class="journey__steps">
-      <div class="phone"><b class="step-n">1</b><p class="ph__top">Classes</p><span class="ph__row"></span><span class="ph__row"></span><span class="ph__row"></span></div>
-      <div class="phone"><b class="step-n">2</b><p class="ph__top">Vinyasa</p><span class="ph__line"></span><span class="ph__line ph__line--short"></span><span class="ph__link">book</span><span class="pin pin--a"><b>✗</b>Does not look clickable</span></div>
-      <div class="phone"><b class="step-n">3</b><p class="ph__top">My bookings</p><span class="ph__blank"></span><span class="pin pin--b"><b>✗</b>Blank, not a word</span></div>
-    </div>
+  <div class="walk" data-visual aria-hidden="true">
+    <svg viewBox="0 0 600 380" class="walk__map">
+      <rect x="20" y="40" width="150" height="230" rx="22"/>
+      <rect x="225" y="110" width="150" height="230" rx="22"/>
+      <rect x="430" y="40" width="150" height="230" rx="22"/>
+      <path id="walk-path" class="walk__path" d="M95 150 C 150 150, 180 230, 300 225 S 420 120, 505 150"/>
+      <g class="walk__knot" transform="translate(300 225)"><circle r="20"/><path d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
+      <g class="walk__knot" transform="translate(505 150)"><circle r="20"/><path d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
+      <g class="walk__eye"><circle r="22" class="walk__ball"/><circle r="9" cx="4" class="walk__pupil"/><circle r="3" cx="1" cy="-3" fill="#fff"/><animateMotion dur="7s" repeatCount="indefinite" keyPoints="0;0.5;0.5;1;1" keyTimes="0;0.42;0.55;0.92;1" calcMode="linear"><mpath href="#walk-path"/></animateMotion></g>
+    </svg>
   </div>
 </section>
 
@@ -57,14 +56,16 @@
     <h2 id="redesign-title">It redesigns what gets in the way.</h2>
     <p>A look drawn from your product, the one you pick, and shorter journeys. Never a new feature. Only what got better is kept, in a pull request.</p>
   </div>
-  <div class="journey journey--after" data-visual aria-label="The same journey after AEOM: three steps, a clear button, a confirmation">
-    <p class="journey__name">Book a class <span>reaches its end</span></p>
-    <div class="journey__steps">
-      <div class="phone"><b class="step-n">1</b><p class="ph__top">Classes</p><span class="ph__row ph__row--hot"></span><span class="ph__row"></span><span class="ph__row"></span></div>
-      <div class="phone"><b class="step-n">2</b><p class="ph__top">Vinyasa</p><span class="ph__line"></span><span class="ph__line ph__line--short"></span><span class="ph__btn">Book this class</span></div>
-      <div class="phone"><b class="step-n">3</b><p class="ph__top">Booked</p><span class="ph__done">✓</span><p class="ph__note">Tuesday 7pm. See you there.</p></div>
-    </div>
-    <p class="journey__tags"><span>Look: Enamel, picked by you</span><span>Booked in 3 steps</span><span>No feature added</span></p>
+  <div class="tidy" data-visual aria-hidden="true">
+    <span style="--i:0;--x:-30px;--y:40px;--r:-28deg;--c:#ff5a3c;--br:50%"></span>
+    <span style="--i:1;--x:60px;--y:-30px;--r:18deg;--c:#9ed8ff;--br:4px"></span>
+    <span style="--i:2;--x:-20px;--y:70px;--r:40deg;--c:#ffbfd8;--br:30px 4px"></span>
+    <span style="--i:3;--x:40px;--y:20px;--r:-12deg;--c:#7fd49a;--br:50% 50% 4px 4px"></span>
+    <span style="--i:4;--x:-60px;--y:-40px;--r:30deg;--c:#ffd84d;--br:2px"></span>
+    <span style="--i:5;--x:30px;--y:-60px;--r:-40deg;--c:#c7b8ff;--br:50%"></span>
+    <span style="--i:6;--x:-50px;--y:10px;--r:22deg;--c:#ff9f6e;--br:12px 40px"></span>
+    <span style="--i:7;--x:70px;--y:50px;--r:-24deg;--c:#9ed8ff;--br:50% 4px"></span>
+    <span style="--i:8;--x:-10px;--y:-50px;--r:8deg;--c:#ffbfd8;--br:6px"></span>
   </div>
 </section>
 
@@ -74,12 +75,9 @@
     <h2 id="keep-title">It keeps the line.</h2>
     <p>Every pull request held to the standard of your front: its look, its components, its journeys.</p>
   </div>
-  <div class="diff" data-visual aria-label="A pull request whose new colour is not in the standard">
-    <p class="diff__head"><b>Add the waiting list</b> <span>#142</span></p>
-    <p class="diff__file">src/waitlist.css</p>
-    <p class="diff__line diff__line--add">+ .join { background: <mark>#3b82f6</mark>; }</p>
-    <p class="diff__verdict diff__verdict--ko">#3b82f6 is not a colour of the standard: use --cobalt.</p>
-    <p class="diff__verdict diff__verdict--ok">Same look, same buttons, same product.</p>
+  <div class="line" data-visual aria-hidden="true">
+    <div class="line__row"><span></span><span></span><span></span><span></span><span class="line__odd"><b>✕</b></span><span></span></div>
+    <span class="line__rule"></span>
   </div>
 </section>
 
