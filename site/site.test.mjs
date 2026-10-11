@@ -40,7 +40,10 @@ test("the README and the page say what AEOM is in one sentence, then what works 
     assert.doesNotMatch(today, notYet, `${notYet} is not done: it belongs in « What comes next »`);
     assert.match(next, notYet);
   }
-  for (const text of [readme, page]) assert.match(text, /not (yet )?run on a real project/i, "until a real project goes through it, it says so");
+  for (const text of [readme, page]) {
+    assert.match(text, /run on two real projects/i, "it says how many real projects went through it");
+    assert.doesNotMatch(text, /not (yet )?run on a real project/i, "real projects went through it: it no longer says the opposite");
+  }
   const stages = [...page.matchAll(/<li data-stage="([^"]+)">/g)].map(([, stage]) => stage);
   assert.deepEqual(stages, ["done", "now", "next", "then", "later"], "the page's roadmap goes from what is done to what comes last");
 });
@@ -156,4 +159,11 @@ test("the build refuses any folder whose emptying would delete the site", () => 
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
+});
+
+test("each step of « How it works » is its title, then its words in one block, so the grid keeps them in their columns", () => {
+  const steps = page.split('<ol class="steps">')[1]?.split("</ol>")[0] ?? "";
+  const items = [...steps.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(([, inner]) => inner.trim());
+  assert.equal(items.length, 7);
+  for (const item of items) assert.match(item, /^<strong>[^<]+<\/strong> <span>[\s\S]+<\/span>$/, item.slice(0, 60));
 });

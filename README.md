@@ -2,16 +2,16 @@
 
 All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.
 
-Today, most of the first works. You type `/aeom` in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.
+Today, the first works. You type `/aeom` in Claude Code on your app: it says what the run will cost, then takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.
 
-> **Status: pre-alpha.** `/aeom` runs end to end on demo apps. It has not run on a real project yet.
+> **Status: pre-alpha.** `/aeom` has been run on two real projects besides demo apps: a strategy game in the browser, end to end, and a workout tracker, up to its art directions. It is not on npm yet.
 
 ## What it does today
 
 `/aeom` is a Claude Code skill. It coordinates a fleet of agents (workers, each in its own git worktree, and judges), and the `aeom` CLI does the measuring.
 
 1. **Understand.** AEOM reads the project's own words (its README, its docs), then writes in `.aeom/product.md`, which you can correct, what kind of product it is (a tool, a game or a creative product), what the app is for, who uses it and its main loop; for a game, its genre and fiction, the feeling it aims for, its references and its existing illustrations. It records three to five key journeys that it replays in a real browser.
-2. **Look.** Every screen is captured at 390 and 1280 px. Four checks are measured: pointer cursor, sideways scrolling, AA contrast, console errors. Eight principles are judged by three independent judges, and the majority decides.
+2. **Look.** Every screen is captured at 390 and 1280 px. Four checks are measured: pointer cursor, sideways scrolling, AA contrast, console errors. Eight principles are judged by one judge, then two more on what it fails, and the majority decides.
 3. **Decide.** If nothing fails, AEOM says « nothing to redo », writes the standard of the front as it is (step 8), and stops. No branch is created. Before the first judge, AEOM says what the run will cost, phase by phase (agents, tokens, time), and waits for your go. With `/aeom --juger`, or when you ask it only to judge, it stops here whatever the verdict: what fails, screen by screen and journey by journey, without redoing anything, for six judges instead of about forty agents.
 4. **A new direction.** Three art directions by default (`/aeom --directions <n>` for more), each drawn from the product's own world, never from the looks AIs propose by default: for a tool, something its users know (an object, a document, a place, a trade); for a game, its fiction, its illustrations and the interface of its genre. Each is built on two or three screens, one of them dense. Judges screen out the default looks, then a knockout keeps one: one judge per duel, three for the final. Then AEOM stops and asks you: apply it, choose another, or drop some. Your answer is kept with your taste; `--autonome` skips the question. With `--garder-le-style`, or `"style": "keep"` in `.aeom/config.json`, the app's own style is kept and fixed instead.
 5. **The pages.** One worker per page, all at once, each in its own files. A page is kept only if fewer things fail on it than before.
