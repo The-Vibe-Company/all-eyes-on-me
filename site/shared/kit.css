@@ -77,7 +77,26 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 @keyframes knot-x-2 { 0%, 70% { opacity: 1; } 74%, 96% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes knot-v { 0%, 38% { opacity: 0; } 42%, 96% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes knot-v-2 { 0%, 70% { opacity: 0; } 74%, 96% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .walk--hero .walk__knot circle, .walk--hero .walk__x, .walk--hero .walk__v { animation: none; } }
+/* Each screen is plain and grey until the eye has been through it, then drawn and coloured. */
+.screen__frame { fill: #fffaf0; stroke: var(--ink); stroke-width: 3; }
+.screen__plain rect { fill: #d9d3c4; }
+.screen__done { opacity: 0; }
+.screen--1 .screen__done { animation: drawn-1 8s ease-in-out infinite; } .screen--1 .screen__plain { animation: plain-1 8s ease-in-out infinite; }
+.screen--2 .screen__done { animation: drawn-2 8s ease-in-out infinite; } .screen--2 .screen__plain { animation: plain-2 8s ease-in-out infinite; }
+.screen--3 .screen__done { animation: drawn-3 8s ease-in-out infinite; } .screen--3 .screen__plain { animation: plain-3 8s ease-in-out infinite; }
+@keyframes drawn-1 { 0%, 12% { opacity: 0; } 18%, 95% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes plain-1 { 0%, 12% { opacity: 1; } 18%, 95% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes drawn-2 { 0%, 40% { opacity: 0; } 46%, 95% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes plain-2 { 0%, 40% { opacity: 1; } 46%, 95% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes drawn-3 { 0%, 72% { opacity: 0; } 78%, 95% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes plain-3 { 0%, 72% { opacity: 1; } 78%, 95% { opacity: 0; } 100% { opacity: 1; } }
+/* Without motion, the walk is shown done: every screen drawn, every knot undone. */
+@media (prefers-reduced-motion: reduce) {
+  .walk--hero .walk__knot circle, .walk--hero .walk__x, .walk--hero .walk__v, .screen__plain, .screen__done { animation: none; }
+  .screen__plain, .walk--hero .walk__x { opacity: 0; }
+  .screen__done, .walk--hero .walk__v { opacity: 1; }
+  .walk--hero .walk__knot circle { fill: #1f8a4c; }
+}
 
 @media (min-width: 980px) {
   .hero { grid-template-columns: 1.15fr 1fr; min-height: calc(100vh - 80px); padding-top: 8px; }
@@ -101,7 +120,7 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 /* 01: a walk through empty frames, an eye on it, knots where it catches. */
 .walk { max-width: 600px; width: 100%; justify-self: center; }
 .walk__map { display: block; width: 100%; height: auto; overflow: visible; }
-.walk__map rect { fill: rgba(255, 255, 255, 0.55); stroke: var(--ink); stroke-width: 3; }
+.gaze .walk__map > rect { fill: rgba(255, 255, 255, 0.55); stroke: var(--ink); stroke-width: 3; }
 .walk__path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-dasharray: 2 12; stroke-linecap: round; }
 .walk__knot circle { fill: var(--hot); stroke: var(--ink); stroke-width: 3; }
 .walk__knot path { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }

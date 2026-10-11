@@ -1,8 +1,8 @@
 // AEOM landing kit: the small behaviours the kit's components need.
 
 // The eyes are alive: they follow the pointer while it moves, look around on
-// their own when it rests (and on a phone), and blink now and then. Nothing
-// moves for a visitor who asks for less motion.
+// their own when it rests (and on a phone), and blink when the visitor
+// clicks. Nothing moves for a visitor who asks for less motion.
 const eyes = [...document.querySelectorAll(".eye")];
 if (eyes.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
   const look = (eye, x, y) => {
@@ -35,31 +35,36 @@ if (eyes.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     resting = setTimeout(wander, 2500);
   });
   wander();
-  // Each eye blinks on its own time, and now and then twice in a row.
-  for (const eye of eyes) {
-    const blink = () => {
+  // The eyes blink when the visitor clicks, anywhere on the page.
+  addEventListener("pointerdown", () => {
+    for (const eye of eyes) {
       eye.classList.remove("is-blinking");
       void eye.offsetWidth;
       eye.classList.add("is-blinking");
-      setTimeout(blink, Math.random() < 0.2 ? 260 : 2000 + Math.random() * 5000);
-    };
-    setTimeout(blink, 600 + Math.random() * 3000);
-  }
+    }
+  });
 }
 
-// Shapes that do not go together fall in order when they come into view;
-// without motion, they are shown in order from the start.
+// Shapes that do not go together fall in order when they come into view, and
+// again every five seconds; without motion, they are shown in order.
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 for (const tidy of document.querySelectorAll(".tidy")) {
   if (reduced || !("IntersectionObserver" in window)) {
     tidy.classList.add("is-tidy");
     continue;
   }
-  new IntersectionObserver(([entry], watch) => {
+  // While in view, every five seconds: in order, then back to the mess, then in order again.
+  let cycle;
+  const play = () => {
+    tidy.classList.remove("is-tidy");
+    setTimeout(() => tidy.classList.add("is-tidy"), 1100);
+  };
+  new IntersectionObserver(([entry]) => {
+    clearInterval(cycle);
     if (!entry.isIntersecting) return;
-    setTimeout(() => tidy.classList.add("is-tidy"), 300);
-    watch.disconnect();
-  }, { threshold: 0.6 }).observe(tidy);
+    play();
+    cycle = setInterval(play, 5000);
+  }, { threshold: 0.5 }).observe(tidy);
 }
 // The eye that walks the journey stands still for a visitor who asks for less motion.
 if (reduced) for (const motion of document.querySelectorAll("animateMotion")) motion.remove();
