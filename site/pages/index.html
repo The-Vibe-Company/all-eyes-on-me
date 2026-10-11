@@ -18,54 +18,76 @@
     <p class="hero__lede">Your agents ship features. AEOM judges the front, redesigns it, and keeps it that way.</p>
     <p class="actions"><a class="btn btn--hot" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it</a></p>
   </div>
-  <div class="hero__eye" aria-hidden="true"><span class="eye eye--giant"><i></i></span></div>
+  <div class="collage" data-visual aria-hidden="true">
+    <div class="term collage__term">
+      <p class="term__cmd"><span>$</span> /aeom</p>
+      <ul><li class="ko"><b>hierarchy</b>No title stands out.</li><li class="ko"><b>consistent-chrome</b>Three button styles.</li><li class="ok"><b>contrast</b>Every text reads.</li></ul>
+    </div>
+    <figure class="tile tile--enamel collage__tile"><span class="sticker">Picked</span><figcaption><b>Enamel</b>a paint chart of glossy enamels</figcaption><p class="tile__type">Aa</p><p class="tile__swatches"><i></i><i></i><i></i></p><span class="tile__btn">Discover</span></figure>
+    <p class="collage__check">Same colours, same buttons, same product.</p>
+  </div>
 </section>
 
 <section class="feature feature--judge" aria-labelledby="judge-title">
   <div class="feature__text">
     <p class="feature__num">01</p>
-    <h2 id="judge-title">It judges.</h2>
-    <p>Every screen, at phone and desktop width: what is too pale, what does not look clickable, what is left blank.</p>
+    <h2 id="judge-title">It judges your front.</h2>
+    <p>Every screen, at phone and desktop width, held to eight principles. In plain words, with what to redo.</p>
   </div>
-  <div class="mock" aria-hidden="true">
-    <div class="mock__bar"><i></i><i></i><i></i></div>
-    <div class="mock__body">
-      <span class="sk sk--title"></span><span class="sk"></span><span class="sk sk--short sk--pale"></span>
-      <span class="sk sk--button"></span>
-      <span class="sk sk--empty"></span>
-    </div>
-    <span class="pin pin--1"><b>1</b>Too pale to read</span>
-    <span class="pin pin--2"><b>2</b>Does not look clickable</span>
-    <span class="pin pin--3"><b>3</b>Blank when empty</span>
+  <div class="term" data-visual aria-label="What AEOM said about the first draft of this page">
+    <p class="term__cmd"><span>$</span> /aeom --juger</p>
+    <ul>
+      <li class="ko"><b>hierarchy</b>The title is barely larger than the headings below it.</li>
+      <li class="ko"><b>consistent-chrome</b>Three button styles: filled black, outlined white, native grey.</li>
+      <li class="ko"><b>density</b>330 px of blank white under the first image, on a phone.</li>
+      <li class="ok"><b>contrast</b>Every text reads.</li>
+    </ul>
+    <p class="term__end">5 things to redo on 1 screen. This page, first draft.</p>
   </div>
 </section>
 
 <section class="feature feature--redesign" aria-labelledby="redesign-title">
   <div class="feature__text">
     <p class="feature__num">02</p>
-    <h2 id="redesign-title">It redesigns.</h2>
-    <p>Three looks drawn from your product. You pick one, it rebuilds every screen on it.</p>
+    <h2 id="redesign-title">It redesigns your front.</h2>
+    <p>Three art directions drawn from your product's own world. You pick one, it rebuilds every screen on it.</p>
   </div>
-  <div class="trio" aria-hidden="true">
-    <div class="look look--forest"><span class="sk sk--title"></span><span class="sk"></span><span class="sk sk--button"></span></div>
-    <div class="look look--coral"><span class="sticker">Picked</span><span class="sk sk--title"></span><span class="sk"></span><span class="sk sk--button"></span></div>
-    <div class="look look--night"><span class="sk sk--title"></span><span class="sk"></span><span class="sk sk--button"></span></div>
+  <div class="tiles" data-visual aria-label="Three art directions AEOM drew for a shop of lamps, chairs and rugs">
+    <figure class="tile tile--shade">
+      <figcaption><b>Lampshade</b>the glow of a lampshade at dusk</figcaption>
+      <p class="tile__type">Aa</p>
+      <p class="tile__swatches"><i></i><i></i><i></i></p>
+      <span class="tile__btn">Discover</span>
+    </figure>
+    <figure class="tile tile--enamel">
+      <span class="sticker">Picked</span>
+      <figcaption><b>Enamel</b>a paint chart of glossy enamels</figcaption>
+      <p class="tile__type">Aa</p>
+      <p class="tile__swatches"><i></i><i></i><i></i></p>
+      <span class="tile__btn">Discover</span>
+    </figure>
+    <figure class="tile tile--knots">
+      <figcaption><b>Rug knots</b>a rug's dyed yarn on the loom</figcaption>
+      <p class="tile__type">Aa</p>
+      <p class="tile__swatches"><i></i><i></i><i></i></p>
+      <span class="tile__btn">Discover</span>
+    </figure>
   </div>
 </section>
 
 <section class="feature feature--keep" aria-labelledby="keep-title">
   <div class="feature__text">
     <p class="feature__num">03 <span class="soon">Soon</span></p>
-    <h2 id="keep-title">It keeps it.</h2>
-    <p>Every pull request held to the standard of your front: same colours, same components, same product.</p>
+    <h2 id="keep-title">It checks every PR against it.</h2>
+    <p>Your front gets a standard: its colours, its components, its rules. Every pull request is held to it.</p>
   </div>
-  <div class="pr" aria-hidden="true">
-    <p class="pr__title">Add the checkout page <span>#142</span></p>
-    <ul>
-      <li class="ok">Colours from the standard</li>
-      <li class="ok">Header from the kit</li>
-      <li class="ko">A second button style</li>
-    </ul>
+  <div class="diff" data-visual aria-label="A pull request whose new colour is not in the standard">
+    <p class="diff__head"><b>Add the checkout page</b> <span>#142</span></p>
+    <p class="diff__file">src/checkout.css</p>
+    <p class="diff__line diff__line--add">+ .pay { background: <mark>#3b82f6</mark>; }</p>
+    <p class="diff__verdict diff__verdict--ko">#3b82f6 is not a colour of the standard: use --hot.</p>
+    <p class="diff__line diff__line--add">+ .pay { background: var(--hot); }</p>
+    <p class="diff__verdict diff__verdict--ok">Same colours, same buttons, same product.</p>
   </div>
 </section>
 

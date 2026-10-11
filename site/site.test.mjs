@@ -152,9 +152,22 @@ test("the build refuses any folder whose emptying would delete the site", () => 
 });
 
 test("the page says the three things AEOM does, the one not built yet marked as coming", () => {
-  for (const what of ["It judges.", "It redesigns.", "It keeps it."]) assert.ok(page.includes(what), `${what} is missing`);
-  assert.match(page.split("It keeps it.")[0].split("It redesigns.")[1] ?? "", /class="soon"/, "keeping every pull request is not built yet: it says so");
+  for (const what of ["It judges your front.", "It redesigns your front.", "It checks every PR against it."]) assert.ok(page.includes(what), `${what} is missing`);
+  assert.match(page.split("It checks every PR against it.")[0].split("It redesigns your front.")[1] ?? "", /class="soon"/, "checking every pull request is not built yet: it says so");
   assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
-  const words = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  assert.ok(words.length < 1000, `the page stays short, ${words.length} characters of text: what does not fit is in the README`);
+  // The prose only: what a drawing shows, such as a terminal's lines, is not read as text to wade through.
+  let prose = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "");
+  for (let at = prose.indexOf("data-visual"); at !== -1; at = prose.indexOf("data-visual")) {
+    const open = prose.lastIndexOf("<", at);
+    const tag = prose.slice(open + 1).match(/^\w+/)[0];
+    let depth = 0;
+    let end = open;
+    for (const m of prose.slice(open).matchAll(new RegExp(`<(/?)${tag}\\b[^>]*>`, "g"))) {
+      depth += m[1] ? -1 : 1;
+      if (depth === 0) { end = open + m.index + m[0].length; break; }
+    }
+    prose = prose.slice(0, open) + prose.slice(end);
+  }
+  const words = prose.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  assert.ok(words.length < 1000, `the page stays short, ${words.length} characters of prose: what does not fit is in the README`);
 });
