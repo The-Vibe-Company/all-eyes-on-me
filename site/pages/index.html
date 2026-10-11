@@ -16,8 +16,8 @@
     <p class="kicker"><span class="kicker__ref">01</span> Open-source CLI and Claude Code skills</p>
     <h1 id="title">All Eyes On Me</h1>
     <p class="lede">All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.</p>
-    <p>Today, most of the first works. You type <code>/aeom</code> in Claude Code on your app: it takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.</p>
-    <p>It runs end to end on demo apps. It has not run on a real project yet, apart from this page, rebuilt by an earlier version.</p>
+    <p>Today, the first works. You type <code>/aeom</code> in Claude Code on your app: it says what the run will cost, then takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.</p>
+    <p>It has been run on two real projects, besides demo apps and this page, rebuilt by an earlier version: a strategy game in the browser, end to end, and a workout tracker, up to its art directions. What they taught it is in: it knows a game from a tool, asks before its costly waves, and takes up a run its session lost.</p>
     <p class="actions"><a class="btn btn--primary" href="https://github.com/The-Vibe-Company/all-eyes-on-me">Star on GitHub<span class="btn__count" data-stars hidden></span></a> <a class="btn" href="#try">Try it from source</a></p>
   </div>
 
@@ -168,8 +168,8 @@
   <dl class="record">
     <div><dt>Object</dt><dd>A web app's frontend</dd></div>
     <div><dt>Examined</dt><dd>Every page, at phone and desktop width</dd></div>
-    <div><dt>Judged by</dt><dd>Three independent judges; the majority decides</dd></div>
-    <div><dt>Status</dt><dd>Pre-alpha: demo apps only, not yet run on a real project</dd></div>
+    <div><dt>Judged by</dt><dd>One judge, then two more on what it fails; the majority decides</dd></div>
+    <div><dt>Status</dt><dd>Pre-alpha: run on two real projects, not on npm yet</dd></div>
     <div><dt>Licence</dt><dd>MIT, open source</dd></div>
   </dl>
 </section>
@@ -181,13 +181,13 @@
   </div>
   <div class="section__body">
     <ol class="steps">
-      <li><strong>Understand.</strong> It reads your project's own words, then writes what kind of product it is, what it is for, who uses it and its main loop (for a game, its fiction and its illustrations), and replays three to five key journeys in a real browser.</li>
-      <li><strong>Look.</strong> It captures every screen at phone and desktop width, measures pointer cursors, sideways scrolling, contrast and console errors, and three independent judges hold each page to eight principles.</li>
-      <li><strong>Decide.</strong> If nothing fails, it says « nothing to redo », writes the standard of the front as it is, and stops. <code>/aeom --juger</code> stops here whatever the verdict: what fails, without redoing anything. Before its first judge, it says what the run will cost and waits for your go.</li>
-      <li><strong>A new direction.</strong> Three art directions drawn from the product's own world, never from the looks AIs propose by default: things your users know, or a game's fiction and illustrations. A knockout keeps one, and you validate it or choose another before any page is rebuilt. A client's own style can be kept instead.</li>
-      <li><strong>Pages, then journeys.</strong> One worker per page, then per journey, each in its own files. A guard refuses any change that adds a feature. Only what got better is kept.</li>
-      <li><strong>Show.</strong> A result page on your machine, and the features a blocked journey would need, never built.</li>
-      <li><strong>The standard, then the PR.</strong> The standard of your front, in words: its direction, every token and component with the file it lives in, its own rules. What you correct in it by hand stays. Then a pull request in words, with no capture.</li>
+      <li><strong>Understand.</strong> <span>It reads your project's own words, then writes what kind of product it is, what it is for, who uses it and its main loop (for a game, its fiction and its illustrations), and replays three to five key journeys in a real browser. Then it says what the run will cost, phase by phase, and waits for your go.</span></li>
+      <li><strong>Look.</strong> <span>It captures every screen at phone and desktop width, measures pointer cursors, sideways scrolling, contrast and console errors, and holds each page to eight principles: one judge on everything, two more on what it fails.</span></li>
+      <li><strong>Decide.</strong> <span>If nothing fails, it says « nothing to redo », writes the standard of the front as it is, and stops. <code>/aeom --juger</code> stops here whatever the verdict: what fails, without redoing anything.</span></li>
+      <li><strong>A new direction.</strong> <span>Three art directions drawn from the product's own world, never from the looks AIs propose by default: things your users know, or a game's fiction and illustrations. A knockout keeps one, and you validate it or choose another before any page is rebuilt. A client's own style can be kept instead.</span></li>
+      <li><strong>Pages, then journeys.</strong> <span>One worker per page, then per journey, each in its own files. A guard refuses any change that adds a feature. Only what got better is kept. If your session closes on the way, <code>/aeom --reprendre</code> takes the run up where it stopped.</span></li>
+      <li><strong>Show.</strong> <span>A result page on your machine, and the features a blocked journey would need, never built.</span></li>
+      <li><strong>The standard, then the PR.</strong> <span>The standard of your front, in words: its direction, every token and component with the file it lives in, its own rules. What you correct in it by hand stays. Then a pull request in words, with no capture.</span></li>
     </ol>
     <p>On the demo app, the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0; the measurable checks from 10 to 0; the journeys' failures from 14 to 7; « See my orders » from four steps to three. No feature was added.</p>
   </div>
@@ -251,7 +251,7 @@
   </div>
   <div class="section__body">
     <ol class="strata">
-      <li data-stage="done"><strong>Done.</strong> Most of level 1, on demo apps: <code>/aeom</code> understands the product, judges every screen and journey, and rebuilds the front on a new direction, or keeps a client's style, and writes the standard of the front.</li>
+      <li data-stage="done"><strong>Done.</strong> Level 1, run on two real projects: <code>/aeom</code> understands the product, games included, says what the run will cost, judges every screen and journey, rebuilds the front on a direction you validate, or keeps a client's style, writes the standard of the front, and takes up a run its session lost.</li>
       <li data-stage="now"><strong>Now.</strong> A bench of apps with known defects, measuring what AEOM finds and fixes.</li>
       <li data-stage="next"><strong>Next, level 2: keep.</strong> Every pull request held to the standard: what can be measured blocks the CI check, the judges comment on whether it is still the same product.</li>
       <li data-stage="then"><strong>Then, level 3: build.</strong> Build what is asked, or a front from scratch, inside the standard, front only.</li>

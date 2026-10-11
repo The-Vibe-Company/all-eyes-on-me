@@ -834,6 +834,9 @@ h2 {
   color: var(--mark);
 }
 
+/* A command in a step reads whole: never cut at its hyphens. */
+.steps code { white-space: nowrap; }
+
 .steps strong {
   color: var(--ink);
   font-weight: 700;
