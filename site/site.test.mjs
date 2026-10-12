@@ -18,20 +18,15 @@ function cliCommands() {
   return new Map(block.split("\n").map((line) => line.trim().match(/^(\S+)\s+(.+)$/).slice(1)));
 }
 
-test("the commands on the page are exactly the CLI's, with its words", () => {
-  const shown = new Map([...page.matchAll(/<li data-command="([^"]+)"><code>aeom \1<\/code>\s*([^<]+)<\/li>/g)].map(([, name, what]) => [name, what.trim()]));
-  assert.deepEqual(shown, cliCommands());
-});
-
 test("the commands in the README are exactly the CLI's, with its words", () => {
   const listed = new Map([...readme.matchAll(/^\| `aeom (\S+)` \| (.+?) \|$/gm)].map(([, name, what]) => [name, what.trim()]));
   assert.deepEqual(listed, cliCommands());
 });
 
 test("the README and the page say what AEOM is in one sentence, then what works today, apart from what comes", () => {
-  const sentence = "All Eyes On Me is the art director of a product coded by agents: it sets the standard of its front, holds every pull request to it, and builds the front that follows it.";
+  const sentence = "All Eyes On Me is the designer of a product coded by agents: it walks its screens and journeys like a user, redesigns what gets in the way, and holds every pull request to the standard it sets.";
   assert.ok(readme.split("\n").slice(0, 4).join(" ").includes(sentence), "the README opens on the sentence");
-  assert.ok(page.includes(sentence), "the page says the same sentence");
+  assert.match(page, /the designer of a product coded by agents/i, "the page says what AEOM is, in short");
   const today = readme.split("## What it does today")[1]?.split("\n## ")[0] ?? "";
   const next = readme.split("## What comes next")[1]?.split("\n## ")[0] ?? "";
   assert.ok(today && next, "the README has « What it does today » and « What comes next »");
@@ -40,12 +35,8 @@ test("the README and the page say what AEOM is in one sentence, then what works 
     assert.doesNotMatch(today, notYet, `${notYet} is not done: it belongs in « What comes next »`);
     assert.match(next, notYet);
   }
-  for (const text of [readme, page]) {
-    assert.match(text, /run on two real projects/i, "it says how many real projects went through it");
-    assert.doesNotMatch(text, /not (yet )?run on a real project/i, "real projects went through it: it no longer says the opposite");
-  }
-  const stages = [...page.matchAll(/<li data-stage="([^"]+)">/g)].map(([, stage]) => stage);
-  assert.deepEqual(stages, ["done", "now", "next", "then", "later"], "the page's roadmap goes from what is done to what comes last");
+  assert.match(readme, /run on two real projects/i, "the README says how many real projects went through it");
+  assert.doesNotMatch(readme + page, /not (yet )?run on a real project/i, "real projects went through it: nothing says the opposite");
 });
 
 test("the page links to the repository to star it", () => {
@@ -127,7 +118,6 @@ test("the condition report is written from the kept run, not by hand", async () 
   const { runSection } = await import(new URL("site/run.mjs", root));
   const written = readFileSync(new URL("site/shared/run.html", root), "utf8");
   assert.equal(written, await runSection(), "site/shared/run.html is out of date: run node site/run.mjs");
-  assert.match(page, /<!-- include: run -->/);
   const tournament = JSON.parse(readFileSync(new URL("site/run/directions/tournament.json", root), "utf8"));
   for (const slug of tournament.entrants) assert.match(written, new RegExp(`src="/run/directions/${slug}\\.webp"`));
   for (const duel of tournament.duels.filter((d) => d.b)) {
@@ -161,9 +151,23 @@ test("the build refuses any folder whose emptying would delete the site", () => 
   }
 });
 
-test("each step of « How it works » is its title, then its words in one block, so the grid keeps them in their columns", () => {
-  const steps = page.split('<ol class="steps">')[1]?.split("</ol>")[0] ?? "";
-  const items = [...steps.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(([, inner]) => inner.trim());
-  assert.equal(items.length, 7);
-  for (const item of items) assert.match(item, /^<strong>[^<]+<\/strong> <span>[\s\S]+<\/span>$/, item.slice(0, 60));
+test("the page says the three things AEOM does, the one not built yet marked as coming", () => {
+  for (const what of ["It walks your product like a user.", "It redesigns what gets in the way.", "It keeps the line."]) assert.ok(page.includes(what), `${what} is missing`);
+  assert.match(page.split("It keeps the line.")[0].split("It redesigns what gets in the way.")[1] ?? "", /class="soon"/, "keeping every pull request to the standard is not built yet: it says so");
+  assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
+  // The prose only: what a drawing shows, such as a terminal's lines, is not read as text to wade through.
+  let prose = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "");
+  for (let at = prose.indexOf("data-visual"); at !== -1; at = prose.indexOf("data-visual")) {
+    const open = prose.lastIndexOf("<", at);
+    const tag = prose.slice(open + 1).match(/^\w+/)[0];
+    let depth = 0;
+    let end = open;
+    for (const m of prose.slice(open).matchAll(new RegExp(`<(/?)${tag}\\b[^>]*>`, "g"))) {
+      depth += m[1] ? -1 : 1;
+      if (depth === 0) { end = open + m.index + m[0].length; break; }
+    }
+    prose = prose.slice(0, open) + prose.slice(end);
+  }
+  const words = prose.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  assert.ok(words.length < 1000, `the page stays short, ${words.length} characters of prose: what does not fit is in the README`);
 });

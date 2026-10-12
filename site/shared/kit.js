@@ -1,17 +1,73 @@
 // AEOM landing kit: the small behaviours the kit's components need.
 
-// A plate with two views: the slider moves the line between them.
-for (const plate of document.querySelectorAll("[data-compare]")) {
-  const view = plate.querySelector(".plate__view");
-  const input = plate.querySelector(".compare__input");
-  if (!view || !input) continue;
-  const move = () => {
-    view.style.setProperty("--split", `${input.value}%`);
-    input.setAttribute("aria-valuetext", `${input.value}% visible light, ${100 - Number(input.value)}% infrared`);
+// The eyes are alive: they follow the pointer while it moves, look around on
+// their own when it rests (and on a phone), and blink when the visitor
+// clicks. Nothing moves for a visitor who asks for less motion.
+const eyes = [...document.querySelectorAll(".eye")];
+if (eyes.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const look = (eye, x, y) => {
+    const pupil = eye.querySelector("i");
+    pupil.style.setProperty("--px", `${x}%`);
+    pupil.style.setProperty("--py", `${y}%`);
   };
-  input.addEventListener("input", move);
-  move();
+  let resting;
+  const wander = () => {
+    for (const eye of eyes) {
+      eye.classList.remove("is-following");
+      const angle = Math.random() * Math.PI * 2;
+      const reach = 10 + Math.random() * 20;
+      look(eye, Math.cos(angle) * reach, Math.sin(angle) * reach);
+    }
+    resting = setTimeout(wander, 900 + Math.random() * 1600);
+  };
+  addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch") return;
+    clearTimeout(resting);
+    for (const eye of eyes) {
+      eye.classList.add("is-following");
+      const box = eye.getBoundingClientRect();
+      const dx = event.clientX - (box.left + box.width / 2);
+      const dy = event.clientY - (box.top + box.height / 2);
+      const far = Math.hypot(dx, dy) || 1;
+      const reach = Math.min(1, far / 300) * 28;
+      look(eye, (dx / far) * reach, (dy / far) * reach);
+    }
+    resting = setTimeout(wander, 2500);
+  });
+  wander();
+  // The eyes blink when the visitor clicks, anywhere on the page.
+  addEventListener("pointerdown", () => {
+    for (const eye of eyes) {
+      eye.classList.remove("is-blinking");
+      void eye.offsetWidth;
+      eye.classList.add("is-blinking");
+    }
+  });
 }
+
+// Shapes that do not go together fall in order when they come into view, and
+// again every five seconds; without motion, they are shown in order.
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+for (const tidy of document.querySelectorAll(".tidy")) {
+  if (reduced || !("IntersectionObserver" in window)) {
+    tidy.classList.add("is-tidy");
+    continue;
+  }
+  // While in view, every five seconds: in order, then back to the mess, then in order again.
+  let cycle;
+  const play = () => {
+    tidy.classList.remove("is-tidy");
+    setTimeout(() => tidy.classList.add("is-tidy"), 1100);
+  };
+  new IntersectionObserver(([entry]) => {
+    clearInterval(cycle);
+    if (!entry.isIntersecting) return;
+    play();
+    cycle = setInterval(play, 5000);
+  }, { threshold: 0.5 }).observe(tidy);
+}
+// The eye that walks the journey stands still for a visitor who asks for less motion.
+if (reduced) for (const motion of document.querySelectorAll("animateMotion")) motion.remove();
 
 // Copies text with the Clipboard API, which needs a secure page and the
 // permission, or else with the older copy command. Says whether it worked.
