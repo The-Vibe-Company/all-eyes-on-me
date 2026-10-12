@@ -100,7 +100,7 @@ export async function runJudge(argv: string[]): Promise<number> {
     await writeFile(join(votesDir, "to-judge.json"), JSON.stringify({ since: resolve(since), pages: changed }, null, 2) + "\n");
     console.log(
       changed.length
-        ? `${s(changed.length, "page")} changed since ${since}: ${changed.join(", ")}.${kept.length ? ` ${s(kept.length, "page")} keeps its verdict: ${kept.join(", ")}.` : ""} The voters judge only the pages of ${join(votesDir, "to-judge.json")}.`
+        ? `${s(changed.length, "page")} changed since ${since}: ${changed.join(", ")}.${kept.length ? ` ${s(kept.length, "page")} ${kept.length === 1 ? "keeps its" : "keep their"} verdict: ${kept.join(", ")}.` : ""} The voters judge only the pages of ${join(votesDir, "to-judge.json")}.`
         : `No page changed since ${since}: every page keeps its verdict. Count them with aeom judge, with no voter.`,
     );
     return 0;
