@@ -4,6 +4,7 @@ title: Un worker de page seulement là où quelque chose échoue encore après l
 milestone: 03-la-commande-unique
 depends_on: [15]
 design: null
+status: done
 tracker: { tool: github, id: 100, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/100 }
 ---
 
