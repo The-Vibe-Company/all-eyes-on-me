@@ -1,0 +1,27 @@
+README.md
+  s_4ce34ec42d9105::t_41985c6d229827 17-18
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_f2bd8f13dd891c 14-19,21-29,37-39,44,56
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_a2f67b48836d76 24-25,53-57,105-106,109,111-114,117-126,145-146,148-150,152,155
+site/pages/commands.html
+  s_4ce34ec42d9105::t_9a22cd227126f5 57
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_2141fd0dd4fe1c 3,59-66,70-71,73,119-120,225-227,229,269-276
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "db959d837204fc19c85650740a1d0412435423a7",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
