@@ -176,7 +176,8 @@ async function printByPage(out: string, critiqueFile: string, json: boolean): Pr
   } catch {
     critique = undefined;
   }
-  const pages = journeyFindingsByPage({ replay, critique });
+  // Each capture as a path the worker can open, wherever it runs from.
+  const pages = journeyFindingsByPage({ replay, critique }).map((p) => ({ ...p, findings: p.findings.map((f) => (f.capture ? { ...f, capture: join(out, f.capture) } : f)) }));
   if (json) {
     // The JSON is the answer; what it leaves out is said apart, so the coordinator can tell no critique from nothing failing.
     if (!critique) console.error(missing);
@@ -187,7 +188,7 @@ async function printByPage(out: string, critiqueFile: string, json: boolean): Pr
   if (!pages.length) console.log("No journey breaks or fails on any page.");
   for (const { page, findings } of pages) {
     console.log(page);
-    for (const f of findings) console.log(`  ${f.name}${f.step ? `, step ${f.step}` : ""}${f.principle ? `, ${f.principle}` : ""}: ${f.reason}`);
+    for (const f of findings) console.log(`  ${f.name}${f.step ? `, step ${f.step}` : ""}${f.principle ? `, ${f.principle}` : ""}: ${f.reason}${f.capture ? `\n    ${f.capture}` : ""}`);
   }
   return 0;
 }

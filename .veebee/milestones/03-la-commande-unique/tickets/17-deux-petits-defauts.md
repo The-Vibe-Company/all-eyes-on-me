@@ -4,6 +4,7 @@ title: aeom judge refuse ses deux étapes en une fois, et --by-page donne la cap
 milestone: 03-la-commande-unique
 depends_on: [13]
 design: null
+status: done
 tracker: { tool: github, id: 98, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/98 }
 ---
 
