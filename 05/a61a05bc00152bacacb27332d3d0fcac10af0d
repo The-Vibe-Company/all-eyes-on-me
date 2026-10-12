@@ -1,0 +1,19 @@
+.veebee/milestones/03-la-commande-unique/tickets/20-une-coordination-plus-legere.md
+  s_4ce34ec42d9105::t_750c5488bb8331 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "05a61a05bc00152bacacb27332d3d0fcac10af0d",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
