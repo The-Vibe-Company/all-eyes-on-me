@@ -55,6 +55,7 @@ test("the estimate reads as a table, phase by phase, with what is at most and th
   assert.match(text, /only when the verdict finds something to redo/);
   assert.match(text, /\nIf a journey still breaks after the pages, at most +\d+ agents +≈ \d\.\d M tokens +≈ \d+ min more\n/);
   assert.match(text, /the session that coordinates the run/);
+  assert.match(text, /The agents, judges and workers, run on Sonnet; the session that coordinates the run, on its own model\./);
 });
 
 test("/aeom --ux costs the journeys alone: no direction and no page wave", () => {
