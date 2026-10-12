@@ -160,8 +160,8 @@ test("aeom compare --journeys --by-critique decides from the two critiques, with
     }
     const { code, out } = await run(dir, ["compare", "--journeys", "before", "after", "--by-critique"]);
     assert.equal(code, 0, out);
-    assert.match(out, /✓ See my orders\s+kept\s+4 → 3 steps\s+the critique clears clear-start, short and fails nothing that passed/);
-    assert.match(out, /✗ Contact the shop\s+back\s+5 → 5 steps\s+the critique now fails same-words, which passed/);
+    assert.match(out, /✓ See my orders\s+kept\s+4 → 3 steps\s+the critique clears clear-start, short: 2 principles failing, now 0/);
+    assert.match(out, /✗ Contact the shop\s+back\s+5 → 5 steps\s+the critique fails more than before: same-words, which passed/);
     const both = await run(dir, ["compare", "--journeys", "before", "after", "--by-critique", "--duels", "after/duels"]);
     assert.equal(both.code, 1);
     assert.match(both.out, /--by-critique decides without duels: leave out --duels/);

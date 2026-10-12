@@ -4,6 +4,7 @@ title: Les workers tournent en Sonnet
 milestone: 03-la-commande-unique
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 95, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/95 }
 ---
 

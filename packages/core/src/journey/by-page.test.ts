@@ -101,3 +101,19 @@ test("a step with no route, as on a browser error page, is put under the home pa
   });
   assert.deepEqual(pages.map((p) => p.page), ["/"]);
 });
+
+test("a principle failing at the step where the journey breaks goes where the break goes: the page it broke on is an error, not a page of the app", () => {
+  const pages = journeyFindingsByPage({
+    replay: replay({ help: [run(["/", "/aide"], { broken: { step: 2, reason: "the page answered 500" } })] }),
+    critique: critique({ help: [{ principle: "no-dead-end", steps: [2], reason: "Aide leads to a bare error page." }] }),
+  });
+  assert.deepEqual(pages.map((p) => [p.page, p.findings.map((f) => f.principle ?? "breaks")]), [["/", ["breaks", "no-dead-end"]]]);
+});
+
+test("a journey that breaks at one width only keeps its findings on the page the other width reached", () => {
+  const pages = journeyFindingsByPage({
+    replay: replay({ open: [run(["/", "/orders"], { width: 390, broken: { step: 2, reason: "the page answered 500" } }), run(["/", "/orders/7"])] }),
+    critique: critique({ open: [{ principle: "result-shown", steps: [2], reason: "The order shows no total." }] }),
+  });
+  assert.deepEqual(pages.map((p) => [p.page, p.findings.map((f) => f.principle ?? "breaks")]), [["/", ["breaks"]], ["/orders/:id", ["result-shown"]]]);
+});
