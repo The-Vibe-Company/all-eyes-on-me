@@ -417,15 +417,28 @@ test("a journey the critiques find nothing better in reads « unchanged » on th
   }
 });
 
-test("a page the kit fixed alone, with no worker, says so on the result page", async () => {
+test("a page the kit fixed alone, with no worker, says so on the result page; never one that passed already or was put back", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
   const R = join(dir, ".aeom", "runs", "run-8");
+  const page = async () => (await readFile(join(R, "report.html"), "utf8")).match(/<section class="screen" data-page="\/"[^>]*>.*?<\/section>/s)![0];
   try {
     await changedRun(R);
+    await snapshot(join(R, "end"), { "/": [] });
+    await put(join(R, "after", "compare.json"), [{ page: "/", verdict: "better" }]);
     await put(join(R, "no-worker.json"), ["/"]);
     const { code, out } = await run(dir, ["report", ".aeom/runs/run-8"]);
     assert.equal(code, 0, out);
-    assert.match(await readFile(join(R, "report.html"), "utf8"), /<section class="screen" data-page="\/"[^>]*>.*?Fixed by the kit: no worker touched it\./s);
+    assert.match(await page(), /Fixed by the kit: no worker touched it\./);
+    // Put back, it is not a page the kit fixed.
+    await put(join(R, "after", "compare.json"), [{ page: "/", verdict: "same" }]);
+    assert.equal((await run(dir, ["report", ".aeom/runs/run-8"])).code, 0);
+    assert.doesNotMatch(await page(), /Fixed by the kit/);
+    // A list written by hand that does not read leaves the page as it is, never without a result page.
+    await put(join(R, "after", "compare.json"), [{ page: "/", verdict: "better" }]);
+    await writeFile(join(R, "no-worker.json"), '["/",]');
+    const broken = await run(dir, ["report", ".aeom/runs/run-8"]);
+    assert.equal(broken.code, 0, broken.out);
+    assert.doesNotMatch(await page(), /Fixed by the kit/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

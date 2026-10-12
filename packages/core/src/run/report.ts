@@ -115,8 +115,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const paired = pairRoutes(before?.pages.map((p) => p.path) ?? [], after?.pages.map((p) => p.path) ?? []);
   const nameAfter = (path: string) => paired.get(path) ?? path;
   const pages = [...new Set([...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore, ...(after?.pages.map((p) => nameAfter(p.path)) ?? []), ...erroredAfter])];
-  // The pages the run gave no worker, because nothing failed on them once the kit was in.
-  const noWorker = (await json<string[]>(join(runDir, "no-worker.json"))) ?? [];
+  // The pages the run gave no worker, because nothing failed on them once the kit was in. A list that does not read
+  // only loses that note: the result page is still written.
+  const noWorker = await json<unknown>(join(runDir, "no-worker.json")).then((l) => (Array.isArray(l) ? l.filter((p): p is string => typeof p === "string") : []), () => [] as string[]);
   const screens: ResultPage["screens"] = pages.map((page) => {
     const b = before?.pages.find((p) => p.path === page);
     const a = after?.pages.find((p) => nameAfter(p.path) === page);
@@ -133,7 +134,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     return {
       page,
       status,
-      ...(Array.isArray(noWorker) && noWorker.includes(page) ? { byKit: true as const } : {}),
+      // Fixed by the kit: something failed before, it is kept, and no worker touched it.
+      ...(noWorker.includes(page) && status === "kept" && (c?.before?.total ?? 0) > 0 ? { byKit: true as const } : {}),
       count: c?.before && c.after ? { before: c.before.total, after: c.after.total } : null,
       ...(status === "sent back" ? { back: { verdict: decision === "worse" ? ("worse" as const) : ("same" as const), before: d?.before?.total ?? null, after: d?.after?.total ?? null } } : {}),
       widths: widths.map((width) => ({
