@@ -1,0 +1,27 @@
+.veebee/milestones/03-la-commande-unique/tickets/17-deux-petits-defauts.md
+  s_4ce34ec42d9105::t_eae8258e05324c 7
+packages/cli/src/commands/journey.test.ts
+  s_4ce34ec42d9105::t_d177ce7f5fe09a 121-129
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_c7a726c55b70b0 179-180,191
+packages/core/src/journey/by-page.test.ts
+  s_4ce34ec42d9105::t_0e008a181e2e9a 120-133
+packages/core/src/journey/by-page.ts
+  s_4ce34ec42d9105::t_f4fc17ebf77f4f 16-17,27-29,52,59,62,64,81,83-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "43550e30f6534a2c17bd0a0ae79e8f6ad095edaa",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
