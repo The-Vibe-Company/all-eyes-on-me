@@ -2,7 +2,7 @@
 // the code drift apart.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { createServer } from "node:net";
@@ -10,6 +10,7 @@ import { test } from "node:test";
 
 const root = new URL("../", import.meta.url);
 const page = readFileSync(new URL("site/pages/index.html", root), "utf8");
+const commands = readFileSync(new URL("site/pages/commands.html", root), "utf8");
 const readme = readFileSync(new URL("README.md", root), "utf8");
 
 function cliCommands() {
@@ -66,6 +67,11 @@ test("the site starts with one command and serves the page", async () => {
   await withSite(async (url, response) => {
     assert.equal(response.status, 200);
     assert.match(await response.text(), /All Eyes On Me/);
+    for (const path of ["/commands", "/commands/"]) {
+      const sub = await fetch(`${url}${path}`);
+      assert.equal(sub.status, 200, `${path} is served`);
+      assert.match(await sub.text(), /Three commands\./);
+    }
     const post = await fetch(`${url}/api/stars`, { method: "POST" });
     assert.equal(post.status, 405, "/api/stars only answers GET, like the Vercel function");
     assert.equal(post.headers.get("allow"), "GET");
@@ -103,6 +109,8 @@ test("the site builds to static files a host serves as is", () => {
       assert.ok(existsSync(join(out, href)), `${href} is linked but not built`);
     }
     assert.ok(existsSync(join(out, "shared/kit.css")));
+    assert.match(readFileSync(join(out, "commands/index.html"), "utf8"), /Three commands\./, "the commands page is built");
+    assert.doesNotMatch(readFileSync(join(out, "commands/index.html"), "utf8"), /<!-- (include|missing partial):/);
   } finally {
     rmSync(out, { recursive: true, force: true });
   }
@@ -151,27 +159,9 @@ test("the build refuses any folder whose emptying would delete the site", () => 
   }
 });
 
-test("the page shows three commands, each with when and what it does, the one not built yet marked as coming", () => {
-  const skill = readFileSync(new URL("skills/aeom/SKILL.md", root), "utf8");
-  const built = cliCommands();
-  const blocks = [...page.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)];
-  assert.deepEqual(blocks.map(([, id]) => id), ["judge", "redo", "check"]);
-  for (const [block, id] of blocks) {
-    const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?<\/p>/);
-    assert.ok(command, `${id} names its command`);
-    const [, typed, soon] = command;
-    // A skill option the skill knows, or a CLI command marked as coming exactly while the CLI lacks it.
-    if (typed.startsWith("/aeom")) {
-      for (const option of typed.split(" ").slice(1)) assert.ok(skill.includes(option), `${option} is not an option of /aeom`);
-      assert.ok(!soon, `${typed} works today`);
-    } else {
-      const name = typed.replace(/^aeom /, "");
-      assert.equal(Boolean(soon), !built.has(name), built.has(name) ? `aeom ${name} is built: it is no longer « Soon »` : `aeom ${name} is not built yet: it says « Soon »`);
-    }
-    assert.match(block, /<p class="when"><b>When<\/b> [^<]+<\/p>/, `${id} says when to use it`);
-    assert.ok((block.match(/<li>/g) ?? []).length >= 3, `${id} says what it does`);
-    assert.ok(page.includes(`href="#${id}"`), `the overview leads to ${id}`);
-  }
+test("the page says the three things AEOM does, the one not built yet marked as coming", () => {
+  for (const what of ["It walks your product like a user.", "It redesigns what gets in the way.", "It keeps the line."]) assert.ok(page.includes(what), `${what} is missing`);
+  assert.match(page.split("It keeps the line.")[0].split("It redesigns what gets in the way.")[1] ?? "", /class="soon"/, "keeping every pull request to the standard is not built yet: it says so");
   assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
   // The prose only: what a drawing shows, such as a terminal's lines, is not read as text to wade through.
   let prose = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "");
@@ -187,5 +177,46 @@ test("the page shows three commands, each with when and what it does, the one no
     prose = prose.slice(0, open) + prose.slice(end);
   }
   const words = prose.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  assert.ok(words.length < 2000, `the page stays short, ${words.length} characters of prose: what does not fit is in the README`);
+  assert.ok(words.length < 1000, `the page stays short, ${words.length} characters of prose: what does not fit is in the README`);
+});
+
+test("each thing AEOM does on the home page leads to the command that does it", () => {
+  for (const id of ["judge", "redo", "check"]) assert.match(page, new RegExp(`<a href="/commands#${id}"><code>[^<]+</code>`), `the home page leads to ${id}`);
+  assert.match(readFileSync(new URL("site/shared/header.html", root), "utf8"), /<a href="\/commands">Commands<\/a>/, "the menu leads to the commands page");
+});
+
+test("the commands page shows three commands, each with when and what it does, the one not built yet marked as coming", () => {
+  const skill = readFileSync(new URL("skills/aeom/SKILL.md", root), "utf8");
+  const built = cliCommands();
+  const blocks = [...commands.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)];
+  assert.deepEqual(blocks.map(([, id]) => id), ["judge", "redo", "check"]);
+  for (const [block, id] of blocks) {
+    const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?<\/p>/);
+    assert.ok(command, `${id} names its command`);
+    const [, typed, soon] = command;
+    // A skill option the skill knows, or a CLI command marked as coming exactly while the CLI lacks it.
+    if (typed.startsWith("/aeom")) {
+      for (const option of typed.split(" ").slice(1)) assert.ok(skill.includes(option), `${option} is not an option of /aeom`);
+      assert.ok(!soon, `${typed} works today`);
+    } else {
+      const name = typed.replace(/^aeom /, "");
+      assert.equal(Boolean(soon), !built.has(name), built.has(name) ? `aeom ${name} is built: it is no longer « Soon »` : `aeom ${name} is not built yet: it says « Soon »`);
+    }
+    assert.match(block, /<p class="when"><b>When<\/b> [^<]+<\/p>/, `${id} says when to use it`);
+    assert.ok((block.match(/<li>/g) ?? []).length >= 3, `${id} says what it does`);
+    assert.ok(commands.includes(`href="#${id}"`), `the top of the page leads to ${id}`);
+  }
+  // What the terminals print is what the CLI prints.
+  const verdict = readFileSync(new URL("packages/cli/src/commands/verdict.ts", root), "utf8");
+  const next = commands.match(/Next: [^<\n]+/)?.[0];
+  assert.ok(next && verdict.includes(next), `the verdict's last line is the CLI's: ${next}`);
+  const measured = (help) => help.match(/(\d+) checks? and (\d+) principles?/);
+  const checks = readdirSync(new URL("packages/core/src/checks/", root)).filter((f) => !/^(index|run|types)\.ts$|\.test\.ts$/.test(f) && f.endsWith(".ts")).length;
+  assert.equal(Number(measured(commands)?.[1]), checks, "the page counts the checks AEOM runs");
+});
+
+test("the commands page lists the CLI underneath: every command, with its words, under a title that counts them", () => {
+  const listed = new Map([...commands.matchAll(/<code title="([^"]+)">([a-z]+)<\/code>/g)].map(([, what, name]) => [name, what.replace(/&#39;|&apos;/g, "'")]));
+  assert.deepEqual(new Map([...listed].sort()), new Map([...cliCommands()].sort()));
+  assert.match(commands, new RegExp(`<h2 id="cli-title">${listed.size} commands underneath\\.</h2>`));
 });
