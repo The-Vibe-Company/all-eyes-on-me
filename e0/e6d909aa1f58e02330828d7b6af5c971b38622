@@ -1,0 +1,82 @@
+README.md
+  s_4ce34ec42d9105::t_e4cd023e5fcab1 16
+  s_4ce34ec42d9105::t_97a3682b9dc10d 15,61
+  s_4ce34ec42d9105::t_a2d2db5e210a73 104
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_b2c91e293bbbd1 78,129-136,141-146,148-152
+  s_4ce34ec42d9105::t_b4a0f2fde99916 137-140,147
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_1711393efcfb3f 175,179-189,200-202
+  s_4ce34ec42d9105::t_2f7db84150aad3 71,73-74,79-84,99,120-121,129-135,140-143,176,220-228
+packages/cli/src/commands/estimate.test.ts
+  s_4ce34ec42d9105::t_34d0b961ab082c 38-40,45
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_fb4d2e3859e393 6,19-20,33,62
+packages/core/src/directions/directions.test.ts
+  s_4ce34ec42d9105::t_f94353110496c3 110-111,156-168
+  s_4ce34ec42d9105::t_e5544c4bb7b040 169-182
+packages/core/src/directions/tournament.ts
+  s_4ce34ec42d9105::t_232ee1595bbc0d 26-27,130-131,138,140,148
+  s_4ce34ec42d9105::t_71467c794a538e 41-42,52,58-59,112,137,139,149
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_789a2a529c7b1a 15,33,66-75
+  s_4ce34ec42d9105::t_4ec6964946c8b4 21,44
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_bb625ef2fdaf0e 59,90-105
+  s_4ce34ec42d9105::t_fe667300f043c7 118-120,123-125
+packages/core/src/run/pr.test.ts
+  s_4ce34ec42d9105::t_f38f9c82232458 102-103
+packages/core/src/run/pr.ts
+  s_4ce34ec42d9105::t_f57f918413d97a 77-79
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_bcf48c3a767495 35,341
+  s_4ce34ec42d9105::t_72ff4af0bc5654 44-45,362
+  s_4ce34ec42d9105::t_8050a32eda617c 118-120,137-138
+site/pages/commands.html
+  s_4ce34ec42d9105::t_36db960e52574c 50
+  s_4ce34ec42d9105::t_f6b5bbfd498246 57
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_18778337692eb8 3,50,68,97,101
+  s_4ce34ec42d9105::t_460a6f59d4758e 99
+  s_4ce34ec42d9105::t_a060a00a041b53 70
+  s_4ce34ec42d9105::t_4df47b9c8422ad 12-21
+packages/cli/src/commands/standard.ts
+  s_4ce34ec42d9105::t_f575338ebd6812 20
+packages/core/src/standard/standard.ts
+  s_4ce34ec42d9105::t_4a2e0f8ada9e65 246-248
+.veebee/milestones/03-la-commande-unique/tickets/18-pas-de-tournoi-quand-on-choisit.md
+  s_4ce34ec42d9105::t_790858b6ee45dc 7
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_48bbbf3b101d9f 419,421-422,424-425,428-430,442-445
+  s_4ce34ec42d9105::t_a77e75a980c4db 420,423,426-427,431-441
+.veebee/milestones/03-la-commande-unique/tickets/19-un-worker-seulement-la-ou-ca-echoue.md
+  s_4ce34ec42d9105::t_85bfee0662d3b2 7
+package.json
+  s_4ce34ec42d9105::t_f8f346ddde1618 12
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_9512bef3f44c86 45,59,93,132
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_526745e6a54d29 1-26
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_52df2de270ca37 1-39
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_d7ceffa7641e11 1-109
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_1227d6ce67166a 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0e6d909aa1f58e02330828d7b6af5c971b38622",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
