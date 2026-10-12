@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -85,5 +85,34 @@ test("aeom run keeps where a run is, and says to a new session how to take it up
   } finally {
     await rm(dir, { recursive: true, force: true });
     await rm(wt, { recursive: true, force: true });
+  }
+});
+
+test("a lock whose holder is gone is taken over only once it is older than a mark ever holds it: younger, it may be another mark's", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-run-lock-"));
+  try {
+    const R = join(dir, ".aeom", "runs", "run-1");
+    await mkdir(R, { recursive: true });
+    assert.equal((await run(dir, ["run", "mark", R, "--phase", "judge"])).code, 0);
+    // The PID of a process that has ended.
+    const gone = await new Promise<number>((done) => {
+      const child = execFile("node", ["-e", ""]);
+      child.on("exit", () => done(child.pid!));
+    });
+    const lock = join(R, "state.json.lock");
+
+    // Left by a mark that stopped long ago: taken over at once.
+    await writeFile(lock, String(gone));
+    await utimes(lock, new Date(Date.now() - 60_000), new Date(Date.now() - 60_000));
+    assert.equal((await run(dir, ["run", "agent", R, "--name", "a", "--kind", "page judge", "--status", "launched"])).code, 0, "an old lock of a process gone is taken over");
+
+    // Just written: the PID read may be the previous holder's while another mark has the lock now. It waits.
+    await writeFile(lock, String(gone));
+    const start = Date.now();
+    assert.equal((await run(dir, ["run", "agent", R, "--name", "b", "--kind", "page judge", "--status", "launched"])).code, 0);
+    assert.ok(Date.now() - start >= 2000, "a fresh lock is never removed at once");
+    assert.deepEqual(JSON.parse(await readFile(join(R, "state.json"), "utf8")).agents.map((a: { name: string }) => a.name), ["a", "b"]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
   }
 });

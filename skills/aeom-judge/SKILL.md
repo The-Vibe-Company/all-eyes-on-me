@@ -1,6 +1,6 @@
 ---
 name: aeom-judge
-description: Judge every captured page of a web app against the AEOM base principles, or every replayed key journey against the journey principles, with one vote first and three independent votes on what it fails, counted by majority; on a new measure, only the pages whose captures changed. Use after `aeom capture` or `aeom journey`, when AEOM needs to know which principles each page or journey passes or fails.
+description: Judge every captured page of a web app against the AEOM base principles, or every replayed key journey against the journey principles, with one vote first and three independent votes on what it fails, counted by majority; on a new measure, only the pages whose captures changed. Used by /aeom after `aeom capture` or `aeom journey`, when AEOM needs to know which principles each page or journey passes or fails; not the user's command: to judge a front, the user types /aeom judge.
 ---
 
 # AEOM judge

@@ -146,7 +146,7 @@ test("when something fails, aeom verdict says what comes next: a new direction, 
   try {
     const fresh = await run(dir, ["verdict"]);
     assert.equal(fresh.code, 1);
-    assert.match(fresh.out, /Next: six new art directions, drawn from the product sheet\.$/m);
+    assert.match(fresh.out, /Next: three art directions by default, drawn from the product sheet\.$/m);
     assert.match((await run(dir, ["verdict", "--keep-style"])).out, /Next: the kit wave fixes the existing style, without a new direction \(--keep-style\)\.$/m);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
     assert.match((await run(dir, ["verdict"])).out, /Next: the kit wave fixes the existing style, without a new direction \("style": "keep" in \.aeom\/config\.json\)\.$/m);

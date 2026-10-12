@@ -10,9 +10,9 @@ checks and the judge on every screen and, when the project has key journeys,
 their replay and their critique. Exits with 0 when nothing fails, 1 when
 something does, and 2 when it cannot decide: a report missing or unreadable,
 or a screen or journey one report has and another leaves out. When something
-fails, its last line says what comes next: six new art directions, or, with
---keep-style or "style": "keep" in .aeom/config.json, the kit wave on the
-existing style.
+fails, its last line says what comes next: three art directions by default,
+or, with --keep-style or "style": "keep" in .aeom/config.json, the kit wave on
+the existing style.
 
 Options:
   --reports <dir>   check.json, judge.json and judge-journeys.json (default .aeom/reports)
@@ -108,6 +108,6 @@ async function verdict(argv: string[]): Promise<number> {
   console.log("");
   for (const f of failures) console.log(`✗ ${f.where.padEnd(column)}${f.what}`);
   console.log(`\n${s(failures.length, "thing")} to redo.`);
-  console.log(kept ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).` : `Next: six new art directions, drawn from the product sheet.`);
+  console.log(kept ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).` : `Next: three art directions by default, drawn from the product sheet.`);
   return 1;
 }

@@ -2,7 +2,7 @@
 // are published, and how a page gets its partials.
 import { readFile } from "node:fs/promises";
 
-export const PAGES = { "/": "index.html" };
+export const PAGES = { "/": "index.html", "/commands": "commands.html" };
 export const TYPES = { ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".json": "application/json; charset=utf-8" };
 
 export const read = (path) => readFile(new URL(path, import.meta.url));

@@ -49,6 +49,13 @@ async function load(runDir: string): Promise<RunState> {
 
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
+/** Longer than a mark ever holds the lock. */
+const STALE_MS = 2000;
+const stale = async (lock: string, holder: number) => {
+  const age = await stat(lock).then((s) => Date.now() - s.mtimeMs, () => 0);
+  return age > STALE_MS && Number(await readFile(lock, "utf8").catch(() => "")) === holder;
+};
+
 /**
  * Reads, changes and writes the state under a lock, so marks made at once
  * never lose one another; written whole, then moved into place, so a run
@@ -72,7 +79,9 @@ async function update(runDir: string, change: (s: RunState) => RunState): Promis
       } catch {
         alive = false;
       }
-      if (!alive && holder) await rm(lock, { force: true });
+      // Its holder gone, the lock may still be another mark's: the PID was read before that mark took it. Only a lock
+      // still the same holder's and older than a mark ever holds it is taken over.
+      if (!alive && holder && (await stale(lock, holder))) await rm(lock, { force: true });
       else if (Date.now() > until) throw new Error(`Another aeom run (process ${holder}) has been writing ${join(runDir, FILE)} for too long. Run again once it is done.`);
       else await sleep(20 + Math.random() * 30);
     }
