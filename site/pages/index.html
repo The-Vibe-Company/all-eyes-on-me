@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>All Eyes On Me</title>
-<meta name="description" content="Your agents ship features. AEOM makes them look and work like someone designed them: it walks your product like a user, redesigns what gets in the way, and keeps the line.">
+<meta name="description" content="Your agents ship features. AEOM makes them look and work like someone designed them, in three commands: judge your front end, redo it, then hold every pull request to it.">
 <!-- include: head -->
 </head>
 <body>
@@ -43,11 +43,27 @@
   </div>
 </section>
 
-<section class="feature feature--judge" aria-labelledby="judge-title">
+<section class="cmds" id="commands" aria-labelledby="cmds-title">
+  <h2 id="cmds-title">Three commands.</h2>
+  <p class="cmds__lede">Judge your front end, redo it, then hold every pull request to it.</p>
+  <ol class="cmds__list">
+    <li><a class="cmds__card cmds__card--judge" href="#judge"><span class="cmds__n">01</span><code>/aeom --juger</code><span class="cmds__verb">Judge</span></a></li>
+    <li><a class="cmds__card cmds__card--redo" href="#redo"><span class="cmds__n">02</span><code>/aeom</code><span class="cmds__verb">Redo</span></a></li>
+    <li><a class="cmds__card cmds__card--check" href="#check"><span class="cmds__n">03</span><code>aeom review</code><span class="cmds__verb">Check <span class="soon">Soon</span></span></a></li>
+  </ol>
+</section>
+
+<section class="feature feature--judge" id="judge" aria-labelledby="judge-title">
   <div class="feature__text">
-    <p class="feature__num">01</p>
-    <h2 id="judge-title">It walks your product like a user.</h2>
-    <p>It replays your key journeys on phone and desktop, judges every screen and every step, and says plainly what gets in the way.</p>
+    <p class="cmd"><code>/aeom --juger</code></p>
+    <h2 id="judge-title">Judge your front end.</h2>
+    <p class="when"><b>When</b> before you change anything.</p>
+    <ul class="does">
+      <li>Reads your product, then replays its key journeys in a real browser, on phone and desktop.</li>
+      <li>Measures every screen: contrast, clickable buttons, sideways scroll, console errors.</li>
+      <li>Holds each screen to eight design principles, each journey to its own.</li>
+      <li>Says what fails, in plain words. Changes nothing.</li>
+    </ul>
   </div>
   <div class="gaze" data-visual aria-hidden="true">
     <svg viewBox="0 0 600 380" class="walk__map">
@@ -65,11 +81,17 @@
   </div>
 </section>
 
-<section class="feature feature--redesign" aria-labelledby="redesign-title">
+<section class="feature feature--redesign" id="redo" aria-labelledby="redesign-title">
   <div class="feature__text">
-    <p class="feature__num">02</p>
-    <h2 id="redesign-title">It redesigns what gets in the way.</h2>
-    <p>A look drawn from your product, the one you pick, and shorter journeys. Never a new feature. Only what got better is kept, in a pull request.</p>
+    <p class="cmd"><code>/aeom</code></p>
+    <h2 id="redesign-title">Redo your front end.</h2>
+    <p class="when"><b>When</b> the judge finds it falls short.</p>
+    <ul class="does">
+      <li>Says what the run will cost, and waits for your go.</li>
+      <li>Draws three art directions from your product's own world. You pick one.</li>
+      <li>Rebuilds every screen and journey on it, keeps only what got better, never adds a feature.</li>
+      <li>Writes the standard of your front end, and opens a pull request.</li>
+    </ul>
   </div>
   <div class="tidy" data-visual aria-hidden="true">
     <span style="--i:0;--x:-30px;--y:40px;--r:-28deg;--c:#ff5a3c;--br:50%"></span>
@@ -84,11 +106,17 @@
   </div>
 </section>
 
-<section class="feature feature--keep" aria-labelledby="keep-title">
+<section class="feature feature--keep" id="check" aria-labelledby="keep-title">
   <div class="feature__text">
-    <p class="feature__num">03 <span class="soon">Soon</span></p>
-    <h2 id="keep-title">It keeps the line.</h2>
-    <p>Every pull request held to the standard of your front: its look, its components, its journeys.</p>
+    <p class="cmd"><code>aeom review</code> <span class="soon">Soon</span></p>
+    <h2 id="keep-title">Check a pull request.</h2>
+    <p class="when"><b>When</b> before you merge, whoever wrote it.</p>
+    <ul class="does">
+      <li>Holds the screens it touches to the standard of your front end.</li>
+      <li>Flags a colour or a font outside its tokens, a component redone by hand, a different header.</li>
+      <li>Checks the journeys it crosses still reach their end.</li>
+      <li>Gives a clear verdict, as a GitHub check.</li>
+    </ul>
   </div>
   <div class="line" data-visual aria-hidden="true">
     <div class="line__row"><span></span><span></span><span></span><span></span><span class="line__odd"><b>✕</b></span><span></span></div>

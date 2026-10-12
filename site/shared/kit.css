@@ -1,6 +1,6 @@
 /* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
    Pages link this file and include head, header and footer.
-   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --redesign, --keep) with .gaze, .tidy, .line, .soon, .try, .film (copy block). */
+   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .cmds (the three commands at a glance), .feature (--judge, --redesign, --keep) with .cmd, .when, .does, .gaze, .tidy, .line, .soon, .try, .film (copy block). */
 
 :root {
   --sun: #ffd84d;
@@ -42,7 +42,9 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 /* Header and footer */
 .masthead { display: flex; justify-content: space-between; align-items: center; padding: 20px var(--gutter); }
 .brand { font-weight: 800; font-size: 20px; letter-spacing: 0.02em; text-decoration: none; display: inline-flex; align-items: center; }
-.masthead__repo { font-weight: 700; }
+.masthead__nav { display: flex; gap: clamp(14px, 2.4vw, 28px); font-weight: 700; }
+.masthead__nav a { text-decoration: none; }
+.masthead__nav a:hover { text-decoration: underline; }
 .colophon { display: flex; align-items: center; gap: 12px; padding: 28px var(--gutter); background: var(--ink); color: var(--paper); font-size: 15px; }
 .colophon p { margin: 0; }
 .colophon a:hover { color: var(--sun); }
@@ -102,15 +104,39 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
   .hero { grid-template-columns: 1.15fr 1fr; min-height: calc(100vh - 80px); padding-top: 8px; }
 }
 
-/* The three things AEOM does, each a block with its drawing. */
+/* The three commands at a glance, each card leading to its block. */
+.cmds { background: var(--paper); padding: 96px var(--gutter) 104px; }
+.cmds h2 { font-size: clamp(44px, 7vw, 104px); line-height: 0.92; }
+.cmds__lede { font-size: clamp(20px, 1.9vw, 24px); max-width: 34ch; margin: 20px 0 0; }
+.cmds__list { list-style: none; margin: 48px 0 0; padding: 0; display: grid; gap: 16px; }
+.cmds__card { display: grid; gap: 14px; height: 100%; padding: 22px 24px 26px; border: 3px solid var(--ink); border-radius: var(--radius); text-decoration: none; transition: transform 0.2s ease; }
+.cmds__card:hover { color: inherit; transform: translateY(-4px); }
+.cmds__card--judge { background: var(--sun); }
+.cmds__card--redo { background: var(--ink); color: var(--paper); }
+.cmds__card--redo:hover { color: var(--paper); }
+.cmds__card--check { background: var(--sky); }
+.cmds__n { font: 800 18px/1 var(--display); }
+.cmds__card code { font: 600 clamp(20px, 2.2vw, 28px)/1.2 var(--mono); }
+.cmds__card--redo code { color: var(--sun); }
+.cmds__verb { display: flex; align-items: center; gap: 10px; font: 800 clamp(32px, 3.6vw, 48px)/1 var(--display); letter-spacing: -0.03em; }
+@media (min-width: 760px) { .cmds__list { grid-template-columns: repeat(3, 1fr); } }
+
+/* Each command, a block: what to type, when, what it does, and its drawing. */
 .feature { display: grid; gap: 40px; align-items: center; padding: 104px var(--gutter); overflow-x: clip; }
 .feature h2 { font-size: clamp(44px, 6.2vw, 96px); line-height: 0.92; }
-.feature__text p:not(.feature__num) { font-size: clamp(20px, 1.9vw, 24px); max-width: 30ch; margin: 20px 0 0; }
-.feature__num { margin: 0 0 12px; font: 800 18px/1 var(--display); display: flex; align-items: center; gap: 10px; }
-.soon { padding: 5px 10px; border-radius: 999px; background: var(--hot); color: var(--ink); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+.cmd { margin: 0 0 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cmd code { font: 600 clamp(18px, 1.8vw, 22px)/1 var(--mono); background: var(--ink); color: var(--sun); padding: 8px 12px; border-radius: 10px; }
+.feature--redesign .cmd code { background: var(--sun); color: var(--ink); }
+.when { font-size: clamp(20px, 1.9vw, 24px); margin: 20px 0 0; max-width: 34ch; }
+.when b { display: inline-block; margin-right: 8px; padding: 3px 9px; border: 2px solid currentColor; border-radius: 999px; font-size: 0.62em; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: 0.2em; }
+.does { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 12px; max-width: 46ch; font-size: 19px; }
+.does li { position: relative; padding-left: 30px; }
+.does li::before { content: ""; position: absolute; left: 0; top: 0.42em; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); }
+.feature--redesign .does li::before { background: var(--sun); }
+.soon { padding: 5px 10px; border-radius: 999px; background: var(--hot); color: var(--ink); font: 800 13px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; }
 .feature--judge { background: var(--sun); }
 .feature--redesign { background: var(--ink); color: var(--paper); }
-.feature--redesign h2, .feature--redesign .feature__num { color: var(--sun); }
+.feature--redesign h2 { color: var(--sun); }
 .feature--keep { background: var(--sky); }
 @media (min-width: 980px) {
   .feature { grid-template-columns: 1fr 1.1fr; gap: 72px; }
