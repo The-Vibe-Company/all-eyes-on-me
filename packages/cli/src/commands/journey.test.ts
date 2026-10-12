@@ -83,3 +83,50 @@ test("journey files that cannot be replayed are refused before any browser start
     await rm(join(dir, ".aeom", "journeys", "bad.json"));
   }
 });
+
+test("aeom journey --by-page says, page by page, what the journeys break or fail there", async () => {
+  const here = await mkdtemp(join(tmpdir(), "aeom-by-page-"));
+  try {
+    const out = join(here, "replay");
+    await mkdir(out, { recursive: true });
+    const step = (index: number, path: string) => ({ index, action: `step ${index}`, path, capture: null });
+    const runOf = (width: number, paths: string[], broken: { step: number; reason: string } | null = null) => ({ width, steps: paths.map((p, i) => step(i + 1, p)), calls: [], screens: [...new Set(paths)], counts: { steps: paths.length, screens: 1, back: 0 }, broken, sheet: "" });
+    await writeFile(join(out, "report.json"), JSON.stringify({
+      url: "http://localhost:3000/",
+      replayedAt: "",
+      widths: [390, 1280],
+      warnings: [],
+      journeys: [
+        { slug: "share", name: "Share a note", runs: [runOf(390, ["/", "/notes"], { step: 3, reason: 'no button "Share" on the screen' }), runOf(1280, ["/", "/notes", "/notes/12"])] },
+        { slug: "write", name: "Write a note", runs: [runOf(1280, ["/", "/notes/7"])] },
+      ],
+    }));
+    const critique = join(here, "judge-journeys.json");
+    await writeFile(critique, JSON.stringify({
+      judgedAt: "",
+      voters: ["1"],
+      principles: [],
+      failures: 1,
+      pages: [{ page: "write", verdicts: [{ principle: "same-words", pass: false, votes: "1/1 fail", reasons: ['The link says "New", the page "Draft".'], dissent: [], steps: [2] }] }],
+    }));
+
+    const text = await run(here, ["journey", "--by-page", "--out", out, "--critique", critique]);
+    assert.equal(text.code, 0, text.out);
+    assert.equal(text.out, '/notes\n  Share a note, step 3: breaks at 390 px: no button "Share" on the screen\n/notes/:id\n  Write a note, step 2, same-words: The link says "New", the page "Draft".\n');
+
+    const json = await run(here, ["journey", "--by-page", "--out", out, "--critique", critique, "--json"]);
+    assert.equal(json.code, 0, json.out);
+    assert.deepEqual(JSON.parse(json.out).map((p: { page: string }) => p.page), ["/notes", "/notes/:id"]);
+
+    const alone = await run(here, ["journey", "--by-page", "--out", out, "--critique", join(here, "none.json")]);
+    assert.equal(alone.code, 0, alone.out);
+    assert.match(alone.out, /^No critique of the journeys in .*none\.json: only where they break\.\n\/notes\n/);
+    assert.doesNotMatch(alone.out, /same-words/);
+
+    const nothing = await run(here, ["journey", "--by-page", "--out", join(here, "empty")]);
+    assert.equal(nothing.code, 1);
+    assert.match(nothing.out, /No replayed journeys in .*empty\. Run aeom journey first\./);
+  } finally {
+    await rm(here, { recursive: true, force: true });
+  }
+});
