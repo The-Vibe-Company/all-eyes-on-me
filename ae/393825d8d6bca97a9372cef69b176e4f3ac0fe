@@ -1,0 +1,41 @@
+README.md
+  s_4ce34ec42d9105::t_d778bb0ec526f0 15,61
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_91952eca220c7e 399-418
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_0ae5f024db8a9d 46-49,229,232-234
+packages/core/src/journey/by-page.test.ts
+  s_4ce34ec42d9105::t_c1c90ae585d0cf 112-119
+packages/core/src/journey/by-page.ts
+  s_4ce34ec42d9105::t_1d9345bafe7b10 76-77,79
+packages/core/src/journey/ratchet.test.ts
+  s_4ce34ec42d9105::t_e98be229a000a0 128,130,133,135,153-176
+packages/core/src/journey/ratchet.ts
+  s_4ce34ec42d9105::t_713b4e1fcbaf02 107-108,121-123,153-158,160-169,171
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_27d2547e1323af 21
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_8c67c7a6d69d00 105-109
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_2924af079a3dd0 164-168,185-186
+site/pages/commands.html
+  s_4ce34ec42d9105::t_9ff13de36f824c 57
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_4806563c23e18c 70,89,119,271,277,281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae393825d8d6bca97a9372cef69b176e4f3ac0fe",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
