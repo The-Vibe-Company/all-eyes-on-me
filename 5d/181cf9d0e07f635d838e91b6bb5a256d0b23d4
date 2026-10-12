@@ -1,0 +1,37 @@
+packages/cli/src/commands/journey.test.ts
+  s_4ce34ec42d9105::t_51db3ecc71ecd6 3,129-148
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_be2393080db8eb 46-49,158-167,169,171-175,181-182,186
+packages/cli/src/commands/ratchet.test.ts
+  s_4ce34ec42d9105::t_ade9d9dc8df82e 168-170
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_f851a3c6a13a24 65,121-126,133
+packages/core/src/journey/by-page.test.ts
+  s_4ce34ec42d9105::t_772c014f53b757 46,50,55,82-103
+packages/core/src/journey/by-page.ts
+  s_4ce34ec42d9105::t_7dcce76547eebf 25-28,32-35,53-54,63-67,70-75
+packages/core/src/journey/ratchet.test.ts
+  s_4ce34ec42d9105::t_2b1f08f4535ebf 132-143
+packages/core/src/journey/ratchet.ts
+  s_4ce34ec42d9105::t_8d142bb0232ca6 137-141
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_92ab28a06bf298 169
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_c0dd4c6286e321 29-30,127-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5d181cf9d0e07f635d838e91b6bb5a256d0b23d4",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
