@@ -1,0 +1,33 @@
+README.md
+  s_4ce34ec42d9105::t_a2d2db5e210a73 104
+package.json
+  s_4ce34ec42d9105::t_f8f346ddde1618 12
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_9512bef3f44c86 45,59,93,132
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_4df47b9c8422ad 12-21
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_526745e6a54d29 1-26
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_52df2de270ca37 1-39
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_d7ceffa7641e11 1-109
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_1227d6ce67166a 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d5ddf5581768656aec4810f948938f5663044507",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
