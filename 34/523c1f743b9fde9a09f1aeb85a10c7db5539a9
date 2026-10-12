@@ -1,0 +1,21 @@
+packages/core/src/journey/by-page.test.ts
+  s_4ce34ec42d9105::t_bc1afe403f9eb2 104-111
+packages/core/src/journey/by-page.ts
+  s_4ce34ec42d9105::t_b824839837667b 34-36,75-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "34523c1f743b9fde9a09f1aeb85a10c7db5539a9",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
