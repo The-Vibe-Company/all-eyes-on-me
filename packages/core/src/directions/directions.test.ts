@@ -166,3 +166,17 @@ test("with no knockout played, the person chooses alone: the decision names no c
   const started = voteDuel(t, { duel: nextDuel(t)!.id, voter: "1", winner: nextDuel(t)!.a, reason: "First." });
   assert.throws(() => decideDirection(started, { choose: "brume", at: AT }), /The knockout is not over/);
 });
+
+test("a run with no knockout records its directions with no duel; a lone direction is the person's choice, not a champion of the judges", () => {
+  const open = createTournament(["topo", "brume"], { knockout: false });
+  assert.deepEqual(open.duels, []);
+  assert.equal(nextDuel(open), null);
+  assert.equal(champion(open), null);
+  assert.equal(decideDirection(open, { choose: "brume", at: AT }).tournament.decision!.judges, null);
+  const lone = decideDirection(createTournament(["topo"], { knockout: false }), { at: AT });
+  assert.deepEqual([lone.tournament.decision!.applied, lone.tournament.decision!.judges], ["topo", null]);
+  const alone = decideDirection(createTournament(["topo"]), { at: AT });
+  assert.equal(alone.tournament.decision!.judges, null, "a direction alone met no judge: no champion of theirs");
+  const none = decideDirection(open, { drop: ["topo", "brume"], at: AT });
+  assert.deepEqual([none.tournament.decision, none.rerun], [undefined, []], "dropping every direction asks for new ones");
+});

@@ -243,8 +243,9 @@ function directionOf(previous: string | undefined): string | null {
 /**
  * A first standard from the shared files of the front: every custom property
  * and every class of the style sheets, and every other file as a component of
- * its own, each with its file. The direction is the knockout's champion with
- * the sentence that drew it from the product, when the run had one, or else
+ * its own, each with its file. The direction is the one the run applied, the
+ * person's choice or the knockout's champion, with the sentence that drew it
+ * from the product, when the run had one, or else
  * the one the last standard wrote; what is left, and the rules, are for AEOM
  * to write.
  */

@@ -68,18 +68,20 @@ A knockout between directions, two by two: one vote decides a duel, three
 the final. The state lives in <dir>/tournament.json; each direction's capture
 is <dir>/<name>.png.
 
-  start <name>... [--reset] [--votes <n>] [--final-votes <n>]
+  start <name>... [--reset] [--votes <n>] [--final-votes <n>] [--no-knockout]
                                         Draw the first round (--reset replaces a tournament already there);
-                                        --votes per duel (default 1), --final-votes for the final (default 3)
+                                        --votes per duel (default 1), --final-votes for the final (default 3);
+                                        --no-knockout records the directions with no duel, for the person to choose
   next                                  Print the next duel and its two captures
   vote --duel <n> --voter <v> --winner <name> --reason "<why>"
   status                                Print every duel, the champion, and what the person decided
   decide [--choose <name>] [--drop <name>]... [--why "<their words>"]
-                                        Keep the person's decision once there is a champion:
-                                        without --choose or --drop they validate it; --choose
-                                        takes any direction captured in <dir>; dropping the
-                                        champion without choosing asks for a new knockout.
-                                        Their decision also goes to their taste, in ~/.aeom/taste.`;
+                                        Keep the person's decision: with no knockout, --choose names
+                                        the direction (or --drop all the others); after a knockout,
+                                        without --choose or --drop they validate its champion, and
+                                        dropping the champion without choosing asks for a new one.
+                                        --choose takes any direction captured in <dir>. A decision on
+                                        the judges' champion also goes to their taste, in ~/.aeom/taste.`;
 
 const ASK = "Show the person the directions and ask them: aeom tournament decide (it validates), --choose <name> or --drop <name>; with /aeom --autonome, the champion applies as it is.";
 
@@ -94,6 +96,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       winner: { type: "string" },
       reason: { type: "string" },
       reset: { type: "boolean" },
+      "no-knockout": { type: "boolean" },
       votes: { type: "string", default: "1" },
       "final-votes": { type: "string", default: "3" },
       choose: { type: "string" },
@@ -114,7 +117,8 @@ export async function runTournament(argv: string[]): Promise<number> {
 
   try {
     if (action === "start") {
-      const t = createTournament(names, { votesPerDuel: Number(values.votes), finalVotes: Number(values["final-votes"]) });
+      const knockout = !values["no-knockout"];
+      const t = createTournament(names, { votesPerDuel: Number(values.votes), finalVotes: Number(values["final-votes"]), knockout });
       const exists = await access(file).then(() => true, () => false);
       if (exists && !values.reset) {
         console.error(`${file} already holds a tournament. Pass --reset to replace it and its votes.`);
@@ -122,11 +126,21 @@ export async function runTournament(argv: string[]): Promise<number> {
       }
       await mkdir(values.dir, { recursive: true });
       await save(t);
-      console.log(names.length === 1 ? `${names[0]} alone: champion without a duel. ${ASK}` : `${names.length} directions, first round drawn. Run: aeom tournament next --dir ${values.dir}`);
+      console.log(
+        !knockout
+          ? `${names.length} direction${names.length === 1 ? "" : "s"} recorded, with no knockout: ask the person, then aeom tournament decide --dir ${values.dir} --choose <name>.`
+          : names.length === 1
+            ? `${names[0]} alone: champion without a duel. ${ASK}`
+            : `${names.length} directions, first round drawn. Run: aeom tournament next --dir ${values.dir}`,
+      );
       return 0;
     }
     const t = await load();
     if (action === "next") {
+      if (t.knockout === false) {
+        console.log(`No knockout in this run: the person chooses. Ask them, then aeom tournament decide --dir ${values.dir} --choose <name>.`);
+        return 0;
+      }
       const duel = nextDuel(t);
       if (!duel) {
         console.log(`No duel left. Champion: ${champion(t)}`);
@@ -159,7 +173,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       const drop = values.drop ?? [];
       const { tournament, rerun } = decideDirection(t, { choose: values.choose, drop, why: values.why, at: new Date().toISOString(), directions: captured });
       // No knockout played: the person chose alone, and there is no champion to agree with.
-      const judges = champion(t);
+      const judges = t.duels.some((d) => d.votes.length > 0) ? champion(t) : null;
       const applied = tournament.decision?.applied;
       const said = [values.choose && values.choose !== judges ? `Chose ${values.choose}.` : "", drop.length ? `Dropped ${drop.join(", ")}.` : "", values.why?.trim() ?? ""].filter(Boolean).join(" ");
       if (judges !== null) {
@@ -203,7 +217,15 @@ export async function runTournament(argv: string[]): Promise<number> {
       }
       const won = champion(t);
       const d = t.decision;
-      console.log(!won ? `\nNo champion yet.` : !d ? `\nChampion: ${won}, waiting for the person's decision.` : `\nChampion of the judges: ${d.judges}\nApplied: ${d.applied}, the person's decision${d.why ? `: ${d.why}` : ""}${d.dropped.length ? ` (dropped: ${d.dropped.join(", ")})` : ""}`);
+      console.log(
+        d
+          ? `\nChampion of the judges: ${d.judges ?? "none, no knockout"}\nApplied: ${d.applied}, the person's decision${d.why ? `: ${d.why}` : ""}${d.dropped.length ? ` (dropped: ${d.dropped.join(", ")})` : ""}`
+          : t.knockout === false
+            ? `\nNo knockout: waiting for the person's choice among ${t.entrants.join(", ")}.`
+            : !won
+              ? `\nNo champion yet.`
+              : `\nChampion: ${won}, waiting for the person's decision.`,
+      );
       return 0;
     }
   } catch (error) {

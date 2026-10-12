@@ -134,14 +134,17 @@ test("with no knockout, the person chooses alone: aeom tournament decide --choos
   try {
     await mkdir(D, { recursive: true });
     for (const name of ["topo", "bivouac", "grotte"]) await writeFile(join(D, `${name}.png`), "");
-    assert.equal((await run(dir, ["tournament", "start", "--dir", D, "topo", "bivouac", "grotte"])).code, 0);
+    const started = await run(dir, ["tournament", "start", "--no-knockout", "--dir", D, "topo", "bivouac", "grotte"]);
+    assert.equal(started.code, 0, started.out);
+    assert.match(started.out, /3 directions recorded, with no knockout: ask the person, then aeom tournament decide --dir .* --choose <name>/);
+    assert.match((await run(dir, ["tournament", "next", "--dir", D])).out, /No knockout in this run: the person chooses/);
     const { code, out } = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "grotte", "--why", "Elle prolonge les illustrations."], { AEOM_HOME: home });
     assert.equal(code, 0, out);
     assert.match(out, /The run applies grotte, chosen by the person, with no knockout\./);
     const decision = JSON.parse(await readFile(join(D, "tournament.json"), "utf8")).decision;
     assert.equal(decision.applied, "grotte");
     assert.equal(decision.judges, null);
-    assert.match((await run(dir, ["tournament", "status", "--dir", D])).out, /grotte/);
+    assert.match((await run(dir, ["tournament", "status", "--dir", D])).out, /Champion of the judges: none, no knockout\nApplied: grotte, the person's decision: Elle prolonge les illustrations\./);
   } finally {
     await rm(dir, { recursive: true, force: true });
     await rm(home, { recursive: true, force: true });
