@@ -4,6 +4,7 @@ title: Une coordination plus légère
 milestone: 03-la-commande-unique
 depends_on: [18, 19]
 design: null
+status: done
 tracker: { tool: github, id: 101, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/101 }
 ---
 
