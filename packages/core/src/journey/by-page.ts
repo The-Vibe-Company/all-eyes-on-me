@@ -73,8 +73,10 @@ export function journeyFindingsByPage({ replay, critique }: { replay: JourneyRep
         if (seen.has(step)) continue;
         seen.add(step);
         // At the step where the journey breaks, the page it lands on is an error, not one of the app's: the finding goes where the break goes.
+        // A width that got past this step says the page; one that broke there only has an error page, the break's.
+        const reached = journey.runs.filter((r) => !(r.broken && r.broken.step === step));
         const broke = [...breaks.values()].find((b) => b.step === step);
-        add(broke?.route ?? (routeAfter(journey.runs, step) || HOME), { ...base, step, principle: v.principle, reason });
+        add(routeAfter(reached, step) || broke?.route || routeAfter(journey.runs, step) || HOME, { ...base, step, principle: v.principle, reason });
       }
     }
   }

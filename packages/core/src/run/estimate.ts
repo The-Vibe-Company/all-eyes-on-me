@@ -102,9 +102,11 @@ export function estimateRun({ screens, journeys, mode, directions = 3 }: { scree
       phases.push({ phase: "The kit, in the app's own style", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit });
     }
     const pages = Math.max(screens - rebuilt, 0);
-    // The page workers, who fix their pages' journey findings too, the one who promotes their kit candidates,
-    // the screens measured, the journeys judged once; with the style kept, the charter judged.
-    const workers = pages ? pages + 1 : 0;
+    // The page workers, who fix their pages' journey findings too (the screens a direction rebuilt join when journey
+    // findings fall on them: at most, all of them), the one who promotes their kit candidates, the screens measured,
+    // the journeys judged once; with the style kept, the charter judged.
+    const joining = journeys ? rebuilt : 0;
+    const workers = pages + joining ? pages + joining + 1 : 0;
     const style = mode === "keep-style" ? VOTES : 0;
     const critique = journeys ? VOTES : 0;
     phases.push({

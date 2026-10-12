@@ -125,11 +125,14 @@ test("without duels, the critiques decide: a journey stays when it fails fewer p
   assert.equal(by.mixed!.kept, true, "one new failure among two cleared is still better: the first critique's passes rest on one vote");
   assert.match(by.mixed!.why, /the critique clears short, result-shown, though it now fails clear-start: 2 principles failing, now 1/);
   assert.equal(by.mended!.kept, true);
-  assert.match(by.mended!.why, /it now reaches its end, where it broke at step 2/);
+  assert.match(by.mended!.why, /it goes further at 1280 px, to its end where it broke at step 2/);
   assert.equal(by.help!.kept, false);
+  assert.equal(by.help!.unchanged, true, "nothing better sends nobody back: the journey is as it was");
   assert.match(by.help!.why, /nothing better according to the critique: it clears short but now fails clear-start/);
   assert.equal(by.cart!.kept, false);
+  assert.equal(by.cart!.unchanged, true);
   assert.match(by.cart!.why, /nothing better according to the critique/);
+  assert.equal(by.worse!.unchanged, undefined, "worse is sent back");
   assert.equal(by.worse!.kept, false);
   assert.match(by.worse!.why, /the critique fails more than before: clear-start, which passed/);
   assert.equal(by.pay!.kept, false, "a new break sends it back, whatever the critique says");
@@ -146,4 +149,28 @@ test("a journey that now breaks earlier than it did is sent back, even when its 
   });
   assert.equal(orders!.kept, false);
   assert.match(orders!.why, /breaks at step 2/);
+});
+
+test("without duels, a journey that goes further than its old break stays, at the widths it got further", () => {
+  const two = (a: ReturnType<typeof run>, b: ReturnType<typeof run>) => [{ ...a, width: 390 }, { ...b, width: 1280 }];
+  const report = (runs: ReturnType<typeof run>[]): JourneyReport => ({ url: "http://x", replayedAt: "", widths: [390, 1280], warnings: [], journeys: [{ slug: "help", name: "help", runs }] });
+  const broke = (step: number) => run(step, { step, reason: "no link" });
+  const [partly] = ratchetJourneys({
+    before: report(two(broke(2), broke(2))),
+    after: report(two(broke(2), run(3))),
+    beforeVerdict: verdict({ help: ["short"] }),
+    afterVerdict: verdict({ help: ["short", "clear-start"] }),
+    guard: { refused: [], allowed: [] },
+  });
+  assert.equal(partly!.kept, true);
+  assert.match(partly!.why, /^it goes further at 1280 px, to its end where it broke at step 2/, "never « reaches its end » while 390 px still breaks");
+  const [later] = ratchetJourneys({
+    before: report(two(broke(2), broke(2))),
+    after: report(two(broke(4), broke(4))),
+    beforeVerdict: verdict({ help: ["short"] }),
+    afterVerdict: verdict({ help: ["short", "clear-start", "result-shown"] }),
+    guard: { refused: [], allowed: [] },
+  });
+  assert.equal(later!.kept, true, "the critique sees the later steps it never reached: going further wins");
+  assert.match(later!.why, /it goes further at 390, 1280 px, to step 4 where it broke at step 2/);
 });

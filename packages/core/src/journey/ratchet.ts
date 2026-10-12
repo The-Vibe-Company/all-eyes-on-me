@@ -104,6 +104,8 @@ export interface RatchetVerdict {
   cleared: string[];
   /** Principles that still fail on the new version. */
   remaining: string[];
+  /** Without duels: nothing better and nothing worse, so the journey is as it was and nobody is sent back. */
+  unchanged?: true;
 }
 
 const widest = (runs: JourneyRun[]) => runs.reduce((a, b) => (b.width > a.width ? b : a));
@@ -116,8 +118,9 @@ const passing = (verdict: JudgeReport | undefined, slug: string) => verdict?.pag
  * if it goes to its end wherever the old one did, the guard refuses nothing
  * it did, and the judges prefer it. A finding is cleared only when the
  * critique, redone on the new version, no longer finds it. Without duels,
- * the critiques decide: it stays when it no longer breaks, or fails fewer
- * principles than before; it comes back when it fails more.
+ * the critiques decide: it stays when it goes further than its old break,
+ * or fails fewer principles than before; it comes back when it fails more;
+ * the same count is nothing better, and sends nobody back.
  */
 export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard }: { before: JourneyReport; after: JourneyReport; beforeVerdict?: JudgeReport; afterVerdict?: JudgeReport; duels?: Map<string, JourneyDuel>; guard?: GuardResult }): RatchetVerdict[] {
   const runRefused = guard?.refused.filter((v) => !v.journey) ?? [];
@@ -147,12 +150,25 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
         const was = failing(beforeVerdict, journey.slug).length;
         const now = failing(afterVerdict, journey.slug).length;
         const fresh = passing(beforeVerdict, journey.slug).filter((p) => failing(afterVerdict, journey.slug).includes(p));
-        const mended = old.runs.find((o) => o.broken && !journey.runs.find((r) => r.width === o.width)?.broken);
+        const further = [...journey.runs]
+          .sort((a, b) => a.width - b.width)
+          .flatMap((r) => {
+            const was = old.runs.find((o) => o.width === r.width)?.broken;
+            return was && (!r.broken || r.broken.step > was.step) ? [{ width: r.width, from: was.step, to: r.broken?.step ?? null }] : [];
+          });
         const though = fresh.length ? `, though it now fails ${fresh.join(", ")}` : "";
-        // A journey that went past its old break shows steps the old critique never saw: reaching the end wins.
-        if (mended) return verdict(true, `it now reaches its end, where it broke at step ${mended.broken!.step}${cleared.length ? `; the critique clears ${cleared.join(", ")}${though}` : ""}`);
+        // A journey that goes past its old break shows steps the old critique never saw: going further wins, said width by width.
+        if (further.length) {
+          const groups = new Map<string, number[]>();
+          for (const f of further) {
+            const what = `to ${f.to ? `step ${f.to}` : "its end"} where it broke at step ${f.from}`;
+            groups.set(what, [...(groups.get(what) ?? []), f.width]);
+          }
+          const where = [...groups].map(([what, widths]) => `at ${widths.join(", ")} px, ${what}`).join("; ");
+          return verdict(true, `it goes further ${where}${cleared.length ? `; the critique clears ${cleared.join(", ")}${though}` : ""}`);
+        }
         if (now > was) return verdict(false, `the critique fails more than before: ${fresh.join(", ") || "more principles"}, which passed`);
-        if (now === was) return verdict(false, `nothing better according to the critique${cleared.length ? `: it clears ${cleared.join(", ")} but now fails ${fresh.join(", ")}` : ""}`);
+        if (now === was) return { ...verdict(false, `nothing better according to the critique${cleared.length ? `: it clears ${cleared.join(", ")} but now fails ${fresh.join(", ")}` : ""}`), unchanged: true as const };
         return verdict(true, `the critique clears ${cleared.join(", ")}${though}: ${was} principle${was === 1 ? "" : "s"} failing, now ${now}`);
       }
       const duel = duels.get(journey.slug);

@@ -396,3 +396,23 @@ test("served, the page stops after 2 hours with no request, and says so", async 
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test("a journey the critiques find nothing better in reads « unchanged » on the page, never « sent back »", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
+  const R = join(dir, ".aeom", "runs", "run-7");
+  try {
+    await changedRun(R);
+    await put(join(R, "journeys-end", "ratchet.json"), [{ slug: "orders", name: "See my orders", kept: false, unchanged: true, why: "nothing better according to the critique", steps: { before: 4, after: 3 }, cleared: [], remaining: [] }]);
+    const { code, out } = await run(dir, ["report", ".aeom/runs/run-7"]);
+    assert.equal(code, 0, out);
+    const html = await readFile(join(R, "report.html"), "utf8");
+    assert.match(html, /data-journey="orders" data-status="unchanged"/);
+    assert.doesNotMatch(html, /data-journey="orders" data-status="sent back"/);
+    // After a journey wave that left it alone, the page wave's verdict on it stands.
+    await put(join(R, "journeys-after", "ratchet.json"), [{ slug: "orders", name: "See my orders", kept: true, why: "the critique clears short: 1 principle failing, now 0", steps: { before: 4, after: 3 }, cleared: ["short"], remaining: [] }]);
+    assert.equal((await run(dir, ["report", ".aeom/runs/run-7"])).code, 0);
+    assert.match(await readFile(join(R, "report.html"), "utf8"), /data-journey="orders" data-status="kept"/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

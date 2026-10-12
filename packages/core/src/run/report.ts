@@ -161,8 +161,11 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
 
   const lastReplay = await first(runDir, ["journeys-end", "journeys-after"], "report.json");
   const replayAfter = lastReplay ? await json<JourneyReport>(join(runDir, lastReplay, "report.json")) : null;
-  // The ratchet sits beside the replay it judged: journeys-end after the pages, journeys-after in a run of the journeys only.
-  const ratchet = (await json<RatchetVerdict[]>(join(runDir, lastReplay ?? "journeys-end", "ratchet.json"))) ?? [];
+  // The ratchet sits beside the replay it judged: journeys-end after a journey wave, journeys-after after the page wave
+  // (or in a run of the journeys only). A journey the journey wave left unchanged keeps the page wave's verdict.
+  const ratchetLast = (await json<RatchetVerdict[]>(join(runDir, lastReplay ?? "journeys-end", "ratchet.json"))) ?? [];
+  const ratchetAfter = lastReplay === "journeys-end" ? ((await json<RatchetVerdict[]>(join(runDir, "journeys-after", "ratchet.json"))) ?? []) : [];
+  const ratchet = [...ratchetLast.filter((v) => !v.unchanged || !ratchetAfter.some((a) => a.slug === v.slug)), ...ratchetAfter.filter((a) => ratchetLast.some((v) => v.slug === a.slug && v.unchanged) || !ratchetLast.some((v) => v.slug === a.slug))];
   // Cleared and still failing are counted from the critique of the app before the run, as the sheets are.
   const critiqueBefore = (await json<JudgeReport>(join(runDir, "before", "reports", "judge-journeys.json"))) ?? (await json<JudgeReport>(join(runDir, "journeys-before", "judge-journeys.json")));
   const critiqueAfter = lastReplay ? await json<JudgeReport>(join(runDir, lastReplay, "judge-journeys.json")) : null;
@@ -179,7 +182,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     return {
       slug: j.slug,
       name: j.name,
-      status: verdictOfJourney ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
+      // Without duels, nothing better sends nobody back: the journey is as it was.
+      status: verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
       why: verdictOfJourney?.why ?? null,
       broke: { before: broke(j), after: broke(a) },
       steps: { before: widest(j)?.counts.steps ?? null, after: a ? (widest(a)?.counts.steps ?? null) : null },

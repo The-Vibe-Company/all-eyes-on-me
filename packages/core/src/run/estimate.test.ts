@@ -18,7 +18,7 @@ test("a full run with six directions is about thirty-five agents and three milli
   assert.ok(total.tokens > 3_000_000 && total.tokens < 4_500_000, String(total.tokens));
   assert.ok(total.minutes > 90, "a couple of hours");
   assert.equal(phases[2]!.agents, 6 + 3 + 4 + 3, "six workers, three screening judges, four duels of one vote and a final of three");
-  assert.equal(phases[3]!.agents, 6 + 1 + 3 + 3, "the page workers, the promotion, the screens measured, the journeys judged once");
+  assert.equal(phases[3]!.agents, 6 + 2 + 1 + 3 + 3, "the page workers, the two a direction rebuilt when journey findings fall on them, the promotion, the screens measured, the journeys judged once");
   assert.equal(ifBroken!.agents, 4 + 1 + 3 + 3, "at most a worker per journey and a shared one, the journeys judged again, the screens measured again: no duel");
 });
 

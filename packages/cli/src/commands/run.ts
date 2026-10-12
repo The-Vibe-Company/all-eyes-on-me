@@ -43,8 +43,10 @@ With --journeys, the ratchet of the journeys: each folder holds a replay
 aeom judge --journeys --out). A new journey stays only if it goes to its end
 wherever the old one did, the guard refuses nothing it does, and the judges
 prefer it in the duel; otherwise the old one comes back. With --by-critique,
-no duel: it stays when its critique clears a finding and fails nothing that
-passed before. Writes ratchet.json in <after-dir>.
+no duel: it stays when it goes further than its old break or its critique
+fails fewer principles; it comes back when it fails more; at the same count
+it is unchanged, and nobody is sent back for it. Writes ratchet.json in
+<after-dir>.
 
 Options:
   --strict             Exit with 1 when anything that passed before fails after
@@ -224,10 +226,11 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
 
   const column = Math.max(...verdicts.map((v) => v.name.length)) + 2;
   for (const v of verdicts) {
-    console.log(`${v.kept ? "✓" : "✗"} ${v.name.padEnd(column)}${v.kept ? "kept" : "back"}  ${v.steps.before} → ${v.steps.after} steps  ${v.why}`);
+    console.log(`${v.kept ? "✓" : v.unchanged ? "=" : "✗"} ${v.name.padEnd(column)}${v.kept ? "kept" : v.unchanged ? "same" : "back"}  ${v.steps.before} → ${v.steps.after} steps  ${v.why}`);
     if (v.kept) console.log(`  ${" ".repeat(column)}cleared: ${v.cleared.join(", ") || "nothing"}; still failing: ${v.remaining.join(", ") || "nothing"}`);
   }
-  const back = verdicts.filter((v) => !v.kept);
-  console.log(`\n${verdicts.length - back.length} kept, ${back.length} back.${back.length ? " Revert the merges that brought the journeys back, replay, and compare again." : ""} Report: ${join(afterDir, "ratchet.json")}`);
+  const back = verdicts.filter((v) => !v.kept && !v.unchanged);
+  const same = verdicts.filter((v) => v.unchanged).length;
+  console.log(`\n${verdicts.filter((v) => v.kept).length} kept, ${back.length} back${same ? `, ${same} unchanged` : ""}.${back.length ? " Revert the merges that brought the journeys back, replay, and compare again." : ""} Report: ${join(afterDir, "ratchet.json")}`);
   return 0;
 }

@@ -109,3 +109,11 @@ test("a principle failing at the step where the journey breaks goes where the br
   });
   assert.deepEqual(pages.map((p) => [p.page, p.findings.map((f) => f.principle ?? "breaks")]), [["/", ["breaks", "no-dead-end"]]]);
 });
+
+test("a journey that breaks at one width only keeps its findings on the page the other width reached", () => {
+  const pages = journeyFindingsByPage({
+    replay: replay({ open: [run(["/", "/orders"], { width: 390, broken: { step: 2, reason: "the page answered 500" } }), run(["/", "/orders/7"])] }),
+    critique: critique({ open: [{ principle: "result-shown", steps: [2], reason: "The order shows no total." }] }),
+  });
+  assert.deepEqual(pages.map((p) => [p.page, p.findings.map((f) => f.principle ?? "breaks")]), [["/", ["breaks"]], ["/orders/:id", ["result-shown"]]]);
+});
