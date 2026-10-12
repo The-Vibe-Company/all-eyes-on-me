@@ -18,7 +18,7 @@ test("a full run with six directions is about thirty-five agents and three milli
   assert.ok(total.tokens > 3_000_000 && total.tokens < 4_500_000, String(total.tokens));
   assert.ok(total.minutes > 90, "a couple of hours");
   assert.equal(phases[2]!.agents, 6 + 3 + 4 + 3, "six workers, three screening judges, four duels of one vote and a final of three");
-  assert.equal(phases[3]!.agents, 6 + 2 + 1 + 3 + 3, "the page workers, the two a direction rebuilt when journey findings fall on them, the promotion, the screens measured, the journeys judged once");
+  assert.equal(phases[3]!.agents, 1 + 6 + 2 + 1 + 3 + 3, "one vote on the pages after the kit, then at most the page workers, the two a direction rebuilt when journey findings fall on them, the promotion, the screens measured, the journeys judged once");
   assert.equal(ifBroken!.agents, 4 + 1 + 3 + 3, "at most a worker per journey and a shared one, the journeys judged again, the screens measured again: no duel");
 });
 
@@ -41,7 +41,7 @@ test("fewer directions, no journeys, or the style kept cost less, and each says 
   const kept = estimateRun({ screens: 8, journeys: 4, mode: "keep-style" });
   assert.equal(kept.phases[2]!.phase, "The kit, in the app's own style");
   assert.equal(kept.phases[2]!.agents, 1);
-  assert.equal(kept.phases[3]!.agents, 8 + 1 + 3 + 3 + 3, "every page, the promotion, the screens measured, the journeys judged and the charter judged");
+  assert.equal(kept.phases[3]!.agents, 1 + 8 + 1 + 3 + 3 + 3, "one vote after the kit, at most every page, the promotion, the screens measured, the journeys judged and the charter judged");
   const small = estimateRun({ screens: 2, journeys: 0, mode: "full", directions: 3 });
   assert.deepEqual([small.phases[3]!.agents, Math.round(small.phases[3]!.minutes)], [3, 4], "the direction rebuilt both screens: no page wave, only the measure");
   assert.ok(kept.total.agents < estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6 }).total.agents);

@@ -416,3 +416,17 @@ test("a journey the critiques find nothing better in reads « unchanged » on th
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a page the kit fixed alone, with no worker, says so on the result page", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
+  const R = join(dir, ".aeom", "runs", "run-8");
+  try {
+    await changedRun(R);
+    await put(join(R, "no-worker.json"), ["/"]);
+    const { code, out } = await run(dir, ["report", ".aeom/runs/run-8"]);
+    assert.equal(code, 0, out);
+    assert.match(await readFile(join(R, "report.html"), "utf8"), /<section class="screen" data-page="\/"[^>]*>.*?Fixed by the kit: no worker touched it\./s);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
