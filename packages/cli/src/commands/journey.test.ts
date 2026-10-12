@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -117,6 +117,18 @@ test("aeom journey --by-page says, page by page, what the journeys break or fail
     const json = await run(here, ["journey", "--by-page", "--out", out, "--critique", critique, "--json"]);
     assert.equal(json.code, 0, json.out);
     assert.deepEqual(JSON.parse(json.out).map((p: { page: string }) => p.page), ["/notes", "/notes/:id"]);
+
+    // With captures, each finding says where to look, as a path the worker can open.
+    const shot = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
+    for (const j of shot.journeys) for (const r of j.runs) for (const st of r.steps) st.capture = `${j.slug}@${r.width}-0${st.index}.png`;
+    await writeFile(join(out, "report.json"), JSON.stringify(shot));
+    const looked = await run(here, ["journey", "--by-page", "--out", out, "--critique", critique]);
+    assert.match(looked.out, new RegExp(`  Write a note, step 2, same-words: .*\\n    ${join(out, "write@1280-02.png").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n`));
+    const lookedJson = JSON.parse((await run(here, ["journey", "--by-page", "--out", out, "--critique", critique, "--json"])).out);
+    assert.equal(lookedJson[1].findings[0].capture, join(out, "write@1280-02.png"));
+    // A relative --out still gives a path any worker can open, from any folder.
+    const relative = JSON.parse((await run(here, ["journey", "--by-page", "--out", "replay", "--critique", critique, "--json"])).out);
+    assert.equal(relative[1].findings[0].capture, join(await realpath(here), "replay", "write@1280-02.png"));
 
     const alone = await run(here, ["journey", "--by-page", "--out", out, "--critique", join(here, "none.json")]);
     assert.equal(alone.code, 0, alone.out);

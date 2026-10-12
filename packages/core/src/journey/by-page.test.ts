@@ -117,3 +117,34 @@ test("a journey that breaks at one width only keeps its findings on the page the
   });
   assert.deepEqual(pages.map((p) => [p.page, p.findings.map((f) => f.principle ?? "breaks")]), [["/", ["breaks"]], ["/orders/:id", ["result-shown"]]]);
 });
+
+test("each finding carries the capture of its step, at the widest width that reached it; a break, the capture where it stopped", () => {
+  const shot = (r: JourneyRun, width: number) => ({ ...r, width, steps: r.steps.map((s) => ({ ...s, capture: `share@${width}-0${s.index}.png` })) });
+  const pages = journeyFindingsByPage({
+    replay: replay({ share: [shot(run(["/", "/notes"], { broken: { step: 2, reason: "the page answered 500" } }), 390), shot(run(["/", "/notes/3"]), 1280)] }),
+    critique: critique({ share: [{ principle: "result-shown", steps: [2], reason: "Blank." }, { principle: "short", steps: [], reason: "Long." }] }),
+  });
+  const all = pages.flatMap((p) => p.findings.map((f) => [p.page, f.principle ?? "breaks", f.capture ?? null]));
+  assert.deepEqual(all, [
+    ["/", "breaks", "share@390-02.png"],
+    ["/", "short", null],
+    ["/notes/:id", "result-shown", "share@1280-02.png"],
+  ]);
+});
+
+test("a finding's capture comes from the step that gave its page: the widest width reaching it, never another width's when its own has none", () => {
+  const shot = (r: JourneyRun, width: number, none: number[] = []) => ({ ...r, width, steps: r.steps.map((s) => ({ ...s, capture: none.includes(s.index) ? null : `open@${width}-0${s.index}.png` })) });
+  const both = journeyFindingsByPage({
+    replay: replay({ open: [shot(run(["/", "/notes/3"]), 390), shot(run(["/", "/notes/3"]), 1280)] }),
+    critique: critique({ open: [{ principle: "result-shown", steps: [2], reason: "Blank." }] }),
+  });
+  assert.equal(both[0]!.findings[0]!.capture, "open@1280-02.png", "the widest width that reached the step");
+  const blank = journeyFindingsByPage({
+    replay: replay({ open: [shot(run(["/", "/notes"], { broken: { step: 3, reason: "no link" } }), 390), shot(run(["/", "/notes/3", "/notes/3/edit"]), 1280, [3])] }),
+    critique: critique({ open: [{ principle: "result-shown", steps: [3], reason: "Blank." }] }),
+  });
+  const edit = blank.find((p) => p.page === "/notes/:id/edit")!;
+  assert.equal(edit.findings[0]!.capture, undefined, "its own capture failed: none, rather than the 390 px page it is not about");
+  const twice = journeyFindingsByPage({ replay: replay({ open: [shot(run(["/", "/x"], { broken: { step: 2, reason: "500" } }), 390), shot(run(["/", "/x"], { broken: { step: 2, reason: "500" } }), 1280)] }) });
+  assert.equal(twice[0]!.findings[0]!.capture, "open@390-02.png", "a break seen at two widths keeps the first, where it is said");
+});

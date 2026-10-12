@@ -259,6 +259,10 @@ test("aeom judge --changed-since judges again only the pages whose captures chan
     const old = (page: string, failing: string[]) => ({ page, verdicts: PRINCIPLES.map((principle) => ({ principle, pass: !failing.includes(principle), votes: "3/3", reasons: ["before"], dissent: [], steps: [] })) });
     await writeFile(join(before, "reports", "judge.json"), JSON.stringify({ judgedAt: "", voters: ["1", "2", "3"], principles: [], pages: [old("/", ["density"]), old("/b", ["grid"])], failures: 2 }));
     await rm(join(dir, "votes", "1.json"));
+    // Two steps, never one call: the pages that changed first, what voter 1 failed after it voted.
+    const both = await run(args("--changed-since", before, "--to-confirm"));
+    assert.equal(both.code, 1, both.out);
+    assert.match(both.out, /--changed-since and --to-confirm are two steps of one judging: run --changed-since before the first voter, then --to-confirm alone once it voted/);
     const changed = await run(args("--changed-since", before));
     assert.equal(changed.code, 0, changed.out);
     assert.match(changed.out, /1 page changed since .*before: \/b\. 1 page keeps its verdict: \//);

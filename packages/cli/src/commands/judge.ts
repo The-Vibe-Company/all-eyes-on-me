@@ -86,6 +86,10 @@ export async function runJudge(argv: string[]): Promise<number> {
     return 1;
   }
   const s = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
+  if (values["changed-since"] && values["to-confirm"]) {
+    console.error(`--changed-since and --to-confirm are two steps of one judging: run --changed-since before the first voter, then --to-confirm alone once it voted.`);
+    return 1;
+  }
   if (values["changed-since"]) {
     const since = values["changed-since"];
     const kept = await unchangedPages(captures, manifest, since, principles);
