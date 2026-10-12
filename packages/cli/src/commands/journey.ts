@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, JourneyError, journeyFindingsByPage, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
@@ -177,7 +177,7 @@ async function printByPage(out: string, critiqueFile: string, json: boolean): Pr
     critique = undefined;
   }
   // Each capture as a path the worker can open, wherever it runs from.
-  const pages = journeyFindingsByPage({ replay, critique }).map((p) => ({ ...p, findings: p.findings.map((f) => (f.capture ? { ...f, capture: join(out, f.capture) } : f)) }));
+  const pages = journeyFindingsByPage({ replay, critique }).map((p) => ({ ...p, findings: p.findings.map((f) => (f.capture ? { ...f, capture: resolve(out, f.capture) } : f)) }));
   if (json) {
     // The JSON is the answer; what it leaves out is said apart, so the coordinator can tell no critique from nothing failing.
     if (!critique) console.error(missing);

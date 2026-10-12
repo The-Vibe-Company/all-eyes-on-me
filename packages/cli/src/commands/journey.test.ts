@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -126,6 +126,9 @@ test("aeom journey --by-page says, page by page, what the journeys break or fail
     assert.match(looked.out, new RegExp(`  Write a note, step 2, same-words: .*\\n    ${join(out, "write@1280-02.png").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n`));
     const lookedJson = JSON.parse((await run(here, ["journey", "--by-page", "--out", out, "--critique", critique, "--json"])).out);
     assert.equal(lookedJson[1].findings[0].capture, join(out, "write@1280-02.png"));
+    // A relative --out still gives a path any worker can open, from any folder.
+    const relative = JSON.parse((await run(here, ["journey", "--by-page", "--out", "replay", "--critique", critique, "--json"])).out);
+    assert.equal(relative[1].findings[0].capture, join(await realpath(here), "replay", "write@1280-02.png"));
 
     const alone = await run(here, ["journey", "--by-page", "--out", out, "--critique", join(here, "none.json")]);
     assert.equal(alone.code, 0, alone.out);
