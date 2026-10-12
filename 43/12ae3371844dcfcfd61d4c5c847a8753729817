@@ -1,0 +1,33 @@
+README.md
+  s_4ce34ec42d9105::t_97a3682b9dc10d 15,61
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_b4a0f2fde99916 137-140,147
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_2f7db84150aad3 71,73-74,79-84,99,120-121,129-135,140-143,176,220-228
+packages/cli/src/commands/standard.ts
+  s_4ce34ec42d9105::t_f575338ebd6812 20
+packages/core/src/directions/directions.test.ts
+  s_4ce34ec42d9105::t_e5544c4bb7b040 169-182
+packages/core/src/directions/tournament.ts
+  s_4ce34ec42d9105::t_71467c794a538e 41-42,52,58-59,112,137,139,149
+packages/core/src/standard/standard.ts
+  s_4ce34ec42d9105::t_4a2e0f8ada9e65 246-248
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_460a6f59d4758e 89,148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4312ae3371844dcfcfd61d4c5c847a8753729817",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
