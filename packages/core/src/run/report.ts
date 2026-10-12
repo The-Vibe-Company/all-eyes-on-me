@@ -32,7 +32,7 @@ export interface ResultPage {
     entrants: string[];
     reasons: string[];
     sheet: string | null;
-    decision?: { judges: string; dropped: string[]; why?: string };
+    decision?: { judges: string | null; dropped: string[]; why?: string };
   } | null;
   screens: {
     page: string;
@@ -331,6 +331,7 @@ const FEEDBACK_SCRIPT = `
 function chosenBy(d: NonNullable<ResultPage["direction"]>): string {
   const among = d.entrants.map(escape).join(", ");
   if (!d.decision) return `Chosen by knockout among ${among}.`;
+  if (d.decision.judges === null) return `Chosen by you among ${among}, with no knockout.`;
   if (d.decision.judges === d.champion) return `Chosen by knockout among ${among}, and validated by you.`;
   return `Chosen by you; the judges' knockout among ${among} had picked ${escape(d.decision.judges)}.`;
 }

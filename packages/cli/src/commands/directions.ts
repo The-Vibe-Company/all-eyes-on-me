@@ -158,18 +158,21 @@ export async function runTournament(argv: string[]): Promise<number> {
       const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png").map((f) => f.slice(0, -4));
       const drop = values.drop ?? [];
       const { tournament, rerun } = decideDirection(t, { choose: values.choose, drop, why: values.why, at: new Date().toISOString(), directions: captured });
-      const judges = champion(t)!;
+      // No knockout played: the person chose alone, and there is no champion to agree with.
+      const judges = champion(t);
       const applied = tournament.decision?.applied;
       const said = [values.choose && values.choose !== judges ? `Chose ${values.choose}.` : "", drop.length ? `Dropped ${drop.join(", ")}.` : "", values.why?.trim() ?? ""].filter(Boolean).join(" ");
-      await addFeedback(aeomHome(), {
-        ...(await runKey(dirname(values.dir))),
-        id: `direction-choice:${judges}`,
-        category: "direction",
-        verdict: `The judges' champion: ${judges}`,
-        agree: applied === judges,
-        ...(said ? { why: said } : {}),
-        at: new Date().toISOString(),
-      });
+      if (judges !== null) {
+        await addFeedback(aeomHome(), {
+          ...(await runKey(dirname(values.dir))),
+          id: `direction-choice:${judges}`,
+          category: "direction",
+          verdict: `The judges' champion: ${judges}`,
+          agree: applied === judges,
+          ...(said ? { why: said } : {}),
+          at: new Date().toISOString(),
+        });
+      }
       if (!applied) {
         console.log(
           rerun!.length
@@ -180,7 +183,9 @@ export async function runTournament(argv: string[]): Promise<number> {
       }
       await save(tournament);
       console.log(
-        applied === judges
+        judges === null
+          ? `The run applies ${applied}, chosen by the person, with no knockout.`
+          : applied === judges
           ? `The run applies ${applied}, the judges' champion, as the person decided.`
           : values.choose
             ? `The run applies ${applied}, chosen by the person over the judges' ${judges}.`

@@ -56,7 +56,7 @@ const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "E
  * `ux` is `/aeom --ux`: the journeys alone, no direction and no page wave;
  * `/aeom --directions` is a full run with no journey judged.
  */
-export function estimateRun({ screens, journeys, mode, directions = 3 }: { screens: number; journeys: number; mode: RunMode; directions?: number }): Estimate {
+export function estimateRun({ screens, journeys, mode, directions = 3, autonome = false }: { screens: number; journeys: number; mode: RunMode; directions?: number; autonome?: boolean }): Estimate {
   const pj = pageJudge(screens);
   // The judges of a kept charter compare each page before and after: three full votes.
   const sj = fullPageJudge(screens);
@@ -87,16 +87,22 @@ export function estimateRun({ screens, journeys, mode, directions = 3 }: { scree
   if (mode !== "judge") {
     let rebuilt = 0;
     if (mode === "full") {
-      const duels = Math.max(directions - 1, 0);
-      const rounds = directions > 1 ? Math.ceil(Math.log2(directions)) : 0;
-      const duelVotes = duels ? duels - 1 + VOTES : 0;
-      phases.push({
-        phase: `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"} and the knockout`,
-        // One judge decides a duel, three the final.
-        agents: directions + VOTES + duelVotes,
-        tokens: directions * WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens,
-        minutes: MINUTES.direction + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes,
-      });
+      const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
+      if (autonome) {
+        const duels = Math.max(directions - 1, 0);
+        const rounds = directions > 1 ? Math.ceil(Math.log2(directions)) : 0;
+        const duelVotes = duels ? duels - 1 + VOTES : 0;
+        phases.push({
+          phase: `${named} and the knockout`,
+          // With nobody to choose, the judges do: the screening, then one judge decides a duel, three the final.
+          agents: directions + VOTES + duelVotes,
+          tokens: directions * WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens,
+          minutes: MINUTES.direction + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes,
+        });
+      } else {
+        // The person chooses among them: their workers alone.
+        phases.push({ phase: `${named}, for you to choose`, agents: directions, tokens: directions * WORKER.tokens, minutes: MINUTES.direction });
+      }
       rebuilt = Math.min(DIRECTION_SCREENS, screens);
     } else {
       phases.push({ phase: "The kit, in the app's own style", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit });

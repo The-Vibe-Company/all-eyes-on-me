@@ -35,13 +35,14 @@ test("aeom estimate says what a run costs, phase by phase, from the screens and 
     assert.match((await run(dir, ["estimate", "--diagnostic"])).out, /Total, at most +6 agents/);
     assert.match((await run(dir, ["estimate", "--ux"])).out, /Judge the journeys/);
     const full = await run(dir, ["estimate"]);
-    assert.match(full.out, /Three directions and the knockout/, "three by default");
-    assert.match((await run(dir, ["estimate", "--directions", "6"])).out, /Six directions and the knockout/);
+    assert.match(full.out, /Three directions, for you to choose/, "three by default, the person choosing");
+    assert.match((await run(dir, ["estimate", "--autonome"])).out, /Three directions and the knockout/, "with --autonome, the judges choose");
+    assert.match((await run(dir, ["estimate", "--directions", "6"])).out, /Six directions, for you to choose/);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:1", pages: ["/", "/jeu"], public: ["/connexion"], style: "keep" }));
     const kept = await run(dir, ["estimate"]);
     assert.match(kept.out, /^For 3 screens and 4 key journeys:/, "the config's pages, public ones included");
     assert.match(kept.out, /The kit, in the app's own style/);
-    assert.match((await run(dir, ["estimate", "--directions", "4"])).out, /Four directions and the knockout/, "--directions overrides a style kept, as /aeom --directions does");
+    assert.match((await run(dir, ["estimate", "--directions", "4"])).out, /Four directions, for you to choose/, "--directions overrides a style kept, as /aeom --directions does");
     assert.match((await run(dir, ["estimate", "--screens", "12", "--journeys", "0"])).out, /^For 12 screens and 0 key journeys:/);
     const bad = await run(dir, ["estimate", "--screens", "0"]);
     assert.equal(bad.code, 1);

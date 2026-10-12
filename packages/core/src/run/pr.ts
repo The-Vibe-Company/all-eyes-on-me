@@ -74,7 +74,9 @@ export function prBody(page: ResultPage, reportPath: string): { title: string; b
     const among = d.entrants.map(words).join(", ");
     const chosen = !d.decision
       ? `chosen by knockout among ${among}`
-      : d.decision.judges === d.champion
+      : d.decision.judges === null
+        ? `chosen by the person among ${among}, with no knockout`
+        : d.decision.judges === d.champion
         ? `chosen by knockout among ${among}, and validated by the person`
         : `chosen by the person; the judges' knockout among ${among} had picked ${words(d.decision.judges)}`;
     lines.push("## Direction", "", `**${words(d.champion)}**, ${chosen}.${d.sentence ? ` ${words(d.sentence)}` : ""}`, "");

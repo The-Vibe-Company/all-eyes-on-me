@@ -12,7 +12,7 @@ test("judging alone, as on Road to Mastock, costs six judges at most, two thirds
 });
 
 test("a full run with six directions is about thirty-five agents and three million tokens, phase by phase, a journey that still breaks apart", () => {
-  const { phases, total, ifBroken } = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6 });
+  const { phases, total, ifBroken } = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6, autonome: true });
   assert.deepEqual(phases.map((p) => p.phase), ["Understand the product", "Judge the screens and the journeys", "Six directions and the knockout", "The pages and their journeys", "The result page, the standard and the PR"]);
   assert.ok(total.agents >= 30 && total.agents <= 40, String(total.agents));
   assert.ok(total.tokens > 3_000_000 && total.tokens < 4_500_000, String(total.tokens));
@@ -30,7 +30,7 @@ test("one wave for the pages and their journeys costs at least a million tokens 
 });
 
 test("fewer directions, no journeys, or the style kept cost less, and each says so", () => {
-  const three = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 3 });
+  const three = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 3, autonome: true });
   assert.equal(three.phases[2]!.phase, "Three directions and the knockout");
   assert.equal(three.phases[2]!.agents, 3 + 3 + 1 + 3, "three workers, three screening judges, one duel of one vote, a final of three");
   const noJourneys = estimateRun({ screens: 5, journeys: 0, mode: "full", directions: 6 });
@@ -62,4 +62,14 @@ test("/aeom --ux costs the journeys alone: no direction and no page wave", () =>
   const { phases, total } = estimateRun({ screens: 8, journeys: 4, mode: "ux" });
   assert.deepEqual(phases.map((p) => p.phase), ["Understand the product", "Judge the journeys", "The journeys", "The result page, the standard and the PR"]);
   assert.equal(total.agents, 3 + 3 + 1 + 4 + 6 + 3);
+});
+
+test("without --autonome the person chooses the direction: the directions cost their workers alone, no judge", () => {
+  const chosen = estimateRun({ screens: 8, journeys: 4, mode: "full" });
+  const judged = estimateRun({ screens: 8, journeys: 4, mode: "full", autonome: true });
+  assert.equal(chosen.phases[2]!.phase, "Three directions, for you to choose");
+  assert.equal(chosen.phases[2]!.agents, 3, "three workers, no screening judge, no duel");
+  assert.equal(judged.phases[2]!.agents, 3 + 3 + 1 + 3);
+  assert.ok(judged.total.tokens - chosen.total.tokens > 300_000, "the judges of the knockout cost more than 0.3 M tokens");
+  assert.ok(chosen.phases[2]!.minutes < judged.phases[2]!.minutes);
 });
