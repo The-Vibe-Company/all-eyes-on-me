@@ -99,4 +99,6 @@ test("a direction the person chose over the judges' champion says so, with their
   assert.match(body, /> Le plaid prolonge les photos de la boutique\./);
   const validated = prBody({ ...page, direction: { ...page.direction!, decision: { judges: "tissus", dropped: [] } } }, "r.html").body;
   assert.match(validated, /\*\*tissus\*\*, chosen by knockout among tissus, plaid, and validated by the person\./);
+  const alone = prBody({ ...page, direction: { ...page.direction!, champion: "plaid", reasons: [], decision: { judges: null, dropped: [] } } }, "r.html").body;
+  assert.match(alone, /\*\*plaid\*\*, chosen by the person among tissus, plaid, with no knockout\./);
 });

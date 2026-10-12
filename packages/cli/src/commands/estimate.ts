@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, estimateRun, estimateText, loadConfig, type RunMode } from "@aeom/core";
 
-const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux] [--directions <n>] [--screens <n>] [--journeys <n>]
+const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>]
 
 Says what a run of /aeom would cost before it starts: how many agents, how many
 tokens and how long, phase by phase, at most. The screens are the config's
@@ -16,6 +16,8 @@ journeys, the files in .aeom/journeys.
                      wave (/aeom --directions is a run with --journeys 0)
   --directions <n>   Build this many directions (default 3); with a style
                      kept in the config, build them anyway
+  --autonome         Nobody chooses the direction: the judges screen them and
+                     play a knockout (without it, the person chooses)
   --screens <n>      Count this many screens instead
   --journeys <n>     Count this many key journeys instead`;
 
@@ -28,7 +30,7 @@ const count = (value: string | undefined, what: string, least: number): number |
 export async function runEstimate(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, screens: { type: "string" }, journeys: { type: "string" }, help: { type: "boolean", short: "h" } },
+    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(USAGE);
@@ -57,7 +59,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
   }
   const journeys = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
   const mode: RunMode = values.juger || values.diagnostic ? "judge" : values.ux ? "ux" : values["garder-le-style"] || (config.style === "keep" && given.directions === undefined) ? "keep-style" : "full";
-  const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 3 });
+  const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome) });
   console.log(estimateText(estimate, { screens, journeys }));
   return 0;
 }

@@ -23,8 +23,8 @@ export interface Duel {
 export interface Decision {
   /** The direction the run applies. */
   applied: string;
-  /** The judges' champion, which the person validated or replaced. */
-  judges: string;
+  /** The judges' champion, which the person validated or replaced; null when they chose with no knockout played. */
+  judges: string | null;
   /** The directions the person dropped. */
   dropped: string[];
   /** Their words, when they gave any. */
@@ -38,6 +38,8 @@ export interface Tournament {
   /** How many votes decide the final, when not votesPerDuel. */
   finalVotes?: number;
   duels: Duel[];
+  /** False when the run plays no knockout: the person chooses among the directions. */
+  knockout?: false;
   /** The person's decision, once they made it. */
   decision?: Decision;
 }
@@ -47,12 +49,14 @@ export interface Tournament {
  * number, the last one goes through to the next round without a duel. A
  * direction alone, the only one the screening left, is champion at once.
  */
-export function createTournament(entrants: string[], { votesPerDuel = 3, finalVotes }: { votesPerDuel?: number; finalVotes?: number } = {}): Tournament {
+export function createTournament(entrants: string[], { votesPerDuel = 3, finalVotes, knockout = true }: { votesPerDuel?: number; finalVotes?: number; knockout?: boolean } = {}): Tournament {
   finalVotes ??= votesPerDuel;
   if (entrants.length < 1) throw new Error("A tournament needs at least one direction: a direction alone is champion without a duel.");
   for (const n of [votesPerDuel, finalVotes]) if (!Number.isInteger(n) || n < 1 || n % 2 === 0) throw new Error("Votes per duel must be a positive odd number, so every duel has a majority.");
   if (new Set(entrants).size !== entrants.length) throw new Error("Each direction can enter only once.");
   const t: Tournament = { entrants, votesPerDuel, ...(finalVotes !== votesPerDuel ? { finalVotes } : {}), duels: [] };
+  // No knockout: the directions are recorded for the person to choose among, with no duel.
+  if (!knockout) return { ...t, knockout: false };
   return { ...t, duels: pair(t, entrants, 1, 1) };
 }
 
@@ -105,6 +109,7 @@ export function voteDuel(t: Tournament, { duel: id, voter, winner, reason }: Due
 
 /** The direction that won the last duel, or null while duels remain. */
 export function champion(t: Tournament): string | null {
+  if (!t.duels.length) return null;
   const lastRound = Math.max(...t.duels.map((d) => d.round));
   const final = t.duels.filter((d) => d.round === lastRound);
   return final.length === 1 && final[0]!.winner !== undefined ? final[0]!.winner : null;
@@ -122,14 +127,17 @@ export function applied(t: Tournament): string | null {
  * decides nothing: `rerun` names the knockout's directions left for a new
  * knockout, and when one alone is left, it is their choice. A later decision
  * keeps what they dropped and what they applied before, unless it drops or
- * chooses again.
+ * chooses again. With no knockout played (no vote in any duel), the person
+ * chooses alone: by name, or by dropping all the others.
  */
 export function decideDirection(
   t: Tournament,
   { choose, drop = [], why, at, directions = t.entrants }: { choose?: string; drop?: string[]; why?: string; at: string; directions?: string[] },
 ): { tournament: Tournament; rerun: string[] | null } {
-  const judges = champion(t);
-  if (judges === null) throw new Error("The knockout is not over: there is no champion to show the person yet.");
+  // Only a knockout some judge voted in has a champion of the judges: a direction alone met none.
+  const played = t.duels.some((d) => d.votes.length > 0);
+  const judges = played ? champion(t) : null;
+  if (judges === null && played) throw new Error("The knockout is not over: there is no champion to show the person yet.");
   const known = [...new Set([...t.entrants, ...directions])];
   for (const name of [...(choose ? [choose] : []), ...drop]) if (!known.includes(name)) throw new Error(`${name} is not one of the directions: ${known.join(", ")}.`);
   if (choose && drop.includes(choose)) throw new Error(`${choose} is both chosen and dropped.`);
@@ -137,7 +145,8 @@ export function decideDirection(
   const dropped = [...new Set([...(t.decision?.dropped ?? []), ...drop])].filter((name) => name !== choose);
   const left = t.entrants.filter((name) => !dropped.includes(name));
   const kept = t.decision && !dropped.includes(t.decision.applied) ? t.decision.applied : null;
-  const pick = choose ?? kept ?? (!dropped.includes(judges) ? judges : left.length === 1 ? left[0]! : null);
+  const pick = choose ?? kept ?? (judges !== null && !dropped.includes(judges) ? judges : left.length === 1 ? left[0]! : null);
+  if (pick === null && judges === null && left.length) throw new Error(`No knockout was played: choose one of ${left.join(", ")}.`);
   if (pick === null) return { tournament: t, rerun: left };
   const decision: Decision = { applied: pick, judges, dropped, ...(why?.trim() ? { why: why.trim() } : {}), at };
   return { tournament: { ...t, decision }, rerun: null };

@@ -17,7 +17,7 @@ product's own rules. Words only: no image, no capture.
 With --draft, prints a first standard from the shared files of the front:
 every custom property of the style sheets with its value, every class they
 name, and every other file as a component of its own. With --run, the
-direction the run's knockout chose, with its sentence. The rest of the
+direction the run applied, with its sentence. The rest of the
 direction and the rules are left for AEOM to write.
 
 aeom standard <draft.md> writes .aeom/standard.md. A draft that names a token,

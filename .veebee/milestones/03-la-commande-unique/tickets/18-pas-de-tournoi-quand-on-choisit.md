@@ -4,6 +4,7 @@ title: Pas de tournoi quand c'est l'utilisateur qui choisit la direction
 milestone: 03-la-commande-unique
 depends_on: [15]
 design: null
+status: done
 tracker: { tool: github, id: 99, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/99 }
 ---
 
