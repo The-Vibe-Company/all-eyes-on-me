@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -126,6 +126,26 @@ test("aeom journey --by-page says, page by page, what the journeys break or fail
     const nothing = await run(here, ["journey", "--by-page", "--out", join(here, "empty")]);
     assert.equal(nothing.code, 1);
     assert.match(nothing.out, /No replayed journeys in .*empty\. Run aeom journey first\./);
+
+    // The page judge's report is not a critique of these journeys: said, in JSON too, and only the breaks are given.
+    const pagesJudged = join(here, "judge.json");
+    await writeFile(pagesJudged, JSON.stringify({ judgedAt: "", voters: ["1"], principles: [], failures: 0, pages: [{ page: "/", verdicts: [] }] }));
+    const wrongCritique = await run(here, ["journey", "--by-page", "--out", out, "--critique", pagesJudged, "--json"]);
+    assert.equal(wrongCritique.code, 0, wrongCritique.out);
+    assert.match(wrongCritique.out, /judge\.json judges none of these journeys: only where they break\./);
+    // A verdict with no steps, a replay with no url: no crash.
+    await writeFile(critique, JSON.stringify({ judgedAt: "", voters: ["1"], principles: [], failures: 1, pages: [{ page: "write", verdicts: [{ principle: "short", pass: false, votes: "1/1 fail", reasons: ["Long."], dissent: [] }] }] }));
+    const report = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
+    await writeFile(join(out, "report.json"), JSON.stringify({ ...report, url: "" }));
+    const loose = await run(here, ["journey", "--by-page", "--out", out, "--critique", critique]);
+    assert.equal(loose.code, 0, loose.out);
+    assert.match(loose.out, /Write a note, short: Long\./);
+    // No journey in the replay, or two modes at once: refused.
+    await writeFile(join(out, "report.json"), JSON.stringify({ ...report, journeys: [] }));
+    assert.match((await run(here, ["journey", "--by-page", "--out", out])).out, /is not a replay of aeom journey/);
+    const both = await run(here, ["journey", "--by-page", "--plan", "--out", out]);
+    assert.equal(both.code, 1);
+    assert.match(both.out, /--plan and --by-page are two answers: ask for one/);
   } finally {
     await rm(here, { recursive: true, force: true });
   }

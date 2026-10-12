@@ -165,6 +165,9 @@ test("aeom compare --journeys --by-critique decides from the two critiques, with
     const both = await run(dir, ["compare", "--journeys", "before", "after", "--by-critique", "--duels", "after/duels"]);
     assert.equal(both.code, 1);
     assert.match(both.out, /--by-critique decides without duels: leave out --duels/);
+    const voters = await run(dir, ["compare", "--journeys", "before", "after", "--by-critique", "--voters", "2"]);
+    assert.equal(voters.code, 1);
+    assert.match(voters.out, /--by-critique decides without duels: leave out --voters/);
     const duelsStill = await run(dir, ["compare", "--journeys", "before", "after"]);
     assert.equal(duelsStill.code, 1, "without --by-critique, the duels still decide");
   } finally {

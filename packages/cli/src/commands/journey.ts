@@ -43,6 +43,10 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.error(`--out cannot be empty.`);
     return 1;
   }
+  if (parsed.plan && parsed["by-page"]) {
+    console.error(`--plan and --by-page are two answers: ask for one.`);
+    return 1;
+  }
   if (parsed.plan) return printPlan(parsed.out);
   if (parsed["by-page"]) return printByPage(parsed.out, parsed.critique, Boolean(parsed.json));
   if (parsed.reset !== undefined && !parsed.reset.trim()) {
@@ -147,24 +151,39 @@ async function printByPage(out: string, critiqueFile: string, json: boolean): Pr
   let replay: JourneyReport;
   try {
     replay = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
-    if (typeof replay?.url !== "string" || !Array.isArray(replay.journeys)) throw new Error();
   } catch {
     console.error(`No replayed journeys in ${out}. Run aeom journey first.`);
     return 1;
   }
+  // Each journey's slug and name, and each run's steps and screens: what the pages are read from.
+  const r = replay as Partial<JourneyReport> | null;
+  const readable =
+    Array.isArray(r?.journeys) &&
+    r.journeys.length > 0 &&
+    r.journeys.every((j) => typeof j?.slug === "string" && typeof j.name === "string" && Array.isArray(j.runs) && j.runs.every((run) => Array.isArray(run?.steps) && Array.isArray(run.screens)));
+  if (!readable) {
+    console.error(`${join(out, "report.json")} is not a replay of aeom journey to read the pages from. Run aeom journey again.`);
+    return 1;
+  }
   let critique: JudgeReport | undefined;
+  let missing = `No critique of the journeys in ${critiqueFile}: only where they break.`;
   try {
-    critique = JSON.parse(await readFile(critiqueFile, "utf8"));
-    if (!Array.isArray(critique?.pages)) throw new Error();
+    const read = JSON.parse(await readFile(critiqueFile, "utf8")) as Partial<JudgeReport> | null;
+    const pages = Array.isArray(read?.pages) ? read.pages.filter((p) => typeof p?.page === "string" && Array.isArray(p.verdicts)) : [];
+    // The page judge's report, or the critique of other journeys, judges none of these.
+    if (pages.some((p) => replay.journeys.some((j) => j.slug === p.page))) critique = { ...(read as JudgeReport), pages };
+    else missing = `${critiqueFile} judges none of these journeys: only where they break.`;
   } catch {
     critique = undefined;
   }
   const pages = journeyFindingsByPage({ replay, critique });
   if (json) {
+    // The JSON is the answer; what it leaves out is said apart, so the coordinator can tell no critique from nothing failing.
+    if (!critique) console.error(missing);
     console.log(JSON.stringify(pages, null, 2));
     return 0;
   }
-  if (!critique) console.log(`No critique of the journeys in ${critiqueFile}: only where they break.`);
+  if (!critique) console.log(missing);
   if (!pages.length) console.log("No journey breaks or fails on any page.");
   for (const { page, findings } of pages) {
     console.log(page);

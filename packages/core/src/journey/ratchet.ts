@@ -134,7 +134,11 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
       const remaining = [...new Set([...failing(afterVerdict, journey.slug), ...failing(beforeVerdict, journey.slug).filter((p) => !cleared.includes(p))])];
       const verdict = (kept: boolean, why: string): RatchetVerdict => ({ slug: journey.slug, name: journey.name, kept, why, steps, ...(kept ? { cleared, remaining } : { cleared: [], remaining: failing(beforeVerdict, journey.slug) }) });
 
-      const breaks = journey.runs.find((r) => r.broken && !old.runs.find((o) => o.width === r.width)?.broken);
+      // A break is new where the old one went to its end, or broke later.
+      const breaks = journey.runs.find((r) => {
+        const was = old.runs.find((o) => o.width === r.width)?.broken;
+        return r.broken && (!was || r.broken.step < was.step);
+      });
       if (breaks) return verdict(false, `breaks at step ${breaks.broken!.step} at ${breaks.width} px: ${breaks.broken!.reason}`);
       const refused = [...(guard?.refused.filter((v) => (v.journeys ?? [v.journey]).includes(journey.name)) ?? []), ...runRefused];
       if (refused.length) return verdict(false, `the guard refuses ${refused.map((v) => `${v.what} (${v.why})`).join(", ")}`);

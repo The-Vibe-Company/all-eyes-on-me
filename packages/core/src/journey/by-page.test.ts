@@ -43,16 +43,16 @@ test("a principle failing at a step is put under the page the user is on at that
   ]);
 });
 
-test("a journey that breaks at a step is put under the page it was on before that step, the start page at step 1", () => {
+test("a journey that breaks at a step is put under the page it was on before that step, the page it opened at step 1", () => {
   const pages = journeyFindingsByPage({
     replay: replay({
       share: [run(["/", "/notes"], { width: 390, broken: { step: 3, reason: 'no button "Share" on the screen' } }), run(["/", "/notes", "/notes/12/share"])],
-      write: [run([], { broken: { step: 1, reason: 'no link "New" on the screen' } })],
+      write: [run(["/write"], { broken: { step: 1, reason: "the page answered 500" } })],
     }),
   });
   assert.deepEqual(pages, [
-    { page: "/", findings: [{ journey: "write", name: "Journey write", step: 1, reason: 'breaks at 1280 px: no link "New" on the screen', breaks: true }] },
     { page: "/notes", findings: [{ journey: "share", name: "Journey share", step: 3, reason: 'breaks at 390 px: no button "Share" on the screen', breaks: true }] },
+    { page: "/write", findings: [{ journey: "write", name: "Journey write", step: 1, reason: "breaks at 1280 px: the page answered 500", breaks: true }] },
   ]);
 });
 
@@ -78,4 +78,26 @@ test("a principle failing with no step named is put under the journey's first pa
     critique: critique({ open: [{ principle: "short", steps: [], reason: "Five steps for one note." }] }),
   });
   assert.deepEqual(page, { page: "/", findings: [{ journey: "open", name: "Journey open", principle: "short", reason: "Five steps for one note." }] });
+});
+
+test("each step a principle fails at gets the reason of the voter who pointed at it", () => {
+  const report = critique({ send: [{ principle: "next-step", steps: [2, 3], reason: "unused" }] });
+  report.pages[0]!.verdicts[1]!.at = [
+    { step: 3, reason: "Partir is below the fold." },
+    { step: 2, reason: "The recap card covers the slider." },
+    { step: 3, reason: "Partir cannot be seen." },
+  ];
+  const pages = journeyFindingsByPage({ replay: replay({ send: [run(["/", "/send", "/send/confirm"])] }), critique: report });
+  assert.deepEqual(pages.map((p) => [p.page, p.findings.map((f) => `${f.step} ${f.reason}`)]), [
+    ["/send", ["2 The recap card covers the slider."]],
+    ["/send/confirm", ["3 Partir is below the fold."]],
+  ]);
+});
+
+test("a step with no route, as on a browser error page, is put under the home page, never under a page with no name", () => {
+  const pages = journeyFindingsByPage({
+    replay: { ...replay({ open: [run(["/", ""])] }), url: "" },
+    critique: critique({ open: [{ principle: "no-dead-end", steps: [2], reason: "A browser error." }] }),
+  });
+  assert.deepEqual(pages.map((p) => p.page), ["/"]);
 });

@@ -129,3 +129,15 @@ test("without duels, the critiques decide: a journey stays when it clears a find
   assert.equal(by.pay!.kept, false, "a new break sends it back, whatever the critique says");
   assert.match(by.pay!.why, /breaks at step 2/);
 });
+
+test("a journey that now breaks earlier than it did is sent back, even when its shorter critique looks better", () => {
+  const [orders] = ratchetJourneys({
+    before: replay({ orders: run(5, { step: 5, reason: "no button Pay" }) }),
+    after: replay({ orders: run(2, { step: 2, reason: "no link Orders" }) }),
+    beforeVerdict: verdict({ orders: ["same-words"] }),
+    afterVerdict: verdict({ orders: [] }),
+    guard: { refused: [], allowed: [] },
+  });
+  assert.equal(orders!.kept, false);
+  assert.match(orders!.why, /breaks at step 2/);
+});

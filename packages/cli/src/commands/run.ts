@@ -62,7 +62,7 @@ export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { strict: { type: "boolean" }, "keep-style": { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, "by-critique": { type: "boolean" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { strict: { type: "boolean" }, "keep-style": { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, "by-critique": { type: "boolean" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || positionals.length !== 2) {
     console.log(COMPARE_HELP);
@@ -118,17 +118,19 @@ export async function runCompare(argv: string[]): Promise<number> {
   return 0;
 }
 
-async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; "by-critique"?: boolean; base?: string; known?: string; voters: string }): Promise<number> {
-  if (values["by-critique"] && values.duels !== undefined) {
-    console.error(`--by-critique decides without duels: leave out --duels.`);
-    return 1;
+async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; "by-critique"?: boolean; base?: string; known?: string; voters?: string }): Promise<number> {
+  for (const option of ["duels", "voters"] as const) {
+    if (values["by-critique"] && values[option] !== undefined) {
+      console.error(`--by-critique decides without duels: leave out --${option}.`);
+      return 1;
+    }
   }
   if (values.known !== undefined && !values.known.trim()) {
     console.error(`--known cannot be empty: give the folder of a replay of the new journey files on the app at --base.`);
     return 1;
   }
   // No judge cannot prefer anything: every journey would come back for a reason nobody gave.
-  const voters = Number(values.voters);
+  const voters = Number(values.voters ?? "3");
   if (!Number.isInteger(voters) || voters < 1) {
     console.error(`--voters must be a whole number of judges, 1 or more.`);
     return 1;
