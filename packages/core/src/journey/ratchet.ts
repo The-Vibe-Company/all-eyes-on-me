@@ -115,9 +115,11 @@ const passing = (verdict: JudgeReport | undefined, slug: string) => verdict?.pag
  * Decides, journey by journey, whether the new version stays. It stays only
  * if it goes to its end wherever the old one did, the guard refuses nothing
  * it did, and the judges prefer it. A finding is cleared only when the
- * critique, redone on the new version, no longer finds it.
+ * critique, redone on the new version, no longer finds it. Without duels,
+ * the critiques decide: it stays when it clears a finding and fails nothing
+ * that passed before.
  */
-export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard }: { before: JourneyReport; after: JourneyReport; beforeVerdict?: JudgeReport; afterVerdict?: JudgeReport; duels: Map<string, JourneyDuel>; guard?: GuardResult }): RatchetVerdict[] {
+export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard }: { before: JourneyReport; after: JourneyReport; beforeVerdict?: JudgeReport; afterVerdict?: JudgeReport; duels?: Map<string, JourneyDuel>; guard?: GuardResult }): RatchetVerdict[] {
   const runRefused = guard?.refused.filter((v) => !v.journey) ?? [];
   // A journey only the new version has cannot be compared: it is named, never kept, never left out.
   const unmatched = after.journeys
@@ -132,10 +134,20 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
       const remaining = [...new Set([...failing(afterVerdict, journey.slug), ...failing(beforeVerdict, journey.slug).filter((p) => !cleared.includes(p))])];
       const verdict = (kept: boolean, why: string): RatchetVerdict => ({ slug: journey.slug, name: journey.name, kept, why, steps, ...(kept ? { cleared, remaining } : { cleared: [], remaining: failing(beforeVerdict, journey.slug) }) });
 
-      const breaks = journey.runs.find((r) => r.broken && !old.runs.find((o) => o.width === r.width)?.broken);
+      // A break is new where the old one went to its end, or broke later.
+      const breaks = journey.runs.find((r) => {
+        const was = old.runs.find((o) => o.width === r.width)?.broken;
+        return r.broken && (!was || r.broken.step < was.step);
+      });
       if (breaks) return verdict(false, `breaks at step ${breaks.broken!.step} at ${breaks.width} px: ${breaks.broken!.reason}`);
       const refused = [...(guard?.refused.filter((v) => (v.journeys ?? [v.journey]).includes(journey.name)) ?? []), ...runRefused];
       if (refused.length) return verdict(false, `the guard refuses ${refused.map((v) => `${v.what} (${v.why})`).join(", ")}`);
+      if (!duels) {
+        const worse = passing(beforeVerdict, journey.slug).filter((p) => failing(afterVerdict, journey.slug).includes(p));
+        if (worse.length) return verdict(false, `the critique now fails ${worse.join(", ")}, which passed`);
+        if (!cleared.length) return verdict(false, "nothing better according to the critique");
+        return verdict(true, `the critique clears ${cleared.join(", ")} and fails nothing that passed`);
+      }
       const duel = duels.get(journey.slug);
       if (!duel) return verdict(false, "no judge compared the two versions");
       if (duel.winner === "before") return verdict(false, `the judges prefer the old one (${duel.votes}): ${duel.reasons[0]}`);

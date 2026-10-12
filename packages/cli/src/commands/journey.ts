@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, JourneyError, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport } from "@aeom/core";
+import { ConfigError, JourneyError, journeyFindingsByPage, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
@@ -18,12 +18,18 @@ ${APP_OPTIONS_HELP}
                        (default: reset in .aeom/config.json)
   --plan               Replay nothing: from the last replay in --out, say which
                        screens several journeys cross (one worker, first) and
-                       which belong to one journey (its own worker)`;
+                       which belong to one journey (its own worker)
+  --by-page            Replay nothing: from the last replay in --out and the
+                       critique, say page by page what the journeys break or
+                       fail there, for the worker of that page
+  --critique <file>    The critique of the journeys, for --by-page
+                       (default .aeom/reports/judge-journeys.json)
+  --json               With --by-page, write it as JSON`;
 
 export async function runJourney(argv: string[]): Promise<number> {
   const parsed = parseArgs({
     args: argv,
-    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" }, plan: { type: "boolean" } },
+    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" }, plan: { type: "boolean" }, "by-page": { type: "boolean" }, critique: { type: "string", default: ".aeom/reports/judge-journeys.json" }, json: { type: "boolean" } },
   }).values;
   if (parsed.help) {
     console.log(JOURNEY_HELP);
@@ -37,7 +43,12 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.error(`--out cannot be empty.`);
     return 1;
   }
+  if (parsed.plan && parsed["by-page"]) {
+    console.error(`--plan and --by-page are two answers: ask for one.`);
+    return 1;
+  }
   if (parsed.plan) return printPlan(parsed.out);
+  if (parsed["by-page"]) return printByPage(parsed.out, parsed.critique, Boolean(parsed.json));
   if (parsed.reset !== undefined && !parsed.reset.trim()) {
     console.error(`--reset cannot be empty: give the command that puts the app's data back, or leave the option out.`);
     return 1;
@@ -132,5 +143,51 @@ async function printPlan(out: string): Promise<number> {
   console.log(`Shared, one worker first, with the navigation: ${wave.shared.join(", ") || "no screen"}`);
   // The slug names the journey's file: two journeys can share a name, never a file.
   for (const journey of report.journeys) console.log(`${journey.name} (${journey.slug}): ${wave.own[journey.slug]!.join(", ") || "no screen of its own"}`);
+  return 0;
+}
+
+/** Prints, page by page, what the journeys break or fail there, from the last replay and its critique. */
+async function printByPage(out: string, critiqueFile: string, json: boolean): Promise<number> {
+  let replay: JourneyReport;
+  try {
+    replay = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
+  } catch {
+    console.error(`No replayed journeys in ${out}. Run aeom journey first.`);
+    return 1;
+  }
+  // Each journey's slug and name, and each run's steps and screens: what the pages are read from.
+  const r = replay as Partial<JourneyReport> | null;
+  const readable =
+    Array.isArray(r?.journeys) &&
+    r.journeys.length > 0 &&
+    r.journeys.every((j) => typeof j?.slug === "string" && typeof j.name === "string" && Array.isArray(j.runs) && j.runs.every((run) => Array.isArray(run?.steps) && Array.isArray(run.screens)));
+  if (!readable) {
+    console.error(`${join(out, "report.json")} is not a replay of aeom journey to read the pages from. Run aeom journey again.`);
+    return 1;
+  }
+  let critique: JudgeReport | undefined;
+  let missing = `No critique of the journeys in ${critiqueFile}: only where they break.`;
+  try {
+    const read = JSON.parse(await readFile(critiqueFile, "utf8")) as Partial<JudgeReport> | null;
+    const pages = Array.isArray(read?.pages) ? read.pages.filter((p) => typeof p?.page === "string" && Array.isArray(p.verdicts)) : [];
+    // The page judge's report, or the critique of other journeys, judges none of these.
+    if (pages.some((p) => replay.journeys.some((j) => j.slug === p.page))) critique = { ...(read as JudgeReport), pages };
+    else missing = `${critiqueFile} judges none of these journeys: only where they break.`;
+  } catch {
+    critique = undefined;
+  }
+  const pages = journeyFindingsByPage({ replay, critique });
+  if (json) {
+    // The JSON is the answer; what it leaves out is said apart, so the coordinator can tell no critique from nothing failing.
+    if (!critique) console.error(missing);
+    console.log(JSON.stringify(pages, null, 2));
+    return 0;
+  }
+  if (!critique) console.log(missing);
+  if (!pages.length) console.log("No journey breaks or fails on any page.");
+  for (const { page, findings } of pages) {
+    console.log(page);
+    for (const f of findings) console.log(`  ${f.name}${f.step ? `, step ${f.step}` : ""}${f.principle ? `, ${f.principle}` : ""}: ${f.reason}`);
+  }
   return 0;
 }

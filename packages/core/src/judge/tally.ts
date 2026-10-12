@@ -26,6 +26,8 @@ export interface PrincipleVerdict {
   dissent: string[];
   /** For a journey: the steps the winning side pointed at, in order. */
   steps: number[];
+  /** For a journey: each step the winning side pointed at, with the reason of the voter who did, in the voters' order. */
+  at?: { step: number; reason: string }[];
 }
 
 export interface JudgeReport {
@@ -122,6 +124,10 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
         reasons: cast.filter((v) => v.pass === pass).map((v) => v.reason),
         dissent: cast.filter((v) => v.pass !== pass).map((v) => v.reason),
         steps: [...new Set(cast.filter((v) => v.pass === pass && v.step !== undefined).map((v) => v.step!))].sort((a, b) => a - b),
+        ...(() => {
+          const at = cast.filter((v) => v.pass === pass && v.step !== undefined).map((v) => ({ step: v.step!, reason: v.reason }));
+          return at.length ? { at } : {};
+        })(),
       };
     }),
   }));

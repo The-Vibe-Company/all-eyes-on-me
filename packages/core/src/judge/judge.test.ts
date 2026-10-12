@@ -166,6 +166,7 @@ test("a journey's verdict keeps the steps the winning side pointed at", () => {
   const verdict = tally([v("1", false, 3), v("2", false, 2), v("3", true, 1)], journeys, ps).pages[0]!.verdicts[0]!;
   assert.equal(verdict.pass, false);
   assert.deepEqual(verdict.steps, [2, 3]);
+  assert.deepEqual(verdict.at, [{ step: 3, reason: "1 says" }, { step: 2, reason: "2 says" }], "each step with the reason of the voter who pointed at it");
   refuses(() => tally([v("1", false, 0), v("2", false, 2), v("3", true)], journeys, ps), /the step for result-shown must be a step number/);
   // A journey's failure points at a step, or nobody can see where it shows; a page vote has no step.
   refuses(() => tally([v("1", false), v("2", false, 2), v("3", true)], journeys, ps, { steps: true }), /voter 1, see-my-orders: no step for result-shown/);
