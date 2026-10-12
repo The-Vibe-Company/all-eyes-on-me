@@ -1,0 +1,29 @@
+README.md
+  s_4ce34ec42d9105::t_75cd8db59fd31b 5,15,59,61
+site/pages/commands.html
+  s_4ce34ec42d9105::t_2855d5132f005e 17,19-21,27,39,45,49,57,63,75
+site/pages/index.html
+  s_4ce34ec42d9105::t_6ce018b1c33c65 51,74,94
+site/shared/try.html
+  s_4ce34ec42d9105::t_edf7300dc3af0b 7
+site/site.test.mjs
+  s_4ce34ec42d9105::t_89ae7e2841e6ea 196-202
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_4c71955ec5df2a 3,12-21,47,49,88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3139d2431241accdac37640e5d8592d6165ffdc8",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
