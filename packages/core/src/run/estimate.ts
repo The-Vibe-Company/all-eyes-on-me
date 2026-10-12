@@ -21,6 +21,8 @@ export interface Estimate {
   mode: RunMode;
   phases: Phase[];
   total: { agents: number; tokens: number; minutes: number };
+  /** The journey wave a run adds only when a journey still breaks after the pages, at most: apart from the total. */
+  ifBroken?: Phase;
 }
 
 /** One agent: what it costs in tokens, and how long it takes, in minutes. */
@@ -48,9 +50,11 @@ const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "E
 
 /**
  * The phases of a run and what each costs, at most: the phases after the
- * judges run only when the verdict finds something to redo, the journeys only
- * when a journey fails. `ux` is `/aeom --ux`: the journeys alone, no direction
- * and no page wave; `/aeom --directions` is a full run with no journey judged.
+ * judges run only when the verdict finds something to redo. The page workers
+ * fix their pages' journey findings too, judged once after them; a journey
+ * wave of its own runs only when a journey still breaks, apart from the total.
+ * `ux` is `/aeom --ux`: the journeys alone, no direction and no page wave;
+ * `/aeom --directions` is a full run with no journey judged.
  */
 export function estimateRun({ screens, journeys, mode, directions = 3 }: { screens: number; journeys: number; mode: RunMode; directions?: number }): Estimate {
   const pj = pageJudge(screens);
@@ -98,25 +102,28 @@ export function estimateRun({ screens, journeys, mode, directions = 3 }: { scree
       phases.push({ phase: "The kit, in the app's own style", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit });
     }
     const pages = Math.max(screens - rebuilt, 0);
-    // The page workers, the one who promotes their kit candidates, the screens measured; with the style kept, the charter judged.
+    // The page workers, who fix their pages' journey findings too, the one who promotes their kit candidates,
+    // the screens measured, the journeys judged once; with the style kept, the charter judged.
     const workers = pages ? pages + 1 : 0;
     const style = mode === "keep-style" ? VOTES : 0;
+    const critique = journeys ? VOTES : 0;
     phases.push({
-      phase: "The pages",
-      agents: workers + VOTES + style,
-      tokens: workers * WORKER.tokens + VOTES * pj.tokens + style * sj.tokens,
-      minutes: (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (style ? sj.minutes : 0),
+      phase: journeys ? "The pages and their journeys" : "The pages",
+      agents: workers + VOTES + critique + style,
+      tokens: workers * WORKER.tokens + VOTES * pj.tokens + critique * jj.tokens + style * sj.tokens,
+      minutes: (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (critique ? jj.minutes : 0) + (style ? sj.minutes : 0),
     });
-    if (journeys) {
-      phases.push({
-        phase: "The journeys",
-        // Their critique on the new front, one shared worker and one per journey, the new version judged, the duels, the screens measured again, and the charter with the style kept.
-        agents: VOTES + 1 + journeys + VOTES + VOTES + VOTES + style,
-        tokens: 2 * VOTES * jj.tokens + SHARED_WORKER.tokens + journeys * WORKER.tokens + VOTES * JOURNEY_DUEL_JUDGE.tokens + VOTES * pj.tokens + style * sj.tokens,
-        minutes: jj.minutes + MINUTES.journey + jj.minutes + JOURNEY_DUEL_JUDGE.minutes + pj.minutes + (style ? sj.minutes : 0),
-      });
-    }
     phases.push({ phase: "The result page, the standard and the PR", agents: 0, tokens: 0, minutes: MINUTES.end });
+    // A journey that still breaks: one worker per journey and a shared one, the journeys judged again, the screens measured again. No duel: the critiques decide.
+    const ifBroken = journeys
+      ? {
+          phase: "If a journey still breaks after the pages",
+          agents: journeys + 1 + VOTES + VOTES + style,
+          tokens: journeys * WORKER.tokens + SHARED_WORKER.tokens + VOTES * jj.tokens + VOTES * pj.tokens + style * sj.tokens,
+          minutes: MINUTES.journey + jj.minutes + pj.minutes + (style ? sj.minutes : 0),
+        }
+      : undefined;
+    return { ...withTotal(mode, phases), ...(ifBroken ? { ifBroken } : {}) };
   }
   return withTotal(mode, phases);
 }
@@ -135,12 +142,15 @@ const duration = (minutes: number) => {
 /** The estimate as a table, phase by phase, then what it leaves out. */
 export function estimateText(estimate: Estimate, { screens, journeys }: { screens: number; journeys: number }): string {
   const rows = [...estimate.phases.map((p) => ({ ...p, label: p.phase })), { ...estimate.total, label: "Total, at most" }];
-  const width = Math.max(...rows.map((r) => r.label.length));
+  const brokenLabel = estimate.ifBroken ? `${estimate.ifBroken.phase}, at most` : "";
+  const width = Math.max(...rows.map((r) => r.label.length), brokenLabel.length);
   const agents = (n: number) => (n ? `${n} agent${n === 1 ? "" : "s"}` : "no agent");
-  const lines = rows.map((r) => `${r.label.padEnd(width)}  ${agents(r.agents).padStart(9)}  ${(r.tokens ? millions(r.tokens) : "the session").padEnd(16)}  ${duration(r.minutes)}`);
+  const row = (r: { label: string; agents: number; tokens: number; minutes: number }, label = r.label.padEnd(width)) => `${label}  ${agents(r.agents).padStart(9)}  ${(r.tokens ? millions(r.tokens) : "the session").padEnd(16)}  ${duration(r.minutes)}`;
+  const lines = rows.map((r) => row(r));
+  const broken = estimate.ifBroken ? `\n\n${row({ ...estimate.ifBroken, label: brokenLabel })} more` : "";
   const notes = [
-    ...(estimate.mode === "judge" ? [] : ["The phases after the judges run only when the verdict finds something to redo; the journeys, only when a journey fails."]),
+    ...(estimate.mode === "judge" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
     "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
   ];
-  return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}:\n\n${lines.join("\n")}\n\n${notes.join("\n")}`;
+  return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }
