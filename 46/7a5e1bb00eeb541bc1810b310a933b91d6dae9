@@ -1,0 +1,21 @@
+.veebee/milestones/03-la-commande-unique/tickets/15-une-seule-vague.md
+  s_4ce34ec42d9105::t_8ac22f3ab740d5 7
+.veebee/milestones/03-la-commande-unique/tickets/16-les-workers-en-sonnet.md
+  s_4ce34ec42d9105::t_e5624e10f7afe7 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "467a5e1bb00eeb541bc1810b310a933b91d6dae9",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
