@@ -218,3 +218,13 @@ test("the commands page lists the CLI underneath: every command, with its words,
   assert.deepEqual(new Map([...listed].sort()), new Map([...cliCommands()].sort()));
   assert.match(commands, new RegExp(`<h2 id="cli-title">${listed.size} commands underneath\\.</h2>`));
 });
+
+test("the cost the terminals of the commands page show is what aeom estimate prints", () => {
+  const cli = new URL("packages/cli/dist/index.js", root).pathname;
+  const flat = (text) => text.replace(/<[^>]+>/g, "").replace(/[ \t]+/g, " ");
+  const shown = flat(commands);
+  const rows = (args) => execFileSync("node", [cli, "estimate", "--screens", "4", "--journeys", "2", ...args], { encoding: "utf8" }).split("\n").filter((line) => line.includes("≈")).map((line) => flat(line).trim());
+  for (const row of rows(["--juger"])) assert.ok(shown.includes(row), `/aeom judge shows « ${row} »`);
+  const total = rows([]).find((row) => row.startsWith("Total"));
+  assert.ok(shown.includes(total), `/aeom redo shows « ${total} »`);
+});

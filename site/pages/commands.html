@@ -34,9 +34,9 @@
       <li>Says what fails, in plain words. Changes nothing.</li>
     </ul>
   </div>
-  <div class="term" data-visual aria-hidden="true">
-    <p class="term__head"><span></span><span></span><span></span>Claude Code · an example notes app</p>
-<pre><span class="l"><span class="term__in">/aeom judge</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Judge the screens and the journeys  6 agents  ≈ 0.4 M tokens  ≈ 10 min</span><span class="l">Total, at most                      6 agents  ≈ 0.4 M tokens  ≈ 35 min</span><span class="l"><span class="term__in">go</span></span><span class="l">Measured: 4 screens at 390, 1280 px, 4 checks and 8 principles each; 2 journeys on 6 principles.</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> /             contrast: .hint "Saved": text contrast is 2.6</span><span class="l"><span class="term__x">✗</span> /notes        overflow: the page is 512 px wide in a 390 px window, so it scrolls sideways</span><span class="l"><span class="term__x">✗</span> /notes/:id    hierarchy: two buttons of the same weight compete for the eye</span><span class="l"><span class="term__x">✗</span> /settings     states: an empty list shows nothing and says nothing</span><span class="l"><span class="term__x">✗</span> Share a note  breaks at step 3 at 390 px: no button "Share" on the screen</span><span class="l"><span class="term__x">✗</span> Write a note  same-words: the link says "New", the page "Draft", the button "Create"</span><span class="l"> </span><span class="l">6 things to redo.</span><span class="l">Next: three art directions by default, drawn from the product sheet.</span></pre>
+  <div class="term">
+    <p class="term__head"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>Claude Code · an example notes app</p>
+<pre><span class="l"><span class="term__in">/aeom judge</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Understand the product              no agent  the session     ≈ 25 min</span><span class="l">Judge the screens and the journeys  6 agents  ≈ 0.4 M tokens  ≈ 10 min</span><span class="l">Total, at most                      6 agents  ≈ 0.4 M tokens  ≈ 35 min</span><span class="l"><span class="term__in">go</span></span><span class="l">Measured: 4 screens at 390, 1280 px, 4 checks and 8 principles each; 2 journeys on 6 principles.</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> /             contrast: .hint "Saved": text contrast is 2.6:1, needs 4.5:1</span><span class="l"><span class="term__x">✗</span> /notes        overflow: the page is 512 px wide in a 390 px window, so it scrolls sideways</span><span class="l"><span class="term__x">✗</span> /notes/:id    hierarchy: two buttons of the same weight compete for the eye</span><span class="l"><span class="term__x">✗</span> /settings     states: an empty list shows nothing and says nothing</span><span class="l"><span class="term__x">✗</span> Share a note  breaks at step 3 at 390 px: no button "Share" on the screen</span><span class="l"><span class="term__x">✗</span> Write a note  same-words: the link says "New", the page "Draft", the button "Create"</span><span class="l"> </span><span class="l">6 things to redo.</span><span class="l">Next: three art directions by default, drawn from the product sheet.</span></pre>
   </div>
 </section>
 
@@ -52,8 +52,8 @@
       <li>Writes the standard of your front end, and opens a pull request.</li>
     </ul>
   </div>
-  <div class="term" data-visual aria-hidden="true">
-    <p class="term__head"><span></span><span></span><span></span>Claude Code · an example notes app</p>
+  <div class="term">
+    <p class="term__head"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>Claude Code · an example notes app</p>
 <pre><span class="l"><span class="term__in">/aeom redo</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Total, at most  37 agents  ≈ 2.9 M tokens  ≈ 2 h 18</span><span class="l"><span class="term__in">go</span></span><span class="l">6 things to redo. Three directions, drawn from the product:</span><span class="l">  Field notebook · Library card · Index tabs</span><span class="l">The judges' knockout picks Library card:</span><span class="l">  "titles read first, one accent for every action"</span><span class="l"><span class="term__in">Library card</span></span><span class="l">Kit merged on Library card.</span><span class="l"><span class="term__v">✓</span> /             kept</span><span class="l"><span class="term__v">✓</span> /notes        kept</span><span class="l"><span class="term__v">✓</span> /notes/:id    kept</span><span class="l"><span class="term__x">✗</span> /settings     sent back: contrast got worse at 390 px</span><span class="l"><span class="term__v">✓</span> Share a note  reaches its end, in 3 steps instead of 5</span><span class="l">Standard written: .aeom/standard.md</span><span class="l">Pull request opened: #12 The front redone on Library card</span></pre>
   </div>
 </section>
@@ -70,8 +70,8 @@
       <li>Gives a clear verdict, as a GitHub check.</li>
     </ul>
   </div>
-  <div class="term" data-visual aria-hidden="true">
-    <p class="term__head"><span></span><span></span><span></span>Soon · what it will say</p>
+  <div class="term">
+    <p class="term__head"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>Soon · what it will say</p>
 <pre><span class="l"><span class="term__in">/aeom review</span></span><span class="l">feat/export against main, held to .aeom/standard.md:</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> ExportButton.tsx:14   #7c3aed is not a colour of the standard</span><span class="l"><span class="term__x">✗</span> ExportButton.tsx      a button redone by hand: the standard's is ui/button.tsx</span><span class="l"><span class="term__x">✗</span> reports/layout.tsx:8  a header of its own: the standard's is ui/header.tsx</span><span class="l"><span class="term__v">✓</span> Export a report       still reaches its end</span><span class="l"> </span><span class="l">3 things outside the standard.</span></pre>
   </div>
 </section>

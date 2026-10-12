@@ -43,7 +43,8 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .masthead { display: flex; justify-content: space-between; align-items: center; padding: 20px var(--gutter); }
 .brand { font-weight: 800; font-size: 20px; letter-spacing: 0.02em; text-decoration: none; display: inline-flex; align-items: center; }
 .masthead__nav { display: flex; gap: clamp(14px, 2.4vw, 28px); font-weight: 700; }
-.masthead__nav a { text-decoration: none; }
+.masthead__nav a { text-decoration: none; white-space: nowrap; }
+@media (max-width: 420px) { .masthead { gap: 16px; } .masthead__try { display: none; } }
 .masthead__nav a:hover { text-decoration: underline; }
 .colophon { display: flex; align-items: center; gap: 12px; padding: 28px var(--gutter); background: var(--ink); color: var(--paper); font-size: 15px; }
 .colophon p { margin: 0; }
