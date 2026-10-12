@@ -149,3 +149,25 @@ test("an after replay with a journey the before does not have is refused, not sk
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom compare --journeys --by-critique decides from the two critiques, with no duel vote at all", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-ratchet-"));
+  try {
+    for (const [name, steps, failing] of [["before", { orders: 4, contact: 5 }, { orders: ["clear-start", "short"], contact: [] }], ["after", { orders: 3, contact: 5 }, { orders: [], contact: ["same-words"] }]] as const) {
+      await mkdir(join(dir, name), { recursive: true });
+      await writeFile(join(dir, name, "report.json"), JSON.stringify(replay(steps)));
+      await writeFile(join(dir, name, "judge-journeys.json"), JSON.stringify(verdict(failing as unknown as Record<string, string[]>)));
+    }
+    const { code, out } = await run(dir, ["compare", "--journeys", "before", "after", "--by-critique"]);
+    assert.equal(code, 0, out);
+    assert.match(out, /✓ See my orders\s+kept\s+4 → 3 steps\s+the critique clears clear-start, short and fails nothing that passed/);
+    assert.match(out, /✗ Contact the shop\s+back\s+5 → 5 steps\s+the critique now fails same-words, which passed/);
+    const both = await run(dir, ["compare", "--journeys", "before", "after", "--by-critique", "--duels", "after/duels"]);
+    assert.equal(both.code, 1);
+    assert.match(both.out, /--by-critique decides without duels: leave out --duels/);
+    const duelsStill = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(duelsStill.code, 1, "without --by-critique, the duels still decide");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -4,6 +4,7 @@ title: Le cliquet des parcours tranche sur les critiques, sans duel
 milestone: 03-la-commande-unique
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 93, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/93 }
 ---
 

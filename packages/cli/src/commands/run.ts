@@ -33,7 +33,7 @@ async function readReport<T>(file: string, problems: string[]): Promise<T | unde
 }
 
 const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict] [--keep-style]
-       aeom compare --journeys <before-dir> <after-dir> [--duels <dir>] [--base <ref>] [--known <dir>]
+       aeom compare --journeys <before-dir> <after-dir> [--duels <dir> | --by-critique] [--base <ref>] [--known <dir>]
 
 Compares two snapshots page by page: what fails before and after (checks + principles),
 and what fails after that passed before. Writes compare.json in <after-dir>.
@@ -42,8 +42,9 @@ With --journeys, the ratchet of the journeys: each folder holds a replay
 (report.json, from aeom journey) and its critique (judge-journeys.json, from
 aeom judge --journeys --out). A new journey stays only if it goes to its end
 wherever the old one did, the guard refuses nothing it does, and the judges
-prefer it in the duel; otherwise the old one comes back. Writes ratchet.json
-in <after-dir>.
+prefer it in the duel; otherwise the old one comes back. With --by-critique,
+no duel: it stays when its critique clears a finding and fails nothing that
+passed before. Writes ratchet.json in <after-dir>.
 
 Options:
   --strict             Exit with 1 when anything that passed before fails after
@@ -51,6 +52,7 @@ Options:
                        (also when .aeom/config.json says "style": "keep")
   --journeys           Compare journeys, not pages
   --duels <dir>        The judges' duel votes (default <after-dir>/duels)
+  --by-critique        Decide from the two critiques, without duels
   --base <ref>         The commit the change started from, for the guard
   --known <dir>        A replay of the new journey files on the app at --base:
                        the calls it made count as made before, for the guard
@@ -60,7 +62,7 @@ export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { strict: { type: "boolean" }, "keep-style": { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
+    options: { strict: { type: "boolean" }, "keep-style": { type: "boolean" }, journeys: { type: "boolean" }, duels: { type: "string" }, "by-critique": { type: "boolean" }, base: { type: "string" }, known: { type: "string" }, voters: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help || positionals.length !== 2) {
     console.log(COMPARE_HELP);
@@ -116,7 +118,11 @@ export async function runCompare(argv: string[]): Promise<number> {
   return 0;
 }
 
-async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; base?: string; known?: string; voters: string }): Promise<number> {
+async function compareJourneys(beforeDir: string, afterDir: string, values: { duels?: string; "by-critique"?: boolean; base?: string; known?: string; voters: string }): Promise<number> {
+  if (values["by-critique"] && values.duels !== undefined) {
+    console.error(`--by-critique decides without duels: leave out --duels.`);
+    return 1;
+  }
   if (values.known !== undefined && !values.known.trim()) {
     console.error(`--known cannot be empty: give the folder of a replay of the new journey files on the app at --base.`);
     return 1;
@@ -183,7 +189,7 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
   }
   let duels;
   try {
-    duels = tallyDuels(await readDuelVotes(values.duels ?? join(afterDir, "duels")), slugs, { voters });
+    if (!values["by-critique"]) duels = tallyDuels(await readDuelVotes(values.duels ?? join(afterDir, "duels")), slugs, { voters });
   } catch (error) {
     if (!(error instanceof DuelVoteError)) throw error;
     console.error(`The duel votes cannot be counted:\n${error.problems.map((p) => `  ${p}`).join("\n")}`);
