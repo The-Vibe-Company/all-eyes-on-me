@@ -31,8 +31,9 @@ const HOME = "/";
  * The findings of the journeys, page by page: a principle that fails at a
  * step goes under the page the user is on at that step, with the reason of
  * the voter who pointed at it; a journey that breaks at a step, under the
- * page it was on before it, or at step 1 the page it opened. So the worker of
- * a page gets the journey findings it can fix.
+ * page it was on before it, or at step 1 the page it opened, and so does a
+ * principle failing at that step. So the worker of a page gets the journey
+ * findings it can fix.
  */
 export function journeyFindingsByPage({ replay, critique }: { replay: JourneyReport; critique?: JudgeReport }): JourneyPage[] {
   const pages = new Map<string, PageJourneyFinding[]>();
@@ -71,7 +72,9 @@ export function journeyFindingsByPage({ replay, critique }: { replay: JourneyRep
       for (const { step, reason } of [...at].sort((a, b) => a.step - b.step)) {
         if (seen.has(step)) continue;
         seen.add(step);
-        add(routeAfter(journey.runs, step) || HOME, { ...base, step, principle: v.principle, reason });
+        // At the step where the journey breaks, the page it lands on is an error, not one of the app's: the finding goes where the break goes.
+        const broke = [...breaks.values()].find((b) => b.step === step);
+        add(broke?.route ?? (routeAfter(journey.runs, step) || HOME), { ...base, step, principle: v.principle, reason });
       }
     }
   }
