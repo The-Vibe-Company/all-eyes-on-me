@@ -18,7 +18,10 @@ test("every file the skill links to exists", () => {
 test("every section the skill names is a heading of one of its files", () => {
   const all = files.map(read).join("\n");
   const headings = new Set([...all.matchAll(/^## (\d[a-z]?)\./gm)].map(([, n]) => n));
-  for (const [, n] of all.matchAll(/\bsections? (\d[a-z]?)\b/g)) assert.ok(headings.has(n), `section ${n} is named but no file of the skill has it`);
+  // « section 2b », « Section 4 », « sections 3 to 5 »: every number named, the last of a range too.
+  for (const [, first, last] of all.matchAll(/\bsections? (\d[a-z]?)(?: (?:to|and) (\d[a-z]?))?\b/gi)) {
+    for (const n of [first, last].filter(Boolean)) assert.ok(headings.has(n), `section ${n} is named but no file of the skill has it`);
+  }
 });
 
 test("SKILL.md keeps what every run needs, and stays under 6,000 words", () => {

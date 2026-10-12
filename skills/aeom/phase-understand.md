@@ -1,6 +1,6 @@
 # /aeom: understand the product
 
-Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (section 2c, at the start of every run and with `--ux`). Everything it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
+Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (section 2c, at the start of every run and with `--ux`). **Briefing any worker** and sections 3 to 5 are in [phase-wave.md](phase-wave.md); everything else it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
 
 ## 2c. Understand the product (with `/aeom --ux`; steps 1 to 9 also open a run without an option)
 

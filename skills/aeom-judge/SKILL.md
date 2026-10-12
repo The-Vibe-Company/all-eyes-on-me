@@ -109,7 +109,7 @@ After the fleet rebuilt the journeys, three judges choose, journey by journey, b
 > { "voter": "<N>", "journeys": { "see-my-orders": { "winner": "after", "reason": "Mes commandes is now in the home menu, one step instead of a detour through the products." } } }
 > ```
 >
-> `winner` is `before` or `after`. Do not read other judges' votes. Do not change any file other than yours.
+> `winner` is `before` or `after`. Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.
 
 ## Judging a kept style
 

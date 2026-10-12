@@ -13,7 +13,7 @@ Every brief, kit or page, also says:
 - **Its own report folder.** The worker passes `--out <a temporary folder>` to `aeom check`, so it never touches `.aeom/reports`.
 - **Only its own processes.** The worker stops the server it started and nothing else: never `pkill` or `killall` by name, which takes down the servers of the other workers in the middle of their checks.
 - **Its own browser.** The worker looks at its page through `aeom capture` or its own Playwright, never through a browser pane the session shares: another worker can replace its tab at any moment.
-- **Its report in a file, one line in reply.** The worker writes in `$MAIN/.aeom/runs/$RUN/<worker>/report.md` what it changed, its kit candidates, any journey step it renamed or shortened and, for a direction, its two plain sentences; then it replies in one line: done or not, and the report's path. Read the report when you need it: the reply alone stays in this session.
+- **Its report in a file, one line in reply.** The worker writes in `$MAIN/.aeom/runs/$RUN/<worker>/report.md` what it changed, its kit candidates, any journey step it renamed or shortened and, for a direction, the banned look it is closest to and its two plain sentences; then it replies in one line: done or not, and the report's path. Read the report when you need it: the reply alone stays in this session.
 - **Commit first, check after.** The worker commits as soon as its work is in place, then checks and commits fixes. A worker that stalls during its checks leaves committed work behind.
 
 If a worker stops without committing, look at its worktree: when the work is there and stays inside its files, commit it yourself and say so.
