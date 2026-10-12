@@ -110,22 +110,28 @@ test("a changed protected file sends every journey back", () => {
   for (const v of verdicts) assert.match(v.why, /server\.mjs/);
 });
 
-test("without duels, the critiques decide: a journey stays when it clears a finding and fails nothing that passed", () => {
+test("without duels, the critiques decide: a journey stays when it fails fewer principles than before, or no longer breaks", () => {
   const verdicts = ratchetJourneys({
-    before: replay({ orders: run(4), help: run(3), cart: run(5), pay: run(2) }),
-    after: replay({ orders: run(3), help: run(3), cart: run(5), pay: run(2, { step: 2, reason: "no button" }) }),
-    beforeVerdict: verdict({ orders: ["short", "result-shown"], help: ["short"], cart: ["short"], pay: ["short"] }),
-    afterVerdict: verdict({ orders: ["result-shown"], help: ["clear-start"], cart: ["short"], pay: [] }),
+    before: replay({ orders: run(4), help: run(3), cart: run(5), worse: run(3), mixed: run(4), mended: run(3, { step: 2, reason: "the page answered 500" }), pay: run(2) }),
+    after: replay({ orders: run(3), help: run(3), cart: run(5), worse: run(3), mixed: run(4), mended: run(3), pay: run(2, { step: 2, reason: "no button" }) }),
+    beforeVerdict: verdict({ orders: ["short", "result-shown"], help: ["short"], cart: ["short"], worse: ["short"], mixed: ["short", "result-shown"], mended: ["short"], pay: ["short"] }),
+    afterVerdict: verdict({ orders: ["result-shown"], help: ["clear-start"], cart: ["short"], worse: ["short", "clear-start"], mixed: ["clear-start"], mended: ["clear-start"], pay: [] }),
     guard: { refused: [], allowed: [] },
   });
   const by = Object.fromEntries(verdicts.map((v) => [v.slug, v]));
   assert.equal(by.orders!.kept, true);
-  assert.match(by.orders!.why, /the critique clears short and fails nothing that passed/);
+  assert.match(by.orders!.why, /the critique clears short: 2 principles failing, now 1/);
   assert.deepEqual(by.orders!.cleared, ["short"]);
+  assert.equal(by.mixed!.kept, true, "one new failure among two cleared is still better: the first critique's passes rest on one vote");
+  assert.match(by.mixed!.why, /the critique clears short, result-shown, though it now fails clear-start: 2 principles failing, now 1/);
+  assert.equal(by.mended!.kept, true);
+  assert.match(by.mended!.why, /it now reaches its end, where it broke at step 2/);
   assert.equal(by.help!.kept, false);
-  assert.match(by.help!.why, /the critique now fails clear-start, which passed/);
+  assert.match(by.help!.why, /nothing better according to the critique: it clears short but now fails clear-start/);
   assert.equal(by.cart!.kept, false);
   assert.match(by.cart!.why, /nothing better according to the critique/);
+  assert.equal(by.worse!.kept, false);
+  assert.match(by.worse!.why, /the critique fails more than before: clear-start, which passed/);
   assert.equal(by.pay!.kept, false, "a new break sends it back, whatever the critique says");
   assert.match(by.pay!.why, /breaks at step 2/);
 });

@@ -116,8 +116,8 @@ const passing = (verdict: JudgeReport | undefined, slug: string) => verdict?.pag
  * if it goes to its end wherever the old one did, the guard refuses nothing
  * it did, and the judges prefer it. A finding is cleared only when the
  * critique, redone on the new version, no longer finds it. Without duels,
- * the critiques decide: it stays when it clears a finding and fails nothing
- * that passed before.
+ * the critiques decide: it stays when it no longer breaks, or fails fewer
+ * principles than before; it comes back when it fails more.
  */
 export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard }: { before: JourneyReport; after: JourneyReport; beforeVerdict?: JudgeReport; afterVerdict?: JudgeReport; duels?: Map<string, JourneyDuel>; guard?: GuardResult }): RatchetVerdict[] {
   const runRefused = guard?.refused.filter((v) => !v.journey) ?? [];
@@ -143,10 +143,17 @@ export function ratchetJourneys({ before, after, beforeVerdict, afterVerdict, du
       const refused = [...(guard?.refused.filter((v) => (v.journeys ?? [v.journey]).includes(journey.name)) ?? []), ...runRefused];
       if (refused.length) return verdict(false, `the guard refuses ${refused.map((v) => `${v.what} (${v.why})`).join(", ")}`);
       if (!duels) {
-        const worse = passing(beforeVerdict, journey.slug).filter((p) => failing(afterVerdict, journey.slug).includes(p));
-        if (worse.length) return verdict(false, `the critique now fails ${worse.join(", ")}, which passed`);
-        if (!cleared.length) return verdict(false, "nothing better according to the critique");
-        return verdict(true, `the critique clears ${cleared.join(", ")} and fails nothing that passed`);
+        // The first critique's passes rest on one vote, and fixing one thing can show another: the count decides.
+        const was = failing(beforeVerdict, journey.slug).length;
+        const now = failing(afterVerdict, journey.slug).length;
+        const fresh = passing(beforeVerdict, journey.slug).filter((p) => failing(afterVerdict, journey.slug).includes(p));
+        const mended = old.runs.find((o) => o.broken && !journey.runs.find((r) => r.width === o.width)?.broken);
+        const though = fresh.length ? `, though it now fails ${fresh.join(", ")}` : "";
+        // A journey that went past its old break shows steps the old critique never saw: reaching the end wins.
+        if (mended) return verdict(true, `it now reaches its end, where it broke at step ${mended.broken!.step}${cleared.length ? `; the critique clears ${cleared.join(", ")}${though}` : ""}`);
+        if (now > was) return verdict(false, `the critique fails more than before: ${fresh.join(", ") || "more principles"}, which passed`);
+        if (now === was) return verdict(false, `nothing better according to the critique${cleared.length ? `: it clears ${cleared.join(", ")} but now fails ${fresh.join(", ")}` : ""}`);
+        return verdict(true, `the critique clears ${cleared.join(", ")}${though}: ${was} principle${was === 1 ? "" : "s"} failing, now ${now}`);
       }
       const duel = duels.get(journey.slug);
       if (!duel) return verdict(false, "no judge compared the two versions");
