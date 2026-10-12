@@ -187,21 +187,19 @@ test("each thing AEOM does on the home page leads to the command that does it", 
 
 test("the commands page shows three commands, each with when and what it does, the one not built yet marked as coming", () => {
   const skill = readFileSync(new URL("skills/aeom/SKILL.md", root), "utf8");
-  const built = cliCommands();
   const blocks = [...commands.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)];
   assert.deepEqual(blocks.map(([, id]) => id), ["judge", "redo", "check"]);
   for (const [block, id] of blocks) {
     const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?<\/p>/);
     assert.ok(command, `${id} names its command`);
     const [, typed, soon] = command;
-    // A skill option the skill knows, or a CLI command marked as coming exactly while the CLI lacks it.
-    if (typed.startsWith("/aeom")) {
-      for (const option of typed.split(" ").slice(1)) assert.ok(skill.includes(option), `${option} is not an option of /aeom`);
-      assert.ok(!soon, `${typed} works today`);
-    } else {
-      const name = typed.replace(/^aeom /, "");
-      assert.equal(Boolean(soon), !built.has(name), built.has(name) ? `aeom ${name} is built: it is no longer « Soon »` : `aeom ${name} is not built yet: it says « Soon »`);
-    }
+    // A verb the skill knows, marked as coming exactly while the skill says it is not built yet.
+    const verb = typed.match(/^\/aeom (\w+)$/)?.[1];
+    assert.ok(verb, `${typed} is /aeom and a verb`);
+    const line = skill.match(new RegExp(`^- \\*\\*\`/aeom ${verb}\`\\*\\*.*$`, "m"))?.[0];
+    assert.ok(line, `/aeom ${verb} is not a command of the skill`);
+    const built = !/not built yet/.test(line);
+    assert.equal(Boolean(soon), !built, built ? `/aeom ${verb} works: it is not « Soon »` : `/aeom ${verb} is not built yet: it says « Soon »`);
     assert.match(block, /<p class="when"><b>When<\/b> [^<]+<\/p>/, `${id} says when to use it`);
     assert.ok((block.match(/<li>/g) ?? []).length >= 3, `${id} says what it does`);
     assert.ok(commands.includes(`href="#${id}"`), `the top of the page leads to ${id}`);

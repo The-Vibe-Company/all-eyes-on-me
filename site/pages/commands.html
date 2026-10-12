@@ -14,17 +14,17 @@
 <section class="page-top" aria-labelledby="title">
   <p class="kicker">The commands</p>
   <h1 id="title">Three commands.</h1>
-  <p class="page-top__lede">Judge your front end, redo it, then hold every pull request to it. The first two run in Claude Code.</p>
+  <p class="page-top__lede">Judge your front end, redo it, then hold every pull request to it. In Claude Code.</p>
   <ol class="cmds">
-    <li><a class="cmds__card cmds__card--judge" href="#judge"><span class="cmds__n">01</span><code>/aeom --juger</code><span class="cmds__verb">Judge</span></a></li>
-    <li><a class="cmds__card cmds__card--redo" href="#redo"><span class="cmds__n">02</span><code>/aeom</code><span class="cmds__verb">Redo</span></a></li>
-    <li><a class="cmds__card cmds__card--check" href="#check"><span class="cmds__n">03</span><code>aeom review</code><span class="cmds__verb">Check <span class="soon">Soon</span></span></a></li>
+    <li><a class="cmds__card cmds__card--judge" href="#judge"><span class="cmds__n">01</span><code>/aeom judge</code><span class="cmds__verb">Judge</span></a></li>
+    <li><a class="cmds__card cmds__card--redo" href="#redo"><span class="cmds__n">02</span><code>/aeom redo</code><span class="cmds__verb">Redo</span></a></li>
+    <li><a class="cmds__card cmds__card--check" href="#check"><span class="cmds__n">03</span><code>/aeom review</code><span class="cmds__verb">Check <span class="soon">Soon</span></span></a></li>
   </ol>
 </section>
 
 <section class="feature feature--judge" id="judge" aria-labelledby="judge-title">
   <div class="feature__text">
-    <p class="cmd"><code>/aeom --juger</code></p>
+    <p class="cmd"><code>/aeom judge</code></p>
     <h2 id="judge-title">Judge your front end.</h2>
     <p class="when"><b>When</b> before you change anything.</p>
     <ul class="does">
@@ -36,17 +36,17 @@
   </div>
   <div class="term" data-visual aria-hidden="true">
     <p class="term__head"><span></span><span></span><span></span>Claude Code · an example notes app</p>
-<pre><span class="l"><span class="term__in">/aeom --juger</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Judge the screens and the journeys  6 agents  ≈ 0.4 M tokens  ≈ 10 min</span><span class="l">Total, at most                      6 agents  ≈ 0.4 M tokens  ≈ 35 min</span><span class="l"><span class="term__in">go</span></span><span class="l">Measured: 4 screens at 390, 1280 px, 4 checks and 8 principles each; 2 journeys on 6 principles.</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> /             contrast: .hint "Saved": text contrast is 2.6</span><span class="l"><span class="term__x">✗</span> /notes        overflow: the page is 512 px wide in a 390 px window, so it scrolls sideways</span><span class="l"><span class="term__x">✗</span> /notes/:id    hierarchy: two buttons of the same weight compete for the eye</span><span class="l"><span class="term__x">✗</span> /settings     states: an empty list shows nothing and says nothing</span><span class="l"><span class="term__x">✗</span> Share a note  breaks at step 3 at 390 px: no button "Share" on the screen</span><span class="l"><span class="term__x">✗</span> Write a note  same-words: the link says "New", the page "Draft", the button "Create"</span><span class="l"> </span><span class="l">6 things to redo.</span><span class="l">Next: three art directions by default, drawn from the product sheet.</span></pre>
+<pre><span class="l"><span class="term__in">/aeom judge</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Judge the screens and the journeys  6 agents  ≈ 0.4 M tokens  ≈ 10 min</span><span class="l">Total, at most                      6 agents  ≈ 0.4 M tokens  ≈ 35 min</span><span class="l"><span class="term__in">go</span></span><span class="l">Measured: 4 screens at 390, 1280 px, 4 checks and 8 principles each; 2 journeys on 6 principles.</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> /             contrast: .hint "Saved": text contrast is 2.6</span><span class="l"><span class="term__x">✗</span> /notes        overflow: the page is 512 px wide in a 390 px window, so it scrolls sideways</span><span class="l"><span class="term__x">✗</span> /notes/:id    hierarchy: two buttons of the same weight compete for the eye</span><span class="l"><span class="term__x">✗</span> /settings     states: an empty list shows nothing and says nothing</span><span class="l"><span class="term__x">✗</span> Share a note  breaks at step 3 at 390 px: no button "Share" on the screen</span><span class="l"><span class="term__x">✗</span> Write a note  same-words: the link says "New", the page "Draft", the button "Create"</span><span class="l"> </span><span class="l">6 things to redo.</span><span class="l">Next: three art directions by default, drawn from the product sheet.</span></pre>
   </div>
 </section>
 
 <section class="feature feature--redesign" id="redo" aria-labelledby="redo-title">
   <div class="feature__text">
-    <p class="cmd"><code>/aeom</code></p>
+    <p class="cmd"><code>/aeom redo</code></p>
     <h2 id="redo-title">Redo your front end.</h2>
     <p class="when"><b>When</b> the judge finds it falls short.</p>
     <ul class="does">
-      <li>Says what the run will cost, waits for your go, then judges like <code>--juger</code>.</li>
+      <li>Says what the run will cost, waits for your go, then judges like <code>/aeom judge</code>.</li>
       <li>Draws three art directions from your product's own world. The judges rank them, you pick one.</li>
       <li>Rebuilds every screen and journey on it, keeps only what got better, never adds a feature.</li>
       <li>Writes the standard of your front end, and opens a pull request.</li>
@@ -54,13 +54,13 @@
   </div>
   <div class="term" data-visual aria-hidden="true">
     <p class="term__head"><span></span><span></span><span></span>Claude Code · an example notes app</p>
-<pre><span class="l"><span class="term__in">/aeom</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Total, at most  37 agents  ≈ 2.9 M tokens  ≈ 2 h 18</span><span class="l"><span class="term__in">go</span></span><span class="l">6 things to redo. Three directions, drawn from the product:</span><span class="l">  Field notebook · Library card · Index tabs</span><span class="l">The judges' knockout picks Library card:</span><span class="l">  "titles read first, one accent for every action"</span><span class="l"><span class="term__in">Library card</span></span><span class="l">Kit merged on Library card.</span><span class="l"><span class="term__v">✓</span> /             kept</span><span class="l"><span class="term__v">✓</span> /notes        kept</span><span class="l"><span class="term__v">✓</span> /notes/:id    kept</span><span class="l"><span class="term__x">✗</span> /settings     sent back: contrast got worse at 390 px</span><span class="l"><span class="term__v">✓</span> Share a note  reaches its end, in 3 steps instead of 5</span><span class="l">Standard written: .aeom/standard.md</span><span class="l">Pull request opened: #12 The front redone on Library card</span></pre>
+<pre><span class="l"><span class="term__in">/aeom redo</span></span><span class="l">For 4 screens and 2 key journeys:</span><span class="l">Total, at most  37 agents  ≈ 2.9 M tokens  ≈ 2 h 18</span><span class="l"><span class="term__in">go</span></span><span class="l">6 things to redo. Three directions, drawn from the product:</span><span class="l">  Field notebook · Library card · Index tabs</span><span class="l">The judges' knockout picks Library card:</span><span class="l">  "titles read first, one accent for every action"</span><span class="l"><span class="term__in">Library card</span></span><span class="l">Kit merged on Library card.</span><span class="l"><span class="term__v">✓</span> /             kept</span><span class="l"><span class="term__v">✓</span> /notes        kept</span><span class="l"><span class="term__v">✓</span> /notes/:id    kept</span><span class="l"><span class="term__x">✗</span> /settings     sent back: contrast got worse at 390 px</span><span class="l"><span class="term__v">✓</span> Share a note  reaches its end, in 3 steps instead of 5</span><span class="l">Standard written: .aeom/standard.md</span><span class="l">Pull request opened: #12 The front redone on Library card</span></pre>
   </div>
 </section>
 
 <section class="feature feature--keep" id="check" aria-labelledby="check-title">
   <div class="feature__text">
-    <p class="cmd"><code>aeom review</code> <span class="soon">Soon</span></p>
+    <p class="cmd"><code>/aeom review</code> <span class="soon">Soon</span></p>
     <h2 id="check-title">Check a pull request.</h2>
     <p class="when"><b>When</b> before you merge, whoever wrote it.</p>
     <ul class="does">
@@ -72,7 +72,7 @@
   </div>
   <div class="term" data-visual aria-hidden="true">
     <p class="term__head"><span></span><span></span><span></span>Soon · what it will say</p>
-<pre><span class="l"><span class="term__in">aeom review</span></span><span class="l">feat/export against main, held to .aeom/standard.md:</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> ExportButton.tsx:14   #7c3aed is not a colour of the standard</span><span class="l"><span class="term__x">✗</span> ExportButton.tsx      a button redone by hand: the standard's is ui/button.tsx</span><span class="l"><span class="term__x">✗</span> reports/layout.tsx:8  a header of its own: the standard's is ui/header.tsx</span><span class="l"><span class="term__v">✓</span> Export a report       still reaches its end</span><span class="l"> </span><span class="l">3 things outside the standard.</span></pre>
+<pre><span class="l"><span class="term__in">/aeom review</span></span><span class="l">feat/export against main, held to .aeom/standard.md:</span><span class="l"> </span><span class="l"><span class="term__x">✗</span> ExportButton.tsx:14   #7c3aed is not a colour of the standard</span><span class="l"><span class="term__x">✗</span> ExportButton.tsx      a button redone by hand: the standard's is ui/button.tsx</span><span class="l"><span class="term__x">✗</span> reports/layout.tsx:8  a header of its own: the standard's is ui/header.tsx</span><span class="l"><span class="term__v">✓</span> Export a report       still reaches its end</span><span class="l"> </span><span class="l">3 things outside the standard.</span></pre>
   </div>
 </section>
 
