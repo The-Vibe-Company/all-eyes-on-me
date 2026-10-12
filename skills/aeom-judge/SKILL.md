@@ -42,7 +42,7 @@ Give each voter this, with `<N>` replaced by its number:
 > }
 > ```
 >
-> Do not read other judges' votes. Do not change any file other than yours.
+> Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.
 
 ## The confirm brief
 
@@ -56,7 +56,7 @@ Give each of voters 2 and 3 this, with `<N>` replaced by its number:
 > 4. For each page and each principle listed, decide `pass` or `fail`, with one sentence that names what you see. When in doubt, fail.
 > 5. Write `.aeom/reports/judge/<N>.json` in the voter brief's shape, with only the pages and principles listed.
 >
-> Do not read other judges' votes. Do not change any file other than yours.
+> Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.
 
 ## Judging journeys
 
@@ -90,7 +90,7 @@ The same, one vote first and three on what it fails, on the key journeys instead
 > }
 > ```
 >
-> Do not read other judges' votes. Do not change any file other than yours.
+> Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.
 
 ## Comparing journeys
 
@@ -129,4 +129,4 @@ When a run keeps the app's style, three judges check, page by page, that it did.
 > { "voter": "<N>", "pages": { "/contact": { "charter-kept": { "pass": false, "reason": "The pink buttons are now green." } } } }
 > ```
 >
-> Do not read other judges' votes. Do not change any file other than yours.
+> Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.

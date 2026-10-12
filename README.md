@@ -101,7 +101,7 @@ None of this is done yet:
 | --- | --- |
 | `packages/cli` | The `aeom` command: the deterministic plumbing agents call (capture, checks, journeys, the guard, the verdict, the result page, the PR). |
 | `packages/core` | Capture (built on Playwright), checks, journeys, the judge's tally, the ratchets, the result page. |
-| `skills/` | The coordinator skill, `/aeom`, and the judges, `/aeom-judge`. They run in Claude Code and launch workers and judges as subagents. |
+| `skills/` | The coordinator skill, `/aeom`, and the judges, `/aeom-judge`. They run in Claude Code and launch workers and judges as subagents. `/aeom` is split by phase: `SKILL.md` holds what every run needs, and `phase-understand.md`, `phase-directions.md` and `phase-wave.md` are read only when a run gets there. |
 
 State lives in files:
 - `.aeom/` in the project's repository: the product sheet, the standard of the front, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
