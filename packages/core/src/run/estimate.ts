@@ -115,11 +115,14 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     const workers = pages + joining ? pages + joining + 1 : 0;
     const style = mode === "keep-style" ? VOTES : 0;
     const critique = journeys ? VOTES : 0;
+    // Before the wave, one vote on every page as the kit left it: a page where nothing fails any more gets no worker.
+    const look = workers ? 1 : 0;
+    const vote = fullPageJudge(screens);
     phases.push({
       phase: journeys ? "The pages and their journeys" : "The pages",
-      agents: workers + VOTES + critique + style,
-      tokens: workers * WORKER.tokens + VOTES * pj.tokens + critique * jj.tokens + style * sj.tokens,
-      minutes: (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (critique ? jj.minutes : 0) + (style ? sj.minutes : 0),
+      agents: look + workers + VOTES + critique + style,
+      tokens: look * vote.tokens + workers * WORKER.tokens + VOTES * pj.tokens + critique * jj.tokens + style * sj.tokens,
+      minutes: (look ? vote.minutes : 0) + (pages ? MINUTES.page + MINUTES.promotion : 0) + pj.minutes + (critique ? jj.minutes : 0) + (style ? sj.minutes : 0),
     });
     phases.push({ phase: "The result page, the standard and the PR", agents: 0, tokens: 0, minutes: MINUTES.end });
     // A journey that still breaks: one worker per journey and a shared one, the journeys judged again, the screens measured again. No duel: the critiques decide.
