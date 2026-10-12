@@ -1,0 +1,53 @@
+site/site.test.mjs
+  s_4ce34ec42d9105::t_7b6446f646e594 38-39,186,188
+  s_4ce34ec42d9105::t_298926914a2913 175
+  s_4ce34ec42d9105::t_fe4aadbeb40e65 176-189
+  s_4ce34ec42d9105::t_d08bf18ee37be7 27,29
+  s_4ce34ec42d9105::t_df062bc4d378a5 154-174,190
+site/shared/footer.html
+  s_4ce34ec42d9105::t_1972c77d7ca924 3
+  s_4ce34ec42d9105::t_027f853fd158f1 2
+site/pages/index.html
+  s_4ce34ec42d9105::t_ef3540c8190fe5 14,129-131
+  s_4ce34ec42d9105::t_d90ec1e19d41b2 15,17,19-20,57,67,81,85,95,106-108,110,119-120,127-128,133
+  s_4ce34ec42d9105::t_dcd16f5471eee8 43,66
+  s_4ce34ec42d9105::t_cd8f587f5ab268 16,18
+  s_4ce34ec42d9105::t_ea32a84b2142c3 69,80,96-105,121-123
+  s_4ce34ec42d9105::t_c582c701c571f1 21-22,38-42,68,70-79
+  s_4ce34ec42d9105::t_2d0f8d4d93bf89 23-37
+  s_4ce34ec42d9105::t_e9c55f1f5ea11f 7,46-56,58-66,84,86-94,109,111-119
+site/shared/head.html
+  s_4ce34ec42d9105::t_740c01f7625da8 1-3
+site/shared/header.html
+  s_4ce34ec42d9105::t_e27517bbb594c8 3
+  s_4ce34ec42d9105::t_e921a526ce74f5 4
+site/shared/kit.css
+  s_4ce34ec42d9105::t_2dcb7fb731f889 1-2,4-44,48-65,103,105-106,125,137-138,140-145,155,161,167,177-189
+  s_4ce34ec42d9105::t_f7319c72055140 104,126
+  s_4ce34ec42d9105::t_a8c4086483bc8e 146-148,150-154,162-166,168-176
+  s_4ce34ec42d9105::t_962e2bffd3f1da 66-81,102,156-161
+  s_4ce34ec42d9105::t_e0dae75dc533d1 82-101,149
+  s_4ce34ec42d9105::t_ff316784ea1cd5 3,45-47,107-124,127-136,139
+site/shared/kit.js
+  s_4ce34ec42d9105::t_60284393c6157b 3,6-11,13-37,40-44,61
+  s_4ce34ec42d9105::t_444b4947a9899a 46-47,50-55,64,69-70
+  s_4ce34ec42d9105::t_f4978b1e2dcd9f 4-5,38-40,44-45,48-49,56-63,65-67
+README.md
+  s_4ce34ec42d9105::t_9f208238c44577 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3af437e6fcb324bfcac367173498258d33896e0e",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
