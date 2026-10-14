@@ -10,9 +10,11 @@ checks and the judge on every screen and, when the project has key journeys,
 their replay and their critique. Exits with 0 when nothing fails, 1 when
 something does, and 2 when it cannot decide: a report missing or unreadable,
 or a screen or journey one report has and another leaves out. When something
-fails, its last line says what comes next: three art directions by default,
-or, with --keep-style or "style": "keep" in .aeom/config.json, the kit wave on
-the existing style.
+fails, its last line says what comes next: with --keep-style or "style":
+"keep" in .aeom/config.json, the kit wave on the existing style; for a front
+with a direction of its own, improving it (recommended) or new directions;
+otherwise three art directions by default. --out keeps it in a file, with
+whether the front has an identity and what is recommended.
 
 Options:
   --reports <dir>   check.json, judge.json and judge-journeys.json (default .aeom/reports)

@@ -194,7 +194,9 @@ test("aeom verdict --out keeps the verdict in a file, for the result page", asyn
 });
 
 test("a front with a direction of its own is recommended an improvement, keeping its style, before any new direction", async () => {
-  const dir = await project({ failing: { "/": ["states", "grid"] } });
+  const dir = await project();
+  const identity = ["hierarchy", "states", "one-direction", "not-generic", "not-ai-default"];
+  await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["states", "grid"], "/commandes": [] }, identity)));
   try {
     const out = join(dir, "verdict.json");
     const { code, out: said } = await run(dir, ["verdict", "--out", out]);
@@ -203,8 +205,16 @@ test("a front with a direction of its own is recommended an improvement, keeping
     const written = JSON.parse(await readFile(out, "utf8"));
     assert.deepEqual([written.identity, written.recommend], [true, "keep"]);
     // One screen without an identity is enough to recommend new directions.
-    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["grid"], "/commandes": ["one-direction"] })));
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["grid"], "/commandes": ["one-direction"] }, identity)));
     assert.equal(JSON.parse((await run(dir, ["verdict", "--out", out]), await readFile(out, "utf8"))).recommend, "directions");
+    // Each of the three counts, the AI default look too.
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["not-ai-default"], "/commandes": [] }, identity)));
+    assert.equal(JSON.parse((await run(dir, ["verdict", "--out", out]), await readFile(out, "utf8"))).recommend, "directions");
+    // A judgement that never asked about them says nothing of an identity.
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["grid"], "/commandes": [] }, ["hierarchy", "states", "one-direction", "not-generic"])));
+    const unasked = await run(dir, ["verdict", "--out", out]);
+    assert.equal(JSON.parse(await readFile(out, "utf8")).identity, false);
+    assert.match(unasked.out, /Next: three art directions by default/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

@@ -28,7 +28,7 @@ export interface RunVerdict {
   keptWithStyle: Failure[];
   /** True only when every screen and journey was measured and nothing fails. */
   nothingToRedo: boolean;
-  /** True when no screen fails a principle of IDENTITY_PRINCIPLES: the front has a direction of its own. */
+  /** True when all of IDENTITY_PRINCIPLES were judged and no screen fails one: the front has a direction of its own. */
   identity: boolean;
 }
 
@@ -104,6 +104,9 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     missing,
     keptWithStyle,
     nothingToRedo: failures.length === 0 && missing.length === 0,
-    identity: judge.pages.every((page) => !page.verdicts.some((v) => !v.pass && IDENTITY_PRINCIPLES.includes(v.principle))),
+    // Only a judgement that asked about all three can say the front has an identity.
+    identity:
+      IDENTITY_PRINCIPLES.every((id) => judge.principles.some((p) => p.id === id)) &&
+      judge.pages.every((page) => !page.verdicts.some((v) => !v.pass && IDENTITY_PRINCIPLES.includes(v.principle))),
   };
 }
