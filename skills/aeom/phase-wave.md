@@ -4,7 +4,7 @@ Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**B
 
 ## Briefing any worker
 
-**Every worker runs on Sonnet**, as the judges do: launch it with the Agent tool's `model: "sonnet"`, whatever model this session coordinates on. Directions, kit, pages, promotion, journeys: all of them. A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
+**Every worker runs on Sonnet**, as the judges do: launch it with the Agent tool's `model: "sonnet"`, whatever model this session coordinates on. Kit, pages, promotion, journeys: all of them. The direction workers are the one exception, on this session's own model (section 2b, step 3). A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
 
 Every brief, kit or page, also says:
 

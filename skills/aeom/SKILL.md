@@ -46,7 +46,7 @@ A run keeps its options under their own names: `/aeom judge` is marked `--option
 The user follows the run through its captures, not through a report at the end. Send images into the session (as files when the session can, otherwise their paths) every time something visible lands, without waiting to be asked:
 
 - **Before**: the captures of section 1, with the count of what fails.
-- **Each direction** as soon as it is captured, then the sheet of all of them.
+- **The directions**, once screened (section 2b, step 6): the sheet with the front as it is, then each one left.
 - **The question of section 2b, step 8**, with the sheet; with `--autonome`, the screening and the champion, with the reasons that decided it.
 - **The kit** once merged, on the page that shows it best.
 - **Each page** as it merges, before and after side by side.
@@ -99,7 +99,7 @@ One message per checkpoint, a line of context with the images, no more. A long w
 
 **`/aeom judge`** (`/aeom --juger` and `--diagnostic` are the same) runs steps 1 to 3 only, then stops, whatever the verdict says: the product sheet, the key journeys and their critique, every screen captured, checked and judged, and the verdict. It creates no run branch, launches no worker, builds no direction and commits nothing: the product sheet and the journeys stay in `.aeom/`, as after « rien à refaire ». Tell the user what fails, screen by screen and journey by journey, with the captures, then in one line what a full run would do (the verdict's last line), and write the result page, served as **The result page, served** says. It is the cheap first look at a project: six judges at most, one vote on the screens and one on the journeys, then two more on what each fails, where a full run takes about twenty-five (`aeom estimate` says how much on this project). When the user asks only to judge the front (« juger », « juge mon front », « dis-moi ce qui ne va pas »), run it this way.
 
-**`/aeom --autonome`** runs the same steps without the two stops of a run: the cost is shown and the run goes on, and since nobody chooses the direction, the judges screen the directions and play a knockout, whose champion is applied without asking (section 2b, steps 6 to 8). Without it, a run always stops for the go, and a run that builds directions stops for the user to choose one, with no judge ranking them first.
+**`/aeom --autonome`** runs the same steps without the two stops of a run: the cost is shown and the run goes on, and since nobody chooses the direction, three judges screen the directions and play a knockout, whose champion is applied without asking (section 2b, steps 6 to 8). Without it, a run always stops for the go, and a run that builds directions stops for the user to choose one: one judge only screens out the ones not worth showing, and none ranks them.
 
 `/aeom --garder-le-style` runs these same steps, with the style kept at step 4. `/aeom --directions <n>` sets how many directions a run builds when it builds some, three by default. `/aeom --forcer-directions` and `/aeom --ux` skip the verdict and run their own mode, as their sections say.
 

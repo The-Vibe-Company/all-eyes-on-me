@@ -100,8 +100,8 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
           minutes: MINUTES.direction + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes,
         });
       } else {
-        // The person chooses among them: their workers alone.
-        phases.push({ phase: `${named}, for you to choose`, agents: directions, tokens: directions * WORKER.tokens, minutes: MINUTES.direction });
+        // The person chooses among them: their workers, and one judge who screens out the ugly, the dated and the worse than now.
+        phases.push({ phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * WORKER.tokens + SCREENING_JUDGE.tokens, minutes: MINUTES.direction + SCREENING_JUDGE.minutes });
       }
       rebuilt = Math.min(DIRECTION_SCREENS, screens);
     } else {
@@ -162,7 +162,11 @@ export function estimateText(estimate: Estimate, { screens, journeys }: { screen
   const notes = [
     ...(estimate.mode === "judge" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
     "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
-    "The agents, judges and workers, run on Sonnet; the session that coordinates the run, on its own model.",
+    estimate.mode === "judge"
+      ? "The judges run on Sonnet."
+      : estimate.mode === "full"
+        ? "The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run."
+        : "The judges and the workers run on Sonnet.",
   ];
   return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }

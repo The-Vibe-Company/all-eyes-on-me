@@ -15,11 +15,14 @@ A model asked to "be bold" reaches for these. A direction that one of them descr
 - Kraft paper, rubber stamps, scalloped edges, hand-drawn labels.
 - A purple-to-blue gradient, glassy cards, glow.
 - Inter or Space Grotesk on white with rounded cards.
+- A dated look, the web of the 2000s and early 2010s: glossy or bevelled buttons, a gradient on every block, heavy borders and drop shadows on everything, clip-art pictograms, rounded bubbly type. A direction must look like what a good team would ship this year.
 - On a game or a creative product, a document interface laid over it: a survey map with contour lines and a graduated frame, an administrative form, a dashboard of cards and charts, a spreadsheet. Players open a game to enter its world, not to read a document about it.
 
 Design movements are banned as starting points for the same reason: "Swiss", "brutalist", "editorial", "retro terminal", "luxury" and "artisanal" are exactly where these looks come from.
 
 ## Where a direction comes from
+
+**The product's name may give a wink, never the look.** A detail that makes sense, once, and only when it comes naturally from the direction's own source: the eye in the O of All Eyes On Me, a fleet in formation in the hero of Armada, a nod to Star Wars for a tool that runs a fleet of coding agents. These are examples of the kind, not winks to reuse. The look itself comes from the world of the people who use the product: Armada's users are developers who run agents, so its world is the review and the merge (a diff read line by line, a queue of pull requests, a run that turns green), not a navy, signal flags or a sky full of planes, and not a phosphor terminal either, which is a banned look. A direction drawn from the name alone is a costume: drop it.
 
 From the product's own world, not from design history. That world is the product brief, `aeom product --brief`: what kind of product it is, what the app is for, who uses it, its main loop, and for a game or a creative product its world. A tool's world is the real one its users live in; a game's is its fiction. The steps below are for a tool; a game or a creative product follows **For a game or a creative product** further down.
 
