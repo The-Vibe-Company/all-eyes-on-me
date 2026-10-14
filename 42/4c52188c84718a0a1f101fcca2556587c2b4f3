@@ -1,0 +1,33 @@
+README.md
+  s_4ce34ec42d9105::t_1188035619a02e 16,61
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_930767b81e4fda 74-75,106-108
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_c68129e760aeb6 171-172
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_aa60d549c06297 59-61,70
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_e88af496fd70ae 165-169
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_be9a498dfcb6a2 102
+skills/aeom/directions.md
+  s_4ce34ec42d9105::t_0bf1ea01a1c318 25
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_125a3a2e9d51c5 11,14-19,21,24,26,30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "424c52188c84718a0a1f101fcca2556587c2b4f3",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "unknown"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
