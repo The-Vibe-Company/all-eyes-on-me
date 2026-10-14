@@ -84,6 +84,11 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
   if (!checked.size) missing.push("no page was checked");
   for (const page of checked) if (!pairs.has(page)) missing.push(`${page} was checked but not judged`);
   for (const page of judged) if (!partners.has(page)) missing.push(`${page} was judged but not checked`);
+  // A verdict on a front measured at two lists of widths judges one front on screens the other never saw.
+  const px = (widths: number[]) => `${widths.join(", ")} px`;
+  const differ = (widths: number[] | undefined) => !!widths && px(widths) !== px(check.widths);
+  if (differ(judge.widths)) missing.push(`the screens were checked at ${px(check.widths)} and judged at ${px(judge.widths!)}: capture, check and judge them at the same widths`);
+  if (journeys && differ(journeys.widths)) missing.push(`the screens were checked at ${px(check.widths)} and the journeys replayed at ${px(journeys.widths)}: replay them at the same widths`);
   const replayed = new Set(journeys?.journeys.map((j) => j.slug));
   const critiqued = new Set(journeyJudge?.pages.map((p) => p.page));
   for (const slug of recorded) {

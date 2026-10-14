@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, usableWidths, WIDTH_RANGE, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -16,14 +16,15 @@ export const APP_OPTIONS_HELP = `  --url <url>          Where the app answers, s
   --start "<command>"  Start the app with this command first, and stop it after
                        (default: start in .aeom/config.json, only when --url
                        is not given, so --url alone captures a running app)
-  --widths <list>      Comma-separated widths in px (default ${DEFAULT_WIDTHS.join(",")})
+  --widths <list>      Comma-separated widths in px (default: widths in
+                       .aeom/config.json, or ${DEFAULT_WIDTHS.join(",")})
   --timeout <seconds>  How long to wait for the app to answer (default 30)`;
 
-/** Parses --widths, or returns an error message. */
+/** Parses --widths, which withConfig fills from the config when it is not given, or returns an error message. */
 export function parseWidths(value: string | undefined): number[] | string {
-  if (!value) return DEFAULT_WIDTHS;
-  const widths = value.split(",").map((w) => Number(w.trim()));
-  return widths.some((w) => !Number.isInteger(w) || w <= 0) ? "--widths must be positive whole numbers, such as 390,1280." : widths;
+  if (value === undefined) return DEFAULT_WIDTHS;
+  const widths = value.trim() ? usableWidths(value.split(",").map((w) => (w.trim() ? Number(w.trim()) : NaN))) : null;
+  return widths ?? `--widths lists the widths to measure, in px between ${WIDTH_RANGE.min} and ${WIDTH_RANGE.max}, such as 1280 or 390,1280.`;
 }
 
 /**
@@ -60,7 +61,7 @@ export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : 
  * used only when --url is not given either: an explicit --url means an app
  * that is already running there.
  */
-export async function withConfig<T extends { url?: string; start?: string; pages?: string }>(values: T): Promise<T & { public?: string }> {
+export async function withConfig<T extends { url?: string; start?: string; pages?: string; widths?: string }>(values: T): Promise<T & { public?: string }> {
   let config;
   try {
     config = await loadConfig();
@@ -74,6 +75,8 @@ export async function withConfig<T extends { url?: string; start?: string; pages
   const open = config.public?.filter((p) => !given || given.includes(p));
   if (open?.length) values = { ...values, public: open.join(",") };
   if (values.pages === undefined && config.pages) values = { ...values, pages: config.pages.join(",") };
+  // The widths that count are the product's, whoever starts the app: --widths alone replaces them.
+  if (values.widths === undefined && config.widths) values = { ...values, widths: config.widths.join(",") };
   if (values.url !== undefined) return values;
   return { ...values, url: config.url, start: values.start ?? config.start };
 }

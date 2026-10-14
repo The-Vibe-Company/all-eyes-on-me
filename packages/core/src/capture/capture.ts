@@ -7,6 +7,16 @@ import type { SignedIn } from "./sign-in.js";
 
 export const DEFAULT_WIDTHS = [390, 1280];
 
+/** The widths a screen can have, in px: below, no phone; above, no screen anyone works on. */
+export const WIDTH_RANGE = { min: 240, max: 3840 };
+
+/** The widths to measure, each once and narrowest first; null when the list is empty or holds a width no screen has. */
+export function usableWidths(widths: unknown): number[] | null {
+  if (!Array.isArray(widths) || !widths.length) return null;
+  if (widths.some((w) => !Number.isInteger(w) || w < WIDTH_RANGE.min || w > WIDTH_RANGE.max)) return null;
+  return [...new Set(widths as number[])].sort((a, b) => a - b);
+}
+
 /**
  * How tall a capture may be, in pixels: a page of 24,000 px is more than a
  * judge can read in one image, and its top is what tells its look. A longer

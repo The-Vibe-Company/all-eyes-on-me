@@ -36,6 +36,8 @@ export interface JudgeReport {
   principles: Principle[];
   pages: { page: string; verdicts: PrincipleVerdict[] }[];
   failures: number;
+  /** The widths of the captures the voters looked at; absent in a report counted before it was kept. */
+  widths?: number[];
 }
 
 /** Some votes cannot be counted. The message lists every problem. */

@@ -60,7 +60,7 @@ export async function runCheck(argv: string[]): Promise<number> {
     }
     const skipped = report.errors.map((e) => `\n✗ ${route(e.url)}  ${e.reason} (not checked)`).join("");
     if (report.findings.length === 0) {
-      console.log(`\nAll ${CHECKS.length} checks pass on ${plural(report.pages.length, "page")}.${skipped}`);
+      console.log(`\nAll ${CHECKS.length} checks pass on ${plural(report.pages.length, "page")} at ${widths.join(", ")} px.${skipped}`);
       return report.errors.length ? 1 : 0;
     }
 

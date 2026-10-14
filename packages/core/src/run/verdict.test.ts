@@ -16,7 +16,7 @@ const judge = (failing: Record<string, string[]>, ids = ["hierarchy", "states"])
 const journeys = (broken: { step: number; reason: string } | null): JourneyReport => ({
   url: "http://x",
   replayedAt: "",
-  widths: [1280],
+  widths: [390, 1280],
   warnings: [],
   journeys: [{ slug: "orders", name: "See my orders", runs: [{ width: 1280, steps: [], calls: [], screens: ["/"], counts: { steps: 3, screens: 1, back: 0 }, broken, sheet: "" }] }],
 });
@@ -78,4 +78,18 @@ test("a screen whose record changes at every visit, checked as /sessions/124 and
   assert.deepEqual(v.failures.map((f) => f.where).sort(), ["/sessions/123", "/sessions/123"], "named once, as the judges saw it");
   const other: CheckReport = { ...check(), pages: ["http://x/", "http://x/autre"] };
   assert.match(verdictOf({ check: other, judge: judge({ "/": [], "/sessions/123": [] }) }).missing.join("\n"), /\/autre was checked but not judged/);
+});
+
+test("screens checked at one list of widths and judged or replayed at another decide nothing: the verdict says which", () => {
+  const desktop = { ...check(), widths: [1280] };
+  const same = verdictOf({ check: desktop, judge: { ...judge({ "/": [], "/commandes": [] }), widths: [1280] }, journeys: { ...journeys(null), widths: [1280] }, journeyJudge: judge({ orders: [] }, ["short"]), recorded: ["orders"] });
+  assert.deepEqual(same.missing, []);
+  assert.deepEqual(same.measured.widths, [1280]);
+  const stale = verdictOf({ check: desktop, judge: { ...judge({ "/": [], "/commandes": [] }), widths: [390, 1280] }, journeys: journeys(null), journeyJudge: judge({ orders: [] }, ["short"]), recorded: ["orders"] });
+  assert.equal(stale.nothingToRedo, false);
+  assert.deepEqual(stale.missing, [
+    "the screens were checked at 1280 px and judged at 390, 1280 px: capture, check and judge them at the same widths",
+    "the screens were checked at 1280 px and the journeys replayed at 390, 1280 px: replay them at the same widths",
+  ]);
+  assert.deepEqual(verdictOf({ check: desktop, judge: judge({ "/": [], "/commandes": [] }) }).missing, [], "a verdict counted before judges said their widths decides as before");
 });
