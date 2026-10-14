@@ -126,6 +126,7 @@ export async function runJudge(argv: string[]): Promise<number> {
   const merged = all.map((page) => counted.pages.find((p) => p.page === page) ?? reused.find((p) => p.page === page)!).filter(Boolean);
   const report: JudgeReport & { reused?: string[] } = {
     ...counted,
+    widths: manifest.widths,
     pages: merged,
     failures: merged.reduce((n, p) => n + p.verdicts.filter((v) => !v.pass).length, 0),
     ...(reused.length ? { reused: reused.map((p) => p.page) } : {}),

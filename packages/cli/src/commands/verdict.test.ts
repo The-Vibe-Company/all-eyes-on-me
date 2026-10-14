@@ -33,7 +33,7 @@ const judge = (failing: Record<string, string[]>, base = ["hierarchy", "states"]
 const replay = (broken: { step: number; reason: string } | null) => ({
   url: "http://x",
   replayedAt: "",
-  widths: [1280],
+  widths: [390, 1280],
   warnings: [],
   journeys: [{ slug: "orders", name: "See my orders", runs: [{ width: 1280, steps: [], calls: [], screens: ["/"], counts: { steps: 3, screens: 1, back: 0 }, broken, sheet: "" }] }],
 });

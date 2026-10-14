@@ -9,7 +9,7 @@ You run the judge on the latest captures. One subagent votes on everything first
 
 ## Steps
 
-1. **Fresh captures.** Run `aeom capture` right before judging, every time, so the judges never see an older state of the app. It reads `url` and `start` from `.aeom/config.json`; without that file, pass `--url` and `--start`.
+1. **Fresh captures.** Run `aeom capture` right before judging, every time, with `--widths "$WIDTHS"` when the run noted its widths, so the judges never see an older state of the app. It reads `url` and `start` from `.aeom/config.json`; without that file, pass `--url` and `--start`.
 2. **Clear the last verdict.** Delete `.aeom/reports/judge.json`, create `.aeom/reports/judge/` if it does not exist, and delete the `*.json` files in it, so neither an old verdict nor old votes, nor an old list of what to judge, can pass for this run's.
 3. **Measuring again?** When the pages were judged before in this run and a snapshot holds that verdict (`before`, `after`…), run `aeom judge --changed-since <that snapshot>`: it writes in the votes folder `to-judge.json`, the pages whose captures changed. The voters judge only those; the others keep the snapshot's verdict. When none changed, go to step 6.
 4. **One voter first.** Launch one subagent, with the voter brief below and the number 1. Give it nothing else: no earlier verdict, no opinion of yours.
@@ -62,7 +62,7 @@ Give each of voters 2 and 3 this, with `<N>` replaced by its number:
 
 The same, one vote first and three on what it fails, on the key journeys instead of the pages, after `aeom journey`:
 
-1. **Fresh replays.** Run `aeom journey` right before judging.
+1. **Fresh replays.** Run `aeom journey` right before judging, with `--widths "$WIDTHS"` when the run noted its widths.
 2. **Clear the last verdict.** Delete `.aeom/reports/judge-journeys.json` and the `*.json` files of `.aeom/reports/judge-journeys/` (or of the votes folder the run passes), creating the folder if needed.
 3. **One voter first**, with the journey brief below and the number 1, on the lighter model. Nothing else.
 4. **Two more on what it failed**: `aeom judge --journeys --to-confirm` writes `to-confirm.json` in the journeys' votes folder. When there is something to confirm, launch voters 2 and 3 at once with the journey brief, told to judge only the journeys and principles `to-confirm.json` lists, without reading what voter 1 said.

@@ -332,23 +332,11 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   return { width, steps, calls: made, screens, counts: { steps: steps.length, screens: screens.length, back }, broken };
 }
 
-/**
- * Removes only the files the previous replay's report says it wrote: a
- * width or a journey replayed before and not now leaves no capture behind
- * for a judge to look at.
- */
-async function clearPreviousReplay(outDir: string): Promise<void> {
-  let previous: JourneyReport;
-  try {
-    previous = JSON.parse(await readFile(join(outDir, "report.json"), "utf8"));
-  } catch {
-    return;
-  }
-  const files = (Array.isArray(previous?.journeys) ? previous.journeys : []).flatMap((j) => (Array.isArray(j?.runs) ? j.runs : []).flatMap((r) => [r?.sheet, ...(Array.isArray(r?.steps) ? r.steps.map((s) => s?.capture) : [])]));
-  // Only a file's own name, inside the folder: a report edited by hand never reaches outside it.
-  const own = files.filter((f): f is string => typeof f === "string" && !!f && basename(f) === f);
-  await Promise.all([...own, "report.json"].map((file) => rm(join(outDir, file), { force: true })));
-}
+/** The files a replay's report says it wrote, each by its own name in the folder: a report edited by hand never reaches outside it. */
+const replayFiles = (report: JourneyReport | null): string[] =>
+  (Array.isArray(report?.journeys) ? report.journeys : [])
+    .flatMap((j) => (Array.isArray(j?.runs) ? j.runs : []).flatMap((r) => [r?.sheet, ...(Array.isArray(r?.steps) ? r.steps.map((s) => s?.capture) : [])]))
+    .filter((f): f is string => typeof f === "string" && !!f && f !== "." && f !== ".." && basename(f) === f);
 
 /**
  * Replays each journey in a fresh browser at each width, capturing the screen
@@ -359,7 +347,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
   const root = new URL(url);
   const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
-  await clearPreviousReplay(outDir);
+  const previous = replayFiles(await readFile(join(outDir, "report.json"), "utf8").then((t) => JSON.parse(t) as JourneyReport).catch(() => null));
   const warnings = reset ? [] : ["No reset command in .aeom/config.json: journeys that change the app's data can differ from one replay to the next."];
   const replays: JourneyReplay[] = [];
   for (const journey of journeys) {
@@ -402,5 +390,8 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
   }
   const report: JourneyReport = { url, replayedAt: new Date().toISOString(), widths, journeys: replays, warnings };
   await writeFile(join(outDir, "report.json"), JSON.stringify(report, null, 2) + "\n");
+  // Once this replay is whole, what the last one wrote and this one did not (a width or a journey left out) goes: no judge looks at it.
+  const written = new Set(replayFiles(report));
+  await Promise.all(previous.filter((f) => !written.has(f)).map((f) => rm(join(outDir, f), { force: true })));
   return report;
 }
