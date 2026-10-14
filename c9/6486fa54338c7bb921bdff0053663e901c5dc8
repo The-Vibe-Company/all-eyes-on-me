@@ -1,0 +1,52 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_c501b6b67be763 36,141
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_055e6f8b633525 57-58,63-65
+  s_4ce34ec42d9105::t_391f8889e76ead 1-56,59-62,66-108
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_c501b6b67be763 13
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_3390553ca1938a 10-19
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_3390553ca1938a 1
+packages/core/src/run/config.ts
+  s_4ce34ec42d9105::t_3390553ca1938a 3,23-24,83-87
+  s_4ce34ec42d9105::t_a7e7c40e09d9cf 88
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_c501b6b67be763 13-14
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_b015b840593db6 2-3
+  s_4ce34ec42d9105::t_e8302fd56db7c3 336-352,362
+  s_4ce34ec42d9105::t_6467d99f2ef97d 335
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_3390553ca1938a 4,19-20,23,25-27,64,78-79
+README.md
+  s_4ce34ec42d9105::t_c501b6b67be763 14
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_9be8535ab4c8d6 63
+packages/core/src/run/run.test.ts
+  s_4ce34ec42d9105::t_391f8889e76ead 96-99
+.veebee/milestones/03-la-commande-unique/tickets/24-les-largeurs-dans-le-cout-le-rapport-et-le-cliquet.md
+  s_4ce34ec42d9105::t_c1903474e3c9db 1-6,8-24
+  s_4ce34ec42d9105::t_2a89007961d026 7
+.veebee/milestones/03-la-commande-unique/tickets/23-les-largeurs-qui-comptent.md
+  s_4ce34ec42d9105::t_258059dc08010b 7
+  s_4ce34ec42d9105::t_2a89007961d026 8
+  s_4ce34ec42d9105::t_c1903474e3c9db 1-6,9-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c96486fa54338c7bb921bdff0053663e901c5dc8",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
