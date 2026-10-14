@@ -46,7 +46,7 @@ A run keeps its options under their own names: `/aeom judge` is marked `--option
 The user follows the run through its captures, not through a report at the end. Send images into the session (as files when the session can, otherwise their paths) every time something visible lands, without waiting to be asked:
 
 - **Before**: the captures of section 1, with the count of what fails.
-- **Each direction** as soon as it is captured, then the sheet of all of them.
+- **The directions**, once screened (section 2b, step 6): the sheet with the front as it is, then each one left.
 - **The question of section 2b, step 8**, with the sheet; with `--autonome`, the screening and the champion, with the reasons that decided it.
 - **The kit** once merged, on the page that shows it best.
 - **Each page** as it merges, before and after side by side.
