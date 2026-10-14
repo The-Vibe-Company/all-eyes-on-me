@@ -1,0 +1,33 @@
+packages/cli/src/commands/compare.test.ts
+  s_4ce34ec42d9105::t_23fbf41dfa0c0d 95
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_b90162d6b4a982 99,110-111,120
+packages/cli/src/commands/ratchet.test.ts
+  s_4ce34ec42d9105::t_23fbf41dfa0c0d 184-185
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_23fbf41dfa0c0d 10,232-234,355
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_b90162d6b4a982 71-72,85,94
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_b90162d6b4a982 15
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_23fbf41dfa0c0d 94-96,100
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_23fbf41dfa0c0d 97-101,177-180
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f7934b4c206968e30881b78304eeca904491a1a5",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
