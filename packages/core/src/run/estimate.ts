@@ -162,7 +162,11 @@ export function estimateText(estimate: Estimate, { screens, journeys }: { screen
   const notes = [
     ...(estimate.mode === "judge" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
     "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
-    "The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run.",
+    estimate.mode === "judge"
+      ? "The judges run on Sonnet."
+      : estimate.mode === "full"
+        ? "The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run."
+        : "The judges and the workers run on Sonnet.",
   ];
   return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }

@@ -168,8 +168,8 @@ export async function runTournament(argv: string[]): Promise<number> {
       return 0;
     }
     if (action === "decide") {
-      // Any direction built and captured can be chosen, the ones the screening took out included.
-      const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png").map((f) => f.slice(0, -4));
+      // Any direction built and captured can be chosen, the ones the screening took out included; the sheet and the front as it is are not directions.
+      const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png" && f !== "now.png").map((f) => f.slice(0, -4));
       const drop = values.drop ?? [];
       const { tournament, rerun } = decideDirection(t, { choose: values.choose, drop, why: values.why, at: new Date().toISOString(), directions: captured });
       // No knockout played: the person chose alone, and there is no champion to agree with.

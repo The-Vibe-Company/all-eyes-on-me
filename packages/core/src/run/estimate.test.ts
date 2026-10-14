@@ -56,6 +56,9 @@ test("the estimate reads as a table, phase by phase, with what is at most and th
   assert.match(text, /\nIf a journey still breaks after the pages, at most +\d+ agents +≈ \d\.\d M tokens +≈ \d+ min more\n/);
   assert.match(text, /the session that coordinates the run/);
   assert.match(text, /The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run\./);
+  const judged = estimateText(estimateRun({ screens: 8, journeys: 4, mode: "judge" }), { screens: 8, journeys: 4 });
+  assert.match(judged, /The judges run on Sonnet\./, "no direction worker without directions");
+  assert.doesNotMatch(judged, /direction workers/);
 });
 
 test("/aeom --ux costs the journeys alone: no direction and no page wave", () => {
@@ -64,7 +67,7 @@ test("/aeom --ux costs the journeys alone: no direction and no page wave", () =>
   assert.equal(total.agents, 3 + 3 + 1 + 4 + 6 + 3);
 });
 
-test("without --autonome the person chooses the direction: the directions cost their workers alone, no judge", () => {
+test("without --autonome the person chooses the direction: the directions cost their workers and one judge who screens them, no knockout", () => {
   const chosen = estimateRun({ screens: 8, journeys: 4, mode: "full" });
   const judged = estimateRun({ screens: 8, journeys: 4, mode: "full", autonome: true });
   assert.equal(chosen.phases[2]!.phase, "Three directions, for you to choose");

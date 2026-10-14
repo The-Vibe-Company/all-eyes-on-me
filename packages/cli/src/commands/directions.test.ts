@@ -71,7 +71,8 @@ test("aeom tournament decide keeps what the person decided on the knockout, in t
   const env = { AEOM_HOME: home };
   try {
     await mkdir(D, { recursive: true });
-    for (const name of ["topo", "bivouac", "grotte"]) await writeFile(join(D, `${name}.png`), "");
+    // The sheet and the front as it is lie next to the directions' captures: neither is a direction.
+    for (const name of ["topo", "bivouac", "grotte", "now", "sheet"]) await writeFile(join(D, `${name}.png`), "");
     assert.equal((await run(dir, ["tournament", "start", "--dir", D, "topo", "bivouac"])).code, 0);
     const early = await run(dir, ["tournament", "decide", "--dir", D], env);
     assert.equal(early.code, 1);
@@ -102,7 +103,9 @@ test("aeom tournament decide keeps what the person decided on the knockout, in t
     );
     const unknown = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "plage"], env);
     assert.equal(unknown.code, 1);
-    assert.match(unknown.out, /plage is not one of the directions: topo, bivouac, grotte/);
+    assert.match(unknown.out, /plage is not one of the directions: topo, bivouac, grotte\.$/m);
+    const now = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "now"], env);
+    assert.equal(now.code, 1, "the front as it is is kept by improving it, never chosen as a direction");
   } finally {
     await rm(dir, { recursive: true, force: true });
     await rm(home, { recursive: true, force: true });
