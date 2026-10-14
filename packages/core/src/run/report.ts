@@ -7,7 +7,7 @@ import { pairRoutes } from "../capture/shape.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { RatchetVerdict } from "../journey/ratchet.js";
 import type { JudgeReport } from "../judge/tally.js";
-import { DEFAULT_WIDTHS, route } from "../capture/capture.js";
+import { DEFAULT_WIDTHS, route, usableWidths } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { blockedJourneys } from "./features.js";
 import type { FeedbackCategory } from "./taste.js";
@@ -229,8 +229,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     for (const f of saved.entries.filter((f) => typeof f?.slug === "string" && still.includes(f.slug))) entries.push({ ...f, capture: f.capture && (await exists(join(runDir, f.capture))) ? f.capture : null });
     features = { entries, more: Number.isInteger(saved.more) ? saved.more : 0 };
   }
-  const measured = before?.widths ?? replayBefore?.widths;
-  const widths = Array.isArray(measured) ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
+  // Each width once, narrowest first, whatever wrote the manifest: anything else is not a list of widths.
+  const measured = usableWidths(before?.widths ?? replayBefore?.widths);
+  const widths = measured ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
   return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}) };
 }
 
@@ -351,7 +352,7 @@ function chosenBy(d: NonNullable<ResultPage["direction"]>): string {
 function widthsHtml(widths: ResultPage["widths"]): string {
   if (!widths || widths.measured.join(",") === DEFAULT_WIDTHS.join(",")) return "";
   const left = widths.leftOut.length ? `; ${widths.leftOut.join(", ")} px left out` : "";
-  return `<p class="line">Measured at ${widths.measured.join(", ")} px, the widths declared for this project${left}.</p>`;
+  return `<p class="line">Measured at ${widths.measured.join(", ")} px, the widths this run declared${left}.</p>`;
 }
 
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */

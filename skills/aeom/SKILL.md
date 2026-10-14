@@ -96,7 +96,7 @@ One message per checkpoint, a line of context with the images, no more. A long w
 3. **Write it**: `aeom standard .aeom/runs/$RUN/standard.md`. It refuses a token, a value or a component the code does not hold, a placeholder left, or an image, and says which: fix the draft and run it again. It keeps what the user corrected since the last run and says what it changed: tell the user. When the user's own corrections no longer hold, such as a value they wrote that the code does not have, it writes nothing and names the line: tell the user which line to fix, and go on without the standard: step 4 commits nothing.
 4. **Commit it** only when step 3 wrote it and the run kept something (a direction, a screen or a journey: the result page says it), on the run branch, with its base, before the PR: `git add .aeom/standard.md .aeom/standard.base.md && { git diff --cached --quiet -- .aeom/standard.md .aeom/standard.base.md || git commit -m "aeom: the standard of the front"; }`. After « rien à refaire », when the run kept nothing, or when step 3 wrote nothing, commit nothing: the user commits it, as they do the product sheet.
 
-**The cost, before the judges.** No judge or worker starts before the user knows what the run will cost. Once the product sheet and the journeys are recorded, run `aeom estimate --screens <how many pages the capture of section 2c step 3 found>`, with the option the run was asked with: `--juger` (for `/aeom judge` too), `--garder-le-style`, `--ux`, `--directions <n>` or `--autonome` as the user typed it; `--journeys 0` for `/aeom --forcer-directions`, which judges no journey. It says, phase by phase, how many agents, how many tokens and how long, at most; its first line, understanding the product, is already done. Show the table to the user, then ask, with the session's question tool when it has one: judge only (its first two lines), the whole run, or stop. Wait for the answer, and go on as they chose: judge only is `--juger`. With `--juger`, ask only whether to go. With `--autonome`, show the table and go on.
+**The cost, before the judges.** No judge or worker starts before the user knows what the run will cost. Once the product sheet and the journeys are recorded, run `aeom estimate --widths "$WIDTHS" --screens <how many pages the capture of section 2c step 3 found>`, with the option the run was asked with: `--juger` (for `/aeom judge` too), `--garder-le-style`, `--ux`, `--directions <n>` or `--autonome` as the user typed it; `--journeys 0` for `/aeom --forcer-directions`, which judges no journey. It says, phase by phase, how many agents, how many tokens and how long, at most; its first line, understanding the product, is already done. Show the table to the user, then ask, with the session's question tool when it has one: judge only (its first two lines), the whole run, or stop. Wait for the answer, and go on as they chose: judge only is `--juger`. With `--juger`, ask only whether to go. With `--autonome`, show the table and go on.
 
 **`/aeom judge`** (`/aeom --juger` and `--diagnostic` are the same) runs steps 1 to 3 only, then stops, whatever the verdict says: the product sheet, the key journeys and their critique, every screen captured, checked and judged, and the verdict. It creates no run branch, launches no worker, builds no direction and commits nothing: the product sheet and the journeys stay in `.aeom/`, as after « rien à refaire ». Tell the user what fails, screen by screen and journey by journey, with the captures, then in one line what a full run would do (the verdict's last line), and write the result page, served as **The result page, served** says. It is the cheap first look at a project: six judges at most, one vote on the screens and one on the journeys, then two more on what each fails, where a full run takes about twenty-five (`aeom estimate` says how much on this project). When the user asks only to judge the front (« juger », « juge mon front », « dis-moi ce qui ne va pas »), run it this way.
 
@@ -107,8 +107,8 @@ One message per checkpoint, a line of context with the images, no more. A long w
 ## 1. Look
 
 ```bash
-aeom capture
-aeom check          # exits 1 when something fails, which is expected here
+aeom capture --widths "$WIDTHS"
+aeom check --widths "$WIDTHS"   # exits 1 when something fails, which is expected here
 ```
 
 Then run the judge with the `aeom-judge` skill: one vote, then three independent votes on what it fails, then `aeom judge`. Then keep a copy:
@@ -117,7 +117,7 @@ Then run the judge with the `aeom-judge` skill: one vote, then three independent
 aeom snapshot .aeom/runs/$RUN/before
 ```
 
-If the project has key journeys (`.aeom/journeys/`), replay them now, before anything changes: `aeom journey --out .aeom/runs/$RUN/journeys-before`. It is what `aeom guard` compares with in section 5.
+If the project has key journeys (`.aeom/journeys/`), replay them now, before anything changes: `aeom journey --widths "$WIDTHS" --out .aeom/runs/$RUN/journeys-before`. It is what `aeom guard` compares with in section 5.
 
 ## 2. Plan
 

@@ -91,13 +91,13 @@ test("in a browser, the page keeps a reason typed without leaving the field, eve
 
 test("the page says at its head the widths measured when they are not the default, and the default one left out", async () => {
   const desktop = resultHtml({ ...PAGE, widths: { measured: [1280], leftOut: [390] } });
-  assert.match(desktop, /<header>[\s\S]*Measured at 1280 px, the widths declared for this project; 390 px left out\.[\s\S]*<\/header>/);
-  assert.match(resultHtml({ ...PAGE, widths: { measured: [390, 768, 1280], leftOut: [] } }), /Measured at 390, 768, 1280 px, the widths declared for this project\./);
-  assert.doesNotMatch(resultHtml({ ...PAGE, widths: { measured: [390, 1280], leftOut: [] } }), /widths declared/);
+  assert.match(desktop, /<header>[\s\S]*Measured at 1280 px, the widths this run declared; 390 px left out\.[\s\S]*<\/header>/);
+  assert.match(resultHtml({ ...PAGE, widths: { measured: [390, 768, 1280], leftOut: [] } }), /Measured at 390, 768, 1280 px, the widths this run declared\./);
+  assert.doesNotMatch(resultHtml({ ...PAGE, widths: { measured: [390, 1280], leftOut: [] } }), /widths this run declared/);
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-widths-"));
   try {
     await mkdir(join(dir, "before", "captures"), { recursive: true });
-    await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [], errors: [] }));
+    await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280, 1280], pages: [], errors: [] }));
     assert.deepEqual((await readRun(dir, "run-1")).widths, { measured: [1280], leftOut: [390] });
   } finally {
     await rm(dir, { recursive: true, force: true });

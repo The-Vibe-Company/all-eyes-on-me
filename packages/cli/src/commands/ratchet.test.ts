@@ -181,7 +181,8 @@ test("two replays made at different widths are not compared: the ratchet says wh
     await writeFile(join(dir, "before", "report.json"), JSON.stringify({ ...replay({ orders: 4, contact: 5 }), widths: [390, 1280] }));
     const { code, out } = await run(dir, ["compare", "--journeys", "before", "after"]);
     assert.equal(code, 1);
-    assert.match(out, /before was replayed at 390, 1280 px and after at 1280 px: compare two replays made at the same widths/);
+    assert.match(out, /^Nothing compared: before was replayed at 390, 1280 px and after at 1280 px: compare two replays made at the same widths\. Replay after again/m);
+    assert.doesNotMatch(out, /Both folders need/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

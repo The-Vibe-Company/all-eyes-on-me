@@ -92,7 +92,7 @@ test("two snapshots measured at different widths are not compared: aeom compare 
     await snapshot(join(dir, "after"), [], [], [1280]);
     const { code, out } = await run(dir, ["compare", "before", "after"]);
     assert.equal(code, 1);
-    assert.match(out, /before was measured at 390, 1280 px and after at 1280 px: compare two measures made at the same widths/);
+    assert.match(out, /Nothing compared: before was measured at 390, 1280 px and after at 1280 px: compare two measures made at the same widths\. Capture, check and judge after again with the run's --widths/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
