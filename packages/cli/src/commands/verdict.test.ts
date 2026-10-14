@@ -19,13 +19,17 @@ const run = async (cwd: string, args: string[]) => {
 };
 
 const check = (findings: unknown[] = []) => ({ url: "http://x", checkedAt: "", widths: [390, 1280], checks: ["cursor", "overflow", "contrast", "console"], pages: ["http://x/", "http://x/commandes"], errors: [], findings });
-const judge = (failing: Record<string, string[]>, ids = ["hierarchy", "states"]) => ({
-  judgedAt: "",
-  voters: ["1", "2", "3"],
-  principles: ids.map((id) => ({ id, text: id })),
-  failures: 0,
-  pages: Object.entries(failing).map(([page, failed]) => ({ page, verdicts: ids.map((principle) => ({ principle, pass: !failed.includes(principle), votes: "", reasons: [`${principle} fails on ${page}`], dissent: [], steps: [] })) })),
-});
+// Every principle a page fails is judged on every page, passing where it does not fail.
+const judge = (failing: Record<string, string[]>, base = ["hierarchy", "states"]) => {
+  const ids = [...new Set([...base, ...Object.values(failing).flat()])];
+  return {
+    judgedAt: "",
+    voters: ["1", "2", "3"],
+    principles: ids.map((id) => ({ id, text: id })),
+    failures: 0,
+    pages: Object.entries(failing).map(([page, failed]) => ({ page, verdicts: ids.map((principle) => ({ principle, pass: !failed.includes(principle), votes: "", reasons: [`${principle} fails on ${page}`], dissent: [], steps: [] })) })),
+  };
+};
 const replay = (broken: { step: number; reason: string } | null) => ({
   url: "http://x",
   replayedAt: "",
@@ -142,7 +146,7 @@ test("a report that is not the right one, or an unknown option, never reads as s
 });
 
 test("when something fails, aeom verdict says what comes next: a new direction, or the existing style kept", async () => {
-  const dir = await project({ failing: { "/": ["states"] } });
+  const dir = await project({ failing: { "/": ["states", "not-generic"] } });
   try {
     const fresh = await run(dir, ["verdict"]);
     assert.equal(fresh.code, 1);
@@ -184,6 +188,33 @@ test("aeom verdict --out keeps the verdict in a file, for the result page", asyn
     assert.match(saved.line, /^Measured: 2 screens/);
     assert.equal(saved.failures[0].where, "/");
     assert.equal(saved.keepStyle, false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a front with a direction of its own is recommended an improvement, keeping its style, before any new direction", async () => {
+  const dir = await project();
+  const identity = ["hierarchy", "states", "one-direction", "not-generic", "not-ai-default"];
+  await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["states", "grid"], "/commandes": [] }, identity)));
+  try {
+    const out = join(dir, "verdict.json");
+    const { code, out: said } = await run(dir, ["verdict", "--out", out]);
+    assert.equal(code, 1);
+    assert.match(said, /Next: the front has a direction of its own \(one-direction, not-generic and not-ai-default pass on every screen\): improve it, keeping its style \(recommended\), or ask for new directions\.$/m);
+    const written = JSON.parse(await readFile(out, "utf8"));
+    assert.deepEqual([written.identity, written.recommend], [true, "keep"]);
+    // One screen without an identity is enough to recommend new directions.
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["grid"], "/commandes": ["one-direction"] }, identity)));
+    assert.equal(JSON.parse((await run(dir, ["verdict", "--out", out]), await readFile(out, "utf8"))).recommend, "directions");
+    // Each of the three counts, the AI default look too.
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["not-ai-default"], "/commandes": [] }, identity)));
+    assert.equal(JSON.parse((await run(dir, ["verdict", "--out", out]), await readFile(out, "utf8"))).recommend, "directions");
+    // A judgement that never asked about them says nothing of an identity.
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify(judge({ "/": ["grid"], "/commandes": [] }, ["hierarchy", "states", "one-direction", "not-generic"])));
+    const unasked = await run(dir, ["verdict", "--out", out]);
+    assert.equal(JSON.parse(await readFile(out, "utf8")).identity, false);
+    assert.match(unasked.out, /Next: three art directions by default/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

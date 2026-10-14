@@ -2,7 +2,7 @@
 
 Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (section 2b, in a run that builds directions). **Briefing any worker** and sections 3 to 5 are in [phase-wave.md](phase-wave.md); everything else it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
 
-## 2b. Directions (in a run without an option once the verdict finds something to redo, or with `/aeom --forcer-directions`)
+## 2b. Directions (in a run without an option once the verdict finds something to redo and the person chose new directions, or with `/aeom --forcer-directions`)
 
 Instead of fixing the current look, start from new ones and keep the best: three by default, or as many as the user asked with `/aeom --directions <n>`. Each one costs a worker, a worktree and its own app, so more is rarely better.
 

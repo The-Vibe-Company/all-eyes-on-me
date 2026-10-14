@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { loadConfig, verdictOf, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { IDENTITY_PRINCIPLES, loadConfig, verdictOf, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 
 export const VERDICT_HELP = `Usage: aeom verdict [options]
 
@@ -10,9 +10,11 @@ checks and the judge on every screen and, when the project has key journeys,
 their replay and their critique. Exits with 0 when nothing fails, 1 when
 something does, and 2 when it cannot decide: a report missing or unreadable,
 or a screen or journey one report has and another leaves out. When something
-fails, its last line says what comes next: three art directions by default,
-or, with --keep-style or "style": "keep" in .aeom/config.json, the kit wave on
-the existing style.
+fails, its last line says what comes next: with --keep-style or "style":
+"keep" in .aeom/config.json, the kit wave on the existing style; for a front
+with a direction of its own, improving it (recommended) or new directions;
+otherwise three art directions by default. --out keeps it in a file, with
+whether the front has an identity and what is recommended.
 
 Options:
   --reports <dir>   check.json, judge.json and judge-journeys.json (default .aeom/reports)
@@ -88,7 +90,7 @@ async function verdict(argv: string[]): Promise<number> {
   }
 
   const kept = values["keep-style"] ? "--keep-style" : config.style === "keep" ? `"style": "keep" in .aeom/config.json` : null;
-  const { measured: m, failures, missing, keptWithStyle, nothingToRedo } = verdictOf({ check, judge, journeys, journeyJudge, recorded, keepStyle: kept !== null });
+  const { measured: m, failures, missing, keptWithStyle, nothingToRedo, identity } = verdictOf({ check, judge, journeys, journeyJudge, recorded, keepStyle: kept !== null });
   if (missing.length) {
     console.error(`Cannot decide: ${missing.join(", ")}. Capture, check and judge again${recorded.length ? ", and replay and judge the journeys again" : ""}, so every report covers the same screens and journeys.`);
     return 2;
@@ -97,7 +99,9 @@ async function verdict(argv: string[]): Promise<number> {
   const journeyPart = m.journeys ? `; ${s(m.journeys, "journey")} on ${s(m.journeyPrinciples, "principle")}` : "";
   const line = `Measured: ${s(m.screens, "screen")} at ${m.widths.join(", ")} px, ${s(m.checks, "check")} and ${s(m.principles, "principle")} each${journeyPart}.`;
   if (values.out) await mkdir(dirname(values.out), { recursive: true });
-  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null }, null, 2) + "\n");
+  // A front with a direction of its own is improved, its style kept, unless the person asks for new directions.
+  const recommend = kept !== null || identity ? "keep" : "directions";
+  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null, identity, recommend }, null, 2) + "\n");
   console.log(line);
   if (keptWithStyle.length) console.log(`Left to the style kept: ${keptWithStyle.map((f) => `${f.where} ${f.what.split(":")[0]}`).join(", ")}.`);
   if (nothingToRedo) {
@@ -108,6 +112,12 @@ async function verdict(argv: string[]): Promise<number> {
   console.log("");
   for (const f of failures) console.log(`✗ ${f.where.padEnd(column)}${f.what}`);
   console.log(`\n${s(failures.length, "thing")} to redo.`);
-  console.log(kept ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).` : `Next: three art directions by default, drawn from the product sheet.`);
+  console.log(
+    kept
+      ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).`
+      : identity
+        ? `Next: the front has a direction of its own (${IDENTITY_PRINCIPLES.join(", ").replace(/, ([^,]+)$/, " and $1")} pass on every screen): improve it, keeping its style (recommended), or ask for new directions.`
+        : `Next: three art directions by default, drawn from the product sheet.`,
+  );
   return 1;
 }
