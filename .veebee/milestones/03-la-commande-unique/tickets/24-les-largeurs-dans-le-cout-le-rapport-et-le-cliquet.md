@@ -4,6 +4,7 @@ title: Les largeurs dans le coût, le rapport et le cliquet
 milestone: 03-la-commande-unique
 depends_on: [23]
 design: null
+status: done
 tracker: { tool: github, id: 111, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/111 }
 ---
 

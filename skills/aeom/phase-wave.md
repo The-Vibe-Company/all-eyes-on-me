@@ -68,8 +68,8 @@ When the style is kept (step 4), add to the page brief: the page keeps the app's
 On the run branch:
 
 ```bash
-aeom capture
-aeom check
+aeom capture --widths "$WIDTHS"
+aeom check --widths "$WIDTHS"
 ```
 
 Run the judge again with the `aeom-judge` skill, judging only what changed since the before (`aeom judge --changed-since .aeom/runs/$RUN/before`, its step 3), then:
@@ -82,7 +82,7 @@ aeom compare .aeom/runs/$RUN/before .aeom/runs/$RUN/after
 If the project has key journeys, check that no worker added a feature:
 
 ```bash
-aeom journey --out .aeom/runs/$RUN/journeys-after
+aeom journey --widths "$WIDTHS" --out .aeom/runs/$RUN/journeys-after
 aeom guard .aeom/runs/$RUN/journeys-before .aeom/runs/$RUN/journeys-after --base $KIT_BASE
 ```
 
@@ -91,7 +91,7 @@ It refuses a call the app never made, new fields sent to a call it made, and a c
 ```bash
 MAIN="$(git rev-parse --show-toplevel)"
 git worktree add --detach "$WT/$RUN-base" $KIT_BASE
-(cd "$WT/$RUN-base" && aeom journey --journeys "$MAIN/.aeom/journeys" --out "$MAIN/.aeom/runs/$RUN/journeys-before")
+(cd "$WT/$RUN-base" && aeom journey --widths "$WIDTHS" --journeys "$MAIN/.aeom/journeys" --out "$MAIN/.aeom/runs/$RUN/journeys-before")
 git worktree remove "$WT/$RUN-base"
 ```
 

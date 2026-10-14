@@ -1,3 +1,5 @@
+import { DEFAULT_WIDTHS } from "../capture/capture.js";
+
 /**
  * What a run costs before it starts: agents, tokens and time, phase by phase.
  * Calibrated on Road to Mastock (8 screens, 4 key journeys, 10 October 2026):
@@ -33,9 +35,11 @@ export interface Estimate {
  */
 const CONFIRM_SHARE = 0.5;
 const staged = ({ tokens, minutes }: { tokens: number; minutes: number }) => ({ tokens: (tokens * (1 + 2 * CONFIRM_SHARE)) / 3, minutes: minutes * (1 + CONFIRM_SHARE) });
-const fullPageJudge = (screens: number) => ({ tokens: 40_000 + 15_000 * screens, minutes: 1.5 + 0.6 * screens });
-const pageJudge = (screens: number) => staged(fullPageJudge(screens));
-const journeyJudge = (journeys: number) => staged({ tokens: 40_000 + 20_000 * journeys, minutes: 1 + 0.75 * journeys });
+/** A judge's share for each screen or journey was measured at two widths, 390 and 1280: it looks at one capture per width. */
+const CALIBRATED_WIDTHS = 2;
+const fullPageJudge = (screens: number, widths = CALIBRATED_WIDTHS) => ({ tokens: 40_000 + ((15_000 * widths) / CALIBRATED_WIDTHS) * screens, minutes: 1.5 + ((0.6 * widths) / CALIBRATED_WIDTHS) * screens });
+const pageJudge = (screens: number, widths?: number) => staged(fullPageJudge(screens, widths));
+const journeyJudge = (journeys: number, widths = CALIBRATED_WIDTHS) => staged({ tokens: 40_000 + ((20_000 * widths) / CALIBRATED_WIDTHS) * journeys, minutes: 1 + ((0.75 * widths) / CALIBRATED_WIDTHS) * journeys });
 const WORKER = { tokens: 130_000 };
 const SHARED_WORKER = { tokens: 150_000 };
 const SCREENING_JUDGE = { tokens: 60_000, minutes: 2 };
@@ -56,11 +60,11 @@ const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "E
  * `ux` is `/aeom --ux`: the journeys alone, no direction and no page wave;
  * `/aeom --directions` is a full run with no journey judged.
  */
-export function estimateRun({ screens, journeys, mode, directions = 3, autonome = false }: { screens: number; journeys: number; mode: RunMode; directions?: number; autonome?: boolean }): Estimate {
-  const pj = pageJudge(screens);
+export function estimateRun({ screens, journeys, mode, directions = 3, autonome = false, widths = CALIBRATED_WIDTHS }: { screens: number; journeys: number; mode: RunMode; directions?: number; autonome?: boolean; widths?: number }): Estimate {
+  const pj = pageJudge(screens, widths);
   // The judges of a kept charter compare each page before and after: three full votes.
-  const sj = fullPageJudge(screens);
-  const jj = journeyJudge(journeys);
+  const sj = fullPageJudge(screens, widths);
+  const jj = journeyJudge(journeys, widths);
   const phases: Phase[] = [
     { phase: "Understand the product", agents: 0, tokens: 0, minutes: MINUTES.understand },
   ];
@@ -117,7 +121,7 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     const critique = journeys ? VOTES : 0;
     // Before the wave, one vote on every page as the kit left it: a page where nothing fails any more gets no worker.
     const look = workers ? 1 : 0;
-    const vote = fullPageJudge(screens);
+    const vote = fullPageJudge(screens, widths);
     phases.push({
       phase: journeys ? "The pages and their journeys" : "The pages",
       agents: look + workers + VOTES + critique + style,
@@ -151,7 +155,7 @@ const duration = (minutes: number) => {
 };
 
 /** The estimate as a table, phase by phase, then what it leaves out. */
-export function estimateText(estimate: Estimate, { screens, journeys }: { screens: number; journeys: number }): string {
+export function estimateText(estimate: Estimate, { screens, journeys, widths = DEFAULT_WIDTHS }: { screens: number; journeys: number; widths?: number[] }): string {
   const rows = [...estimate.phases.map((p) => ({ ...p, label: p.phase })), { ...estimate.total, label: "Total, at most" }];
   const brokenLabel = estimate.ifBroken ? `${estimate.ifBroken.phase}, at most` : "";
   const width = Math.max(...rows.map((r) => r.label.length), brokenLabel.length);
@@ -168,5 +172,7 @@ export function estimateText(estimate: Estimate, { screens, journeys }: { screen
         ? "The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run."
         : "The judges and the workers run on Sonnet.",
   ];
-  return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
+  // The default widths go unsaid, as everywhere else.
+  const at = widths.join(",") === DEFAULT_WIDTHS.join(",") ? "" : `, at ${widths.join(", ")} px`;
+  return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }

@@ -76,3 +76,16 @@ test("without --autonome the person chooses the direction: the directions cost t
   assert.ok(judged.total.tokens - chosen.total.tokens > 300_000, "the judges of the knockout cost more than 0.3 M tokens");
   assert.ok(chosen.phases[2]!.minutes < judged.phases[2]!.minutes);
 });
+
+test("one width instead of two costs the judges about half of what they look at, and nothing else", () => {
+  const both = estimateRun({ screens: 8, journeys: 4, mode: "full" });
+  assert.deepEqual(estimateRun({ screens: 8, journeys: 4, mode: "full", widths: 2 }), both, "two widths, 390 and 1280, as before");
+  const one = estimateRun({ screens: 8, journeys: 4, mode: "full", widths: 1 });
+  assert.equal(one.total.agents, both.total.agents);
+  assert.ok(one.total.tokens < both.total.tokens - 300_000, "every judge looks at half the captures");
+  assert.ok(one.phases[1]!.minutes < both.phases[1]!.minutes);
+  const judged = estimateRun({ screens: 8, journeys: 4, mode: "judge", widths: 1 });
+  assert.ok(judged.total.tokens < estimateRun({ screens: 8, journeys: 4, mode: "judge" }).total.tokens * 0.75);
+  assert.match(estimateText(one, { screens: 8, journeys: 4, widths: [1280] }), /^For 8 screens and 4 key journeys, at 1280 px:\n/);
+  assert.match(estimateText(both, { screens: 8, journeys: 4, widths: [390, 1280] }), /^For 8 screens and 4 key journeys:\n/, "the default widths go unsaid");
+});
