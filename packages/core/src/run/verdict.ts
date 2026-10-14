@@ -7,6 +7,9 @@ import type { JudgeReport } from "../judge/tally.js";
 /** The principles that judge a style itself: a client's charter fails them by what it is, and keeping it is the point. */
 export const STYLE_PRINCIPLES = ["not-generic", "not-ai-default"];
 
+/** The principles that say a front has a direction of its own, worth improving rather than replacing. */
+export const IDENTITY_PRINCIPLES = ["one-direction", "not-generic", "not-ai-default"];
+
 /** One thing that fails, where it shows. */
 export interface Failure {
   kind: "page" | "check" | "principle" | "journey" | "journey-principle";
@@ -25,6 +28,8 @@ export interface RunVerdict {
   keptWithStyle: Failure[];
   /** True only when every screen and journey was measured and nothing fails. */
   nothingToRedo: boolean;
+  /** True when no screen fails a principle of IDENTITY_PRINCIPLES: the front has a direction of its own. */
+  identity: boolean;
 }
 
 /**
@@ -99,5 +104,6 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     missing,
     keptWithStyle,
     nothingToRedo: failures.length === 0 && missing.length === 0,
+    identity: judge.pages.every((page) => !page.verdicts.some((v) => !v.pass && IDENTITY_PRINCIPLES.includes(v.principle))),
   };
 }
