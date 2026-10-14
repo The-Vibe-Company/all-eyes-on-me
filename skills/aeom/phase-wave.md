@@ -10,6 +10,7 @@ Every brief, kit or page, also says:
 
 - **Run the CLI from inside the worktree.** The worker runs `aeom ...` from inside its worktree, so the app it starts is the worktree's copy. Inside the AEOM repository itself, where a fresh worktree has no build, it is `node "$MAIN/packages/cli/dist/index.js" ...`.
 - **Its own port.** Give each worker a different port for its checks (`--start "PORT=<port> ..." --url http://localhost:<port>`), so two workers never test each other's app.
+- **The run's widths.** Every `aeom capture`, `aeom check` or `aeom journey` the worker runs takes `--widths <the run's WIDTHS, written out>`.
 - **Its own report folder.** The worker passes `--out <a temporary folder>` to `aeom check`, so it never touches `.aeom/reports`.
 - **Only its own processes.** The worker stops the server it started and nothing else: never `pkill` or `killall` by name, which takes down the servers of the other workers in the middle of their checks.
 - **Its own browser.** The worker looks at its page through `aeom capture` or its own Playwright, never through a browser pane the session shares: another worker can replace its tab at any moment.

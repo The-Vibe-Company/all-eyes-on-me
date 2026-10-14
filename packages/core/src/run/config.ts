@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { usableWidths, WIDTH_RANGE } from "../capture/capture.js";
 
 /** `.aeom/config.json`: how to reach the project's app, so commands need no flags. */
 export interface ProjectConfig {
@@ -19,6 +20,8 @@ export interface ProjectConfig {
   public?: string[];
   /** The route a signed-in user lands on, when `/` sends them elsewhere: the first screen the directions are built and judged on. */
   home?: string;
+  /** The widths that count, in px, such as [1280] for a tool used on a computer only: the only ones captured, checked, replayed and judged. Without it, 390 and 1280. */
+  widths?: number[];
 }
 
 /**
@@ -76,6 +79,12 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
   if (home !== undefined) {
     if (typeof home !== "string" || !home.trim().startsWith("/")) throw new ConfigError(`${file}: "home" is the route a signed-in user lands on, such as "/jeu".`);
     config.home = home.trim();
+  }
+  const widths = (parsed as Record<string, unknown>).widths;
+  if (widths !== undefined) {
+    const usable = usableWidths(widths);
+    if (!usable) throw new ConfigError(`${file}: "widths" lists the widths to measure, in px between ${WIDTH_RANGE.min} and ${WIDTH_RANGE.max}, such as [1280] or [390, 1280].`);
+    config.widths = usable;
   }
   const style = (parsed as Record<string, unknown>).style;
   if (style !== undefined) {

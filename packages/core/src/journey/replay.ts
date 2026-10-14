@@ -1,6 +1,6 @@
 import { exec } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { promisify } from "node:util";
 import { chromium, type Locator, type Page, type Request } from "playwright";
 import { DEFAULT_WIDTHS, screenshotCapped, scrollThrough } from "../capture/capture.js";
@@ -333,6 +333,24 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
 }
 
 /**
+ * Removes only the files the previous replay's report says it wrote: a
+ * width or a journey replayed before and not now leaves no capture behind
+ * for a judge to look at.
+ */
+async function clearPreviousReplay(outDir: string): Promise<void> {
+  let previous: JourneyReport;
+  try {
+    previous = JSON.parse(await readFile(join(outDir, "report.json"), "utf8"));
+  } catch {
+    return;
+  }
+  const files = (Array.isArray(previous?.journeys) ? previous.journeys : []).flatMap((j) => (Array.isArray(j?.runs) ? j.runs : []).flatMap((r) => [r?.sheet, ...(Array.isArray(r?.steps) ? r.steps.map((s) => s?.capture) : [])]));
+  // Only a file's own name, inside the folder: a report edited by hand never reaches outside it.
+  const own = files.filter((f): f is string => typeof f === "string" && !!f && basename(f) === f);
+  await Promise.all([...own, "report.json"].map((file) => rm(join(outDir, file), { force: true })));
+}
+
+/**
  * Replays each journey in a fresh browser at each width, capturing the screen
  * after every step, and stops a journey at the step it cannot take. Writes the
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
@@ -341,6 +359,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
   const root = new URL(url);
   const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
+  await clearPreviousReplay(outDir);
   const warnings = reset ? [] : ["No reset command in .aeom/config.json: journeys that change the app's data can differ from one replay to the next."];
   const replays: JourneyReplay[] = [];
   for (const journey of journeys) {
