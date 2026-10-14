@@ -174,3 +174,15 @@ test("aeom compare --journeys --by-critique decides from the two critiques, with
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("two replays made at different widths are not compared: the ratchet says which", async () => {
+  const dir = await ratchetDir();
+  try {
+    await writeFile(join(dir, "before", "report.json"), JSON.stringify({ ...replay({ orders: 4, contact: 5 }), widths: [390, 1280] }));
+    const { code, out } = await run(dir, ["compare", "--journeys", "before", "after"]);
+    assert.equal(code, 1);
+    assert.match(out, /before was replayed at 390, 1280 px and after at 1280 px: compare two replays made at the same widths/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

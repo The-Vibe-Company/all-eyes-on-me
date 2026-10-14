@@ -19,9 +19,9 @@ const run = async (cwd: string, args: string[]) => {
 };
 
 /** A snapshot with these checks and principles failing on `/`. */
-async function snapshot(dir: string, checks: string[], principles: string[]) {
+async function snapshot(dir: string, checks: string[], principles: string[], widths = [1280]) {
   await mkdir(join(dir, "reports"), { recursive: true });
-  const check = { url: "http://x", checkedAt: "", widths: [1280], checks: ["cursor", "overflow", "contrast", "console"], pages: ["http://x/"], errors: [], findings: checks.map((c) => ({ check: c, url: "http://x/", width: 1280, message: "" })) };
+  const check = { url: "http://x", checkedAt: "", widths, checks: ["cursor", "overflow", "contrast", "console"], pages: ["http://x/"], errors: [], findings: checks.map((c) => ({ check: c, url: "http://x/", width: 1280, message: "" })) };
   const ids = ["states", "grid"];
   const judge = { judgedAt: "", voters: ["1", "2", "3"], principles: ids.map((id) => ({ id, text: id })), failures: 0, pages: [{ page: "/", verdicts: ids.map((principle) => ({ principle, pass: !principles.includes(principle), votes: "", reasons: [], dissent: [], steps: [] })) }] };
   await writeFile(join(dir, "reports", "check.json"), JSON.stringify(check));
@@ -80,6 +80,19 @@ test("with the style kept, aeom compare leaves out the principles that judge the
     await mkdir(join(dir, ".aeom"), { recursive: true });
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
     assert.equal((await run(dir, ["compare", "before", "after", "--strict"])).code, 0, "the config keeps the style too");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("two snapshots measured at different widths are not compared: aeom compare says which", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-"));
+  try {
+    await snapshot(join(dir, "before"), ["contrast"], [], [390, 1280]);
+    await snapshot(join(dir, "after"), [], [], [1280]);
+    const { code, out } = await run(dir, ["compare", "before", "after"]);
+    assert.equal(code, 1);
+    assert.match(out, /before was measured at 390, 1280 px and after at 1280 px: compare two measures made at the same widths/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

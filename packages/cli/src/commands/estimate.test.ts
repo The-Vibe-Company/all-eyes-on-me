@@ -44,6 +44,15 @@ test("aeom estimate says what a run costs, phase by phase, from the screens and 
     assert.match(kept.out, /The kit, in the app's own style/);
     assert.match((await run(dir, ["estimate", "--directions", "4"])).out, /Four directions, for you to choose/, "--directions overrides a style kept, as /aeom --directions does");
     assert.match((await run(dir, ["estimate", "--screens", "12", "--journeys", "0"])).out, /^For 12 screens and 0 key journeys:/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:1", pages: ["/", "/jeu"], public: ["/connexion"], widths: [1280] }));
+    const desktop = await run(dir, ["estimate", "--juger"]);
+    assert.match(desktop.out, /^For 3 screens and 4 key journeys, at 1280 px:/, "the config's widths");
+    const tokens = (out: string) => Number(/Total, at most +\d+ agents +≈ (\d\.\d) M tokens/.exec(out)?.[1]);
+    assert.ok(tokens(desktop.out) < tokens((await run(dir, ["estimate", "--juger", "--widths", "390,1280"])).out), "one width costs less than two");
+    assert.match((await run(dir, ["estimate", "--widths", "390"])).out, /^For 3 screens and 4 key journeys, at 390 px:/, "--widths wins over the config");
+    const wrong = await run(dir, ["estimate", "--widths", "10"]);
+    assert.equal(wrong.code, 1);
+    assert.match(wrong.out, /--widths lists the widths to measure/);
     const bad = await run(dir, ["estimate", "--screens", "0"]);
     assert.equal(bad.code, 1);
     assert.match(bad.out, /--screens is a whole number of screens, at least 1/);

@@ -7,7 +7,7 @@ import { pairRoutes } from "../capture/shape.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { RatchetVerdict } from "../journey/ratchet.js";
 import type { JudgeReport } from "../judge/tally.js";
-import { route } from "../capture/capture.js";
+import { DEFAULT_WIDTHS, route } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { blockedJourneys } from "./features.js";
 import type { FeedbackCategory } from "./taste.js";
@@ -63,6 +63,8 @@ export interface ResultPage {
   stillFailing: Failure[];
   /** False when the run stopped before measuring its end: what still fails is then what failed before. */
   measuredAfter: boolean;
+  /** The widths the run measured, and those of the default it left out, as the config or the run declared. */
+  widths?: { measured: number[]; leftOut: number[] };
   /** What blocked journeys would need, named by `aeom features`, never built. */
   features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
 }
@@ -227,7 +229,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     for (const f of saved.entries.filter((f) => typeof f?.slug === "string" && still.includes(f.slug))) entries.push({ ...f, capture: f.capture && (await exists(join(runDir, f.capture))) ? f.capture : null });
     features = { entries, more: Number.isInteger(saved.more) ? saved.more : 0 };
   }
-  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features };
+  const measured = before?.widths ?? replayBefore?.widths;
+  const widths = Array.isArray(measured) ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
+  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}) };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -343,10 +347,17 @@ function chosenBy(d: NonNullable<ResultPage["direction"]>): string {
   return `Chosen by you; the judges' knockout among ${among} had picked ${escape(d.decision.judges)}.`;
 }
 
+/** The widths, said only when they are not the default: in six months, why a verdict speaks of the desktop alone. */
+function widthsHtml(widths: ResultPage["widths"]): string {
+  if (!widths || widths.measured.join(",") === DEFAULT_WIDTHS.join(",")) return "";
+  const left = widths.leftOut.length ? `; ${widths.leftOut.join(", ")} px left out` : "";
+  return `<p class="line">Measured at ${widths.measured.join(", ")} px, the widths declared for this project${left}.</p>`;
+}
+
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
   const named = r.features?.entries.length ? r.features : null;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 

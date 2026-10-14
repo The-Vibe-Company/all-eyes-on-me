@@ -60,6 +60,12 @@ Options:
                        the calls it made count as made before, for the guard
   --voters <n>         How many duel votes to expect (default 3)`;
 
+/** Null when both lists name the same widths; otherwise each said in px. */
+function sameWidths(a: unknown, b: unknown): [string, string] | null {
+  const said = (w: unknown) => (Array.isArray(w) ? `${[...w].sort((x, y) => x - y).join(", ")} px` : "unknown widths");
+  return said(a) === said(b) ? null : [said(a), said(b)];
+}
+
 export async function runCompare(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
@@ -85,6 +91,12 @@ export async function runCompare(argv: string[]): Promise<number> {
   const after = await read(afterDir);
   if (problems.length) {
     console.error(`Both snapshots need check.json and judge.json:\n${problems.map((p) => `  ${p}`).join("\n")}`);
+    return 1;
+  }
+  // A check that passed at 390 and is not measured there any more did not get better: two lists of widths are never compared.
+  const differ = sameWidths(before.check!.widths, after.check!.widths);
+  if (differ) {
+    console.error(`${beforeDir} was measured at ${differ[0]} and ${afterDir} at ${differ[1]}: compare two measures made at the same widths.`);
     return 1;
   }
   // With the style kept, the principles that judge the charter itself say nothing of what the run did.
@@ -158,6 +170,9 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
     const problem = report && problemWith(report);
     if (problem) problems.push(`${join(dir, "report.json")}: ${problem}`);
   }
+  // Two replays at different widths: a journey that broke at 390 only and is not replayed there did not get better.
+  const replayedAt = before && after && !problems.length ? sameWidths(before.widths, after.widths) : null;
+  if (replayedAt) problems.push(`${beforeDir} was replayed at ${replayedAt[0]} and ${afterDir} at ${replayedAt[1]}: compare two replays made at the same widths`);
   // A journey the new version was not replayed on would be neither kept nor sent back: it must be replayed.
   // One that broke is replayed: the ratchet sends it back, so its unchecked calls never stay.
   if (before && after && !problems.length) {
