@@ -50,7 +50,7 @@ export function parseWidths(value: string | undefined): number[] | string {
  * Starts the app when --start is given, runs `work`, and always stops the app
  * after. Returns 1 when the app does not start.
  */
-export async function withApp(values: { url: string; start?: string; timeout?: string }, work: () => Promise<number>): Promise<number> {
+export async function withApp(values: { url: string; start?: string; timeout?: string }, work: () => Promise<number>, onStartError?: (message: string, output: string) => void): Promise<number> {
   let app: RunningApp | undefined;
   if (values.start) {
     console.log(`Starting the app: ${values.start}`);
@@ -60,6 +60,7 @@ export async function withApp(values: { url: string; start?: string; timeout?: s
       if (!(error instanceof AppStartError)) throw error;
       console.error(`The app did not start. ${error.message}`);
       if (error.log.trim()) console.error(`\nLast output:\n${error.log.trim()}`);
+      onStartError?.(error.message, error.log.trim());
       return 1;
     }
     console.log(`App ready at ${values.url}`);

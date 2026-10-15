@@ -32,10 +32,11 @@ test("the README and the page say what AEOM is in one sentence, then what works 
   const next = readme.split("## What comes next")[1]?.split("\n## ")[0] ?? "";
   assert.ok(today && next, "the README has « What it does today » and « What comes next »");
   assert.ok(readme.indexOf("## What it does today") < readme.indexOf("## What comes next"));
-  for (const notYet of [/spend cap/i, /npm/i, /\bCI\b/, /learn/i]) {
+  for (const notYet of [/spend cap/i, /npm/i, /learn/i]) {
     assert.doesNotMatch(today, notYet, `${notYet} is not done: it belongs in « What comes next »`);
     assert.match(next, notYet);
   }
+  assert.match(today, /\bCI\b/, "holding every pull request as a CI check works today");
   assert.match(readme, /run on two real projects/i, "the README says how many real projects went through it");
   assert.doesNotMatch(readme + page, /not (yet )?run on a real project/i, "real projects went through it: nothing says the opposite");
 });
