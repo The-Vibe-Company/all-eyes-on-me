@@ -50,7 +50,7 @@ test("aeom review holds the branch's changes to the standard: the code, with its
   try {
     const { code, out } = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280"]);
     assert.equal(code, 1, out);
-    assert.match(out, /^feat\/export against main, held to \.aeom\/standard\.md:/);
+    assert.match(out, /^feat\/export against main, held to \.aeom\/standard\.md: 1 commit ahead\./);
     assert.match(out, /✗ front\/export\.html:2\s+#7c3aed is not a colour of the standard/);
     assert.match(out, /✗ front\/export\.html:2\s+a button made by hand: the standard's is \.bouton in front\/kit\.css/);
     assert.match(out, /✗ \/export\.html\s+its header differs from the rest of the app: no « Produits », « Exporter » the rest of the app does not have/);
@@ -72,25 +72,58 @@ test("a branch that touches no screen passes without starting anything; with no 
   } finally {
     git("checkout", "-q", "main");
   }
-  await rm(join(dir, ".aeom", "standard.md"));
+  // A project with no standard, at its base or in its tree.
+  const bare = await mkdtemp(join(tmpdir(), "aeom-review-bare-"));
   try {
-    const none = await run(["review", "--base", "main"]);
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: bare });
+    execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "start"], { cwd: bare });
+    const none = await promisify(execFile)("node", [AEOM, "review"], { cwd: bare, env: { ...process.env, AEOM_HOME: join(bare, ".home") } }).then(() => ({ code: 0, out: "" }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
     assert.equal(none.code, 1);
     assert.match(none.out, /No standard in \.aeom\/standard\.md: run \/aeom first, which writes it from the front as it is\./);
   } finally {
-    git("checkout", "--", ".aeom/standard.md");
+    await rm(bare, { recursive: true, force: true });
   }
 });
 
-test("with no app to start, the code is still read, and the review says the screens were not measured", async () => {
+test("with no app to start, the code is still read; a branch whose code holds but whose screens were not measured is no green", async () => {
   git("checkout", "-q", "-b", "feat/couleur");
-  await writeFile(join(dir, "front", "kit.css"), (await import("node:fs")).readFileSync(join(dir, "front", "kit.css"), "utf8") + "h1 { color: #1F4B57; }\n");
-  git("commit", "-q", "-am", "couleur");
+  await writeFile(join(dir, "front", "page.css"), "h1 { color: #1F4B57; }\n");
+  git("add", ".");
+  git("commit", "-q", "-m", "couleur");
   try {
     const { code, out } = await run(["review", "--base", "main"]);
     assert.equal(code, 1, out);
-    assert.match(out, /✗ front\/kit\.css:6\s+#1F4B57 is --petrole written in hard: use the token/);
+    assert.match(out, /✗ front\/page\.css:1\s+#1F4B57 is --petrole written in hard: use the token/);
     assert.match(out, /No app to start: \.aeom\/config\.json has no url, so the screens were not measured, only the code read\./);
+  } finally {
+    git("checkout", "-q", "main");
+  }
+  git("checkout", "-q", "-b", "feat/titre");
+  await writeFile(join(dir, "front", "produits.html"), page(["Accueil", "Produits"], `<h1>Nos produits</h1>`));
+  git("commit", "-q", "-am", "titre");
+  try {
+    const { code, out } = await run(["review", "--base", "main"]);
+    assert.equal(code, 2, out);
+    assert.match(out, /Nothing outside the standard in the code; the screens it touches were not measured\./);
+  } finally {
+    git("checkout", "-q", "main");
+  }
+});
+
+test("a deleted page is not measured; the base is found without being given; the standard is the base's", async () => {
+  git("checkout", "-q", "-b", "chore/menage");
+  await rm(join(dir, "front", "produits.html"));
+  // The branch also loosens the standard: the review still holds it to the base's.
+  await writeFile(join(dir, ".aeom", "standard.md"), "# The standard of Boutique\nWhat the front holds to.\n\n## Direction\nnuancier.\n\n## Tokens\n\n## Components\n\n## Rules\n- None.\n");
+  await writeFile(join(dir, "front", "promo.css"), ".promo { color: #7c3aed; }\n");
+  git("add", "-A");
+  git("commit", "-q", "-m", "menage");
+  try {
+    const { code, out } = await run(["review", "--dir", "front", "--widths", "1280"]);
+    assert.equal(code, 1, out);
+    assert.match(out, /^chore\/menage against main/, "main found by itself");
+    assert.match(out, /#7c3aed is not a colour of the standard/, "held to the base's standard, not the branch's edit of it");
+    assert.doesNotMatch(out, /produits\.html\s+does not load/);
   } finally {
     git("checkout", "-q", "main");
   }
