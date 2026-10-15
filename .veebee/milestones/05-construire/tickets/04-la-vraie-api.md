@@ -4,6 +4,7 @@ title: Quand la vraie API arrive, les données fictives sont remplacées sans re
 milestone: 05-construire
 depends_on: [03]
 design: null
+status: done
 tracker: { tool: github, id: 68, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/68 }
 ---
 

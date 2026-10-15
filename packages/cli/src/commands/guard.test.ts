@@ -210,7 +210,7 @@ test("a front built from scratch on fake data calls no server: with --from-scrat
   assert.equal(called.code, 1);
   assert.match(called.out, /✗ POST \/api\/panier\s+a call to a server, in "Add a product"/);
   assert.match((await run(["guard", "--from-scratch", "before", "same"])).out, /--from-scratch compares a replay with nothing: give one folder/);
-  assert.match(called.out, /Refused: a front built on fake data calls no server/);
+  assert.match(called.out, /Refused: a front built from scratch calls no server but the API given with --api/);
   assert.match((await run(["guard", "--from-scratch", "--help"])).out, /^Usage: aeom guard/);
   // A journey that breaks leaves its calls after the break unchecked: refused, not passed.
   await mkdir(join(dir, "broke"), { recursive: true });
@@ -224,4 +224,19 @@ test("a front built from scratch on fake data calls no server: with --from-scrat
   const outside = await run(["guard", "--from-scratch", "outside"]);
   assert.equal(outside.code, 1);
   assert.match(outside.out, /✗ GET https:\/\/api\.example\.com\/v1\/climbs/);
+});
+
+test("a front built on an API given calls that API, and only it: its calls are let through and listed, any other is refused, and a remote API is refused", async () => {
+  await mkdir(join(dir, "on-api"), { recursive: true });
+  await writeFile(join(dir, "on-api", "report.json"), JSON.stringify(report([{ method: "GET", path: "/v1/climbs", origin: "http://localhost:8000" } as never, { method: "POST", path: "/v1/climbs", fields: ["route"], origin: "http://localhost:8000" } as never])));
+  const ok = await run(["guard", "--from-scratch", "on-api", "--api", "http://localhost:8000/v1"]);
+  assert.equal(ok.code, 0, ok.out);
+  assert.match(ok.out, /✓ GET http:\/\/localhost:8000\/v1\/climbs\s+a call to the API given/);
+  assert.match(ok.out, /✓ POST http:\/\/localhost:8000\/v1\/climbs\s+a call to the API given/);
+  const other = await run(["guard", "--from-scratch", "outside", "--api", "http://localhost:8000/v1"]);
+  assert.equal(other.code, 1, "a call outside the API given is refused");
+  const remote = await run(["guard", "--from-scratch", "on-api", "--api", "https://api.example.com/v1"]);
+  assert.equal(remote.code, 1);
+  assert.match(remote.out, /--api is an API running on this machine, on its own fake data, such as http:\/\/localhost:8000: AEOM touches no real data/);
+  assert.match((await run(["guard", "same", "same", "--api", "http://localhost:8000"])).out, /--api goes with --from-scratch/);
 });
