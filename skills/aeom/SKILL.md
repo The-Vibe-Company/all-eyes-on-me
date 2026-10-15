@@ -27,7 +27,7 @@ The user types a verb after `/aeom`, or the option it stands for:
 
 - **`/aeom judge`** is `/aeom --juger`: judge the front, and stop at the verdict.
 - **`/aeom redo`** is `/aeom` with no option: judge, then redo what fails (« Without an option » below). Options follow the verb: `/aeom redo --garder-le-style`.
-- **`/aeom review`** will hold a pull request to the standard: not built yet; say so in one line and stop.
+- **`/aeom review`** runs `aeom review` on the branch and says what it prints, file by file and screen by screen; its GitHub check, its judges and its journeys are not built yet.
 - **`/aeom build`** with `--from-scratch` mocks up a front from a spec or a prompt, and with `--api` plugs it into its API (section 2e); a change asked in a sentence comes later: say so in one line and stop.
 
 A run keeps its options under their own names: `/aeom judge` is marked `--option juger`.
@@ -48,7 +48,7 @@ A run keeps its options under their own names: `/aeom judge` is marked `--option
 
 ## Show as you go
 
-The user follows the run through its captures, not through a report at the end. Send images into the session (as files when the session can, otherwise their paths) every time something visible lands, without waiting to be asked:
+The user follows the run through its captures. Send images into the session (as files, or their paths) every time something visible lands, unasked:
 
 - **Before**: the captures of section 1, with the count of what fails.
 - **The directions**, once screened (section 2b, step 6): the sheet with the front as it is, then each one left.
@@ -57,7 +57,7 @@ The user follows the run through its captures, not through a report at the end. 
 - **Each page** as it merges, before and after side by side.
 - **The end**: the comparison table and every page before and after.
 
-One message per checkpoint, a line of context with the images, no more. A long wave still sends something at least every few minutes: the latest page that landed. The user reacting to a capture is feedback, not an interruption: take it and keep going.
+One message per checkpoint, a line of context with the images. A long wave sends the latest page that landed every few minutes. A reaction to a capture is feedback: take it and keep going.
 
 ## Without an option (`/aeom redo`): judge, then redo what fails
 
