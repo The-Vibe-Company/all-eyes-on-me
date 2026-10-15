@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
 import { readFileSync } from "node:fs";
 import { signIn, startApp, type RunningApp } from "../capture/index.js";
-import { checkClipped, checkContrast, checkCursor, checkHeader, checkOverflow, checkPages, checkSite, checkUneven, checkWrap, watchConsole } from "./index.js";
+import { checkClipped, checkContrast, checkCursor, checkFontSize, checkHeader, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 
@@ -244,6 +244,54 @@ test("a page that goes elsewhere while it is checked does not stop the check of 
   } finally {
     await new Promise((done) => server.close(done));
   }
+});
+
+describe("tap-size", () => {
+  test("on a phone, flags a button or a link smaller than 44 by 44 px, not a link inside a sentence", async () => {
+    const page = await pageWith(`
+      <a class="help" href="/aide" style="display:inline-block;font-size:12px">Aide</a>
+      <button class="close" style="width:24px;height:24px;padding:0">×</button>
+      <button style="min-height:48px;padding:0 16px">Ajouter</button>
+      <p>Lisez nos <a href="/cgv">conditions</a> avant de commander.</p>
+      <label style="display:flex;align-items:center;min-height:48px"><input type="checkbox"> Se souvenir de moi</label>`, 390);
+    const issues = await checkTapSize(page);
+    assert.deepEqual(issues.map((i) => i.element), ['a.help "Aide"', 'button.close "×"']);
+    assert.match(issues[1]!.message, /24×24 px: too small to tap, 44×44 at least/);
+  });
+
+  test("on a computer, a small target is not a tap", async () => {
+    assert.deepEqual(await checkTapSize(await pageWith(`<button style="width:24px;height:24px;padding:0">×</button>`)), []);
+  });
+});
+
+describe("font-size", () => {
+  test("flags text under 12 px, and on a phone a field under 16 px, which the phone zooms into", async () => {
+    const page = await pageWith(`<p class="fine" style="font-size:10px">Prix indicatif hors livraison.</p><p>Lisible.</p><input class="email" type="email" style="font-size:14px" placeholder="Email"><input type="text" style="font-size:16px">`, 390);
+    const issues = await checkFontSize(page);
+    assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["p.fine", "input.email"]);
+    assert.match(issues[0]!.message, /its text is 10 px: 12 at least/);
+    assert.match(issues[1]!.message, /the field's text is 14 px: a phone zooms in when you type in it, 16 at least/);
+    assert.deepEqual((await checkFontSize(await pageWith(`<input type="email" style="font-size:14px">`))).length, 0, "a computer does not zoom");
+  });
+});
+
+describe("line-length", () => {
+  test("flags a paragraph of more than 90 characters a line, over three lines or more", async () => {
+    const words = "Nos lampes sont faites à la main dans un atelier du Jura, avec du laiton brossé et du lin. ".repeat(4);
+    const issues = await checkLineLength(await pageWith(`<p class="wide" style="width:1100px;font-size:16px">${words}</p><p style="max-width:60ch">${words}</p><p style="width:1100px">Une ligne seule, longue ou pas, se lit d'un coup.</p>`));
+    assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["p.wide"]);
+    assert.match(issues[0]!.message, /about \d{3} characters a line: 90 at most, so the eye finds the next line/);
+  });
+});
+
+describe("zoom", () => {
+  test("flags a page that forbids zooming, and on a phone a page with no viewport tag", async () => {
+    const forbids = await pageWith(`<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><p>Hi</p>`, 390);
+    assert.match((await checkZoom(forbids))[0]?.message ?? "", /the page forbids zooming \(user-scalable=no, maximum-scale=1\): let people zoom/);
+    assert.match((await checkZoom(await pageWith(`<p>Hi</p>`, 390)))[0]?.message ?? "", /no viewport tag: a phone shows the page as a shrunken computer page/);
+    assert.deepEqual(await checkZoom(await pageWith(`<p>Hi</p>`)), [], "a computer needs none");
+    assert.deepEqual(await checkZoom(await pageWith(`<meta name="viewport" content="width=device-width, initial-scale=1"><p>Hi</p>`, 390)), []);
+  });
 });
 
 test("a check the config leaves out of a page finds nothing there, and still runs on the others", async () => {

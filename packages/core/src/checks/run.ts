@@ -10,13 +10,17 @@ import { checkClipped } from "./clipped.js";
 import { checkContrast } from "./contrast.js";
 import { watchConsole } from "./console.js";
 import { checkCursor } from "./cursor.js";
+import { checkFontSize } from "./font-size.js";
+import { checkLineLength } from "./line-length.js";
+import { checkTapSize } from "./tap-size.js";
+import { checkZoom } from "./zoom.js";
 import { checkHeader } from "./header.js";
 import { checkOverflow } from "./overflow.js";
 import { checkUneven } from "./uneven.js";
 import { checkWrap } from "./wrap.js";
 import type { CheckName, Finding, Issue } from "./types.js";
 
-export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped"];
+export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom"];
 
 /** The routes where a check does not apply, by check, as the config says: a landing page whose header scrolls away on purpose. */
 export type CheckExceptions = Partial<Record<CheckName, string[]>>;
@@ -62,6 +66,11 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
         await add("wrap", () => checkWrap(page));
         await add("uneven", () => checkUneven(page));
         await add("clipped", () => checkClipped(page));
+        await add("tap-size", () => checkTapSize(page));
+        await add("font-size", () => checkFontSize(page));
+        await add("line-length", () => checkLineLength(page));
+        // The viewport tag is the page's, not the width's: said once, at the narrowest width.
+        if (width === Math.min(...widths)) await add("zoom", () => checkZoom(page));
         // Last of the layout checks: it scrolls the page, then brings it back where it was.
         await add("header", () => checkHeader(page));
         if (width === widest) {
