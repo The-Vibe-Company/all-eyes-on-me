@@ -53,8 +53,8 @@ async function printWidths(): Promise<number> {
     console.log(`Widths: ${used.widths.join(",")}. The front is used on ${used.platform} (seen: ${used.source}).`);
     return 0;
   }
-  const why = sheet === undefined ? "there is no product sheet" : used ? `the sheet guesses ${used.platform} (to confirm)` : `the sheet does not say where the front is used`;
-  console.log(`Not known: ${why}. Ask the user whether the front is used on mobile, desktop or both, then record it: aeom product --used-on <mobile|desktop|both> --by <their name>. Until then, 390,1280.`);
+  const why = sheet === undefined ? "there is no product sheet" : used ? `the sheet says ${used.platform} without a (seen: …) source, a guess` : `the sheet does not say where the front is used`;
+  console.log(`Not known: ${why}. Ask the user whether the front is used on mobile, desktop or both, then record it: aeom product --used-on <mobile|desktop|both> --by <their name>. Until then, the widths are 390,1280.`);
   return 2;
 }
 
@@ -67,13 +67,29 @@ async function recordUsedOn(platform: string, by: string | undefined): Promise<n
     console.error(`--by names who answered, such as --by Antoine: the sheet says whose word it is.`);
     return 1;
   }
+  // The name becomes the part's source, (seen: <name>): anything that would end or break it is refused.
+  if (/[()<>\n\r]/.test(by)) {
+    console.error(`--by is a name on one line, without parentheses or angle brackets, such as --by Antoine.`);
+    return 1;
+  }
   return updateSheet(PRODUCT, (holder) => `Another aeom product (process ${holder}) is writing the sheet. Run again once it is done.`, async ({ sheet: current, base }) => {
     if (current === undefined) {
       console.error(`No product sheet in ${SHEET}: write it first, with aeom product <draft>.`);
       return 1;
     }
+    // Without AEOM's last draft, nothing tells the user's parts from AEOM's: taking this sheet as the base would hand them to the next draft.
+    if (base === undefined) {
+      console.error(`AEOM never wrote ${SHEET} with aeom product: write its draft with aeom product <draft> first, then record the answer.`);
+      return 1;
+    }
+    const text = withPlatform(current, platform as Platform, by.trim());
+    const left = validateProduct(text);
+    if (left.length) {
+      console.error(`With the answer, ${SHEET} would not be a product sheet, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}`);
+      return 1;
+    }
     // AEOM's last draft stays the base: the answer reads as the user's correction, and every later merge keeps it.
-    return { text: withPlatform(current, platform as Platform, by.trim()), base: base ?? current, after: () => console.log(`${SHEET} says the front is used on ${platform}, as ${by.trim()} said.`) };
+    return { text, base, after: () => console.log(`${SHEET} says the front is used on ${platform}, as ${by.trim()} said.`) };
   });
 }
 

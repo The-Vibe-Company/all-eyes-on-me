@@ -231,7 +231,7 @@ test("aeom product --widths says the widths the front is judged at and why, and 
     await writeFile(file, sheet(undefined, undefined, "`both`: nothing says it. (to confirm)"));
     const guess = await run(dir, ["product", "--widths"]);
     assert.equal(guess.code, 2);
-    assert.match(guess.out, /Not known: the sheet guesses both \(to confirm\)\. Ask the user whether the front is used on mobile, desktop or both, then record it: aeom product --used-on <mobile\|desktop\|both> --by <their name>/);
+    assert.match(guess.out, /Not known: the sheet says both without a \(seen: …\) source, a guess\. Ask the user whether the front is used on mobile, desktop or both, then record it: aeom product --used-on <mobile\|desktop\|both> --by <their name>/);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ widths: [390, 768, 1280] }));
     const config = await run(dir, ["product", "--widths"]);
     assert.equal(config.code, 0, "the config wins over the sheet");
@@ -257,6 +257,27 @@ test("aeom product --used-on records the user's answer in the sheet as their own
     assert.equal(wrong.code, 1);
     assert.match(wrong.out, /--used-on is mobile, desktop or both/);
     assert.equal((await run(dir, ["product", "--used-on", "mobile"])).code, 1, "an answer says whose it is");
+    for (const by of ["<me>", "Antoine (CEO", "Antoine\nBruno"]) {
+      const odd = await run(dir, ["product", "--used-on", "mobile", "--by", by]);
+      assert.equal(odd.code, 1, `--by ${JSON.stringify(by)}`);
+      assert.match(odd.out, /--by is a name on one line, without parentheses or angle brackets/);
+    }
+    assert.match(await readFile(file, "utf8"), /`desktop`: Antoine said so\. \(seen: Antoine\)/, "a refused answer leaves the sheet as it was");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom product --used-on refuses a sheet AEOM never wrote: the user's own parts would read as AEOM's and be overwritten", async () => {
+  const { dir, sheet: file } = await project();
+  try {
+    await mkdir(join(dir, ".aeom"), { recursive: true });
+    await writeFile(file, sheet("Written by hand. (seen: Antoine)"));
+    const { code, out } = await run(dir, ["product", "--used-on", "desktop", "--by", "Antoine"]);
+    assert.equal(code, 1);
+    assert.match(out, /AEOM never wrote .aeom\/product\.md with aeom product: write its draft with aeom product <draft> first/);
+    assert.match(await readFile(file, "utf8"), /Written by hand\. \(seen: Antoine\)/);
+    assert.equal(existsSync(join(dir, ".aeom", "product.base.md")), false);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

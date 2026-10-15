@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mergeProduct, platformOf, productBrief, validateProduct } from "./index.js";
+import { mergeProduct, platformOf, productBrief, validateProduct, withPlatform } from "./index.js";
 
 const journey = (name: string, source = "(seen: /)") => `### ${name}\nWhy: a visitor wants it. ${source}\n1. Open \`/\`.\n2. Click "${name}".\n`;
 
@@ -201,4 +201,12 @@ test("the platform the sheet says gives the widths to judge at, only when it was
   assert.deepEqual(platformOf(product({ used: "`mobile`: a phone app in the browser. (seen: Antoine)" })), { platform: "mobile", widths: [390], seen: true, source: "Antoine" });
   assert.deepEqual(platformOf(product({ used: "`both`: a guess. (to confirm)" })), { platform: "both", widths: [390, 1280], seen: false, source: null });
   assert.equal(platformOf(product({ used: null as unknown as string })), null, "a sheet written before AEOM said it");
+});
+
+test("the user's answer goes in a sheet written before AEOM said where the front is used, before the journeys, and the sheet stays whole", () => {
+  const old = product({ used: null as unknown as string });
+  const answered = withPlatform(old, "desktop", "Antoine");
+  assert.deepEqual(validateProduct(answered), []);
+  assert.match(answered, /## The main loop[\s\S]*## Where it is used\n`desktop`: Antoine said so\. \(seen: Antoine\)\n\n## Key journeys/);
+  assert.equal(platformOf(answered)?.seen, true);
 });
