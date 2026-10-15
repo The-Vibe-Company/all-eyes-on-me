@@ -1,0 +1,31 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_79abe4d6cbd14c 36
+packages/core/src/product/product.test.ts
+  s_4ce34ec42d9105::t_0ab33b2f85d7b0 3,205-211
+  s_4ce34ec42d9105::t_46db711fa947cd 212
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_79abe4d6cbd14c 15
+skills/aeom/product.md
+  s_4ce34ec42d9105::t_79abe4d6cbd14c 53
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_ce7afe6598243a 56-57,70-74,80-90,92
+packages/cli/src/commands/product.test.ts
+  s_4ce34ec42d9105::t_0ab33b2f85d7b0 260-280
+  s_4ce34ec42d9105::t_ce7afe6598243a 234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "209ff1942c2e727b705a6b6f2bd9f7f0d934e6f8",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
