@@ -67,6 +67,10 @@ export interface ResultPage {
   widths?: { measured: number[]; leftOut: number[] };
   /** True for a run that built a front from nothing (`/aeom build --from-scratch`): no before, every screen and journey new. */
   built?: boolean;
+  /** The API the front reads, when one was given: its base, from the run's `api` file. */
+  api?: string;
+  /** True for a run that plugged an existing front into its API (`/aeom build --api`): its screens did not change. */
+  replug?: boolean;
   /** What blocked journeys would need, named by `aeom features`, never built. */
   features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
 }
@@ -100,6 +104,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
   // A run that built a front from nothing has no before: only what it built.
   const built = !before && !replayBefore && (await first(runDir, ["end", "after"], join("captures", "manifest.json"))) !== null;
+  // The API given, and whether the run only plugged an existing front into it, as the skill notes them in the run's folder.
+  const api = (await readFile(join(runDir, "api"), "utf8").catch(() => "")).trim() || undefined;
+  const replug = await exists(join(runDir, "replug"));
   if (!before && !replayBefore && !built) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
   const verdict = await json<SavedVerdict>(join(runDir, "verdict.json"));
   const keepStyle = verdict?.keepStyle === true;
@@ -133,7 +140,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     const failingAfter = c?.after?.failing ?? [];
     const d = decided?.find((x) => x.page === page);
     const decision = d?.verdict;
-    const status: ResultPage["screens"][number]["status"] = built ? (erroredAfter.includes(page) ? "does not load" : "new") :
+    const status: ResultPage["screens"][number]["status"] = built ? (erroredAfter.includes(page) ? "does not load" : replug ? "unchanged" : "new") :
       erroredAfter.includes(page) || (erroredBefore.includes(page) && !a) ? "does not load"
       : !decision ? (c?.verdict === "new" ? "new" : "unchanged")
       : decision === "better" ? "kept" : decision === "new" || decision === "missing" ? decision : "sent back";
@@ -198,7 +205,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       slug: j.slug,
       name: j.name,
       // Without duels, nothing better sends nobody back: the journey is as it was.
-      status: built ? "new" : verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
+      status: built ? (replug ? "unchanged" : "new") : verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
       why: verdictOfJourney?.why ?? null,
       broke: { before: broke(j), after: broke(a) },
       steps: { before: widest(j)?.counts.steps ?? null, after: a ? (widest(a)?.counts.steps ?? null) : null },
@@ -239,7 +246,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   // Each width once, narrowest first, whatever wrote the manifest: anything else is not a list of widths.
   const measured = usableWidths(before?.widths ?? replayBefore?.widths ?? (built ? after?.widths : undefined));
   const widths = measured ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
-  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}) };
+  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}) };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -365,7 +372,7 @@ function widthsHtml(widths: ResultPage["widths"]): string {
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${r.built ? "What the run built" : nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${r.replug ? "The front, on its API" : r.built ? "What the run built" : nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
   const named = r.features?.entries.length ? r.features : null;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 
@@ -377,7 +384,7 @@ export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { 
 
   // A run that built from nothing has no before: the screen alone.
   const pair = (w: { width: number; before: string | null; after: string | null }, what: string) => r.built
-    ? `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Built</figcaption>${img(w.after, `${what}, ${w.width} px`)}</figure></div></div>` :
+    ? `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>${r.replug ? "On its API" : "Built"}</figcaption>${img(w.after, `${what}, ${w.width} px`)}</figure></div></div>` :
     `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Before</figcaption>${img(w.before, `${what} before, ${w.width} px`)}</figure>${nothing ? "" : `<figure><figcaption>After</figcaption>${img(w.after, `${what} after, ${w.width} px`)}</figure>`}</div></div>`;
   const screens = r.screens
     .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.byKit ? `<p class="muted">Fixed by the kit: no worker touched it.</p>` : ""}${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${nothing ? "" : say(ofScreen(s))}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, JourneyError, journeyFindingsByPage, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { ConfigError, JourneyError, journeyFindingsByPage, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport, type JudgeReport, localApiBase } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
@@ -24,12 +24,15 @@ ${APP_OPTIONS_HELP}
                        fail there, for the worker of that page
   --critique <file>    The critique of the journeys, for --by-page
                        (default .aeom/reports/judge-journeys.json)
-  --json               With --by-page, write it as JSON`;
+  --json               With --by-page, write it as JSON
+  --api <url>          With --dir, the API the front reads, running on this
+                       machine on its own fake data; any other server is never
+                       reached: what would leave for it is recorded and stopped`;
 
 export async function runJourney(argv: string[]): Promise<number> {
   const parsed = parseArgs({
     args: argv,
-    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" }, plan: { type: "boolean" }, "by-page": { type: "boolean" }, critique: { type: "string", default: ".aeom/reports/judge-journeys.json" }, json: { type: "boolean" } },
+    options: { ...APP_OPTIONS, journeys: { type: "string", default: ".aeom/journeys" }, out: { type: "string", default: ".aeom/captures/journeys" }, reset: { type: "string" }, plan: { type: "boolean" }, "by-page": { type: "boolean" }, critique: { type: "string", default: ".aeom/reports/judge-journeys.json" }, json: { type: "boolean" }, api: { type: "string" } },
   }).values;
   if (parsed.help) {
     console.log(JOURNEY_HELP);
@@ -57,6 +60,19 @@ export async function runJourney(argv: string[]): Promise<number> {
   if (parsed.dir !== undefined && !argv.some((a) => a === "--journeys" || a.startsWith("--journeys="))) {
     console.error(`With --dir, say which journeys to replay: --journeys <folder>. Those in .aeom/journeys are the app's.`);
     return 1;
+  }
+  // A folder of pages built from scratch reaches no server but the API given, which runs on this machine.
+  let api: string | null = null;
+  if (parsed.api !== undefined) {
+    if (parsed.dir === undefined) {
+      console.error(`--api goes with --dir: the API a front built from scratch reads.`);
+      return 1;
+    }
+    api = localApiBase(parsed.api);
+    if (!api) {
+      console.error(`--api is an API running on this machine, on its own fake data, such as http://localhost:8000: AEOM touches no real data.`);
+      return 1;
+    }
   }
   const values = await withConfig(parsed);
   if (!values.url) {
@@ -96,7 +112,7 @@ export async function runJourney(argv: string[]): Promise<number> {
     if (reset && session?.kind === "state") console.log(`With a reset, a saved session may end before the next journey: if the journeys land signed out, give "login" a "script" that prints a new one.`);
     let report: JourneyReport;
     try {
-      report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}) });
+      report = await replayJourneys({ url, journeys, outDir: values.out, widths, ...(reset ? { reset } : {}), ...(session ?? {}), ...(servingFolder() ? { closed: { api } } : {}) });
     } catch (error) {
       if (!(error instanceof ReplayError)) throw error;
       console.error(error.message);

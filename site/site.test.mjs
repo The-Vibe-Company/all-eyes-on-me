@@ -189,7 +189,7 @@ test("the build refuses any folder whose emptying would delete the site", () => 
 test("the page says the four things AEOM does, the ones not built yet marked as coming", () => {
   for (const what of ["It walks your product like a user.", "It redesigns what gets in the way.", "It keeps the line.", "It mocks up what you describe."]) assert.ok(page.includes(what), `${what} is missing`);
   assert.match(page.split("It keeps the line.")[0].split("It redesigns what gets in the way.")[1] ?? "", /class="soon"/, "keeping every pull request to the standard is not built yet: it says so");
-  assert.match(page.split("It mocks up what you describe.")[0].split("It keeps the line.")[1] ?? "", /class="soon"/, "a mockup from a spec or a prompt is not built yet: it says so");
+  assert.doesNotMatch(page.split("It mocks up what you describe.")[0].split("It keeps the line.")[1] ?? "", /class="soon"/, "a mockup from a spec or a prompt is built: it does not say « Soon »");
   assert.match(page.split("It mocks up what you describe.")[1]?.split("</section>")[0] ?? "", /spec or a prompt/, "the mockup starts from a spec or a prompt");
   assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
   // The prose only: what a drawing shows, such as a terminal's lines, is not read as text to wade through.

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { ConfigError, guardJourneys, loadConfig, type JourneyReport, type ServerCall } from "@aeom/core";
+import { ConfigError, guardJourneys, loadConfig, type JourneyReport, type ServerCall, localApiBase, underApi } from "@aeom/core";
 
 export const GUARD_HELP = `Usage: aeom guard <before-dir> <after-dir> [options]
        aeom guard --from-scratch <after-dir> [options]
@@ -20,7 +20,10 @@ Options:
   --allow <what>       A call, such as "POST /api/orders", or a file that the
                        request needs; repeat it; needs --feature
   --from-scratch       A front built from nothing, on fake data: compared with
-                       nothing, so any call it makes is refused`;
+                       nothing, so any call it makes is refused
+  --api <url>          With --from-scratch, the API the front is plugged into,
+                       running on this machine on its own fake data: its calls
+                       are let through and listed, any other is refused`;
 
 const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout }) => stdout);
 
@@ -84,8 +87,21 @@ export async function runGuard(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { base: { type: "string" }, feature: { type: "string" }, allow: { type: "string", multiple: true }, "from-scratch": { type: "boolean" }, help: { type: "boolean", short: "h" } },
+    options: { base: { type: "string" }, feature: { type: "string" }, allow: { type: "string", multiple: true }, "from-scratch": { type: "boolean" }, api: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
+  // The API a front built from nothing is plugged into: on this machine only, on its own fake data.
+  let api: string | null = null;
+  if (values.api !== undefined && !values.help) {
+    if (!values["from-scratch"]) {
+      console.error(`--api goes with --from-scratch: the API a front built from nothing is plugged into.`);
+      return 1;
+    }
+    api = localApiBase(values.api);
+    if (!api) {
+      console.error(`--api is an API running on this machine, on its own fake data, such as http://localhost:8000: AEOM touches no real data.`);
+      return 1;
+    }
+  }
   // A front built from nothing is compared with nothing: it may make no call at all, but those an API asked for allows.
   if (values["from-scratch"] && !values.help && positionals.length !== 1) {
     console.error(`--from-scratch compares a replay with nothing: give one folder, the replay of the front built.`);
@@ -151,14 +167,25 @@ export async function runGuard(argv: string[]): Promise<number> {
   }
 
   if (protectedFiles.length === 0) console.log(`No "protected" list in .aeom/config.json: AEOM compared the calls only, and no file is protected.\n`);
-  const { refused, allowed } = guardJourneys({ before, after, changed, protectedFiles, allow, scratch: Boolean(values["from-scratch"]) });
+  const guarded = guardJourneys({ before, after, changed, protectedFiles, allow, scratch: Boolean(values["from-scratch"]) });
+  // A call to the API given is the front reading its data: let through, and listed.
+  const toApi = (v: { kind: string; what: string }) => api !== null && v.kind === "call" && underApi(v.what.slice(v.what.indexOf(" ") + 1), api);
+  const fromApi = guarded.refused.filter(toApi);
+  const refused = guarded.refused.filter((v) => !toApi(v));
+  const allowed = guarded.allowed;
+  for (const v of fromApi) console.log(`✓ ${v.what}  a call to the API given`);
   for (const v of allowed) console.log(`✓ ${v.what}  let through for the feature asked: "${values.feature}"`);
   for (const v of refused) {
     const journeys = v.journeys ?? (v.journey ? [v.journey] : []);
     console.log(`✗ ${v.what}  ${v.why}${journeys.length ? `, in ${journeys.map((name) => `"${name}"`).join(", ")}` : ""}`);
   }
   if (refused.length && values["from-scratch"]) {
-    console.log(`\nRefused: a front built on fake data calls no server. Read the data through the data module, or give the API with --feature and --allow.`);
+    console.log(api ? `\nRefused: a front built from scratch calls no server but its API, ${api}.` : `\nRefused: a front built on fake data calls no server. Read the data through the data module, or give its API with --api.`);
+    return 1;
+  }
+  // An API given that no journey called: the front does not read it, whatever its data module says.
+  if (api && !fromApi.length) {
+    console.log(`\nRefused: no journey called the API given, ${api}: the front still reads its fake data. Plug its data module into the API, or check that the API answers the front.`);
     return 1;
   }
   if (refused.length) {
@@ -167,6 +194,7 @@ export async function runGuard(argv: string[]): Promise<number> {
   }
   // What was let through is a call or a file that changed: say only what holds for everything else.
   if (allowed.length) console.log(`\nNothing else: every other call was made before${values.base ? ", and no other protected file changed" : ""}.`);
+  else if (values["from-scratch"] && fromApi.length) console.log(`\nNo other call: the front calls the API given and nothing else${values.base ? ", and no protected file changed" : ""}.`);
   else if (values["from-scratch"]) console.log(`No call to a server: the front runs on its own data${values.base ? ", and no protected file changed" : ""}.`);
   else console.log(`No feature added: every call was made before${values.base ? ", and no protected file changed" : ""}.`);
   return 0;

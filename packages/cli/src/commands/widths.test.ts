@@ -21,11 +21,13 @@ const run = async (cwd: string, args: string[]) => {
 };
 
 let server: Server;
+const hits: Record<string, number> = {};
 let url: string;
 
 before(async () => {
   // A desktop tool: its link to the orders is hidden on a phone, so the journey breaks there only.
   server = createServer((req, res) => {
+    if (req.url === "/never") hits.never = (hits.never ?? 0) + 1;
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     const viewport = `<meta name="viewport" content="width=device-width, initial-scale=1">`;
     res.end(req.url === "/orders" ? `${viewport}<h1>Commandes</h1>` : `${viewport}<style>@media (max-width: 600px) { nav { display: none } }</style><nav><a href="/orders">Commandes</a></nav><h1>Tri du matin</h1>`);
@@ -174,14 +176,15 @@ test("a front built from scratch that calls another server is seen by the replay
   try {
     const folder = join(dir, "front");
     await mkdir(folder);
-    await writeFile(join(folder, "index.html"), `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><h1>Voies</h1><script>fetch("${url}/orders").catch(() => {})</script>`);
+    await writeFile(join(folder, "index.html"), `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><h1>Voies</h1><script>fetch("${url}/never").catch(() => {})</script>`);
     await mkdir(join(dir, "journeys"));
     await writeFile(join(dir, "journeys", "open.json"), JSON.stringify({ name: "Open", steps: [{ do: "open", path: "/" }] }));
     const replayed = await run(dir, ["journey", "--dir", folder, "--journeys", join(dir, "journeys"), "--widths", "1280", "--out", join(dir, "end")]);
     assert.equal(replayed.code, 0, replayed.out);
     const guarded = await run(dir, ["guard", "--from-scratch", join(dir, "end")]);
     assert.equal(guarded.code, 1, guarded.out);
-    assert.match(guarded.out, new RegExp(`✗ GET ${url.replace(/[.:/]/g, "\\$&")}/orders\\s+a call to a server`));
+    assert.match(guarded.out, /\/never\s+a call to a server/);
+    assert.equal(hits.never ?? 0, 0, "stopped before it reached the other server");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

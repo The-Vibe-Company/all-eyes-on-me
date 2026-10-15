@@ -19,7 +19,7 @@
     <li><a class="cmds__card cmds__card--judge" href="#judge"><span class="cmds__n">01</span><code>/aeom judge</code><span class="cmds__verb">Judge</span></a></li>
     <li><a class="cmds__card cmds__card--redo" href="#redo"><span class="cmds__n">02</span><code>/aeom redo</code><span class="cmds__verb">Redo</span></a></li>
     <li><a class="cmds__card cmds__card--check" href="#check"><span class="cmds__n">03 <span class="soon">Soon</span></span><code>/aeom review</code><span class="cmds__verb">Check</span></a></li>
-    <li><a class="cmds__card cmds__card--build" href="#build"><span class="cmds__n">04 <span class="soon">Soon</span></span><code>/aeom build</code><span class="cmds__verb">Mock up</span></a></li>
+    <li><a class="cmds__card cmds__card--build" href="#build"><span class="cmds__n">04</span><code>/aeom build</code><span class="cmds__verb">Mock up</span></a></li>
   </ol>
 </section>
 
@@ -79,20 +79,20 @@
 
 <section class="feature feature--build" id="build" aria-labelledby="build-title">
   <div class="feature__text">
-    <p class="cmd"><code>/aeom build</code> <span class="soon">Soon</span></p>
+    <p class="cmd"><code>/aeom build</code></p>
     <h2 id="build-title">Mock up a front end.</h2>
     <p class="when"><b>When</b> you have a spec or an idea, and no front yet.</p>
     <ul class="does">
       <li>Reads your spec, or a prompt of one line, and drafts the product sheet and its key journeys from it.</li>
       <li>Says what the run will cost, and waits for your go.</li>
       <li>Draws three art directions from your product's own world, and you pick one.</li>
-      <li>Mocks up the screens of each key journey on it: front only, on your API or on fake data named as such.</li>
+      <li>Mocks up the screens of each key journey on it: front only, on an API running on your machine or on fake data named as such.</li>
       <li>Replays each journey to its end, writes the standard of your front end, and opens a pull request.</li>
     </ul>
   </div>
   <div class="term">
-    <p class="term__head"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>Soon · what it will say</p>
-<pre><span class="l"><span class="term__in">/aeom build --from-scratch "A logbook for a climbing gym: members log their climbs, route setters see what gets climbed."</span></span><span class="l">No front yet. Product sheet drafted from your prompt: .aeom/product.md</span><span class="l">3 key journeys: Log a climb · See my progress · See what gets climbed</span><span class="l">What the run will cost, phase by phase.</span><span class="l"><span class="term__in">go</span></span><span class="l">Three directions, drawn from the product:</span><span class="l">  Route tape · Chalk board · Grade chart</span><span class="l">Which one should the front take?</span><span class="l"><span class="term__in">Route tape</span></span><span class="l">Kit built on Route tape.</span><span class="l"><span class="term__v">✓</span> Log a climb            reaches its end, on fake data</span><span class="l"><span class="term__v">✓</span> See my progress        reaches its end, on fake data</span><span class="l"><span class="term__v">✓</span> See what gets climbed  reaches its end, on fake data</span><span class="l">Fake data, named as such, in one module: src/fake/</span><span class="l">Standard written: .aeom/standard.md</span><span class="l">Pull request opened: #1 A first front, on Route tape</span></pre>
+    <p class="term__head"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>Claude Code · a climbing gym, from one sentence</p>
+<pre><span class="l"><span class="term__in">/aeom build --from-scratch "A logbook for a climbing gym: members log their climbs, route setters see what gets climbed."</span></span><span class="l">No front yet. Product sheet drafted from your prompt: .aeom/product.md</span><span class="l">3 key journeys: Log a climb · See my progress · See what gets climbed</span><span class="l">What the run will cost, phase by phase.</span><span class="l"><span class="term__in">go</span></span><span class="l">Three directions, drawn from the product:</span><span class="l">  Route tape · Chalk board · Grade chart</span><span class="l">Which one should the front take?</span><span class="l"><span class="term__in">Route tape</span></span><span class="l">Kit built on Route tape.</span><span class="l"><span class="term__v">✓</span> Log a climb            reaches its end, on fake data</span><span class="l"><span class="term__v">✓</span> See my progress        reaches its end, on fake data</span><span class="l"><span class="term__v">✓</span> See what gets climbed  reaches its end, on fake data</span><span class="l">Fake data, named as such, in one module: front/fake/</span><span class="l">Standard written: .aeom/standard.md</span><span class="l">Pull request opened: #1 A first front, on Route tape</span></pre>
   </div>
 </section>
 

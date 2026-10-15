@@ -10,7 +10,7 @@ import { DEFAULT_WIDTHS } from "../capture/capture.js";
  * tokens are the agents' own: the session that coordinates the run is apart.
  */
 
-export type RunMode = "judge" | "full" | "keep-style" | "ux" | "prompt" | "scratch";
+export type RunMode = "judge" | "full" | "keep-style" | "ux" | "prompt" | "scratch" | "replug";
 
 export interface Phase {
   phase: string;
@@ -77,6 +77,15 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
       // The session reads the prompt and the charter, then writes the workers' briefs.
       { phase: "Read the prompt", agents: 0, tokens: 0, minutes: 2 },
       { phase: `${named} from the prompt, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+    ]);
+  }
+  if (mode === "replug") {
+    // A front built from scratch, plugged into its API: one worker on the data module, then the measure.
+    const critique = journeys ? VOTES : 0;
+    return withTotal(mode, [
+      { phase: "Plug the data module into the API", agents: 1, tokens: WORKER.tokens, minutes: MINUTES.page },
+      { phase: "Measure the screens and the journeys", agents: VOTES + critique, tokens: VOTES * pj.tokens + critique * jj.tokens, minutes: pj.minutes + (critique ? jj.minutes : 0) },
+      { phase: "The result page and the PR", agents: 0, tokens: 0, minutes: MINUTES.end },
     ]);
   }
   if (mode === "scratch") {
@@ -199,7 +208,7 @@ export function estimateText(estimate: Estimate, { screens, journeys, widths = D
   const lines = rows.map((r) => row(r));
   const broken = estimate.ifBroken ? `\n\n${row({ ...estimate.ifBroken, label: brokenLabel })} more` : "";
   const notes = [
-    ...(estimate.mode === "judge" || estimate.mode === "prompt" || estimate.mode === "scratch" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
+    ...(estimate.mode === "judge" || estimate.mode === "prompt" || estimate.mode === "scratch" || estimate.mode === "replug" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
     "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
     estimate.mode === "prompt"
       ? "The direction workers run on the session's own model, the judge on Sonnet."
@@ -211,6 +220,6 @@ export function estimateText(estimate: Estimate, { screens, journeys, widths = D
   ];
   // The default widths go unsaid, as everywhere else.
   const at = widths.join(",") === DEFAULT_WIDTHS.join(",") ? "" : `, at ${widths.join(", ")} px`;
-  const head = estimate.mode === "prompt" ? `From a prompt, two screens for each direction${at}` : estimate.mode === "scratch" ? `From scratch, ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}` : `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}`;
+  const head = estimate.mode === "prompt" ? `From a prompt, two screens for each direction${at}` : estimate.mode === "replug" ? `Plugging the front into its API, ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}` : estimate.mode === "scratch" ? `From scratch, ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}` : `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}`;
   return `${head}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }

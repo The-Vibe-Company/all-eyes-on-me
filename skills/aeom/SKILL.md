@@ -17,7 +17,7 @@ This file holds what every run needs. The rest waits in its own file, read only 
 - **Section 2b**, the directions: [phase-directions.md](phase-directions.md), once a run is to build directions.
 - **Briefing any worker** and **sections 3 to 5**, the kit, the page wave and the measure: [phase-wave.md](phase-wave.md), once a run is to change the app.
 - **Section 2d**, `/aeom --depuis <prompt.md>`, three directions from a prompt with no app: [phase-prompt.md](phase-prompt.md), with only **A run that stops** from this file.
-- **Section 2e**, `/aeom build --from-scratch`, a front from a spec: [phase-build.md](phase-build.md).
+- **Section 2e**, `/aeom build --from-scratch` or `--api`, a front from a spec: [phase-build.md](phase-build.md).
 
 When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section. Every worker replies with a short report, ten lines at most, as **Briefing any worker** says, which you keep in the run's folder; every judge writes its votes in a file and replies with its path.
 
@@ -28,7 +28,7 @@ The user types a verb after `/aeom`, or the option it stands for:
 - **`/aeom judge`** is `/aeom --juger`: judge the front, and stop at the verdict.
 - **`/aeom redo`** is `/aeom` with no option: judge, then redo what fails (« Without an option » below). Options follow the verb: `/aeom redo --garder-le-style`.
 - **`/aeom review`** will hold a pull request to the standard: not built yet; say so in one line and stop.
-- **`/aeom build`** with `--from-scratch` mocks up a front from a spec or a prompt (section 2e); a change asked in a sentence is not built yet: say so in one line and stop.
+- **`/aeom build`** with `--from-scratch` mocks up a front from a spec or a prompt, and with `--api` plugs it into its API (section 2e); a change asked in a sentence comes later: say so in one line and stop.
 
 A run keeps its options under their own names: `/aeom judge` is marked `--option juger`.
 
@@ -102,7 +102,7 @@ One message per checkpoint, a line of context with the images, no more. A long w
 
 **The cost, before the judges.** No judge or worker starts before the user knows what the run will cost. Once the product sheet and the journeys are recorded, run `aeom estimate --widths "$WIDTHS" --screens <how many pages the capture of section 2c step 3 found>`, with the option the run was asked with: `--juger` (for `/aeom judge` too), `--garder-le-style`, `--ux`, `--directions <n>` or `--autonome` as the user typed it; `--journeys 0` for `/aeom --forcer-directions`, which judges no journey. It says, phase by phase, how many agents, how many tokens and how long, at most; its first line, understanding the product, is already done. Show the table to the user, then ask, with the session's question tool when it has one: judge only (its first two lines), the whole run, or stop. Wait for the answer, and go on as they chose: judge only is `--juger`. With `--juger`, ask only whether to go. With `--autonome`, show the table and go on.
 
-**`/aeom judge`** (`/aeom --juger` and `--diagnostic` are the same) runs steps 1 to 3 only, then stops, whatever the verdict says: the product sheet, the key journeys and their critique, every screen captured, checked and judged, and the verdict. It creates no run branch, launches no worker, builds no direction and commits nothing: the product sheet and the journeys stay in `.aeom/`, as after « rien à refaire ». Tell the user what fails, screen by screen and journey by journey, with the captures, then in one line what a full run would do (the verdict's last line), and write the result page, served as **The result page, served** says. It is the cheap first look: six judges at most (`aeom estimate` says how much). When the user asks only to judge the front (« juger », « juge mon front », « dis-moi ce qui ne va pas »), run it this way.
+**`/aeom judge`** (`/aeom --juger` and `--diagnostic` are the same) runs steps 1 to 3 only, then stops, whatever the verdict says: the product sheet, the key journeys and their critique, every screen captured, checked and judged, and the verdict. It creates no run branch, launches no worker, builds no direction and commits nothing: the product sheet and the journeys stay in `.aeom/`, as after « rien à refaire ». Tell the user what fails, screen by screen and journey by journey, with the captures, then in one line what a full run would do (the verdict's last line), and write the result page, served as **The result page, served** says. Six judges at most. When the user asks only to judge the front (« juger », « juge mon front », « dis-moi ce qui ne va pas »), run it this way.
 
 **`/aeom --autonome`** runs the same steps without the two stops of a run: the cost is shown and the run goes on, and since nobody chooses the direction, three judges screen the directions and play a knockout, whose champion is applied without asking (section 2b, steps 6 to 8). Without it, a run always stops for the go, and a run that builds directions stops for the user to choose one: one judge only screens out the ones not worth showing, and none ranks them.
 

@@ -123,3 +123,20 @@ test("a run that built a front from nothing has no before: its page shows what i
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a run on an API keeps its address, and one that plugged an existing front into it says so at its head", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-api-"));
+  try {
+    await mkdir(join(dir, "end", "captures"), { recursive: true });
+    await writeFile(join(dir, "end", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [{ url: "http://x/", path: "/", files: [{ width: 1280, file: "index@1280.png" }] }], errors: [] }));
+    await writeFile(join(dir, "api"), "http://localhost:8000/v1\n");
+    await writeFile(join(dir, "replug"), "");
+    const page = await readRun(dir, "run-2");
+    assert.equal(page.api, "http://localhost:8000/v1");
+    assert.equal(page.replug, true);
+    assert.deepEqual(page.screens.map((s) => s.status), ["unchanged"], "plugging the data changes no screen");
+    assert.match(resultHtml(page), /<h1>The front, on its API<\/h1>/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

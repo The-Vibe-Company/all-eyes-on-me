@@ -56,7 +56,7 @@ ln -s "$PWD/skills/aeom" "$PWD/skills/aeom-judge" ~/.claude/skills/
 
 **From a prompt, with no app yet.** `/aeom --depuis prompt.md`, such as the prompt `/style` writes, draws three directions in a few minutes: two static pages each, in plain HTML and CSS, keeping what the charter fixes and varying what it leaves open. The sixteen checks run on each, a judge screens out the ugly and the dated, and you choose. The whole mockup on the chosen direction comes next.
 
-**From scratch, with no front yet.** `/aeom build --from-scratch cahier.md`, or a sentence in quotes, drafts the product sheet and its key journeys from it, says what the run will cost and waits for your go, then draws three directions for you to pick. On the one you pick, it builds the kit and the screens of the key journeys, on fake data kept in one module and named as such. It replays each journey to its end, checks that no screen calls a server, and writes the standard, the result page and a pull request. The front is plain HTML, CSS and JavaScript in `front/`, with no build step, which any stack can take over; open it served, `python3 -m http.server 8080 -d front`.
+**From scratch, with no front yet.** `/aeom build --from-scratch cahier.md`, or a sentence in quotes, with `--api <url>` when an API runs on your machine, drafts the product sheet and its key journeys from it, says what the run will cost and waits for your go, then draws three directions for you to pick. On the one you pick, it builds the kit and the screens of the key journeys, on that API, or on fake data kept in one module and named as such, then `/aeom build --api <url>` plugs it in later without touching the screens. It replays each journey to its end, checks that no screen calls a server but that API, and writes the standard, the result page and a pull request. The front is plain HTML, CSS and JavaScript in `front/`, with no build step, which any stack can take over; open it served, `python3 -m http.server 8080 -d front`.
 
 Then, in your project:
 - it is a git repository with a clean working tree;
@@ -94,7 +94,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 None of this is done yet:
 - **Level 1, finished.** A bench of three apps with defects noted by hand, measuring what AEOM finds and fixes.
 - **Level 2, keep.** `/aeom review`: on every pull request, the new screens are held to the standard. What can be measured blocks the CI check, with no model. The judges say in a comment whether it is still the same product.
-- **Level 3, build.** `/aeom build`: with no front yet, a mockup from a spec or a prompt, on a direction you pick; with one, what is asked, inside the standard. Front only, on an existing API or fake data.
+- **Level 3, build, the rest.** The mockup from a spec or a prompt is here (`/aeom build --from-scratch`, `--api`); next, with a front already there, what is asked in one sentence, inside the standard, and building in a framework the project already holds.
 - **Later.**
   - The judges learn your taste from your feedback, which today is only counted.
   - A spend cap.

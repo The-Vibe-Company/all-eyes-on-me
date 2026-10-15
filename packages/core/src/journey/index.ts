@@ -4,3 +4,4 @@ export * from "./guard.js";
 export * from "./plan.js";
 export * from "./ratchet.js";
 export * from "./by-page.js";
+export * from "./api.js";
