@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { usableWidths, WIDTH_RANGE } from "../capture/capture.js";
+import { CHECKS, type CheckExceptions } from "../checks/run.js";
 
 /** `.aeom/config.json`: how to reach the project's app, so commands need no flags. */
 export interface ProjectConfig {
@@ -22,6 +23,8 @@ export interface ProjectConfig {
   home?: string;
   /** The widths that count, in px, such as [1280] for a tool used on a computer only: the only ones captured, checked, replayed and judged. Without it, 390 and 1280. */
   widths?: number[];
+  /** The routes where a check does not apply, by check, such as {"header": ["/"]} for a landing page whose header scrolls away on purpose. */
+  except?: CheckExceptions;
 }
 
 /**
@@ -85,6 +88,17 @@ export async function loadConfig(projectDir = process.cwd()): Promise<ProjectCon
     const usable = usableWidths(widths);
     if (!usable) throw new ConfigError(`${file}: "widths" lists the widths to measure, in px between ${WIDTH_RANGE.min} and ${WIDTH_RANGE.max}, such as [1280] or [390, 1280].`);
     config.widths = usable;
+  }
+  const except = (parsed as Record<string, unknown>).except;
+  if (except !== undefined) {
+    const say = (why = "") => new ConfigError(`${file}: "except" names checks, each with the routes it leaves out, such as {"header": ["/"]}${why}.`);
+    if (!except || typeof except !== "object" || Array.isArray(except)) throw say();
+    config.except = {};
+    for (const [check, routes] of Object.entries(except)) {
+      if (!(CHECKS as string[]).includes(check)) throw say(`: ${check} is not a check (${CHECKS.join(", ")})`);
+      if (!Array.isArray(routes) || routes.some((r) => typeof r !== "string" || !r.trim().startsWith("/"))) throw say();
+      config.except[check as keyof CheckExceptions] = (routes as string[]).map((r) => r.trim());
+    }
   }
   const style = (parsed as Record<string, unknown>).style;
   if (style !== undefined) {

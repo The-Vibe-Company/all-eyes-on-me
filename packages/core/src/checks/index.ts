@@ -1,6 +1,10 @@
+export { checkClipped } from "./clipped.js";
 export { checkContrast } from "./contrast.js";
+export { checkHeader } from "./header.js";
+export { checkUneven } from "./uneven.js";
+export { checkWrap } from "./wrap.js";
 export { watchConsole } from "./console.js";
 export { checkCursor } from "./cursor.js";
 export { checkOverflow } from "./overflow.js";
-export { CHECKS, checkPages, checkSite, type CheckReport } from "./run.js";
+export { CHECKS, checkPages, checkSite, type CheckExceptions, type CheckReport } from "./run.js";
 export type { CheckName, Finding, Issue } from "./types.js";

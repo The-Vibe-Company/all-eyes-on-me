@@ -95,6 +95,12 @@ test("the project config gives the defaults for url and start, and is optional",
     await assert.rejects(loadConfig(dir), /"home" is the route a signed-in user lands on, such as "\/jeu"/);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ widths: [1280, 390, 1280] }));
     assert.deepEqual((await loadConfig(dir)).widths, [390, 1280], "the widths that count, each once, narrowest first");
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ except: { header: ["/", " /accueil "] } }));
+    assert.deepEqual((await loadConfig(dir)).except, { header: ["/", "/accueil"] }, "a check left out of the pages where it does not apply");
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ except: { headr: ["/"] } }));
+    await assert.rejects(loadConfig(dir), /"except" names checks, each with the routes it leaves out, such as \{"header": \["\/"\]\}: headr is not a check/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ except: { header: "/" } }));
+    await assert.rejects(loadConfig(dir), /"except" names checks, each with the routes it leaves out/);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ widths: [] }));
     await assert.rejects(loadConfig(dir), /"widths" lists the widths to measure, in px between 240 and 3840, such as \[1280\] or \[390, 1280\]/);
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ pages: ["objets"] }));
