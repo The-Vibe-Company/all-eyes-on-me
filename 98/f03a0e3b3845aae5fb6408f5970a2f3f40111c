@@ -1,0 +1,38 @@
+packages/core/src/capture/serve-folder.ts
+  s_4ce34ec42d9105::t_2df6fd07bab371 1,7-11,43,49,51-70,74-75
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_2df6fd07bab371 32-34,88-91
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_76d0ab4eab569d 47,77-78
+skills/aeom/phase-prompt.md
+  s_4ce34ec42d9105::t_7b1ca6ea957c73 7,9,11-12,15-16,21
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_e3d9333b1932ab 144
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_420480d1993f3b 160
+  s_4ce34ec42d9105::t_65e3b054c46ea1 2,149-159,161-163
+packages/core/src/capture/serve-folder.test.ts
+  s_4ce34ec42d9105::t_65e3b054c46ea1 2,17-19,32-38
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_3c5f041a9969c9 5,56-60,80-81
+.veebee/milestones/03-la-commande-unique/tickets/29-trois-directions-depuis-un-prompt.md
+  s_4ce34ec42d9105::t_76d0ab4eab569d 15,22
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_2df6fd07bab371 5,51-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "98f03a0e3b3845aae5fb6408f5970a2f3f40111c",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
