@@ -1,6 +1,10 @@
 export { checkClipped } from "./clipped.js";
 export { checkContrast } from "./contrast.js";
+export { checkFocus } from "./focus.js";
 export { checkFontSize } from "./font-size.js";
+export { checkImages } from "./images.js";
+export { checkLabels } from "./labels.js";
+export { checkLayoutShift } from "./layout-shift.js";
 export { checkHeader } from "./header.js";
 export { checkLineLength } from "./line-length.js";
 export { checkTapSize } from "./tap-size.js";
