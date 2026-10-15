@@ -1,6 +1,6 @@
 /* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
    Pages link this file and include head, header and footer.
-   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --redesign, --keep) with .gaze, .tidy, .line, .soon, .more, .try; on the commands page, .page-top, .cmds, .cmd, .when, .does, .term (a terminal), .cli, .chips, .film (copy block). */
+   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --redesign, --keep, --build) with .gaze, .tidy, .line, .draw, .soon, .more, .try; on the commands page, .page-top, .cmds, .cmd, .when, .does, .term (a terminal), .cli, .chips, .film (copy block). */
 
 :root {
   --sun: #ffd84d;
@@ -95,9 +95,10 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 @keyframes plain-3 { 0%, 72% { opacity: 1; } 78%, 95% { opacity: 0; } 100% { opacity: 1; } }
 /* Without motion, the walk is shown done: every screen drawn, every knot undone. */
 @media (prefers-reduced-motion: reduce) {
-  .walk--hero .walk__knot circle, .walk--hero .walk__x, .walk--hero .walk__v, .screen__plain, .screen__done { animation: none; }
-  .screen__plain, .walk--hero .walk__x { opacity: 0; }
-  .screen__done, .walk--hero .walk__v { opacity: 1; }
+  /* As precise as the rules that animate each screen and knot, and after them, so these win. */
+  .walk--hero .walk__knot circle, .walk--hero .walk__knot .walk__x, .walk--hero .walk__knot .walk__v, .walk--hero .screen .screen__plain, .walk--hero .screen .screen__done { animation: none; }
+  .walk--hero .screen .screen__plain, .walk--hero .walk__knot .walk__x { opacity: 0; }
+  .walk--hero .screen .screen__done, .walk--hero .walk__knot .walk__v { opacity: 1; }
   .walk--hero .walk__knot circle { fill: #1f8a4c; }
 }
 
@@ -105,7 +106,7 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
   .hero { grid-template-columns: 1.15fr 1fr; min-height: calc(100vh - 80px); padding-top: 8px; }
 }
 
-/* The three things AEOM does, each a block with its drawing. */
+/* The four things AEOM does, each a block with its drawing. */
 .feature { display: grid; gap: 40px; align-items: center; padding: 104px var(--gutter); overflow-x: clip; }
 .feature h2 { font-size: clamp(44px, 6.2vw, 96px); line-height: 0.92; }
 .feature__text p:not(.feature__num, .more, .cmd, .when) { font-size: clamp(20px, 1.9vw, 24px); max-width: 30ch; margin: 20px 0 0; }
@@ -121,9 +122,10 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .feature--redesign .more code { background: var(--sun); color: var(--ink); }
 .more a:hover { color: inherit; } .more a:hover code { background: var(--hot); color: var(--ink); }
 .feature--keep { background: var(--sky); }
+.feature--build { background: var(--pink); }
 @media (min-width: 980px) {
   .feature { grid-template-columns: 1fr 1.1fr; gap: 72px; }
-  .feature--redesign .feature__text { order: 2; }
+  .feature--redesign .feature__text, .feature--build .feature__text { order: 2; }
 }
 
 /* 01: a walk through empty frames, an eye on it, knots where it catches. */
@@ -158,6 +160,31 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 @media (prefers-reduced-motion: no-preference) { .line__odd { animation: bounce 2.4s cubic-bezier(.3, 1.4, .5, 1) infinite; } }
 @keyframes bounce { 0%, 100% { transform: translate(10px, -70px) rotate(18deg); } 50% { transform: translate(10px, -46px) rotate(4deg); } }
 
+/* 04: a spec and a prompt lead to an empty screen; the eye walks there from the spec, and the mockup is drawn part by part. */
+.draw { max-width: 600px; width: 100%; justify-self: center; }
+.draw__spec > path:first-child { fill: var(--paper); stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.draw__fold { fill: #d9d3c4; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.draw__ink { fill: var(--ink); }
+.draw__text rect { fill: var(--ink); opacity: 0.25; }
+.draw__box rect { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.draw__prompt > rect:first-child { fill: var(--ink); }
+.draw__chevron { fill: none; stroke: var(--hot); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.draw__typed rect { fill: var(--sun); }
+.draw__caret { fill: var(--paper); }
+.draw__ghost rect { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 7; stroke-linecap: round; opacity: 0.45; }
+.draw__part { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .draw__caret { animation: caret 1s steps(1) infinite; }
+  .draw__part { animation: draw-part 7s cubic-bezier(.3, 1.3, .5, 1) infinite both; animation-delay: calc(var(--i) * 150ms); }
+  .draw__ghost { animation: draw-ghost 7s linear infinite; }
+}
+@keyframes caret { 50% { opacity: 0; } }
+/* The last part starts 0.75 s late: every part is hidden again before the cycle ends. */
+@keyframes draw-part { 0%, 36% { opacity: 0; transform: scale(0.6); } 44%, 84% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: none; } }
+@keyframes draw-ghost { 0%, 36% { opacity: 1; } 52%, 90% { opacity: 0; } 100% { opacity: 1; } }
+/* Without motion, the mockup is shown drawn (kit.js leaves the eye at the end of its path). */
+@media (prefers-reduced-motion: reduce) { .draw__ghost { opacity: 0; } }
+
 /* Try it */
 .try { background: var(--paper); padding: 96px var(--gutter) 104px; }
 .try h2 { font-size: clamp(44px, 7vw, 104px); line-height: 0.92; margin-bottom: 32px; }
@@ -171,7 +198,7 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .try p { font-size: 20px; margin: 24px 0 0; }
 .try code, .hero code { font: 500 0.9em var(--mono); background: var(--ink); color: var(--sun); padding: 2px 7px; border-radius: 6px; }
 
-/* The commands page: the three at a glance, then each with what it prints. */
+/* The commands page: the four at a glance, then each with what it prints. */
 .page-top { padding: 40px var(--gutter) 104px; }
 .page-top h1 { font-size: clamp(56px, 10vw, 150px); line-height: 0.88; letter-spacing: -0.05em; }
 .page-top__lede { font-size: clamp(20px, 2.2vw, 28px); max-width: 32ch; margin: 24px 0 0; }
@@ -182,11 +209,14 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .cmds__card--redo { background: var(--ink); color: var(--paper); }
 .cmds__card--redo:hover { color: var(--paper); }
 .cmds__card--check { background: var(--sky); }
-.cmds__n { font: 800 18px/1 var(--display); }
+.cmds__card--build { background: var(--pink); }
+.cmds__n { display: flex; align-items: center; gap: 10px; font: 800 18px/1 var(--display); }
+.cmds__n .soon { margin: -4px 0; }
 .cmds__card code { font: 600 clamp(20px, 2.2vw, 28px)/1.2 var(--mono); }
 .cmds__card--redo code { color: var(--sun); }
-.cmds__verb { display: flex; align-items: center; gap: 10px; font: 800 clamp(32px, 3.6vw, 48px)/1 var(--display); letter-spacing: -0.03em; }
-@media (min-width: 760px) { .cmds { grid-template-columns: repeat(3, 1fr); } }
+.cmds__verb { font: 800 clamp(32px, 3.6vw, 48px)/1 var(--display); letter-spacing: -0.03em; white-space: nowrap; }
+@media (min-width: 760px) { .cmds { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1180px) { .cmds { grid-template-columns: repeat(4, 1fr); } }
 
 .commands .feature--judge { background: var(--paper); }
 .commands .feature { align-items: start; }

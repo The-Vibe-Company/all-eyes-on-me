@@ -66,8 +66,18 @@ for (const tidy of document.querySelectorAll(".tidy")) {
     cycle = setInterval(play, 5000);
   }, { threshold: 0.5 }).observe(tidy);
 }
-// The eye that walks the journey stands still for a visitor who asks for less motion.
-if (reduced) for (const motion of document.querySelectorAll("animateMotion")) motion.remove();
+// The eye that walks the journey stands still for a visitor who asks for less motion,
+// where its walk ends.
+if (reduced) {
+  for (const motion of document.querySelectorAll("animateMotion")) {
+    const path = document.querySelector(motion.querySelector("mpath")?.getAttribute("href") ?? "");
+    if (path?.getTotalLength) {
+      const end = path.getPointAtLength(path.getTotalLength());
+      motion.parentElement.setAttribute("transform", `translate(${end.x} ${end.y})`);
+    }
+    motion.remove();
+  }
+}
 
 // Copies text with the Clipboard API, which needs a secure page and the
 // permission, or else with the older copy command. Says whether it worked.

@@ -91,8 +91,8 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 
 None of this is done yet:
 - **Level 1, finished.** A bench of three apps with defects noted by hand, measuring what AEOM finds and fixes.
-- **Level 2, keep.** On every pull request, the new screens are held to the standard. What can be measured blocks the CI check, with no model. The judges say in a comment whether it is still the same product.
-- **Level 3, build.** Build what is asked, or a front from scratch, inside the standard: front only, on an existing API or fake data.
+- **Level 2, keep.** `/aeom review`: on every pull request, the new screens are held to the standard. What can be measured blocks the CI check, with no model. The judges say in a comment whether it is still the same product.
+- **Level 3, build.** `/aeom build`: with no front yet, a mockup from a spec or a prompt, on a direction you pick; with one, what is asked, inside the standard. Front only, on an existing API or fake data.
 - **Later.**
   - The judges learn your taste from your feedback, which today is only counted.
   - A spend cap.
