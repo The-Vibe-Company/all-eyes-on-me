@@ -1,0 +1,41 @@
+packages/core/src/checks/font-size.ts
+  s_4ce34ec42d9105::t_772f11b027851b 2,14-18,22,36-41,44,46,53,62
+packages/core/src/checks/zoom.ts
+  s_4ce34ec42d9105::t_772f11b027851b 2,7-8,11
+packages/core/src/checks/run.ts
+  s_4ce34ec42d9105::t_772f11b027851b 17,50
+README.md
+  s_4ce34ec42d9105::t_4580e62678c7a2 14
+packages/core/src/checks/screen.ts
+  s_4ce34ec42d9105::t_6cd4fa4c32060d 1-4
+packages/core/src/checks/header.ts
+  s_4ce34ec42d9105::t_772f11b027851b 2
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_a98cbf7f51c5de 250,253,256,259-270,274,286,291-299,315
+  s_4ce34ec42d9105::t_6cd4fa4c32060d 252
+packages/core/src/checks/tap-size.ts
+  s_4ce34ec42d9105::t_772f11b027851b 72
+  s_4ce34ec42d9105::t_6cd4fa4c32060d 2,5-7,10-15,19-21,23-25,29,32-37,39-59,61-71,73-88,90-91,95,97
+site/site.test.mjs
+  s_4ce34ec42d9105::t_555e55164144d1 212
+packages/core/src/checks/line-length.ts
+  s_4ce34ec42d9105::t_772f11b027851b 9-16,21,25-27,31,33,36,38-51,61
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_4580e62678c7a2 34,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df47de734cf9b2670b0307381dfc078379824528",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
