@@ -4,3 +4,4 @@ export { discoverPages, normalize, visitPages, type Discovery, type PageError } 
 export { AppStartError, startApp, type RunningApp, type StartAppOptions } from "./start-app.js";
 export { findField, findFields, signedInFrom, signIn, signInOnce, SignInError, usableSession, type SignIn, type SignedIn } from "./sign-in.js";
 export { pageShape, pairRoutes } from "./shape.js";
+export { serveFolder, type ServedFolder } from "./serve-folder.js";

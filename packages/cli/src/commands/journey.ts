@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, JourneyError, journeyFindingsByPage, loadConfig, loadJourneys, planJourneyWave, ReplayError, replayJourneys, type JourneyReport, type JudgeReport } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const JOURNEY_HELP = `Usage: aeom journey [--url <url>] [--start "<command>"] [options]
 
@@ -53,6 +53,11 @@ export async function runJourney(argv: string[]): Promise<number> {
     console.error(`--reset cannot be empty: give the command that puts the app's data back, or leave the option out.`);
     return 1;
   }
+  // A folder of pages has no journeys of its own in .aeom/journeys: those are the app's.
+  if (parsed.dir !== undefined && !argv.some((a) => a === "--journeys" || a.startsWith("--journeys="))) {
+    console.error(`With --dir, say which journeys to replay: --journeys <folder>. Those in .aeom/journeys are the app's.`);
+    return 1;
+  }
   const values = await withConfig(parsed);
   if (!values.url) {
     console.error(`--url is required, here or in .aeom/config.json.\n\n${JOURNEY_HELP}`);
@@ -72,7 +77,8 @@ export async function runJourney(argv: string[]): Promise<number> {
     return 1;
   }
   let reset = values.reset;
-  if (reset === undefined) {
+  // The app's reset puts the app's data back: a folder of pages has none.
+  if (reset === undefined && !servingFolder()) {
     try {
       reset = (await loadConfig()).reset;
     } catch (error) {

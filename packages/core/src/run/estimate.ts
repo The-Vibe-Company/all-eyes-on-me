@@ -10,7 +10,7 @@ import { DEFAULT_WIDTHS } from "../capture/capture.js";
  * tokens are the agents' own: the session that coordinates the run is apart.
  */
 
-export type RunMode = "judge" | "full" | "keep-style" | "ux";
+export type RunMode = "judge" | "full" | "keep-style" | "ux" | "prompt";
 
 export interface Phase {
   phase: string;
@@ -43,6 +43,8 @@ const journeyJudge = (journeys: number, widths = CALIBRATED_WIDTHS) => staged({ 
 const WORKER = { tokens: 130_000 };
 const SHARED_WORKER = { tokens: 150_000 };
 const SCREENING_JUDGE = { tokens: 60_000, minutes: 2 };
+/** A direction drawn from a prompt: two screens of static HTML and CSS, no worktree, no install, no build. */
+const PROMPT_WORKER = { tokens: 80_000, minutes: 6 };
 const DUEL_JUDGE = { tokens: 60_000, minutes: 2 };
 const JOURNEY_DUEL_JUDGE = { tokens: 80_000, minutes: 3 };
 const MINUTES = { understand: 25, direction: 25, kit: 15, page: 15, promotion: 10, journey: 15, end: 10 };
@@ -68,6 +70,15 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
   const phases: Phase[] = [
     { phase: "Understand the product", agents: 0, tokens: 0, minutes: MINUTES.understand },
   ];
+  if (mode === "prompt") {
+    // The prompt is the brief: no understanding phase, no app, no judge of an existing front.
+    const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
+    return withTotal(mode, [
+      // The session reads the prompt and the charter, then writes the workers' briefs.
+      { phase: "Read the prompt", agents: 0, tokens: 0, minutes: 2 },
+      { phase: `${named} from the prompt, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+    ]);
+  }
   if (mode === "ux") {
     // The journeys judged, then the pages measured before they change, the workers, both versions judged, the duels.
     phases.push({ phase: "Judge the journeys", agents: journeys ? VOTES : 0, tokens: journeys ? VOTES * jj.tokens : 0, minutes: journeys ? jj.minutes : 0 });
@@ -164,9 +175,11 @@ export function estimateText(estimate: Estimate, { screens, journeys, widths = D
   const lines = rows.map((r) => row(r));
   const broken = estimate.ifBroken ? `\n\n${row({ ...estimate.ifBroken, label: brokenLabel })} more` : "";
   const notes = [
-    ...(estimate.mode === "judge" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
+    ...(estimate.mode === "judge" || estimate.mode === "prompt" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
     "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
-    estimate.mode === "judge"
+    estimate.mode === "prompt"
+      ? "The direction workers run on the session's own model, the judge on Sonnet."
+      : estimate.mode === "judge"
       ? "The judges run on Sonnet."
       : estimate.mode === "full"
         ? "The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run."
@@ -174,5 +187,6 @@ export function estimateText(estimate: Estimate, { screens, journeys, widths = D
   ];
   // The default widths go unsaid, as everywhere else.
   const at = widths.join(",") === DEFAULT_WIDTHS.join(",") ? "" : `, at ${widths.join(", ")} px`;
-  return `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
+  const head = estimate.mode === "prompt" ? `From a prompt, two screens for each direction${at}` : `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}`;
+  return `${head}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }
