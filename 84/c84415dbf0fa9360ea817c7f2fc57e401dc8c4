@@ -1,0 +1,21 @@
+.veebee/milestones/01-landing/tickets/05-en-ligne.md
+  s_a3dac738f608bc::t_c4675886d9c5f1 7,18-20
+README.md
+  s_a3dac738f608bc::t_c4675886d9c5f1 7-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "84c84415dbf0fa9360ea817c7f2fc57e401dc8c4",
+  "prompts": {},
+  "sessions": {
+    "s_a3dac738f608bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a2cfff7d-df27-4836-8eec-c3b53e9f4dd7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
