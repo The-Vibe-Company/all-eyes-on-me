@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { headerDifference, readStandard, reviewCode, screensTouched } from "./index.js";
+import { headerDifference, readStandard, reviewCode, routeTouched, screensTouched } from "./index.js";
 
 const STANDARD = `# The standard of Super boutique
 What the front holds to.
@@ -81,9 +81,9 @@ test("the screens a change touches: a page by its route, anything else of the fr
   const all = ["/", "/produits", "/produits/:id", "/contact"];
   assert.deepEqual(screensTouched(["app/(shop)/produits/[id]/page.tsx"], ["/", "/produits/12"]).routes, ["/produits/12"]);
   assert.deepEqual(screensTouched(["pages/contact.tsx"], all).routes, ["/contact"]);
-  assert.deepEqual(screensTouched(["src/components/Header.tsx"], all), { routes: all, all: true, unmeasured: [] });
-  assert.deepEqual(screensTouched(["shared/kit.css"], all), { routes: all, all: true, unmeasured: [] });
-  assert.deepEqual(screensTouched(["server.mjs", "src/app/api/orders/route.ts", "README.md", "prisma/schema.prisma"], all), { routes: [], all: false, unmeasured: [] });
+  assert.deepEqual(screensTouched(["src/components/Header.tsx"], all), { routes: all, all: true, unmeasured: [], patterns: [] });
+  assert.deepEqual(screensTouched(["shared/kit.css"], all), { routes: all, all: true, unmeasured: [], patterns: [] });
+  assert.deepEqual(screensTouched(["server.mjs", "src/app/api/orders/route.ts", "README.md", "prisma/schema.prisma"], all), { routes: [], all: false, unmeasured: [], patterns: [] });
 });
 
 test("what is not the front's source is never read: the standard itself, docs, tests, stories, snapshots, configs, SVG files, JSON", () => {
@@ -165,7 +165,7 @@ test("a page with a parameter in its route is measured on a route of its shape t
   assert.deepEqual(screensTouched(["app/compte/layout.tsx"], known).routes, ["/compte/reglages"]);
   assert.deepEqual(screensTouched(["pages/_app.tsx"], known).all, true);
   assert.deepEqual(screensTouched(["tailwind.config.js"], known).all, true);
-  assert.deepEqual(screensTouched(["app/actions.ts", "app/lib/db.ts", "app/sitemap.ts", "src/ui/Button.test.tsx", "src/ui/Button.stories.tsx", "pages/404.tsx"], known), { routes: [], all: false, unmeasured: [] });
+  assert.deepEqual(screensTouched(["app/actions.ts", "app/lib/db.ts", "app/sitemap.ts", "src/ui/Button.test.tsx", "src/ui/Button.stories.tsx", "pages/404.tsx"], known), { routes: [], all: false, unmeasured: [], patterns: [] });
   assert.deepEqual(screensTouched(["templates/email/welcome.html"], known).all, true, "an HTML file outside a folder of pages is a template or a partial: every screen");
   assert.deepEqual(screensTouched(["front/docs/index.html", "front/voies.html"], [], { folder: "front" }).routes, ["/docs/", "/voies.html"]);
 });
@@ -175,4 +175,12 @@ test("a header that differs from the rest of the app says how, in its links", ()
   assert.equal(headerDifference(["Accueil", "Exporter"], ["Accueil", "Produits"]), "no « Produits », « Exporter » the rest of the app does not have");
   assert.equal(headerDifference(null, ["Accueil"]), "no header, where the rest of the app has one");
   assert.equal(headerDifference(["Produits", "Accueil"], ["Accueil", "Produits"]), "the same links in another order");
+});
+
+test("a path a journey visits is touched when it fits a touched route's pattern, whatever its slug, its query or the layout above it", () => {
+  const touched = screensTouched(["app/blog/[slug]/page.tsx", "app/compte/layout.tsx", "pages/search.tsx"], ["/blog/premier-billet"]);
+  assert.equal(routeTouched("/blog/un-autre-billet", touched), true);
+  assert.equal(routeTouched("/compte/reglages/securite", touched), true);
+  assert.equal(routeTouched("/search?q=lampe", touched), true);
+  assert.equal(routeTouched("/panier", touched), false);
 });

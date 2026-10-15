@@ -4,6 +4,7 @@ title: Les parcours que la PR traverse sont rejoués : un parcours qui casse blo
 milestone: 04-garder-a-chaque-pr
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 63, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/63 }
 ---
 
