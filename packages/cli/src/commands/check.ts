@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { CHECKS, checkSite, route, type Finding } from "@aeom/core";
+import { CHECKS, checkSite, loadConfig, route, type Finding } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const CHECK_HELP = `Usage: aeom check [--url <url>] [--start "<command>"] [options]
@@ -48,7 +48,9 @@ export async function runCheck(argv: string[]): Promise<number> {
       console.error(`--pages lists no route. Give at least one, such as --pages /.`);
       return 1;
     }
-    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}) });
+    // withConfig already read the config: it holds.
+    const except = (await loadConfig()).except;
+    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}), ...(except ? { except } : {}) });
     await mkdir(values.out, { recursive: true });
     const reportFile = join(values.out, "check.json");
     await writeFile(reportFile, JSON.stringify(report, null, 2) + "\n");
