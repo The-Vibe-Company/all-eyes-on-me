@@ -72,7 +72,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
       return 1;
     }
     const journeysFound = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
-    const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode: "scratch", directions: (given.directions as number | undefined) ?? 3, widths: widths.length });
+    const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode: "scratch", directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
     console.log(estimateText(estimate, { screens: given.screens as number, journeys: journeysFound, widths }));
     return 0;
   }

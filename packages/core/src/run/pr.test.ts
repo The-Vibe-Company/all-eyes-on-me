@@ -102,3 +102,11 @@ test("a direction the person chose over the judges' champion says so, with their
   const alone = prBody({ ...page, direction: { ...page.direction!, champion: "plaid", reasons: [], decision: { judges: null, dropped: [] } } }, "r.html").body;
   assert.match(alone, /\*\*plaid\*\*, chosen by the person among tissus, plaid, with no knockout\./);
 });
+
+test("a run that built a front from nothing says so: its title, its screens and journeys built, and that its data are fake", () => {
+  const built: ResultPage = { ...page, built: true, verdict: null, direction: { champion: "voies", sentence: null, entrants: ["voies", "craie"], reasons: [], sheet: null, decision: { judges: null, dropped: [] } }, screens: [{ page: "/", status: "new", count: null, widths: [], cleared: [], still: [], newly: [] }], journeys: [{ slug: "log", name: "Log a climb", status: "new", why: null, broke: { before: null, after: null }, steps: { before: null, after: 3 }, widths: [], cleared: [], remaining: [] }], stillFailing: [], measuredAfter: true };
+  const { title, body } = prBody(built, ".aeom/runs/run-1/report.html");
+  assert.equal(title, "AEOM: a first front, on voies (run-1)");
+  assert.match(body, /## Built from scratch\n\nEvery screen runs on fake data, kept in one module and named as such, until an API replaces it\./);
+  assert.doesNotMatch(body, /Not measured after the run/);
+});

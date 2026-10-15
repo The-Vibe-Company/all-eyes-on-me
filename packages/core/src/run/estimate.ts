@@ -83,14 +83,25 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     // No front to judge first: the sheet from the source, the directions, the kit, a worker per screen, then the measure.
     const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
     const critique = journeys ? VOTES : 0;
-    return withTotal(mode, [
+    const built = withTotal(mode, [
       { phase: "Write the product sheet and its journeys", agents: 0, tokens: 0, minutes: 10 },
-      { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+      autonome
+        ? (() => {
+            // With nobody to choose: three screening judges, then one judge a duel, three the final.
+            const duels = Math.max(directions - 1, 0);
+            const duelVotes = duels ? duels - 1 + VOTES : 0;
+            const rounds = directions > 1 ? Math.ceil(Math.log2(directions)) : 0;
+            return { phase: `${named} and the knockout`, agents: directions + VOTES + duelVotes, tokens: directions * PROMPT_WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes };
+          })()
+        : { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
       { phase: "The kit, on the direction chosen", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit },
       { phase: "The screens of the key journeys", agents: screens, tokens: screens * WORKER.tokens, minutes: MINUTES.page },
       { phase: "Measure the screens and the journeys", agents: VOTES + critique, tokens: VOTES * pj.tokens + critique * jj.tokens, minutes: pj.minutes + (critique ? jj.minutes : 0) },
       { phase: "The standard, the result page and the PR", agents: 0, tokens: 0, minutes: MINUTES.end },
     ]);
+    // The screens that fail go back once to their workers, then the measure again.
+    const ifBroken = { phase: "If screens go back once", agents: screens + VOTES, tokens: screens * WORKER.tokens + VOTES * pj.tokens, minutes: MINUTES.page + pj.minutes };
+    return { ...built, ifBroken };
   }
   if (mode === "ux") {
     // The journeys judged, then the pages measured before they change, the workers, both versions judged, the duels.

@@ -129,7 +129,7 @@ export async function runPr(argv: string[]): Promise<number> {
     console.log(`Nothing to redo: no PR.`);
     return 0;
   }
-  if (!page.direction && !page.screens.some((s) => s.status === "kept") && !page.journeys.some((j) => j.status === "kept")) {
+  if (!page.built && !page.direction && !page.screens.some((s) => s.status === "kept") && !page.journeys.some((j) => j.status === "kept")) {
     console.log(`Nothing kept: no PR.`);
     return 0;
   }

@@ -116,7 +116,9 @@ test("a run that built a front from nothing has no before: its page shows what i
     assert.equal(page.built, true);
     assert.deepEqual(page.screens.map((s) => [s.page, s.status]), [["/", "new"], ["/voies.html", "new"]]);
     assert.deepEqual(page.screens[1]!.widths, [{ width: 1280, before: null, after: "end/captures/voies-html@1280.png" }]);
-    assert.match(resultHtml(page), /<h1>What the run built<\/h1>/);
+    const html = resultHtml(page);
+    assert.match(html, /<h1>What the run built<\/h1>/);
+    assert.doesNotMatch(html, /figcaption>Before</, "nothing before: the built screen alone");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

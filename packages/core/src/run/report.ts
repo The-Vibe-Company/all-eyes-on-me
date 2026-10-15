@@ -209,6 +209,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       })),
       ...(() => {
         const was = failingOf(critiqueBefore, j.slug), now = failingOf(critiqueAfter, j.slug);
+        if (built) return { cleared: [], remaining: now ?? [] };
         if (was && now) return { cleared: was.filter((p) => !now.includes(p)), remaining: now };
         return { cleared: verdictOfJourney?.cleared ?? [], remaining: verdictOfJourney?.remaining ?? [] };
       })(),
@@ -374,13 +375,15 @@ export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { 
       ? `<section id="direction"><h2>Style kept</h2><p class="muted">No new direction: the run fixed what failed on the app's own style.</p></section>`
       : "";
 
-  const pair = (w: { width: number; before: string | null; after: string | null }, what: string) =>
+  // A run that built from nothing has no before: the screen alone.
+  const pair = (w: { width: number; before: string | null; after: string | null }, what: string) => r.built
+    ? `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Built</figcaption>${img(w.after, `${what}, ${w.width} px`)}</figure></div></div>` :
     `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Before</figcaption>${img(w.before, `${what} before, ${w.width} px`)}</figure>${nothing ? "" : `<figure><figcaption>After</figcaption>${img(w.after, `${what} after, ${w.width} px`)}</figure>`}</div></div>`;
   const screens = r.screens
     .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.byKit ? `<p class="muted">Fixed by the kit: no worker touched it.</p>` : ""}${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${nothing ? "" : say(ofScreen(s))}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
     .join("");
   const journeys = r.journeys
-    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${nothing ? "" : say(ofJourney(j))}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
+    .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : r.built ? `<p>${j.steps.after ?? "?"} steps</p>` : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${nothing ? "" : say(ofJourney(j))}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
     .join("");
   const still = `${r.measuredAfter ? "" : `<p class="muted">Not measured after the run: what failed before it.</p>`}${
     r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}${say(ofFailure(f))}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""

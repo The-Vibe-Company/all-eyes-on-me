@@ -87,7 +87,7 @@ export async function runGuard(argv: string[]): Promise<number> {
     options: { base: { type: "string" }, feature: { type: "string" }, allow: { type: "string", multiple: true }, "from-scratch": { type: "boolean" }, help: { type: "boolean", short: "h" } },
   });
   // A front built from nothing is compared with nothing: it may make no call at all, but those an API asked for allows.
-  if (values["from-scratch"] && positionals.length !== 1) {
+  if (values["from-scratch"] && !values.help && positionals.length !== 1) {
     console.error(`--from-scratch compares a replay with nothing: give one folder, the replay of the front built.`);
     return 1;
   }
@@ -123,7 +123,8 @@ export async function runGuard(argv: string[]): Promise<number> {
   };
   const after = await read(positionals[1]!);
   // From scratch, the before is the same journeys, calling nothing.
-  const before = values["from-scratch"] ? (after ? { ...after, journeys: after.journeys.map((j) => ({ ...j, runs: j.runs.map((r) => ({ ...r, calls: [] })) })) } : null) : await read(positionals[0]!);
+  // From scratch, the before is the same journeys going to their end and calling nothing: one that breaks is refused below.
+  const before = values["from-scratch"] ? (after ? { ...after, journeys: after.journeys.map((j) => ({ ...j, runs: j.runs.map((r) => ({ ...r, calls: [], broken: null })) })) } : null) : await read(positionals[0]!);
   if (!before || !after) return 1;
   const missing = missingReplays(before, after, { finished: true });
   if (missing.length) {
@@ -150,11 +151,15 @@ export async function runGuard(argv: string[]): Promise<number> {
   }
 
   if (protectedFiles.length === 0) console.log(`No "protected" list in .aeom/config.json: AEOM compared the calls only, and no file is protected.\n`);
-  const { refused, allowed } = guardJourneys({ before, after, changed, protectedFiles, allow });
+  const { refused, allowed } = guardJourneys({ before, after, changed, protectedFiles, allow, scratch: Boolean(values["from-scratch"]) });
   for (const v of allowed) console.log(`✓ ${v.what}  let through for the feature asked: "${values.feature}"`);
   for (const v of refused) {
     const journeys = v.journeys ?? (v.journey ? [v.journey] : []);
     console.log(`✗ ${v.what}  ${v.why}${journeys.length ? `, in ${journeys.map((name) => `"${name}"`).join(", ")}` : ""}`);
+  }
+  if (refused.length && values["from-scratch"]) {
+    console.log(`\nRefused: a front built on fake data calls no server. Read the data through the data module, or give the API with --feature and --allow.`);
+    return 1;
   }
   if (refused.length) {
     console.log(`\nRefused: ${refused.length === 1 ? "this is" : "these are"} a feature, and AEOM changes navigation, copy and states only. Undo it, or, if the user asked for it explicitly, run again with --feature and --allow.`);

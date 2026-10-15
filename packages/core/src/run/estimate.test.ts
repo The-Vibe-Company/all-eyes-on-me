@@ -109,5 +109,8 @@ test("from scratch, the cost is the directions, the kit, a worker per screen, th
   assert.ok(scratch.total.agents < estimateRun({ screens: 6, journeys: 3, mode: "full" }).total.agents + 4);
   const text = estimateText(scratch, { screens: 6, journeys: 3 });
   assert.match(text, /^From scratch, 6 screens and 3 key journeys:\n/);
+  assert.equal(scratch.ifBroken?.phase, "If screens go back once", "the one time a failing screen goes back to its worker");
+  const alone = estimateRun({ screens: 6, journeys: 3, mode: "scratch", autonome: true });
+  assert.ok(alone.phases[1]!.agents > scratch.phases[1]!.agents, "with --autonome, three screening judges and the knockout");
   assert.doesNotMatch(text, /only when the verdict finds something to redo/);
 });

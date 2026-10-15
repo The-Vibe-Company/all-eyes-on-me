@@ -29,6 +29,8 @@ export interface GuardOptions {
   protectedFiles?: string[];
   /** Calls (`POST /api/orders`) and files the user's explicit request needs. */
   allow?: string[];
+  /** A front built from nothing: every call counts, to the app's own server or to another one, and none was made before. */
+  scratch?: boolean;
 }
 
 /** A glob as a regular expression: `**` crosses folders, `*` and `?` stay in one. */
@@ -54,13 +56,16 @@ export function globToRegExp(glob: string): RegExp {
  * it made, or a changed file that holds the app's data or logic are refused,
  * unless the user's explicit request allows them.
  */
-export function guardJourneys({ before, after, changed = [], protectedFiles = [], allow = [] }: GuardOptions): GuardResult {
+export function guardJourneys({ before, after, changed = [], protectedFiles = [], allow = [], scratch = false }: GuardOptions): GuardResult {
+  // An app's calls to other servers (a tracker, a payment page) are its business: only a front built from nothing counts them.
+  const counted = (call: { origin?: string }) => scratch || !call.origin;
+  const named = (call: { method: string; path: string; origin?: string }) => `${call.method} ${call.origin ?? ""}${call.path}`;
   const known = new Map<string, Set<string>>();
   for (const run of before.journeys.flatMap((j) => j.runs)) {
-    for (const call of run.calls ?? []) {
-      const names = known.get(`${call.method} ${call.path}`) ?? new Set<string>();
+    for (const call of (run.calls ?? []).filter(counted)) {
+      const names = known.get(named(call)) ?? new Set<string>();
       for (const name of [...call.query, ...call.fields]) names.add(name);
-      known.set(`${call.method} ${call.path}`, names);
+      known.set(named(call), names);
     }
   }
 
@@ -72,11 +77,11 @@ export function guardJourneys({ before, after, changed = [], protectedFiles = []
     found.set(key, seen);
   };
   for (const journey of after.journeys) {
-    for (const call of journey.runs.flatMap((r) => r.calls ?? [])) {
-      const what = `${call.method} ${call.path}`;
+    for (const call of journey.runs.flatMap((r) => r.calls ?? []).filter(counted)) {
+      const what = named(call);
       const names = known.get(what);
       if (!names) {
-        note(`call ${what}`, { kind: "call", what, why: "a call the app did not make before", journey: journey.name, journeys: [] }, journey.name);
+        note(`call ${what}`, { kind: "call", what, why: scratch ? "a call to a server" : "a call the app did not make before", journey: journey.name, journeys: [] }, journey.name);
         continue;
       }
       const added = [...call.fields, ...call.query].filter((name) => !names.has(name));
