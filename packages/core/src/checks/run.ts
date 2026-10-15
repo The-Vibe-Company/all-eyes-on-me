@@ -14,6 +14,7 @@ import { checkFontSize } from "./font-size.js";
 import { checkLineLength } from "./line-length.js";
 import { checkTapSize } from "./tap-size.js";
 import { checkZoom } from "./zoom.js";
+import { PHONE } from "./screen.js";
 import { checkHeader } from "./header.js";
 import { checkOverflow } from "./overflow.js";
 import { checkUneven } from "./uneven.js";
@@ -46,7 +47,7 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
   const findings: Finding[] = [];
   for (const url of urls) {
     for (const width of widths) {
-      const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
+      const context = await browser.newContext({ viewport: { width, height: width < PHONE ? 844 : 800 }, ...(signedIn ? { storageState: signedIn } : {}) });
       try {
         const page = await context.newPage();
         const consoleIssues = watchConsole(page);

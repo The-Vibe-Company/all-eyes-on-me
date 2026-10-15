@@ -1,8 +1,6 @@
 import type { Page } from "playwright";
+import { PHONE } from "./screen.js";
 import type { Issue } from "./types.js";
-
-/** A phone's screen: below this width, a header that stays must leave room for the page. */
-const PHONE = 768;
 /** The share of a phone's screen a header that stays may take. */
 const MOST = 0.25;
 /** How far down the page's header may start: a promotion bar can sit above it. */

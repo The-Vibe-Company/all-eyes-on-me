@@ -1,14 +1,14 @@
 import type { Page } from "playwright";
+import { PHONE } from "./screen.js";
 import type { Issue } from "./types.js";
-
-const PHONE = 768;
 
 /**
  * People may zoom: a viewport tag never forbids it. On a phone, a page has a
- * viewport tag, or the phone shows it as a computer page, shrunk.
+ * viewport tag, or the phone shows it as a computer page, shrunk. The last
+ * tag counts, as the browser reads it.
  */
 export async function checkZoom(page: Page): Promise<Issue[]> {
-  const { content, phone } = await page.evaluate((limit) => ({ content: document.querySelector('meta[name="viewport"]')?.getAttribute("content") ?? null, phone: window.innerWidth < limit }), PHONE);
+  const { content, phone } = await page.evaluate((limit) => ({ content: [...document.querySelectorAll('meta[name="viewport" i]')].pop()?.getAttribute("content") ?? null, phone: window.innerWidth < limit }), PHONE);
   if (content === null) return phone ? [{ message: "no viewport tag: a phone shows the page as a shrunken computer page (<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">)" }] : [];
   const said: string[] = [];
   const scalable = /user-scalable\s*=\s*(no|0)\b/i.exec(content);
