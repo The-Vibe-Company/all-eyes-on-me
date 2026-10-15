@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { mergeProduct, PARTS, productBrief, validateProduct } from "@aeom/core";
+import { ConfigError, loadConfig, mergeProduct, PARTS, platformOf, PLATFORMS, productBrief, validateProduct, withPlatform, type Platform } from "@aeom/core";
 import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
 
 const PRODUCT = sheetFile("product");
@@ -8,6 +8,8 @@ const SHEET = PRODUCT.sheet;
 
 const USAGE = `Usage: aeom product <draft.md>
        aeom product --brief
+       aeom product --widths
+       aeom product --used-on <mobile|desktop|both> --by <name>
 
 Writes the product sheet AEOM drafted to .aeom/product.md: what kind of
 product the app is (a tool, a game or a creative product), what it is for, who
@@ -22,7 +24,74 @@ creative product its genre and fiction, the feeling it aims for, its
 references and its visual assets, without their sources. It names what the
 sheet marks (to confirm) or gives no source for, which no direction may rest
 on.
-Exits with 1 when a part is missing or nothing is confirmed.`;
+Exits with 1 when a part is missing or nothing is confirmed.
+
+With --widths, says the widths the front is judged at and where they come
+from: "widths" in .aeom/config.json, or where the sheet saw the front is used
+(390 on mobile, 1280 on desktop, both). Exits with 2 when only the user can
+say: no sheet, or a sheet that only guesses.
+
+With --used-on, records the user's answer in the sheet, as their own
+correction, which every later run keeps.`;
+
+async function printWidths(): Promise<number> {
+  let config;
+  try {
+    config = await loadConfig();
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    console.error(error.message);
+    return 1;
+  }
+  if (config.widths) {
+    console.log(`Widths: ${config.widths.join(",")}. From "widths" in .aeom/config.json.`);
+    return 0;
+  }
+  const sheet = await readIfThere(SHEET);
+  const used = sheet === undefined ? null : platformOf(sheet);
+  if (used?.seen) {
+    console.log(`Widths: ${used.widths.join(",")}. The front is used on ${used.platform} (seen: ${used.source}).`);
+    return 0;
+  }
+  const why = sheet === undefined ? "there is no product sheet" : used ? `the sheet says ${used.platform} without a (seen: …) source, a guess` : `the sheet does not say where the front is used`;
+  console.log(`Not known: ${why}. Ask the user whether the front is used on mobile, desktop or both, then record it: aeom product --used-on <mobile|desktop|both> --by <their name>. Until then, the widths are 390,1280.`);
+  return 2;
+}
+
+async function recordUsedOn(platform: string, by: string | undefined): Promise<number> {
+  if (!(PLATFORMS as readonly string[]).includes(platform)) {
+    console.error(`--used-on is mobile, desktop or both.`);
+    return 1;
+  }
+  if (!by?.trim()) {
+    console.error(`--by names who answered, such as --by Antoine: the sheet says whose word it is.`);
+    return 1;
+  }
+  // The name becomes the part's source, (seen: <name>): anything that would end or break it is refused.
+  if (/[()<>\n\r]/.test(by)) {
+    console.error(`--by is a name on one line, without parentheses or angle brackets, such as --by Antoine.`);
+    return 1;
+  }
+  return updateSheet(PRODUCT, (holder) => `Another aeom product (process ${holder}) is writing the sheet. Run again once it is done.`, async ({ sheet: current, base }) => {
+    if (current === undefined) {
+      console.error(`No product sheet in ${SHEET}: write it first, with aeom product <draft>.`);
+      return 1;
+    }
+    // Without AEOM's last draft, nothing tells the user's parts from AEOM's: taking this sheet as the base would hand them to the next draft.
+    if (base === undefined) {
+      console.error(`AEOM never wrote ${SHEET} with aeom product: write its draft with aeom product <draft> first, then record the answer.`);
+      return 1;
+    }
+    const text = withPlatform(current, platform as Platform, by.trim());
+    const left = validateProduct(text);
+    if (left.length) {
+      console.error(`With the answer, ${SHEET} would not be a product sheet, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}`);
+      return 1;
+    }
+    // AEOM's last draft stays the base: the answer reads as the user's correction, and every later merge keeps it.
+    return { text, base, after: () => console.log(`${SHEET} says the front is used on ${platform}, as ${by.trim()} said.`) };
+  });
+}
 
 async function printBrief(): Promise<number> {
   const sheet = await readIfThere(SHEET);
@@ -46,9 +115,11 @@ async function printBrief(): Promise<number> {
 }
 
 export async function runProduct(argv: string[]): Promise<number> {
-  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { brief: { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { brief: { type: "boolean" }, widths: { type: "boolean" }, "used-on": { type: "string" }, by: { type: "string" }, help: { type: "boolean", short: "h" } } });
   if (values.brief && !values.help && positionals.length === 0) return printBrief();
-  if (values.help || values.brief || positionals.length !== 1) {
+  if (values.widths && !values.help && positionals.length === 0) return printWidths();
+  if (values["used-on"] !== undefined && !values.help && positionals.length === 0) return recordUsedOn(values["used-on"], values.by);
+  if (values.help || values.brief || values.widths || values["used-on"] !== undefined || positionals.length !== 1) {
     console.log(USAGE);
     return values.help ? 0 : 1;
   }

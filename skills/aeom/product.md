@@ -1,6 +1,6 @@
 # The product sheet
 
-`.aeom/product.md` says what AEOM understood of the app on its own, before it changes a screen. The user corrects it whenever they like; AEOM never waits for them. `aeom product <draft>` writes it. It refuses a draft that does not say what kind of product the app is, misses one of the four parts (and, for a game or a creative product, one of the four parts of its world), has fewer than three or more than five journeys, has a journey without numbered steps, or has a part or journey without a source, a source left as the `<…>` placeholder, or a part or journey that appears twice. The rest of what follows is for AEOM to follow; no command checks it.
+`.aeom/product.md` says what AEOM understood of the app on its own, before it changes a screen. The user corrects it whenever they like; AEOM never waits for them. `aeom product <draft>` writes it. It refuses a draft that does not say what kind of product the app is or where its front is used, misses one of the four parts (and, for a game or a creative product, one of the four parts of its world), has fewer than three or more than five journeys, has a journey without numbered steps, or has a part or journey without a source, a source left as the `<…>` placeholder, or a part or journey that appears twice. The rest of what follows is for AEOM to follow; no command checks it.
 
 ## Read before you write
 
@@ -19,6 +19,9 @@ Two to four sentences: what the app does, in its users' words, naming what it ha
 
 ## Who uses it
 Who opens it, how often, on what device. (to confirm)
+
+## Where it is used
+`mobile`, `desktop` or `both`, then a few words: « `desktop`: the web is for the morning sort and the meeting; an iOS app serves the phone ». (seen: docs/PRD.md) or (to confirm)
 
 ## The main loop
 What a user does again and again, in order: the reason they come back. (seen: <screens>)
@@ -47,6 +50,7 @@ Why: what the user is after, in one sentence. (seen: <screen or file>)
 ```
 
 - **What kind of product** comes first. It starts with one of three words, in backticks: `tool` for something used to get a task done (a shop, a dashboard, a tracker, a form), `game` for something played, `creative` for a product whose point is a world, a story or a work (a comic, a music label, an interactive story, a portfolio). It is never a guess: say it from what you read or saw. A game with a shop is a game; a tracker with badges is a tool.
+- **Where it is used** says what people open this front on: `mobile` (a phone only), `desktop` (a computer only) or `both`, first, in backticks. It decides the widths every screen is judged at: 390 px for a phone, 1280 for a computer, both for both. Say it as seen only from what the project says or holds: its own words (a README or a PRD that says what the web is for and what the phone is for), or a native app for the phone beside this front, a separate client with its own screens in its own code (Swift, Kotlin, a React Native or Flutter app), which leaves this front to the computer unless the project says otherwise. A shell that wraps this same front for the phone (Capacitor, Cordova, Ionic, a WebView) is the opposite: this front is opened on the phone. A store link alone proves nothing. A front that breaks on a phone is no sign it is meant for a computer: it may be exactly what to fix. Anything else is a guess, `(to confirm)`: `/aeom` asks the user before any judge, and records the answer with their name as its source.
 - **Four parts**, with these exact headings, then **three to five journeys** under `## Key journeys`, each a `###` heading. Every `###` under `## Key journeys` is a journey: a note goes in a part of its own.
 - **A game or a creative product adds its world**, four more parts with these exact headings, before the journeys: its genre and fiction, the feeling it aims for, its references and its visual assets. Their directions start from them, not from the real things the app names: a game about hiking explorers is not a hiking map.
   - **Genre and fiction**: the kind of game (persistent strategy, card battler, idle, puzzle…) and its world, with the names the project gives it.

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mergeProduct, productBrief, validateProduct } from "./index.js";
+import { mergeProduct, platformOf, productBrief, validateProduct, withPlatform } from "./index.js";
 
 const journey = (name: string, source = "(seen: /)") => `### ${name}\nWhy: a visitor wants it. ${source}\n1. Open \`/\`.\n2. Click "${name}".\n`;
 
-const product = ({ kind = "`tool`: an online shop. (seen: /)", purpose = "A shop that sells mugs. (seen: /)", who = "People buying a gift. (to confirm)", world = "", journeys = ["See the products", "See my orders", "Contact the shop"] } = {}) =>
-  `# Super boutique\n\n## What kind of product\n${kind}\n\n## What it is for\n${purpose}\n\n## Who uses it\n${who}\n\n## The main loop\nBrowse, order, check the order. (seen: /produits, /commandes)\n\n${world}## Key journeys\n\n${journeys.map((j) => journey(j)).join("\n")}`;
+const product = ({ kind = "`tool`: an online shop. (seen: /)", purpose = "A shop that sells mugs. (seen: /)", who = "People buying a gift. (to confirm)", used = "`both`: a shop people open on their phone and their computer. (seen: README.md)", world = "", journeys = ["See the products", "See my orders", "Contact the shop"] } = {}) =>
+  `# Super boutique\n\n## What kind of product\n${kind}\n\n## What it is for\n${purpose}\n\n## Who uses it\n${who}\n\n${used === null ? "" : `## Where it is used\n${used}\n\n`}## The main loop\nBrowse, order, check the order. (seen: /produits, /commandes)\n\n${world}## Key journeys\n\n${journeys.map((j) => journey(j)).join("\n")}`;
 
 /** The four parts a game's sheet adds, each with what AEOM read. */
 const WORLD = [
@@ -45,7 +45,7 @@ test("a first run writes the proposal, spaced as every later run will write it",
   const result = mergeProduct({ proposed: product() });
   assert.equal(mergeProduct({ base: product(), current: result.text, proposed: product() }).text, result.text, "a second run over an untouched sheet changes nothing");
   assert.match(result.text, /\(seen: \/\)\n1\. Open/);
-  assert.deepEqual(result.added, ["Super boutique", "What kind of product", "What it is for", "Who uses it", "The main loop", "Key journeys", 'journey "See the products"', 'journey "See my orders"', 'journey "Contact the shop"']);
+  assert.deepEqual(result.added, ["Super boutique", "What kind of product", "What it is for", "Who uses it", "Where it is used", "The main loop", "Key journeys", 'journey "See the products"', 'journey "See my orders"', 'journey "Contact the shop"']);
 });
 
 test("what the user corrected stays as they wrote it; the rest takes what AEOM learned", () => {
@@ -186,4 +186,27 @@ test("a sheet written before AEOM said the kind is read as a tool's brief, and t
   assert.deepEqual(validateProduct(product({ kind: "`tool`: an online shop. (seen:/)" })), [], "a source without a space is a source");
   assert.deepEqual(validateProduct(result.text), []);
   assert.equal(productBrief(product()).kind, "tool");
+});
+
+test("a sheet says where the front is used, mobile, desktop or both, from what the project says, or as a guess to confirm", () => {
+  assert.deepEqual(validateProduct(product({ used: "`desktop`: the web is for the morning sort; an iOS app serves the phone. (seen: docs/PRD.md)" })), []);
+  assert.deepEqual(validateProduct(product({ used: "`both`: nothing says where it is used. (to confirm)" })), [], "a guess, for the user to answer");
+  assert.match(validateProduct(product({ used: null as unknown as string })).join("\n"), /missing "Where it is used": say whether the front is used on `mobile`, `desktop` or `both`/);
+  assert.match(validateProduct(product({ used: "On a computer. (seen: README.md)" })).join("\n"), /"Where it is used" starts with `mobile`, `desktop` or `both`, in backticks/);
+  assert.match(validateProduct(product({ used: "`desktop`: a back office." })).join("\n"), /"Where it is used" does not say where it comes from/);
+});
+
+test("the platform the sheet says gives the widths to judge at, only when it was seen", () => {
+  assert.deepEqual(platformOf(product({ used: "`desktop`: the web is for the morning sort. (seen: docs/PRD.md)" })), { platform: "desktop", widths: [1280], seen: true, source: "docs/PRD.md" });
+  assert.deepEqual(platformOf(product({ used: "`mobile`: a phone app in the browser. (seen: Antoine)" })), { platform: "mobile", widths: [390], seen: true, source: "Antoine" });
+  assert.deepEqual(platformOf(product({ used: "`both`: a guess. (to confirm)" })), { platform: "both", widths: [390, 1280], seen: false, source: null });
+  assert.equal(platformOf(product({ used: null as unknown as string })), null, "a sheet written before AEOM said it");
+});
+
+test("the user's answer goes in a sheet written before AEOM said where the front is used, before the journeys, and the sheet stays whole", () => {
+  const old = product({ used: null as unknown as string });
+  const answered = withPlatform(old, "desktop", "Antoine");
+  assert.deepEqual(validateProduct(answered), []);
+  assert.match(answered, /## The main loop[\s\S]*## Where it is used\n`desktop`: Antoine said so\. \(seen: Antoine\)\n\n## Key journeys/);
+  assert.equal(platformOf(answered)?.seen, true);
 });

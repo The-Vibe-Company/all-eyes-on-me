@@ -106,3 +106,26 @@ test("an empty list or a width no screen has is refused, in the config and as an
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+const sheetUsedOn = (used: string) =>
+  `# Bruno\n\n## What kind of product\n\`tool\`: a to-do. (seen: /)\n\n## What it is for\nThe morning sort. (seen: /)\n\n## Who uses it\nA team of three. (seen: README.md)\n\n## Where it is used\n${used}\n\n## The main loop\nSort, then meet. (seen: /)\n\n## Key journeys\n\n${["Sort", "Meet", "Close"].map((n) => `### ${n}\nWhy: it. (seen: /)\n1. Open \`/\`.\n`).join("\n")}`;
+
+test("without widths in the config, the platform the product sheet saw gives them; a guess to confirm does not", async () => {
+  const dir = await project(undefined);
+  try {
+    await writeFile(join(dir, ".aeom", "product.md"), sheetUsedOn("`desktop`: the web is for the morning sort; an iOS app serves the phone. (seen: docs/PRD.md)"));
+    const replayed = await run(dir, ["journey", "--url", url]);
+    assert.equal(replayed.code, 0, replayed.out);
+    assert.match(replayed.out, /✓ See the orders\s+1280 px/);
+    assert.doesNotMatch(replayed.out, /390 px/);
+    assert.match((await run(dir, ["check", "--url", url, "--pages", "/"])).out, /at 1280 px/);
+    assert.match((await run(dir, ["estimate", "--screens", "3", "--juger"])).out, /, at 1280 px:/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ widths: [390] }));
+    assert.match((await run(dir, ["check", "--url", url, "--pages", "/"])).out, /at 390 px/, "the config wins over the sheet");
+    await rm(join(dir, ".aeom", "config.json"));
+    await writeFile(join(dir, ".aeom", "product.md"), sheetUsedOn("`desktop`: a back office. (to confirm)"));
+    assert.equal((await run(dir, ["journey", "--url", url])).code, 1, "a guess changes nothing: still judged at 390, where it breaks");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
