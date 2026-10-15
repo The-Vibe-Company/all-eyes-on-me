@@ -1,0 +1,23 @@
+packages/cli/src/commands/review.ts
+  s_4ce34ec42d9105::t_3be9047540e1a1 4-5,53-59,76-77,81,199-200,206-208,212-213,216,225-230,232-242,261-262,265-267,271,277,281,284,286
+  s_4ce34ec42d9105::t_0272ba60c9e004 195-196,209
+  s_4ce34ec42d9105::t_cde42c7c0eaf47 210
+packages/cli/src/commands/review.test.ts
+  s_4ce34ec42d9105::t_2dc175478db7ef 145,155,186-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f2735ddeadc2cb303261415b5812228b18556499",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
