@@ -67,6 +67,8 @@ export async function runCheck(argv: string[]): Promise<number> {
     }
 
     console.log(`\nChecked ${plural(report.pages.length, "page")} at ${widths.join(", ")} px\n`);
+    // Every check's name in one column, the longest one included.
+    const column = Math.max(...CHECKS.map((c) => c.length)) + 1;
     const byPage = new Map<string, Finding[]>();
     for (const finding of report.findings) byPage.set(finding.url, [...(byPage.get(finding.url) ?? []), finding]);
     for (const [pageUrl, findings] of byPage) {
@@ -74,7 +76,7 @@ export async function runCheck(argv: string[]): Promise<number> {
       const lines = new Map<string, number>();
       for (const f of findings) {
         const at = f.check === "overflow" ? ` at ${f.width} px` : "";
-        const line = `  ✗ ${f.check.padEnd(9)}${f.element ? `${f.element}: ` : ""}${f.message}${at}`;
+        const line = `  ✗ ${f.check.padEnd(column)}${f.element ? `${f.element}: ` : ""}${f.message}${at}`;
         lines.set(line, (lines.get(line) ?? 0) + 1);
       }
       for (const [line, count] of lines) console.log(count > 1 ? `${line} (×${count})` : line);

@@ -4,6 +4,7 @@ title: Ce qu'on touche et ce qu'on lit, mesuré
 milestone: 03-la-commande-unique
 depends_on: [26]
 design: null
+status: done
 tracker: { tool: github, id: 117, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/117 }
 ---
 

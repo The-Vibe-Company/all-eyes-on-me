@@ -26,7 +26,8 @@ before(async () => {
   // A desktop tool: its link to the orders is hidden on a phone, so the journey breaks there only.
   server = createServer((req, res) => {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-    res.end(req.url === "/orders" ? "<h1>Commandes</h1>" : `<style>@media (max-width: 600px) { nav { display: none } }</style><nav><a href="/orders">Commandes</a></nav><h1>Tri du matin</h1>`);
+    const viewport = `<meta name="viewport" content="width=device-width, initial-scale=1">`;
+    res.end(req.url === "/orders" ? `${viewport}<h1>Commandes</h1>` : `${viewport}<style>@media (max-width: 600px) { nav { display: none } }</style><nav><a href="/orders">Commandes</a></nav><h1>Tri du matin</h1>`);
   });
   await new Promise<void>((resolve) => server.listen(0, resolve));
   url = `http://localhost:${(server.address() as { port: number }).port}`;

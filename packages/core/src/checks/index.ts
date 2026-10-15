@@ -1,6 +1,10 @@
 export { checkClipped } from "./clipped.js";
 export { checkContrast } from "./contrast.js";
+export { checkFontSize } from "./font-size.js";
 export { checkHeader } from "./header.js";
+export { checkLineLength } from "./line-length.js";
+export { checkTapSize } from "./tap-size.js";
+export { checkZoom } from "./zoom.js";
 export { checkUneven } from "./uneven.js";
 export { checkWrap } from "./wrap.js";
 export { watchConsole } from "./console.js";
