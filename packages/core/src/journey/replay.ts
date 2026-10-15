@@ -86,6 +86,8 @@ export interface ReplayOptions {
    * data). Such a request is recorded, so the guard refuses it, and stopped, so it never reaches that server.
    */
   closed?: { api: string | null };
+  /** Where the reset runs: the app's own folder, such as a worktree of the base, rather than this one. */
+  resetCwd?: string;
 }
 
 /** The replay cannot go on, such as a reset command that fails. The message says why. */
@@ -357,7 +359,7 @@ const replayFiles = (report: JourneyReport | null): string[] =>
  * after every step, and stops a journey at the step it cannot take. Writes the
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
  */
-export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, relogin, account = {}, closed }: ReplayOptions): Promise<JourneyReport> {
+export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, relogin, account = {}, closed, resetCwd }: ReplayOptions): Promise<JourneyReport> {
   const root = new URL(url);
   const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
@@ -371,7 +373,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
       const runs: JourneyRun[] = [];
       for (const width of widths) {
         if (reset) {
-          await promisify(exec)(reset, { timeout: 60_000 }).catch((error: { stderr?: string; message?: string }) => {
+          await promisify(exec)(reset, { timeout: 60_000, ...(resetCwd ? { cwd: resetCwd } : {}) }).catch((error: { stderr?: string; message?: string }) => {
             throw new ReplayError(`The reset command failed before "${journey.name}": ${(error.stderr || error.message || String(error)).trim().split("\n")[0]}`);
           });
         }

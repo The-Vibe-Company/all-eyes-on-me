@@ -272,11 +272,14 @@ function routeOf(file: string): { route: string; layout?: boolean } | null {
  * unmeasured when it knows none. An HTML file is a page only inside the folder
  * of pages given; elsewhere it is a template or a partial, read by every screen.
  */
-export function screensTouched(files: string[], known: string[], { samples = {}, folder }: { samples?: Record<string, string>; folder?: string } = {}): { routes: string[]; all: boolean; unmeasured: string[] } {
+export function screensTouched(files: string[], known: string[], { samples = {}, folder }: { samples?: Record<string, string>; folder?: string } = {}): { routes: string[]; all: boolean; unmeasured: string[]; patterns: string[] } {
   const routes: string[] = [];
   const unmeasured: string[] = [];
+  // Every route touched as a pattern (`/blog/:slug`, a layout's `/compte/*`): what a journey crossing it may visit.
+  const patterns: string[] = [];
   let all = false;
   const add = (route: string) => {
+    if (!patterns.includes(route)) patterns.push(route);
     if (!route.includes(":")) return void (routes.includes(route) || routes.push(route));
     const shape = new RegExp(`^${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/:[^/]+/g, "[^/]+")}$`);
     const sample = samples[route] ?? known.find((r) => shape.test(r) || pageShape(r) === pageShape(route));
@@ -299,7 +302,10 @@ export function screensTouched(files: string[], known: string[], { samples = {},
     const page = routeOf(file);
     if (page?.layout) {
       if (page.route === "/") all = true;
-      else for (const r of known.filter((k) => k === page.route || k.startsWith(`${page.route}/`))) add(r);
+      else {
+        patterns.push(`${page.route}/*`, page.route);
+        for (const r of known.filter((k) => k === page.route || k.startsWith(`${page.route}/`))) add(r);
+      }
       continue;
     }
     if (page) {
@@ -308,5 +314,16 @@ export function screensTouched(files: string[], known: string[], { samples = {},
     }
     if (FRONT_FILE.test(file) || FRONT_SCRIPT.test(file) || /\.html?$/i.test(file)) all = true;
   }
-  return all ? { routes: known, all: true, unmeasured: [] } : { routes, all: false, unmeasured };
+  return all ? { routes: known, all: true, unmeasured: [], patterns: [] } : { routes, all: false, unmeasured, patterns };
+}
+
+/** True when a path a journey visits (its query dropped) is one of the routes touched, by their patterns. */
+export function routeTouched(path: string, touched: { all: boolean; patterns: string[] }): boolean {
+  if (touched.all) return true;
+  const bare = path.replace(/[?#].*$/, "").replace(/(.)\/+$/, "$1") || "/";
+  return touched.patterns.some((p) => {
+    if (p.endsWith("/*")) return bare.startsWith(p.slice(0, -1));
+    const shape = new RegExp(`^${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/:[^/]+/g, "[^/]+")}$`);
+    return shape.test(bare) || pageShape(bare) === pageShape(p);
+  });
 }

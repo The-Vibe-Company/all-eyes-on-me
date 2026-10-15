@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { execFile, execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
@@ -237,6 +239,37 @@ test("the key journeys a branch crosses are replayed on its base and on it: one 
     assert.equal(code, 0, out);
     assert.match(out, /✓ Voir les produits\s+still reaches its end/);
     assert.match(out, /⚠ Voir les produits\s+POST \/produits\.html: a call the base did not make: a feature, said, not refused/);
+  } finally {
+    git("checkout", "-q", "main");
+  }
+});
+
+test("on an app, the base is started from its own worktree, with the start command, so a journey the branch breaks is told from one already broken; a journey file that cannot be replayed fails the review", async () => {
+  const port = await new Promise<number>((done) => {
+    const server = createServer().listen(0, "127.0.0.1", () => {
+      const { port } = server.address() as AddressInfo;
+      server.close(() => done(port));
+    });
+  });
+  git("checkout", "-q", "-b", "app");
+  // Serves the front of the folder it starts in: the base's own pages when it starts in the base's worktree.
+  await writeFile(join(dir, "serve.mjs"), `import { createServer } from "node:http";\nimport { readFile } from "node:fs/promises";\nimport { join } from "node:path";\ncreateServer(async (req, res) => {\n  const path = req.url === "/" ? "/index.html" : req.url.split("?")[0];\n  try { res.end(await readFile(join(process.cwd(), "front", path))); } catch { res.statusCode = 404; res.end("absent"); }\n}).listen(${port}, "127.0.0.1");\n`);
+  await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: `http://127.0.0.1:${port}`, start: "node serve.mjs", pages: ["/", "/produits.html"] }));
+  git("add", "-A");
+  git("commit", "-q", "-m", "l'app");
+  git("checkout", "-q", "-b", "feat/app-sans-lien");
+  await writeFile(join(dir, "front", "index.html"), page(["Accueil"], `<h1>Accueil</h1>`));
+  git("commit", "-q", "-am", "sans lien");
+  try {
+    const { code, out } = await run(["review", "--base", "app", "--widths", "1280", "--timeout", "10"]);
+    assert.equal(code, 1, out);
+    assert.match(out, /✗ Voir les produits\s+went to its end on app and breaks at step 2 at 1280 px/);
+    await writeFile(join(dir, ".aeom", "journeys", "casse.json"), JSON.stringify({ name: "Cassé", steps: [{ do: "voler" }] }));
+    git("add", "-A");
+    git("commit", "-q", "-m", "un parcours illisible");
+    const broken = await run(["review", "--base", "app", "--widths", "1280", "--timeout", "10"]);
+    assert.equal(broken.code, 1, broken.out);
+    assert.match(broken.out, /✗ \.aeom\/journeys\s+cannot be replayed: [^\n]*casse\.json/);
   } finally {
     git("checkout", "-q", "main");
   }
