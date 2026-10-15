@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, usableWidths, WIDTH_RANGE, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, platformOf, usableWidths, WIDTH_RANGE, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -17,8 +17,17 @@ export const APP_OPTIONS_HELP = `  --url <url>          Where the app answers, s
                        (default: start in .aeom/config.json, only when --url
                        is not given, so --url alone captures a running app)
   --widths <list>      Comma-separated widths in px (default: widths in
-                       .aeom/config.json, or ${DEFAULT_WIDTHS.join(",")})
+                       .aeom/config.json, or where .aeom/product.md saw the
+                       front is used: 390 on mobile, 1280 on desktop; or
+                       ${DEFAULT_WIDTHS.join(",")})
   --timeout <seconds>  How long to wait for the app to answer (default 30)`;
+
+/** The widths of the platform the product sheet saw the front is used on; undefined when it does not say, or only guesses. */
+export async function sheetWidths(): Promise<number[] | undefined> {
+  const sheet = await readFile(".aeom/product.md", "utf8").catch(() => undefined);
+  const used = sheet === undefined ? null : platformOf(sheet);
+  return used?.seen ? used.widths : undefined;
+}
 
 /** Parses --widths, which withConfig fills from the config when it is not given, or returns an error message. */
 export function parseWidths(value: string | undefined): number[] | string {
@@ -77,6 +86,9 @@ export async function withConfig<T extends { url?: string; start?: string; pages
   if (values.pages === undefined && config.pages) values = { ...values, pages: config.pages.join(",") };
   // The widths that count are the product's, whoever starts the app: --widths alone replaces them.
   if (values.widths === undefined && config.widths) values = { ...values, widths: config.widths.join(",") };
+  // Then where the product sheet saw the front is used: a guess to confirm decides nothing.
+  const used = values.widths === undefined ? await sheetWidths() : undefined;
+  if (used) values = { ...values, widths: used.join(",") };
   if (values.url !== undefined) return values;
   return { ...values, url: config.url, start: values.start ?? config.start };
 }

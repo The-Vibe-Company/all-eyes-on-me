@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, estimateRun, estimateText, loadConfig, type RunMode } from "@aeom/core";
-import { parseWidths } from "./app.js";
+import { parseWidths, sheetWidths } from "./app.js";
 
 const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>]
 
@@ -22,7 +22,8 @@ journeys, the files in .aeom/journeys.
   --screens <n>      Count this many screens instead
   --journeys <n>     Count this many key journeys instead
   --widths <list>    Measure at these widths, such as 1280 (default: widths in
-                     .aeom/config.json, or 390,1280): fewer widths, fewer
+                     .aeom/config.json, or where .aeom/product.md saw the
+                     front is used, or 390,1280): fewer widths, fewer
                      captures for each judge to look at`;
 
 const count = (value: string | undefined, what: string, least: number): number | string | undefined => {
@@ -48,7 +49,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
     console.error(error.message);
     return 1;
   }
-  const widths = parseWidths(values.widths ?? config.widths?.join(","));
+  const widths = parseWidths(values.widths ?? config.widths?.join(",") ?? (await sheetWidths())?.join(","));
   if (typeof widths === "string") return (console.error(widths), 1);
   const given = { screens: count(values.screens, "screens", 1), journeys: count(values.journeys, "journeys", 0), directions: count(values.directions, "directions", 1) };
   for (const v of Object.values(given)) if (typeof v === "string") return (console.error(v), 1);

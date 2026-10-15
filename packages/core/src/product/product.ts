@@ -26,6 +26,14 @@ const kindOf = (text: string): ProductKind | null => (text.match(/^`(tool|game|c
 const SOURCE = String.raw`\(seen: *[^()\s<](?:[^()]|\([^()]*\))*\)|\(to confirm\)`;
 const SOURCED = new RegExp(SOURCE, "i");
 
+/** Where the front is used: on a phone, on a computer, or both. */
+const USED = "Where it is used";
+export const PLATFORMS = ["mobile", "desktop", "both"] as const;
+export type Platform = (typeof PLATFORMS)[number];
+/** The widths a platform is judged at: a phone, a computer, or both. */
+export const PLATFORM_WIDTHS: Record<Platform, number[]> = { mobile: [390], desktop: [1280], both: [390, 1280] };
+const platformWord = (text: string): Platform | null => (text.match(/^`(mobile|desktop|both)`/i)?.[1]?.toLowerCase() as Platform | undefined) ?? null;
+
 /** One piece of the sheet the user can correct on its own: the title, a part, or a journey. */
 interface Unit {
   key: string;
@@ -75,6 +83,10 @@ export function validateProduct(text: string): string[] {
   else if (!kind) problems.push(`"${KIND}" starts with \`tool\`, \`game\` or \`creative\`, in backticks, then says it in a few words`);
   else if (!SOURCED.test(body(kindPart))) problems.push(`"${KIND}" does not say where it comes from: add (seen: <screen or file>)`);
   else if (!/\(seen:/i.test(body(kindPart))) problems.push(`"${KIND}" is never a guess: say it from what you read or saw, (seen: <screen or file>)`);
+  const usedPart = all.find((u) => !u.journey && u.key === USED);
+  if (!usedPart) problems.push(`missing "${USED}": say whether the front is used on \`mobile\`, \`desktop\` or \`both\`, from what the project says, or guess it with (to confirm)`);
+  else if (!platformWord(body(usedPart))) problems.push(`"${USED}" starts with \`mobile\`, \`desktop\` or \`both\`, in backticks, then says it in a few words`);
+  else if (!SOURCED.test(body(usedPart))) problems.push(`"${USED}" does not say where it comes from: add (seen: <file>) or (to confirm)`);
   const world = kind === "game" || kind === "creative" ? WORLD_PARTS : [];
   for (const name of [...PARTS, ...world]) {
     const part = all.find((u) => !u.journey && u.key === name);
@@ -118,6 +130,35 @@ export function mergeProduct({ base, current, proposed }: { base?: string; curre
     },
   });
   return { text: join(pieces), ...result };
+}
+
+/**
+ * Where the sheet says the front is used, and the widths that gives: `seen`
+ * only when its first claim has a `(seen: …)` source, the user's answer
+ * included; a guess `(to confirm)` decides nothing. Null for a sheet written
+ * before AEOM said it.
+ */
+export function platformOf(text: string): { platform: Platform; widths: number[]; seen: boolean; source: string | null } | null {
+  const unit = units(text).find((u) => !u.journey && u.key === USED);
+  const platform = unit ? platformWord(body(unit)) : null;
+  if (!unit || !platform) return null;
+  const source = body(unit).match(new RegExp(SOURCE, "i"))?.[0] ?? "";
+  const seen = /^\(seen:/i.test(source);
+  return { platform, widths: PLATFORM_WIDTHS[platform], seen, source: seen ? source.replace(/^\(seen: */i, "").replace(/\)$/, "").trim() : null };
+}
+
+/** The sheet with the user's answer on where the front is used, as their own correction: the next merge keeps it. */
+export function withPlatform(text: string, platform: Platform, by: string): string {
+  const all = units(text);
+  const said = `## ${USED}\n\`${platform}\`: ${by} said so. (seen: ${by})`;
+  const at = all.findIndex((u) => !u.journey && u.key === USED);
+  if (at >= 0) all[at] = { ...all[at]!, text: said };
+  else {
+    // A sheet written before AEOM said it: the part goes before the journeys.
+    const journeys = all.findIndex((u) => u.key === JOURNEYS);
+    all.splice(journeys === -1 ? all.length : journeys, 0, { key: USED, text: said, journey: false });
+  }
+  return all.map((u) => u.text).join("\n\n") + "\n";
 }
 
 /** What a direction may start from: the app's purpose, its users and its main loop, as far as they are known, and a game's world. */

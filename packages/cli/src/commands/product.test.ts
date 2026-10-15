@@ -21,8 +21,8 @@ const run = async (cwd: string, args: string[]) => {
 };
 
 const journey = (name: string) => `### ${name}\nWhy: a visitor wants it. (seen: /)\n1. Open \`/\`.\n2. Click "${name}".\n`;
-const sheet = (who = "People buying a gift. (to confirm)", journeys = ["See the products", "See my orders", "Contact the shop"]) =>
-  `# Super boutique\n\n## What kind of product\n\`tool\`: an online shop. (seen: /)\n\n## What it is for\nA shop that sells mugs. (seen: /)\n\n## Who uses it\n${who}\n\n## The main loop\nBrowse, order, check. (seen: /produits)\n\n## Key journeys\n\n${journeys.map(journey).join("\n")}`;
+const sheet = (who = "People buying a gift. (to confirm)", journeys = ["See the products", "See my orders", "Contact the shop"], used = "\`both\`: a shop people open on their phone and their computer. (seen: README.md)") =>
+  `# Super boutique\n\n## What kind of product\n\`tool\`: an online shop. (seen: /)\n\n## What it is for\nA shop that sells mugs. (seen: /)\n\n## Who uses it\n${who}\n\n## Where it is used\n${used}\n\n## The main loop\nBrowse, order, check. (seen: /produits)\n\n## Key journeys\n\n${journeys.map(journey).join("\n")}`;
 
 async function project() {
   const dir = await mkdtemp(join(tmpdir(), "aeom-product-"));
@@ -212,6 +212,51 @@ test("aeom product --brief gives the directions what the app is for, who uses it
     assert.match(guessed.out, /Nothing in \.aeom\/product\.md is confirmed/);
     await writeFile(file, sheet().replace("mugs. (seen: /)", "mugs. (to confirm)").replace("(seen: /produits)", "(to confirm)").replace("`tool`: an online shop.", "`game`: a game.").replace("## Key journeys", "## Genre and fiction\nBeasts. (seen: README.md)\n\n## The feeling it aims for\nPride. (to confirm)\n\n## References\nNone. (to confirm)\n\n## Visual assets\nPaintings. (seen: public/)\n\n## Key journeys"));
     assert.equal((await run(dir, ["product", "--brief"])).code, 1, "a world confirmed is not enough when what the app is for, who uses it and its loop are all guesses");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom product --widths says the widths the front is judged at and why, and exits 2 when only the user can say", async () => {
+  const { dir, sheet: file } = await project();
+  try {
+    await mkdir(join(dir, ".aeom"), { recursive: true });
+    const none = await run(dir, ["product", "--widths"]);
+    assert.equal(none.code, 2);
+    assert.match(none.out, /Not known: there is no product sheet/);
+    await writeFile(file, sheet(undefined, undefined, "`desktop`: the web is for the morning sort; an iOS app serves the phone. (seen: docs/PRD.md)"));
+    const desktop = await run(dir, ["product", "--widths"]);
+    assert.equal(desktop.code, 0, desktop.out);
+    assert.match(desktop.out, /^Widths: 1280\. The front is used on desktop \(seen: docs\/PRD\.md\)\.$/m);
+    await writeFile(file, sheet(undefined, undefined, "`both`: nothing says it. (to confirm)"));
+    const guess = await run(dir, ["product", "--widths"]);
+    assert.equal(guess.code, 2);
+    assert.match(guess.out, /Not known: the sheet guesses both \(to confirm\)\. Ask the user whether the front is used on mobile, desktop or both, then record it: aeom product --used-on <mobile\|desktop\|both> --by <their name>/);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ widths: [390, 768, 1280] }));
+    const config = await run(dir, ["product", "--widths"]);
+    assert.equal(config.code, 0, "the config wins over the sheet");
+    assert.match(config.out, /^Widths: 390,768,1280\. From "widths" in \.aeom\/config\.json\.$/m);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom product --used-on records the user's answer in the sheet as their own correction, so no later run asks again", async () => {
+  const { dir, sheet: file, draft } = await project();
+  try {
+    await writeFile(draft, sheet(undefined, undefined, "`both`: nothing says it. (to confirm)"));
+    assert.equal((await run(dir, ["product", draft])).code, 0);
+    const answered = await run(dir, ["product", "--used-on", "desktop", "--by", "Antoine"]);
+    assert.equal(answered.code, 0, answered.out);
+    assert.match(await readFile(file, "utf8"), /## Where it is used\n`desktop`: Antoine said so\. \(seen: Antoine\)\n/);
+    assert.match((await run(dir, ["product", "--widths"])).out, /^Widths: 1280\. The front is used on desktop \(seen: Antoine\)\.$/m);
+    // The next run drafts its guess again: the user's answer stays.
+    assert.equal((await run(dir, ["product", draft])).code, 0);
+    assert.match(await readFile(file, "utf8"), /`desktop`: Antoine said so\. \(seen: Antoine\)/);
+    const wrong = await run(dir, ["product", "--used-on", "tablet", "--by", "Antoine"]);
+    assert.equal(wrong.code, 1);
+    assert.match(wrong.out, /--used-on is mobile, desktop or both/);
+    assert.equal((await run(dir, ["product", "--used-on", "mobile"])).code, 1, "an answer says whose it is");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
