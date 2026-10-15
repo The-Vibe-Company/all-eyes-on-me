@@ -3,62 +3,74 @@ import type { Issue } from "./types.js";
 
 /** How many stops of the keyboard are walked: enough for a header, a menu and the first actions of a page. */
 const STOPS = 25;
-const PROPS = ["outline-style", "outline-width", "outline-color", "box-shadow", "border-top-color", "border-bottom-color", "border-left-color", "border-right-color", "border-bottom-width", "background-color", "color", "text-decoration-line", "text-decoration-thickness", "opacity", "transform"];
+/** How far around the element a focus style may show: a ring, a box around it. */
+const AROUND = 16;
 
 /**
  * Whoever moves with the keyboard sees where they are: walked with Tab, each
- * element that takes the focus shows something its unfocused self does not, on
- * itself, on its pseudo-elements or on its parent (a ring by `:focus-within`).
+ * element that takes the focus looks different from itself without it, on
+ * screen. The area around it is captured with the focus and without, its
+ * transitions run to their end, so any visible sign counts: a ring, a filter,
+ * a box around it that lights up, a skip link that comes into view. An embed
+ * such as an iframe is stepped over, never judged.
  */
 export async function checkFocus(page: Page): Promise<Issue[]> {
-  const count = await page.evaluate((props) => {
-    (document.activeElement as HTMLElement | null)?.blur?.();
-    const look = (el: Element) => [el, ...["::before", "::after"].map((p) => [el, p] as const), el.parentElement].map((x) => {
-      if (!x) return "";
-      const style = Array.isArray(x) ? getComputedStyle(x[0], x[1]) : getComputedStyle(x as Element);
-      return props.map((p) => style.getPropertyValue(p)).join("|");
-    }).join("#");
-    const stops = [...document.querySelectorAll<HTMLElement>('a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"])')];
-    const seen: string[] = [];
-    stops.forEach((el, i) => {
-      el.dataset.aeomFocus = String(i);
-      seen.push(look(el));
-    });
-    (window as unknown as { __aeomFocus: string[] }).__aeomFocus = seen;
-    return stops.length;
-  }, PROPS);
-  if (!count) return [];
   const found: Issue[] = [];
-  const visited = new Set<string>();
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur?.());
   try {
     for (let i = 0; i < STOPS; i++) {
       await page.keyboard.press("Tab");
-      const stop = await page.evaluate(async (props) => {
-        const el = document.activeElement as HTMLElement | null;
-        if (!el || el === document.body || el.dataset.aeomFocus === undefined) return null;
-        // A ring that fades in is read once it is in.
-        await Promise.race([Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => undefined))), new Promise((done) => setTimeout(done, 500))]);
-        const look = [el, ...["::before", "::after"].map((p) => [el, p] as const), el.parentElement].map((x) => {
-          if (!x) return "";
-          const style = Array.isArray(x) ? getComputedStyle(x[0], x[1]) : getComputedStyle(x as Element);
-          return props.map((p) => style.getPropertyValue(p)).join("|");
-        }).join("#");
-        const before = (window as unknown as { __aeomFocus: string[] }).__aeomFocus[Number(el.dataset.aeomFocus)];
+      const stop = await page.evaluate((around) => {
+        // The element that holds the focus, inside a shadow root if it is in one.
+        let el = document.activeElement as HTMLElement | null;
+        while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement as HTMLElement;
+        if (!el || el === document.body) return { end: true } as const;
+        // An embed keeps the focus for as many stops as it holds: stepped over, never taken for the walk's end.
+        if (el.tagName === "IFRAME" || el.tagName === "FRAME") return { skip: true } as const;
+        if (el.dataset.aeomStop) return { end: true } as const;
+        el.dataset.aeomStop = "1";
+        if (el.isContentEditable) return { skip: true } as const;
         const box = el.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) return { skip: true } as const;
+        const x = Math.max(box.left - around, 0);
+        const y = Math.max(box.top - around, 0);
         const text = (el.innerText || (el as HTMLInputElement).placeholder || el.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ").slice(0, 40);
         const classes = [...el.classList].map((c) => `.${c}`).join("");
-        return { id: el.dataset.aeomFocus, changed: look !== before, shown: box.width > 0 && box.height > 0, element: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${classes}${text ? ` "${text}"` : ""}` };
-      }, PROPS);
-      if (!stop || visited.has(stop.id)) break;
-      visited.add(stop.id);
-      if (stop.shown && !stop.changed) found.push({ element: stop.element, message: "nothing shows it has the keyboard focus: give it a visible outline or ring (:focus-visible)" });
+        return {
+          clip: { x, y, width: Math.min(box.right + around, window.innerWidth) - x, height: Math.min(box.bottom + around, window.innerHeight) - y },
+          element: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${classes}${text ? ` "${text}"` : ""}`,
+        };
+      }, AROUND);
+      if ("end" in stop) break;
+      if ("skip" in stop || stop.clip.width <= 0 || stop.clip.height <= 0) continue;
+      const shot = () => page.screenshot({ clip: stop.clip, animations: "disabled", caret: "hide" });
+      const focused = await shot();
+      // The same area without the focus, then the focus back where it was, so the next Tab goes on from there.
+      await page.evaluate(() => {
+        let el = document.activeElement as HTMLElement | null;
+        while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement as HTMLElement;
+        (window as unknown as { __aeomFocused?: HTMLElement | null }).__aeomFocused = el;
+        el?.blur();
+      });
+      const unfocused = await shot();
+      await page.evaluate(() => {
+        const holder = window as unknown as { __aeomFocused?: HTMLElement | null };
+        holder.__aeomFocused?.focus({ preventScroll: true });
+        delete holder.__aeomFocused;
+      });
+      if (focused.equals(unfocused)) found.push({ element: stop.element, message: "nothing shows it has the keyboard focus: give it a visible outline or ring (:focus-visible)" });
     }
+  } catch {
+    // A page that goes elsewhere mid-walk: what was found stands.
   } finally {
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement | null)?.blur?.();
-      for (const el of document.querySelectorAll<HTMLElement>("[data-aeom-focus]")) delete el.dataset.aeomFocus;
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    });
+    await page
+      .evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur?.();
+        for (const el of document.querySelectorAll<HTMLElement>("[data-aeom-stop]")) delete el.dataset.aeomStop;
+        delete (window as unknown as { __aeomFocused?: unknown }).__aeomFocused;
+        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      })
+      .catch(() => undefined);
   }
   return found;
 }

@@ -9,9 +9,10 @@ import type { Issue } from "./types.js";
  */
 export async function checkLabels(page: Page): Promise<Issue[]> {
   const found = await page.evaluate(() => {
+    // Hidden from screen readers on purpose (aria-hidden, inert): a duplicate link of a card, a honeypot field.
     const shown = (el: Element) => {
       const b = el.getBoundingClientRect();
-      return b.width > 0 && b.height > 0 && (el.checkVisibility?.({ checkVisibilityCSS: true }) ?? true);
+      return b.width > 0 && b.height > 0 && (el.checkVisibility?.({ checkVisibilityCSS: true }) ?? true) && !el.closest('[aria-hidden="true"], [inert]');
     };
     const describe = (el: HTMLElement) => {
       const text = ((el as HTMLInputElement).placeholder || el.getAttribute("href") || (el as HTMLImageElement).src?.split(/[?#]/)[0]?.split("/").pop() || "").slice(0, 40);
@@ -23,12 +24,19 @@ export async function checkLabels(page: Page): Promise<Issue[]> {
       const said = el.getAttribute("aria-label")?.trim() || byIds(el.getAttribute("aria-labelledby")) || (el.innerText ?? "").trim() || el.getAttribute("title")?.trim() || "";
       if (said) return said;
       for (const img of el.querySelectorAll("img[alt]")) if (img.getAttribute("alt")!.trim()) return img.getAttribute("alt")!;
-      for (const svg of el.querySelectorAll("svg")) {
-        const named = svg.getAttribute("aria-label")?.trim() || svg.querySelector("title")?.textContent?.trim();
+      for (const inner of el.querySelectorAll("[aria-label], [aria-labelledby], svg")) {
+        const named = inner.getAttribute("aria-label")?.trim() || byIds(inner.getAttribute("aria-labelledby")) || (inner.tagName.toLowerCase() === "svg" ? inner.querySelector("title")?.textContent?.trim() : "");
         if (named) return named;
       }
-      const value = (el as HTMLInputElement).value;
-      return el.tagName === "INPUT" && value ? value : "";
+      // Words drawn by CSS are read too.
+      for (const pseudo of ["::before", "::after"]) {
+        const content = getComputedStyle(el, pseudo).content;
+        if (/^["'].*\S.*["']$/.test(content)) return content.slice(1, -1);
+      }
+      const input = el as HTMLInputElement;
+      // A submit button with no value says « Submit », in the browser's words.
+      if (el.tagName === "INPUT") return input.value || (input.type === "submit" || input.type === "reset" ? input.type : "");
+      return "";
     };
     const out: { element: string; how: "button" | "link" | "field" | "image" }[] = [];
     for (const el of document.querySelectorAll<HTMLElement>('button, [role="button"], a[href], input[type="submit"], input[type="button"]')) {
@@ -41,7 +49,7 @@ export async function checkLabels(page: Page): Promise<Issue[]> {
     }
     for (const img of document.images) {
       const b = img.getBoundingClientRect();
-      if (b.width < 4 || b.height < 4 || !shown(img) || img.hasAttribute("alt") || img.getAttribute("role") === "presentation" || img.getAttribute("aria-hidden") === "true") continue;
+      if (b.width < 4 || b.height < 4 || !shown(img) || img.hasAttribute("alt") || /^(presentation|none)$/.test(img.getAttribute("role") ?? "") || img.getAttribute("aria-label")?.trim() || img.getAttribute("title")?.trim()) continue;
       out.push({ element: describe(img), how: "image" });
     }
     return out;

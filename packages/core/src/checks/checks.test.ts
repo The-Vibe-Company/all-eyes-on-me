@@ -325,7 +325,9 @@ describe("images", () => {
       <img class="gone" src="http://127.0.0.1:9/nope.jpg" alt="Lampe" width="120" height="90">
       <img class="wide" src="${FOUR_THREE}" alt="Chaise" style="width:320px;height:180px">
       <img src="${FOUR_THREE}" alt="Tapis" style="width:320px;height:180px;object-fit:cover">
-      <img src="${FOUR_THREE}" alt="Coussin" style="width:200px;height:150px">`);
+      <img src="${FOUR_THREE}" alt="Coussin" style="width:200px;height:150px">
+      <img src="${FOUR_THREE}" alt="Tournée" style="width:200px;height:150px;transform:rotate(90deg)">
+      <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="vraie.jpg" alt="" style="width:400px;height:300px">`);
     await page.waitForTimeout(300);
     const issues = await checkImages(page);
     assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["img.gone", "img.wide"]);
@@ -344,7 +346,13 @@ describe("labels", () => {
       <input class="email" type="email" placeholder="Email">
       <label>Nom <input type="text"></label>
       <img class="photo" src="${FOUR_THREE}">
-      <img src="${FOUR_THREE}" alt="">`);
+      <img src="${FOUR_THREE}" alt="">
+      <article><a href="/p/1" aria-hidden="true" tabindex="-1"><img src="${FOUR_THREE}" alt=""></a><h3><a href="/p/1">Lampe</a></h3></article>
+      <div inert><button><svg width="16" height="16"></svg></button></div>
+      <a href="/t"><span role="img" aria-label="Twitter"></span>&nbsp;</a>
+      <form><input type="submit"></form>
+      <img src="${FOUR_THREE}" role="none">
+      <img src="${FOUR_THREE}" title="Le logo">`);
     const issues = await checkLabels(page);
     assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["button.icon", "a.logo", "input.email", "img.photo"]);
     assert.match(issues[0]!.message, /no name: a screen reader says only « button »/);
@@ -363,7 +371,26 @@ describe("focus", () => {
     assert.deepEqual(issues.map((i) => i.element), ['a.bare "Produits"']);
     assert.match(issues[0]!.message, /nothing shows it has the keyboard focus: give it a visible outline or ring/);
   });
+
+  test("any visible change counts: a filter, a ring on a box around it, a slow border, a skip link that comes into view; one with none after an embed is still found", async () => {
+    const page = await pageWith(`<style>
+      * { outline: none !important }
+      .glow:focus-visible { filter: brightness(1.6) }
+      .g { padding: 6px } .g:focus-within { box-shadow: 0 0 0 3px #36f }
+      .f { border: 2px solid #ccc; transition: border-color 1s } .f:focus-within { border-color: #36f }
+      .skip { position: absolute; left: -9999px } .skip:focus { left: 0; top: 0 }
+    </style>
+      <a class="skip" href="#main">Aller au contenu</a>
+      <a class="glow" href="/a" style="background:#345;color:#fff;padding:8px">Produits</a>
+      <div class="g"><div><input placeholder="Recherche"></div></div>
+      <div class="f"><input placeholder="Email"></div>
+      <iframe srcdoc="<p>Vidéo</p>" style="width:120px;height:60px"></iframe>
+      <a class="plain" href="/c">Contact</a>`);
+    const issues = await checkFocus(page);
+    assert.deepEqual(issues.map((i) => i.element), ['a.plain "Contact"']);
+  });
 });
+
 
 describe("layout-shift", () => {
   test("flags a page that moves while it loads; passes one that does not", async () => {

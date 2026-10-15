@@ -8,7 +8,9 @@ const TOLERANCE = 0.05;
  * Every image loads, and none is stretched or squashed: shown at a shape other
  * than its own, it must be cropped to fit (`object-fit: cover` or `contain`).
  * An image still loading, such as a lazy one far down the page, a drawing in
- * SVG, which keeps its own shape, and a pixel of tracking are left alone.
+ * SVG, which keeps its own shape, a placeholder of a few pixels waiting for the
+ * real picture, and a pixel of tracking are left alone. The shape is read from
+ * the layout, so a turned or tilted image is not taken for a squashed one.
  */
 export async function checkImages(page: Page): Promise<Issue[]> {
   const found = await page.evaluate((tolerance) => {
@@ -30,12 +32,14 @@ export async function checkImages(page: Page): Promise<Issue[]> {
         out.push({ element, how: "broken" });
         continue;
       }
-      if (/\.svg$/i.test(file) || src.startsWith("data:image/svg")) continue;
+      if (/\.svg$/i.test(file) || src.startsWith("data:image/svg") || img.naturalWidth < 16 || img.naturalHeight < 16) continue;
       const style = getComputedStyle(img);
       if (style.objectFit !== "fill") continue;
       const px = (v: string) => parseFloat(v) || 0;
-      const w = b.width - px(style.paddingLeft) - px(style.paddingRight) - px(style.borderLeftWidth) - px(style.borderRightWidth);
-      const h = b.height - px(style.paddingTop) - px(style.paddingBottom) - px(style.borderTopWidth) - px(style.borderBottomWidth);
+      // The layout's size, before any transform turns or tilts it.
+      const w = img.clientWidth - px(style.paddingLeft) - px(style.paddingRight);
+      const h = img.clientHeight - px(style.paddingTop) - px(style.paddingBottom);
+      if (w <= 0 || h <= 0) continue;
       const shown = w / h;
       const natural = img.naturalWidth / img.naturalHeight;
       if (Math.abs(shown / natural - 1) > tolerance) out.push({ element, how: shown > natural ? "stretched" : "squashed", natural: said(img.naturalWidth, img.naturalHeight), shown: said(w, h) });
