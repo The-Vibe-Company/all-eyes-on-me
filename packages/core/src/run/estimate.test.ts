@@ -101,3 +101,16 @@ test("from a prompt, the cost is three direction workers and one judge, in minut
   assert.doesNotMatch(text, /only when the verdict finds something to redo/);
   assert.match(text, /The direction workers run on the session's own model, the judge on Sonnet\./);
 });
+
+test("from scratch, the cost is the directions, the kit, a worker per screen, the measure and the journeys: no judge of a front that does not exist", () => {
+  const scratch = estimateRun({ screens: 6, journeys: 3, mode: "scratch" });
+  assert.deepEqual(scratch.phases.map((p) => p.phase), ["Write the product sheet and its journeys", "Three directions, for you to choose", "The kit, on the direction chosen", "The screens of the key journeys", "Measure the screens and the journeys", "The standard, the result page and the PR"]);
+  assert.equal(scratch.phases[3]!.agents, 6, "one worker per screen, the two the direction drew included: they are rebuilt on the kit");
+  assert.ok(scratch.total.agents < estimateRun({ screens: 6, journeys: 3, mode: "full" }).total.agents + 4);
+  const text = estimateText(scratch, { screens: 6, journeys: 3 });
+  assert.match(text, /^From scratch, 6 screens and 3 key journeys:\n/);
+  assert.equal(scratch.ifBroken?.phase, "If screens go back once", "the one time a failing screen goes back to its worker");
+  const alone = estimateRun({ screens: 6, journeys: 3, mode: "scratch", autonome: true });
+  assert.ok(alone.phases[1]!.agents > scratch.phases[1]!.agents, "with --autonome, three screening judges and the knockout");
+  assert.doesNotMatch(text, /only when the verdict finds something to redo/);
+});

@@ -60,7 +60,9 @@ function fit(text: string, report: string): string {
  * machine that ran it.
  */
 export function prBody(page: ResultPage, reportPath: string): { title: string; body: string } {
-  const title = page.direction
+  const title = page.built
+    ? `AEOM: a first front${page.direction ? `, on ${flat(page.direction.champion)}` : ""} (${flat(page.run)})`
+    : page.direction
     ? `AEOM: a new direction, ${flat(page.direction.champion)} (${flat(page.run)})`
     : page.verdict?.keepStyle
       ? `AEOM: the front fixed, its style kept (${flat(page.run)})`
@@ -85,6 +87,7 @@ export function prBody(page: ResultPage, reportPath: string): { title: string; b
     lines.push("## Style kept", "", "No new direction: the run fixed what failed on the app's own style.", "");
   }
 
+  if (page.built) lines.push("## Built from scratch", "", "Every screen runs on fake data, kept in one module and named as such, until an API replaces it.", "");
   if (page.screens.length) lines.push("## Screens", "", ...capped(page.screens.map(screenLine)), "");
   if (page.journeys.length) lines.push("## Journeys", "", ...capped(page.journeys.map(journeyLine)), "");
   if (page.features?.entries.length) {

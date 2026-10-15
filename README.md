@@ -56,6 +56,8 @@ ln -s "$PWD/skills/aeom" "$PWD/skills/aeom-judge" ~/.claude/skills/
 
 **From a prompt, with no app yet.** `/aeom --depuis prompt.md`, such as the prompt `/style` writes, draws three directions in a few minutes: two static pages each, in plain HTML and CSS, keeping what the charter fixes and varying what it leaves open. The sixteen checks run on each, a judge screens out the ugly and the dated, and you choose. The whole mockup on the chosen direction comes next.
 
+**From scratch, with no front yet.** `/aeom build --from-scratch cahier.md`, or a sentence in quotes, drafts the product sheet and its key journeys from it, says what the run will cost and waits for your go, then draws three directions for you to pick. On the one you pick, it builds the kit and the screens of the key journeys, on fake data kept in one module and named as such. It replays each journey to its end, checks that no screen calls a server, and writes the standard, the result page and a pull request. The front is plain HTML, CSS and JavaScript in `front/`, with no build step, which any stack can take over; open it served, `python3 -m http.server 8080 -d front`.
+
 Then, in your project:
 - it is a git repository with a clean working tree;
 - your app starts locally with one command, on fake data;

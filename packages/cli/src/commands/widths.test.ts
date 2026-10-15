@@ -168,3 +168,21 @@ test("aeom capture and aeom check serve a folder of static pages themselves, wit
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a front built from scratch that calls another server is seen by the replay, and refused by the guard", async () => {
+  const dir = await project(undefined);
+  try {
+    const folder = join(dir, "front");
+    await mkdir(folder);
+    await writeFile(join(folder, "index.html"), `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><h1>Voies</h1><script>fetch("${url}/orders").catch(() => {})</script>`);
+    await mkdir(join(dir, "journeys"));
+    await writeFile(join(dir, "journeys", "open.json"), JSON.stringify({ name: "Open", steps: [{ do: "open", path: "/" }] }));
+    const replayed = await run(dir, ["journey", "--dir", folder, "--journeys", join(dir, "journeys"), "--widths", "1280", "--out", join(dir, "end")]);
+    assert.equal(replayed.code, 0, replayed.out);
+    const guarded = await run(dir, ["guard", "--from-scratch", join(dir, "end")]);
+    assert.equal(guarded.code, 1, guarded.out);
+    assert.match(guarded.out, new RegExp(`✗ GET ${url.replace(/[.:/]/g, "\\$&")}/orders\\s+a call to a server`));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

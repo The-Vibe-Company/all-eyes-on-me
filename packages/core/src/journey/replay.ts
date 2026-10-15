@@ -35,6 +35,8 @@ export interface ServerCall {
   query: string[];
   /** The names of the fields in the body: form fields, or a JSON object's keys. */
   fields: string[];
+  /** The origin of a call to another server than the app's own, such as an outside API or a tracker. */
+  origin?: string;
 }
 
 export interface JourneyRun {
@@ -250,8 +252,11 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   page.context().on("request", (request) => {
     const target = new URL(request.url());
     const sent = ["fetch", "xhr"].includes(request.resourceType()) || (request.isNavigationRequest() && request.method() !== "GET");
-    if (target.origin !== origin || !sent) return;
-    record({ method: request.method(), path: target.pathname, query: [...new Set(target.searchParams.keys())].sort(), fields: fieldNames(request.postData()) });
+    if (!sent) return;
+    // A call to another server is kept with its origin: the guard of a front built from nothing counts it.
+    const outside = target.origin !== origin;
+    if (outside && request.isNavigationRequest()) return;
+    record({ method: request.method(), path: target.pathname, query: [...new Set(target.searchParams.keys())].sort(), fields: fieldNames(request.postData()), ...(outside ? { origin: target.origin } : {}) });
   });
   // A form sent with GET is a navigation like any link: the page says when one leaves, with its fields' names, never their values.
   await page.context().exposeBinding("__aeomFormSent", (_source, sent: { action: string; fields: string[] }) => {

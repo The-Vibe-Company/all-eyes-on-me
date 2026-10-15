@@ -4,6 +4,7 @@ title: Une maquette from scratch, depuis un cahier des charges ou un prompt
 milestone: 05-construire
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 67, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/67 }
 ---
 
@@ -18,9 +19,9 @@ La fiche produit rédigée, ce que le run va coûter, les trois directions tiré
 - [ ] AEOM dit ce que le run va coûter et attend le go, comme `/aeom`
 - [ ] Trois directions tirées du monde du produit, chacune sur une page d'accueil construite pour l'occasion ; l'utilisateur en choisit une (avec `--autonome`, le tournoi choisit)
 - [ ] La direction choisie devient le kit, et AEOM écrit le standard
-- [ ] AEOM construit les écrans des parcours clés de la fiche, sur le standard, branchés sur l'API donnée
+- [ ] AEOM construit les écrans des parcours clés de la fiche, sur le standard
 - [ ] Sans API, les écrans tournent sur des données fictives, nommées comme telles, dans un seul module
-- [ ] Chaque parcours clé se rejoue jusqu'au bout, et chaque écran passe `aeom review`
+- [ ] Chaque parcours clé se rejoue jusqu'au bout, chaque écran passe les seize checks et les juges, et le garde-fou ne voit aucun appel serveur ; `aeom review` s'y ajoutera quand il existera (04-garder-a-chaque-pr/01)
 - [ ] Tout est sur `aeom/<run>`, avec la page de résultat et une PR
 
 ## Comment
@@ -28,4 +29,4 @@ La fiche produit rédigée, ce que le run va coûter, les trois directions tiré
 - Les directions, le choix de l'utilisateur et le tournoi existent (section 2b, `skills/aeom/phase-directions.md`) ; la fiche produit suit le format de `skills/aeom/product.md`.
 
 ## Hors ticket
-- Remplacer les données fictives quand l'API arrive après un run qui n'en avait pas : 04.
+- Brancher les écrans sur une API, qu'elle soit donnée au départ ou qu'elle arrive après : 04.

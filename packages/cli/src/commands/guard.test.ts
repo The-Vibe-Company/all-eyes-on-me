@@ -201,3 +201,27 @@ test("an explicit request lets through what it needs, and only with the user's w
     execFileSync("git", ["checkout", "--", "server.mjs"], { cwd: dir });
   }
 });
+
+test("a front built from scratch on fake data calls no server: with --from-scratch, any call is refused, and none passes", async () => {
+  const none = await run(["guard", "--from-scratch", "same"]);
+  assert.equal(none.code, 0, none.out);
+  assert.match(none.out, /No call to a server: the front runs on its own data/);
+  const called = await run(["guard", "--from-scratch", "feature"]);
+  assert.equal(called.code, 1);
+  assert.match(called.out, /✗ POST \/api\/panier\s+a call to a server, in "Add a product"/);
+  assert.match((await run(["guard", "--from-scratch", "before", "same"])).out, /--from-scratch compares a replay with nothing: give one folder/);
+  assert.match(called.out, /Refused: a front built on fake data calls no server/);
+  assert.match((await run(["guard", "--from-scratch", "--help"])).out, /^Usage: aeom guard/);
+  // A journey that breaks leaves its calls after the break unchecked: refused, not passed.
+  await mkdir(join(dir, "broke"), { recursive: true });
+  const broke = report([]);
+  broke.journeys[0]!.runs[0]!.broken = { step: 2, reason: "no link" } as never;
+  await writeFile(join(dir, "broke", "report.json"), JSON.stringify(broke));
+  assert.equal((await run(["guard", "--from-scratch", "broke"])).code, 1, "a broken journey is refused");
+  // A call to another origin, an outside API or a tracker, is a call too.
+  await mkdir(join(dir, "outside"), { recursive: true });
+  await writeFile(join(dir, "outside", "report.json"), JSON.stringify(report([{ method: "GET", path: "/v1/climbs", origin: "https://api.example.com" } as never])));
+  const outside = await run(["guard", "--from-scratch", "outside"]);
+  assert.equal(outside.code, 1);
+  assert.match(outside.out, /✗ GET https:\/\/api\.example\.com\/v1\/climbs/);
+});

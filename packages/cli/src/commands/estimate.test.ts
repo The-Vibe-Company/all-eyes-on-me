@@ -53,6 +53,9 @@ test("aeom estimate says what a run costs, phase by phase, from the screens and 
     const wrong = await run(dir, ["estimate", "--widths", "10"]);
     assert.equal(wrong.code, 1);
     assert.match(wrong.out, /--widths lists the widths to measure/);
+    const scratch = await run(dir, ["estimate", "--from-scratch", "--screens", "5", "--journeys", "3"]);
+    assert.equal(scratch.code, 0, scratch.out);
+    assert.match(scratch.out, /^From scratch, 5 screens and 3 key journeys, at 1280 px:/);
     const prompt = await run(dir, ["estimate", "--depuis"]);
     assert.equal(prompt.code, 0, prompt.out);
     assert.match(prompt.out, /^From a prompt, two screens for each direction, at 1280 px:/, "at the widths the config declares");
