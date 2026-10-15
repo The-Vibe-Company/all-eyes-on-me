@@ -1,0 +1,45 @@
+packages/core/src/checks/layout-shift.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 1-51
+packages/core/src/checks/labels.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 1-56
+site/pages/commands.html
+  s_4ce34ec42d9105::t_bed34086933f33 32,39
+.veebee/milestones/03-la-commande-unique/tickets/28-ce-qu-on-ne-voit-pas-tout-de-suite.md
+  s_4ce34ec42d9105::t_bed34086933f33 7
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_bed34086933f33 34,38
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_26ad8f29076943 9,319-369
+  s_4ce34ec42d9105::t_6e34c4f2d0fef2 370-397
+  s_4ce34ec42d9105::t_e003eb29295412 398
+packages/core/src/checks/focus.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 1-64
+principles/base.md
+  s_4ce34ec42d9105::t_bed34086933f33 9
+packages/core/src/checks/images.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 1-49
+packages/core/src/checks/types.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 1
+packages/core/src/checks/index.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 3,5-7
+packages/core/src/checks/run.ts
+  s_4ce34ec42d9105::t_3bf36abf2fa424 13,15-17,28,70-71,87-90
+README.md
+  s_4ce34ec42d9105::t_bed34086933f33 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5183a3fbe677e12d83dd150e44223e613e8d72ea",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
