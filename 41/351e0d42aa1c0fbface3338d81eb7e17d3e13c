@@ -1,0 +1,57 @@
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_c946e94e6438e1 24,30,179,186-187
+site/pages/commands.html
+  s_4ce34ec42d9105::t_6da00f82fd0d61 89
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_33aa0ba6c84013 4,21-22,45,70-78,84
+packages/core/src/journey/index.ts
+  s_4ce34ec42d9105::t_886d01ac2b5d3d 7
+packages/core/src/journey/api.test.ts
+  s_4ce34ec42d9105::t_886d01ac2b5d3d 1-21
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_3903263ed841f1 84-88,360,386
+  s_4ce34ec42d9105::t_c9dd5be3eeaee4 10,244,260,288-290
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_6da00f82fd0d61 7,17,23-24,34,38,42
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_6da00f82fd0d61 20
+packages/cli/src/commands/journey.ts
+  s_4ce34ec42d9105::t_5e73c52f686cca 4,35,64-76,115
+  s_4ce34ec42d9105::t_26cc73984093f4 27-30
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_c946e94e6438e1 5,99-100,172,183-188
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_33aa0ba6c84013 70-73,107-109,143,208,249,375,387
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_40531ed6372438 126-142
+packages/cli/src/commands/guard.test.ts
+  s_4ce34ec42d9105::t_c946e94e6438e1 213,242-246
+packages/cli/src/commands/estimate.test.ts
+  s_4ce34ec42d9105::t_40531ed6372438 59-64
+packages/core/src/run/pr.test.ts
+  s_4ce34ec42d9105::t_40531ed6372438 113-122
+packages/core/src/journey/api.ts
+  s_4ce34ec42d9105::t_886d01ac2b5d3d 1-39
+packages/core/src/run/pr.ts
+  s_4ce34ec42d9105::t_33aa0ba6c84013 63-65,92-94
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_33aa0ba6c84013 13,82-90,211,223
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_40531ed6372438 117-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "41351e0d42aa1c0fbface3338d81eb7e17d3e13c",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
