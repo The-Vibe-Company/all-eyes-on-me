@@ -1,0 +1,29 @@
+packages/core/src/checks/labels.ts
+  s_4ce34ec42d9105::t_d40c5c89b570fd 12,15,27-28,31-39,52
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_d40c5c89b570fd 34,38
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_31f5ef2d4d65af 328-330,349-355,374-391
+  s_4ce34ec42d9105::t_ef7f8628a69174 394
+packages/core/src/checks/focus.ts
+  s_4ce34ec42d9105::t_6e2c05b2e83be9 6-7,11-15,19,23-27,30-31,34-36,39-61,63-64,66-73
+  s_4ce34ec42d9105::t_d40c5c89b570fd 28-29,32
+packages/core/src/checks/images.ts
+  s_4ce34ec42d9105::t_d40c5c89b570fd 11-13,35,39-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1f4140d765ff7ef49c06d40d8704c4a92c41f21a",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
