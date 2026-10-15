@@ -1,0 +1,45 @@
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_d25341784d83bf 5,25-26,52
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_d25341784d83bf 3,11-12,27-78,102,104-106
+README.md
+  s_4ce34ec42d9105::t_5a5a188e6a6445 14
+packages/core/src/product/product.test.ts
+  s_4ce34ec42d9105::t_217a6f3a9b8a23 3,7-8,190-204
+  s_4ce34ec42d9105::t_c64e3a678e0b10 48
+packages/core/src/product/product.ts
+  s_4ce34ec42d9105::t_ba3165fcc8d07c 29-36,86-89,135-155,161-162
+  s_4ce34ec42d9105::t_5e6e425aea4e3b 156-160
+  s_4ce34ec42d9105::t_2d6a09a9939463 163
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_56c8f55af52b1f 109-131
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_5eef137b60164c 36
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_5a5a188e6a6445 15
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_d25341784d83bf 4,20-22,25-31,89-91
+.veebee/milestones/03-la-commande-unique/tickets/25-la-plateforme-detectee-ou-demandee.md
+  s_4ce34ec42d9105::t_5eef137b60164c 7
+  s_4ce34ec42d9105::t_e85aead78e8c12 1-6,8-27
+packages/cli/src/commands/product.test.ts
+  s_4ce34ec42d9105::t_217a6f3a9b8a23 24-25,219-263
+skills/aeom/product.md
+  s_4ce34ec42d9105::t_5a5a188e6a6445 3,23-25,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2736d3f0e9c94b566e87021338895bd0c6d4161f",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
