@@ -114,3 +114,10 @@ test("from scratch, the cost is the directions, the kit, a worker per screen, th
   assert.ok(alone.phases[1]!.agents > scratch.phases[1]!.agents, "with --autonome, three screening judges and the knockout");
   assert.doesNotMatch(text, /only when the verdict finds something to redo/);
 });
+
+test("plugging an existing front into its API costs one worker and the measure", () => {
+  const replug = estimateRun({ screens: 6, journeys: 3, mode: "replug" });
+  assert.deepEqual(replug.phases.map((p) => p.phase), ["Plug the data module into the API", "Measure the screens and the journeys", "The result page and the PR"]);
+  assert.equal(replug.phases[0]!.agents, 1);
+  assert.match(estimateText(replug, { screens: 6, journeys: 3 }), /^Plugging the front into its API, 6 screens and 3 key journeys:\n/);
+});

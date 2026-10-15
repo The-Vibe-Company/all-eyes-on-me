@@ -17,7 +17,7 @@ This file holds what every run needs. The rest waits in its own file, read only 
 - **Section 2b**, the directions: [phase-directions.md](phase-directions.md), once a run is to build directions.
 - **Briefing any worker** and **sections 3 to 5**, the kit, the page wave and the measure: [phase-wave.md](phase-wave.md), once a run is to change the app.
 - **Section 2d**, `/aeom --depuis <prompt.md>`, three directions from a prompt with no app: [phase-prompt.md](phase-prompt.md), with only **A run that stops** from this file.
-- **Section 2e**, `/aeom build --from-scratch`, a front from a spec: [phase-build.md](phase-build.md).
+- **Section 2e**, `/aeom build --from-scratch` or `--api`, a front from a spec: [phase-build.md](phase-build.md).
 
 When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section. Every worker replies with a short report, ten lines at most, as **Briefing any worker** says, which you keep in the run's folder; every judge writes its votes in a file and replies with its path.
 

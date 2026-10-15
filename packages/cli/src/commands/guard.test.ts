@@ -210,7 +210,7 @@ test("a front built from scratch on fake data calls no server: with --from-scrat
   assert.equal(called.code, 1);
   assert.match(called.out, /✗ POST \/api\/panier\s+a call to a server, in "Add a product"/);
   assert.match((await run(["guard", "--from-scratch", "before", "same"])).out, /--from-scratch compares a replay with nothing: give one folder/);
-  assert.match(called.out, /Refused: a front built from scratch calls no server but the API given with --api/);
+  assert.match(called.out, /Refused: a front built on fake data calls no server. Read the data through the data module, or give its API with --api/);
   assert.match((await run(["guard", "--from-scratch", "--help"])).out, /^Usage: aeom guard/);
   // A journey that breaks leaves its calls after the break unchecked: refused, not passed.
   await mkdir(join(dir, "broke"), { recursive: true });
@@ -239,4 +239,9 @@ test("a front built on an API given calls that API, and only it: its calls are l
   assert.equal(remote.code, 1);
   assert.match(remote.out, /--api is an API running on this machine, on its own fake data, such as http:\/\/localhost:8000: AEOM touches no real data/);
   assert.match((await run(["guard", "same", "same", "--api", "http://localhost:8000"])).out, /--api goes with --from-scratch/);
+  const alias = await run(["guard", "--from-scratch", "on-api", "--api", "http://127.0.0.1:8000/v1"]);
+  assert.equal(alias.code, 0, "127.0.0.1 and localhost on one port are one server");
+  const unused = await run(["guard", "--from-scratch", "same", "--api", "http://localhost:8000/v1"]);
+  assert.equal(unused.code, 1);
+  assert.match(unused.out, /no journey called the API given, http:\/\/localhost:8000\/v1: the front still reads its fake data/);
 });

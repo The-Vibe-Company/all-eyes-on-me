@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, estimateRun, estimateText, loadConfig, type RunMode } from "@aeom/core";
+import { ConfigError, estimateRun, estimateText, loadConfig, localApiBase, type RunMode } from "@aeom/core";
 import { parseWidths, sheetWidths } from "./app.js";
 
 const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --depuis | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>]
@@ -18,6 +18,8 @@ journeys, the files in .aeom/journeys.
   --from-scratch     A front built from a spec or a prompt (/aeom build
                      --from-scratch): give --screens, the screens of the key
                      journeys the product sheet lists
+  --api <url>        Its API, running on this machine on its own fake data;
+                     alone, a front built from scratch plugged into it
   --depuis           Directions drawn from a prompt (/aeom --depuis), with no
                      app: two screens of static pages each, for you to choose
   --directions <n>   Build this many directions (default 3); with a style
@@ -40,7 +42,7 @@ const count = (value: string | undefined, what: string, least: number): number |
 export async function runEstimate(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, "from-scratch": { type: "boolean" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, help: { type: "boolean", short: "h" } },
+    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(USAGE);
@@ -65,14 +67,21 @@ export async function runEstimate(argv: string[]): Promise<number> {
     console.log(estimateText(estimate, { screens: 2, journeys: 0, widths }));
     return 0;
   }
-  // From scratch, there is no app to count yet: the screens are the product sheet's.
-  if (values["from-scratch"]) {
+  // An API given is checked first, before anything starts: on this machine only, on its own fake data.
+  if (values.api !== undefined && !localApiBase(values.api)) {
+    console.error(`--api is an API running on this machine, on its own fake data, such as http://localhost:8000: AEOM touches no real data.`);
+    return 1;
+  }
+  // From scratch, there is no app to count yet: the screens are the product sheet's. With --api alone, a front built
+  // from scratch is plugged into its API.
+  if (values["from-scratch"] || values.api !== undefined) {
+    const mode: RunMode = values["from-scratch"] ? "scratch" : "replug";
     if (given.screens === undefined) {
       console.error(`From scratch, give --screens: how many screens the key journeys of the product sheet cross.`);
       return 1;
     }
     const journeysFound = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
-    const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode: "scratch", directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
+    const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
     console.log(estimateText(estimate, { screens: given.screens as number, journeys: journeysFound, widths }));
     return 0;
   }

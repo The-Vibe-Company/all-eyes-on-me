@@ -110,3 +110,13 @@ test("a run that built a front from nothing says so: its title, its screens and 
   assert.match(body, /## Built from scratch\n\nEvery screen runs on fake data, kept in one module and named as such, until an API replaces it\./);
   assert.doesNotMatch(body, /Not measured after the run/);
 });
+
+test("a front built on its API says so, and a front plugged into its API later says the screens did not change", () => {
+  const base: ResultPage = { ...page, built: true, verdict: null, direction: { champion: "voies", sentence: null, entrants: ["voies"], reasons: [], sheet: null, decision: { judges: null, dropped: [] } }, screens: [], journeys: [], stillFailing: [], measuredAfter: true };
+  const onApi = prBody({ ...base, api: "http://localhost:8000/v1" }, "r.html");
+  assert.match(onApi.body, /## Built from scratch\n\nEvery screen reads its data from the API given, `http:\/\/localhost:8000\/v1`, running on the machine that ran it; what it does not provide yet stays fake, in one module, listed in `front\/data\.md`\./);
+  assert.doesNotMatch(onApi.body, /Every screen runs on fake data/);
+  const replug = prBody({ ...base, direction: null, api: "http://localhost:8000/v1", replug: true }, "r.html");
+  assert.equal(replug.title, "AEOM: the front plugged into its API (run-1)");
+  assert.match(replug.body, /## Plugged into its API\n\nThe screens did not change: the data module now reads `http:\/\/localhost:8000\/v1`; what it does not provide yet stays fake, listed in `front\/data\.md`\./);
+});

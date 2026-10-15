@@ -7,6 +7,7 @@ import { DEFAULT_WIDTHS, screenshotCapped, scrollThrough } from "../capture/capt
 import { openPage, pinFixed, settle } from "../capture/open.js";
 import { findFields, type SignedIn } from "../capture/sign-in.js";
 import { contactSheet } from "../directions/sheet.js";
+import { underApi } from "./api.js";
 import { describeStep, type Journey, type Step, type Target } from "./journey.js";
 
 export interface StepResult {
@@ -80,6 +81,11 @@ export interface ReplayOptions {
   relogin?: () => Promise<SignedIn>;
   /** The sign-in account's values by field label, for fill steps that take theirs from it. Never reported. */
   account?: Record<string, string>;
+  /**
+   * A front built from scratch: no request leaves for another server than its own and the API given (none, on fake
+   * data). Such a request is recorded, so the guard refuses it, and stopped, so it never reaches that server.
+   */
+  closed?: { api: string | null };
 }
 
 /** The replay cannot go on, such as a reset command that fails. The message says why. */
@@ -235,7 +241,7 @@ function fieldNames(body: string | null): string[] {
   }
 }
 
-async function replayOne(page: Page, app: App, journey: Journey, width: number, outDir: string, account: Record<string, string>): Promise<Omit<JourneyRun, "sheet">> {
+async function replayOne(page: Page, app: App, journey: Journey, width: number, outDir: string, account: Record<string, string>, closed?: { api: string | null }): Promise<Omit<JourneyRun, "sheet">> {
   const { origin } = app;
   let status: number | null = null;
   let leftFor: string | null = null;
@@ -251,7 +257,7 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   // Every page of the context, so a tab the journey opens counts too.
   page.context().on("request", (request) => {
     const target = new URL(request.url());
-    const sent = ["fetch", "xhr"].includes(request.resourceType()) || (request.isNavigationRequest() && request.method() !== "GET");
+    const sent = ["fetch", "xhr", "eventsource"].includes(request.resourceType()) || (request.isNavigationRequest() && request.method() !== "GET");
     if (!sent) return;
     // A call to another server is kept with its origin: the guard of a front built from nothing counts it.
     const outside = target.origin !== origin;
@@ -279,6 +285,9 @@ async function replayOne(page: Page, app: App, journey: Journey, width: number, 
   // Every page of the context, so a link that opens a new tab outside the app is caught too.
   await page.context().route("**/*", (route) => {
     const request = route.request();
+    // A front built from scratch reaches no other server than the API given: what would leave is recorded above, and stopped here.
+    const target = new URL(request.url());
+    if (closed && /^https?:$/.test(target.protocol) && target.origin !== origin && ["fetch", "xhr", "eventsource"].includes(request.resourceType()) && !(closed.api && underApi(request.url(), closed.api))) return route.abort();
     if (request.isNavigationRequest() && topLevel(request) && new URL(request.url()).origin !== origin) {
       leftFor = request.url();
       return route.abort();
@@ -348,7 +357,7 @@ const replayFiles = (report: JourneyReport | null): string[] =>
  * after every step, and stops a journey at the step it cannot take. Writes the
  * captures, one sheet per journey and width, and `report.json` to `outDir`.
  */
-export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, relogin, account = {} }: ReplayOptions): Promise<JourneyReport> {
+export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_WIDTHS, reset, signedIn, relogin, account = {}, closed }: ReplayOptions): Promise<JourneyReport> {
   const root = new URL(url);
   const app: App = { origin: root.origin, base: root.pathname.replace(/\/+$/, "") };
   await mkdir(outDir, { recursive: true });
@@ -374,7 +383,7 @@ export async function replayJourneys({ url, journeys, outDir, widths = DEFAULT_W
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...state });
         let run: Omit<JourneyRun, "sheet">;
         try {
-          run = await replayOne(await context.newPage(), app, journey, width, outDir, account);
+          run = await replayOne(await context.newPage(), app, journey, width, outDir, account, closed);
         } finally {
           await context.close();
         }
