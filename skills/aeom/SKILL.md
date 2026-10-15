@@ -27,7 +27,7 @@ The user types a verb after `/aeom`, or the option it stands for:
 
 - **`/aeom judge`** is `/aeom --juger`: judge the front, and stop at the verdict.
 - **`/aeom redo`** is `/aeom` with no option: judge, then redo what fails (« Without an option » below). Options follow the verb: `/aeom redo --garder-le-style`.
-- **`/aeom review`** runs `aeom review` on the branch and says what it prints, file by file and screen by screen; `aeom review --install-check` makes it a GitHub check. Its judges and its journeys are not built yet.
+- **`/aeom review`** runs `aeom review` on the branch and says what it prints, file by file, screen by screen and journey by journey; `aeom review --install-check` makes it a GitHub check. The judges' comment comes later.
 - **`/aeom build`** with `--from-scratch` mocks up a front from a spec or a prompt, and with `--api` plugs it into its API (section 2e); a change asked in a sentence comes later: say so in one line and stop.
 
 A run keeps its options under their own names: `/aeom judge` is marked `--option juger`.

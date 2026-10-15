@@ -1,10 +1,11 @@
 import { execFile } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
+import { appendFile, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
-import { checkSite, headerDifference, headerLinks, loadConfig, readStandard, reviewCode, route, screensTouched } from "@aeom/core";
+import { AppStartError, checkSite, guardJourneys, headerDifference, headerLinks, JourneyError, loadConfig, loadJourneys, pageShape, readStandard, replayJourneys, reviewCode, route, screensTouched, serveFolder, startApp, type Journey, type JourneyReport, type ProjectConfig } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const REVIEW_HELP = `Usage: aeom review [--base <branch>] [--url <url> | --start "<command>" | --dir <folder>] [options]
@@ -80,6 +81,7 @@ export async function runReview(argv: string[]): Promise<number> {
   const standardText = (await git(["show", `${from}:./.aeom/standard.md`]).catch(() => null)) ?? (await readFile(join(".aeom", "standard.md"), "utf8").catch(() => null));
   if (standardText === null) return stop(`No standard in .aeom/standard.md: run /aeom first, which writes it from the front as it is.`, "No standard in `.aeom/standard.md`: run /aeom first, which writes it from the front as it is.");
   const branch = (await git(["branch", "--show-current"]).catch(() => "")).trim() || "HEAD";
+  const baseName = base;
   const ahead = Number((await git(["rev-list", "--count", `${from}..HEAD`])).trim());
   const changed = (await git(["diff", "--name-only", "--diff-filter=d", ...DIFF, from, "HEAD"])).split("\n").filter(Boolean);
   const diff = await git(["diff", "-U0", ...DIFF, from, "HEAD"]);
@@ -108,6 +110,8 @@ export async function runReview(argv: string[]): Promise<number> {
   for (const shape of touched.unmeasured) notes.push(`${shape} was not measured: no route of its shape is known. Add one to "pages" in .aeom/config.json.`);
 
   let measured = false;
+  let journeys: Journey[] = [];
+  let onBranch: JourneyReport | null = null;
   let startFailure = "";
   if (routes.length) {
     const values = await withConfig(parsed);
@@ -159,6 +163,15 @@ export async function runReview(argv: string[]): Promise<number> {
                 if (differs && !leftOut(h.path)) rows.push([h.path, `its header differs from the rest of the app: ${differs}`]);
               }
             }
+            // The key journeys, replayed on the branch: which of them cross the screens it touches.
+            journeys = await loadJourneys(join(".aeom", "journeys")).catch((error: unknown) => {
+              if (error instanceof JourneyError) return [];
+              throw error;
+            });
+            if (journeys.length) {
+              const reset = !servingFolder() ? config.reset : undefined;
+              onBranch = await replayJourneys({ url, journeys, outDir: join(".aeom", "review", "branch"), widths, ...(reset ? { reset } : {}), ...(session ?? {}), ...(servingFolder() ? { closed: { api: null } } : {}) });
+            }
             measured = true;
           } catch (error) {
             notes.push(`The screens could not be measured: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
@@ -173,12 +186,51 @@ export async function runReview(argv: string[]): Promise<number> {
     }
   }
 
+  // The journeys that cross the screens touched, replayed on the base too: one the branch breaks fails the review,
+  // a new call is a feature, said and never refused, since a PR may bring one.
+  const passed: string[] = [];
+  const features: [string, string][] = [];
+  if (measured && !journeys.length) notes.push(`No key journeys recorded in .aeom/journeys: none replayed.`);
+  // Set inside the app's run: TypeScript cannot see it there.
+  const replayed = onBranch as JourneyReport | null;
+  if (replayed) {
+    const crossing = replayed.journeys.filter((j) => touched.all || j.runs.some((r) => r.screens.some((s) => routes.some((t) => pageShape(t) === pageShape(s)))));
+    if (!crossing.length) notes.push(`No key journey crosses the screens touched.`);
+    else {
+      const widths = replayed.widths;
+      const base = await replayOnBase({ from, journeys: journeys.filter((j) => crossing.some((c) => c.slug === j.slug)), dir: parsed.dir, config, widths });
+      if (base.note) notes.push(base.note);
+      const branchCrossing: JourneyReport = { ...replayed, journeys: crossing };
+      for (const a of crossing) {
+        const b = base.report?.journeys.find((x) => x.slug === a.slug);
+        const broke = a.runs.find((r) => r.broken);
+        if (!broke) {
+          passed.push(a.name);
+          continue;
+        }
+        const baseOk = b ? b.runs.every((r) => !r.broken) : null;
+        if (baseOk === false) {
+          notes.push(`${a.name} already broke on ${baseName}: not this branch's doing.`);
+          continue;
+        }
+        const capture = (broke.steps.find((s) => s.index === broke.broken!.step) ?? broke.steps.at(-1))?.capture;
+        rows.push([a.name, `${baseOk ? `went to its end on ${baseName} and breaks` : "breaks"} at step ${broke.broken!.step} at ${broke.width} px: ${broke.broken!.reason}${capture ? ` (${join(".aeom", "review", "branch", capture)})` : ""}`]);
+      }
+      if (base.report) {
+        const { refused } = guardJourneys({ before: base.report, after: branchCrossing });
+        for (const v of refused.filter((v) => v.kind !== "file")) features.push([v.journey ?? v.journeys?.[0] ?? "", `${v.what}: ${v.kind === "call" ? "a call the base did not make" : v.why}: a feature, said, not refused`]);
+      }
+    }
+  }
+
   const lines = [`${branch} against ${base}, held to .aeom/standard.md: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
   const shown = rows.slice(0, MOST);
-  const column = Math.max(0, ...shown.map(([where]) => where.length)) + 2;
+  const column = Math.max(0, ...shown.map(([where]) => where.length), ...passed.map((n) => n.length), ...features.map(([w]) => w.length)) + 2;
   for (const [where, what] of shown) lines.push(`✗ ${where.padEnd(column)}${what}`);
   if (rows.length > MOST) lines.push(`… and ${rows.length - MOST} more: the branch rewrites more than it changes.`);
-  if (rows.length) lines.push("");
+  for (const name of passed) lines.push(`✓ ${name.padEnd(column)}still reaches its end`);
+  for (const [where, what] of features) lines.push(`⚠ ${where.padEnd(column)}${what}`);
+  if (rows.length || passed.length || features.length) lines.push("");
   if (uncommitted) notes.push(`${uncommitted} uncommitted file${uncommitted === 1 ? "" : "s"} not reviewed: commit ${uncommitted === 1 ? "it" : "them"} first.`);
   if (notes.length) lines.push(...notes, "");
   let code = 0;
@@ -194,6 +246,8 @@ export async function runReview(argv: string[]): Promise<number> {
   if (parsed.summary) {
     const md = [`## aeom review`, "", `${asCode(branch)} against ${asCode(base)}, held to ${asCode(".aeom/standard.md")}: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
     for (const [where, what] of shown) md.push(`- ${asCode(where)} ${text(what)}`);
+    for (const name of passed) md.push(`- ✓ ${text(name)} still reaches its end`);
+    for (const [where, what] of features) md.push(`- ⚠ ${text(where)}: ${text(what)}`);
     if (rows.length > MOST) md.push(`- … and ${rows.length - MOST} more.`);
     if (shown.length) md.push("");
     for (const note of notes) md.push(note.startsWith("The app did not start") && startFailure ? `The app did not start: ${startFailure}` : text(note), "");
@@ -201,6 +255,55 @@ export async function runReview(argv: string[]): Promise<number> {
     await appendFile(parsed.summary, md.join("\n"));
   }
   return code;
+}
+
+/**
+ * The journeys replayed on the base, from a worktree of it: its folder of pages served, or its app started with the
+ * config's start, sequentially, once the branch's app has stopped. Without a way to start it, the branch is judged alone.
+ */
+async function replayOnBase({ from, journeys, dir, config, widths }: { from: string; journeys: Journey[]; dir?: string; config: ProjectConfig; widths: number[] }): Promise<{ report: JourneyReport | null; note?: string }> {
+  if (dir === undefined && (!config.start || !config.url)) return { report: null, note: `The base's app cannot be started (no start in .aeom/config.json): the journeys were replayed on the branch alone.` };
+  const root = (await git(["rev-parse", "--show-toplevel"])).trim();
+  const prefix = (await git(["rev-parse", "--show-prefix"])).trim();
+  const place = await mkdtemp(join(tmpdir(), "aeom-review-base-"));
+  const tree = join(place, "base");
+  try {
+    await git(["worktree", "add", "-q", "--detach", tree, from]);
+    const here = join(tree, prefix);
+    // The base runs on the branch's installed dependencies, as AEOM's workers do.
+    for (const at of new Set([root, join(root, prefix)])) {
+      const modules = join(at, "node_modules");
+      const into = join(tree, relative(root, at), "node_modules");
+      if (existsSync(modules) && !existsSync(into)) await symlink(modules, into, "dir").catch(() => undefined);
+    }
+    let url: string;
+    let stop: () => Promise<void>;
+    if (dir !== undefined) {
+      const served = await serveFolder(join(here, dir));
+      url = served.url;
+      stop = served.stop;
+    } else {
+      try {
+        const app = await startApp(config.start!, config.url!, { cwd: here });
+        url = config.url!;
+        stop = () => app.stop();
+      } catch (error) {
+        if (!(error instanceof AppStartError)) throw error;
+        return { report: null, note: `The base's app did not start (${error.message.split("\n")[0]}): the journeys were replayed on the branch alone.` };
+      }
+    }
+    try {
+      const report = await replayJourneys({ url, journeys, outDir: join(".aeom", "review", "base"), widths, ...(dir === undefined && config.reset ? { reset: config.reset } : {}), ...(dir !== undefined ? { closed: { api: null } } : {}) });
+      return { report };
+    } finally {
+      await stop();
+    }
+  } catch (error) {
+    return { report: null, note: `The journeys could not be replayed on the base (${error instanceof Error ? error.message.split("\n")[0] : String(error)}): the branch is judged alone.` };
+  } finally {
+    await git(["worktree", "remove", "--force", tree]).catch(() => undefined);
+    await rm(place, { recursive: true, force: true });
+  }
 }
 
 /** Words in Markdown: no HTML, no line that breaks the list. */

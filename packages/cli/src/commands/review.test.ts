@@ -56,6 +56,7 @@ test("aeom review holds the branch's changes to the standard: the code, with its
     assert.match(out, /✗ \/export\.html\s+its header differs from the rest of the app: no « Produits », « Exporter » the rest of the app does not have/);
     assert.match(out, /\n\d+ things? outside the standard\.\n?$/);
     assert.doesNotMatch(out, /front\/index\.html/, "only what the branch changed");
+    assert.match(out, /No key journeys recorded in \.aeom\/journeys: none replayed\./);
   } finally {
     git("checkout", "-q", "main");
   }
@@ -210,5 +211,33 @@ test("a review that stops before it starts still says why in the check's summary
     assert.match((await import("node:fs")).readFileSync(summary, "utf8"), /^## aeom review\n\nNo standard in `\.aeom\/standard\.md`: run \/aeom first/);
   } finally {
     await rm(bare, { recursive: true, force: true });
+  }
+});
+
+test("the key journeys a branch crosses are replayed on its base and on it: one it breaks fails the review, with its step and capture; a new call is said as a feature, never refused", async () => {
+  await mkdir(join(dir, ".aeom", "journeys"), { recursive: true });
+  await writeFile(join(dir, ".aeom", "journeys", "voir-les-produits.json"), JSON.stringify({ name: "Voir les produits", steps: [{ do: "open", path: "/" }, { do: "click", target: { role: "link", name: "Produits" }, lands: "/produits.html" }] }));
+  git("add", "-A");
+  git("commit", "-q", "-m", "les parcours");
+  git("checkout", "-q", "-b", "feat/sans-lien");
+  await writeFile(join(dir, "front", "index.html"), page(["Accueil"], `<h1>Accueil</h1>`));
+  git("commit", "-q", "-am", "sans lien");
+  try {
+    const { code, out } = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280"]);
+    assert.equal(code, 1, out);
+    assert.match(out, /✗ Voir les produits\s+went to its end on main and breaks at step 2 at 1280 px: [^\n]*\(\.aeom\/review\/branch\/[^)]+\.png\)/);
+  } finally {
+    git("checkout", "-q", "main");
+  }
+  git("checkout", "-q", "-b", "feat/panier");
+  await writeFile(join(dir, "front", "produits.html"), page(["Accueil", "Produits"], `<h1>Produits</h1><script>fetch("produits.html", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ article: 1 }) })</script>`));
+  git("commit", "-q", "-am", "panier");
+  try {
+    const { code, out } = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280"]);
+    assert.equal(code, 0, out);
+    assert.match(out, /✓ Voir les produits\s+still reaches its end/);
+    assert.match(out, /⚠ Voir les produits\s+POST \/produits\.html: a call the base did not make: a feature, said, not refused/);
+  } finally {
+    git("checkout", "-q", "main");
   }
 });
