@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
 import { readFileSync } from "node:fs";
 import { signIn, startApp, type RunningApp } from "../capture/index.js";
-import { checkClipped, checkContrast, checkCursor, checkFontSize, checkHeader, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole } from "./index.js";
+import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 
@@ -315,6 +315,86 @@ describe("zoom", () => {
     assert.deepEqual(await checkZoom(await pageWith(`<meta name="Viewport" content="width=device-width, initial-scale=1"><p>Hi</p>`, 390)), [], "the tag's name in any case");
   });
 });
+
+/** A 40 by 30 picture: 4:3. */
+const FOUR_THREE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAeCAIAAADRv8uKAAAAK0lEQVR4nO3NMQ0AAAgDsElBCtKQjgw4mvRvputExGKxWCwWi8VisVj8N17ahxo9rJVIzAAAAABJRU5ErkJggg==";
+
+describe("images", () => {
+  test("flags an image that does not load, and one stretched or squashed; passes one cropped to fit and one at its own ratio", async () => {
+    const page = await pageWith(`
+      <img class="gone" src="http://127.0.0.1:9/nope.jpg" alt="Lampe" width="120" height="90">
+      <img class="wide" src="${FOUR_THREE}" alt="Chaise" style="width:320px;height:180px">
+      <img src="${FOUR_THREE}" alt="Tapis" style="width:320px;height:180px;object-fit:cover">
+      <img src="${FOUR_THREE}" alt="Coussin" style="width:200px;height:150px">`);
+    await page.waitForTimeout(300);
+    const issues = await checkImages(page);
+    assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["img.gone", "img.wide"]);
+    assert.match(issues[0]!.message, /the image does not load/);
+    assert.match(issues[1]!.message, /the image is stretched: 4:3 shown as 16:9/);
+  });
+});
+
+describe("labels", () => {
+  test("flags a button or a link with no name, a field with no label, an image with no alt; passes what has one, and a decorative image", async () => {
+    const page = await pageWith(`
+      <button class="icon"><svg width="16" height="16"><path d="M0 0h16v16H0z"/></svg></button>
+      <button aria-label="Fermer"><svg width="16" height="16"></svg></button>
+      <a class="logo" href="/"><img src="${FOUR_THREE}" alt=""></a>
+      <a href="/home"><img src="${FOUR_THREE}" alt="Accueil"></a>
+      <input class="email" type="email" placeholder="Email">
+      <label>Nom <input type="text"></label>
+      <img class="photo" src="${FOUR_THREE}">
+      <img src="${FOUR_THREE}" alt="">`);
+    const issues = await checkLabels(page);
+    assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["button.icon", "a.logo", "input.email", "img.photo"]);
+    assert.match(issues[0]!.message, /no name: a screen reader says only « button »/);
+    assert.match(issues[2]!.message, /no label: a placeholder is not one, it goes when you type/);
+    assert.match(issues[3]!.message, /no alt text: say what it shows, or alt="" when it only decorates/);
+  });
+});
+
+describe("focus", () => {
+  test("flags what shows nothing when it has the keyboard focus; passes the browser's own ring and a style of the page's", async () => {
+    const page = await pageWith(`<style>.ring:focus-visible { box-shadow: 0 0 0 3px #36f; outline: none }</style>
+      <a class="bare" href="/a" style="outline:none">Produits</a>
+      <a href="/b">Commandes</a>
+      <button class="ring">Ajouter</button>`);
+    const issues = await checkFocus(page);
+    assert.deepEqual(issues.map((i) => i.element), ['a.bare "Produits"']);
+    assert.match(issues[0]!.message, /nothing shows it has the keyboard focus: give it a visible outline or ring/);
+  });
+});
+
+describe("layout-shift", () => {
+  test("flags a page that moves while it loads; passes one that does not", async () => {
+    // Served, not set: a page set by the test counts as typed into, and its shifts as the user's.
+    const pages: Record<string, string> = {
+      "/moving": `<main><h1>Lampes</h1><p>${"Du texte. ".repeat(1200)}</p></main><script>setTimeout(() => { const b = document.createElement("div"); b.style.height = "300px"; b.textContent = "Bandeau"; document.body.prepend(b); }, 200)</script>`,
+      "/still": `<main><h1>Lampes</h1><p>${"Du texte. ".repeat(1200)}</p></main>`,
+    };
+    const server = createHttpServer((req, res) => {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(`<!doctype html>${pages[req.url ?? ""] ?? ""}`);
+    });
+    await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    try {
+      const at = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+      await page.goto(`${at}/moving`);
+      await page.waitForTimeout(600);
+      const issues = await checkLayoutShift(page);
+      assert.equal(issues.length, 1);
+      assert.match(issues[0]!.message, /the page moves while it loads \(shift 0\.\d+, 0\.1 at most\)/);
+      await page.goto(`${at}/still`);
+      await page.waitForTimeout(300);
+      assert.deepEqual(await checkLayoutShift(page), []);
+    } finally {
+      await page.close();
+      await new Promise((done) => server.close(done));
+    }
+  });
+});
+
 
 test("a check the config leaves out of a page finds nothing there, and still runs on the others", async () => {
   const server = createHttpServer((req, res) => {

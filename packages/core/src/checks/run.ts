@@ -10,7 +10,11 @@ import { checkClipped } from "./clipped.js";
 import { checkContrast } from "./contrast.js";
 import { watchConsole } from "./console.js";
 import { checkCursor } from "./cursor.js";
+import { checkFocus } from "./focus.js";
 import { checkFontSize } from "./font-size.js";
+import { checkImages } from "./images.js";
+import { checkLabels } from "./labels.js";
+import { checkLayoutShift } from "./layout-shift.js";
 import { checkLineLength } from "./line-length.js";
 import { checkTapSize } from "./tap-size.js";
 import { checkZoom } from "./zoom.js";
@@ -21,7 +25,7 @@ import { checkUneven } from "./uneven.js";
 import { checkWrap } from "./wrap.js";
 import type { CheckName, Finding, Issue } from "./types.js";
 
-export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom"];
+export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift"];
 
 /** The routes where a check does not apply, by check, as the config says: a landing page whose header scrolls away on purpose. */
 export type CheckExceptions = Partial<Record<CheckName, string[]>>;
@@ -63,6 +67,8 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
           }
           findings.push(...issues.map((issue) => ({ check, url, width, ...issue })));
         };
+        // First: what moved while the page loaded, before any check moves it.
+        await add("layout-shift", () => checkLayoutShift(page));
         await add("overflow", () => checkOverflow(page));
         await add("wrap", () => checkWrap(page));
         await add("uneven", () => checkUneven(page));
@@ -78,6 +84,10 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
           await add("cursor", () => checkCursor(page));
           await add("contrast", () => checkContrast(page));
           await add("console", () => consoleIssues());
+          await add("images", () => checkImages(page));
+          await add("labels", () => checkLabels(page));
+          // Last: it walks the page with the keyboard.
+          await add("focus", () => checkFocus(page));
         }
       } finally {
         await context.close();
