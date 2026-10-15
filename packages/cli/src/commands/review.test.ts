@@ -142,7 +142,7 @@ test("aeom review --install-check writes the GitHub workflow that holds every PR
     assert.match(workflow, /fetch-depth: 0/);
     assert.match(workflow, /pnpm\/action-setup@v4\n        with:\n          version: 10/, "a version when the project pins none");
     assert.match(workflow, /pnpm install --frozen-lockfile/);
-    assert.match(workflow, /git clone --depth 1 --branch main https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me/);
+    assert.match(workflow, /fetch -q --depth 1 https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me [0-9a-f]{40}\n/, "AEOM pinned to the very commit that wrote the check, never a moving branch");
     assert.match(workflow, /playwright install --with-deps chromium/);
     assert.match(workflow, /review --base "origin\/\$\{\{ github\.base_ref \}\}" --summary "\$GITHUB_STEP_SUMMARY"/);
     assert.doesNotMatch(workflow, /ANTHROPIC|OPENAI|api[_-]?key/i, "no model, no key");
@@ -152,7 +152,7 @@ test("aeom review --install-check writes the GitHub workflow that holds every PR
     assert.equal(other.code, 1);
     assert.match(other.out, /\.github\/workflows\/aeom\.yml is someone else's: run again with --force to replace it/);
     assert.equal((await inRepo(["review", "--install-check", "--force", "--aeom-ref", "v1.2.0"])).code, 0);
-    assert.match((await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8"), /--branch v1\.2\.0/);
+    assert.match((await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8"), /all-eyes-on-me v1\.2\.0\n/);
     await rm(join(repo, "pnpm-lock.yaml"));
     await writeFile(join(repo, "package-lock.json"), "{}");
     await inRepo(["review", "--install-check", "--force"]);
@@ -181,5 +181,34 @@ test("the check's summary lists what is outside the standard in words; an app th
   } finally {
     git("checkout", "-q", "main");
     await rm(summary, { force: true });
+  }
+});
+
+test("in a monorepo, the check is written at the repository's root, installs where the lockfile is, and reviews the app's folder", async () => {
+  const repo = await mkdtemp(join(tmpdir(), "aeom-review-mono-"));
+  try {
+    execFileSync("git", ["init", "-q"], { cwd: repo });
+    await writeFile(join(repo, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+    await mkdir(join(repo, "apps", "web"), { recursive: true });
+    const { stdout } = await promisify(execFile)("node", [AEOM, "review", "--install-check"], { cwd: join(repo, "apps", "web"), env: { ...process.env, AEOM_HOME: join(repo, ".home") } });
+    assert.match(stdout, /Wrote \.github\/workflows\/aeom\.yml/);
+    const workflow = (await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8");
+    assert.match(workflow, /- name: Install the project\n        run: pnpm install --frozen-lockfile\n/, "at the root, where the lockfile is");
+    assert.match(workflow, /- name: Hold the pull request to the standard\n        working-directory: apps\/web\n/);
+  } finally {
+    await rm(repo, { recursive: true, force: true });
+  }
+});
+
+test("a review that stops before it starts still says why in the check's summary", async () => {
+  const bare = await mkdtemp(join(tmpdir(), "aeom-review-early-"));
+  try {
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: bare });
+    execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "start"], { cwd: bare });
+    const summary = join(bare, "summary.md");
+    await promisify(execFile)("node", [AEOM, "review", "--summary", summary], { cwd: bare, env: { ...process.env, AEOM_HOME: join(bare, ".home") } }).catch(() => undefined);
+    assert.match((await import("node:fs")).readFileSync(summary, "utf8"), /^## aeom review\n\nNo standard in `\.aeom\/standard\.md`: run \/aeom first/);
+  } finally {
+    await rm(bare, { recursive: true, force: true });
   }
 });

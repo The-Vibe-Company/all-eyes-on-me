@@ -1,7 +1,8 @@
 import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
 import { checkSite, headerDifference, headerLinks, loadConfig, readStandard, reviewCode, route, screensTouched } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
@@ -49,7 +50,13 @@ export async function runReview(argv: string[]): Promise<number> {
     console.log(REVIEW_HELP);
     return 0;
   }
-  if (parsed["install-check"]) return installCheck(parsed["aeom-ref"] ?? "main", Boolean(parsed.force));
+  if (parsed["install-check"]) return installCheck(parsed["aeom-ref"], Boolean(parsed.force));
+  // A review that stops before it starts says why, in the check's summary too.
+  const stop = async (said: string, md: string) => {
+    console.error(said);
+    if (parsed.summary) await appendFile(parsed.summary, `## aeom review\n\n${md}\n`);
+    return 1;
+  };
   // The branch against what it will be merged into, from where they parted: the first of these that git knows.
   const candidates = parsed.base ? [parsed.base] : [(await git(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).catch(() => "")).trim(), "origin/main", "origin/master", "main", "master"].filter(Boolean);
   let base = "";
@@ -66,15 +73,12 @@ export async function runReview(argv: string[]): Promise<number> {
   }
   if (!from) {
     const shallow = (await git(["rev-parse", "--is-shallow-repository"]).catch(() => "")).trim() === "true";
-    console.error(`Cannot compare this branch with ${candidates.join(", ") || "its base"}: ${why}${shallow ? " The clone is shallow: fetch its history (fetch-depth: 0 in GitHub Actions)." : " Give the branch to compare with: --base <branch>."}`);
-    return 1;
+    const said = `Cannot compare this branch with ${candidates.join(", ") || "its base"}: ${why}${shallow ? " The clone is shallow: fetch its history (fetch-depth: 0 in GitHub Actions)." : " Give the branch to compare with: --base <branch>."}`;
+    return stop(said, text(said));
   }
   // The standard as the base holds it: a branch never reviews itself against its own edit of it.
   const standardText = (await git(["show", `${from}:./.aeom/standard.md`]).catch(() => null)) ?? (await readFile(join(".aeom", "standard.md"), "utf8").catch(() => null));
-  if (standardText === null) {
-    console.error(`No standard in .aeom/standard.md: run /aeom first, which writes it from the front as it is.`);
-    return 1;
-  }
+  if (standardText === null) return stop(`No standard in .aeom/standard.md: run /aeom first, which writes it from the front as it is.`, "No standard in `.aeom/standard.md`: run /aeom first, which writes it from the front as it is.");
   const branch = (await git(["branch", "--show-current"]).catch(() => "")).trim() || "HEAD";
   const ahead = Number((await git(["rev-list", "--count", `${from}..HEAD`])).trim());
   const changed = (await git(["diff", "--name-only", "--diff-filter=d", ...DIFF, from, "HEAD"])).split("\n").filter(Boolean);
@@ -188,23 +192,28 @@ export async function runReview(argv: string[]): Promise<number> {
   console.log(lines.join("\n"));
   // The check's summary, words only: what is outside the standard, and why nothing could be measured when it could not.
   if (parsed.summary) {
-    const md = [`## aeom review`, "", `\`${branch}\` against \`${base}\`, held to \`.aeom/standard.md\`: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
-    for (const [where, what] of shown) md.push(`- \`${where}\` ${what}`);
+    const md = [`## aeom review`, "", `${asCode(branch)} against ${asCode(base)}, held to ${asCode(".aeom/standard.md")}: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
+    for (const [where, what] of shown) md.push(`- ${asCode(where)} ${text(what)}`);
     if (rows.length > MOST) md.push(`- … and ${rows.length - MOST} more.`);
     if (shown.length) md.push("");
-    for (const note of notes) md.push(note.startsWith("The app did not start") && startFailure ? `The app did not start: ${startFailure}` : note, "");
-    md.push(`**${lines.at(-1)}**`, "");
+    for (const note of notes) md.push(note.startsWith("The app did not start") && startFailure ? `The app did not start: ${startFailure}` : text(note), "");
+    md.push(`**${text(lines.at(-1)!)}**`, "");
     await appendFile(parsed.summary, md.join("\n"));
   }
   return code;
 }
 
+/** Words in Markdown: no HTML, no line that breaks the list. */
+const text = (said: string) => said.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\s*\n\s*/g, " ");
+/** A path or a name as code, whatever backticks it holds. */
+const asCode = (said: string) => (said.includes("`") ? `\`\` ${said.replace(/\n/g, " ")} \`\`` : `\`${said.replace(/\n/g, " ")}\``);
+
 /** The project's package manager, from its lockfile: how GitHub installs it. */
-async function installOf(): Promise<string[]> {
-  const has = (file: string) => readFile(file).then(() => true, () => false);
+async function installOf(dir: string): Promise<string[]> {
+  const has = (file: string) => readFile(join(dir, file)).then(() => true, () => false);
   if (await has("pnpm-lock.yaml")) {
     // pnpm's action reads the version from package.json when the project pins one there, and refuses a second one.
-    const pinned = await readFile("package.json", "utf8").then((t) => /"packageManager"\s*:\s*"pnpm@/.test(t), () => false);
+    const pinned = await readFile(join(dir, "package.json"), "utf8").then((t) => /"packageManager"\s*:\s*"pnpm@/.test(t), () => false);
     return ["      - uses: pnpm/action-setup@v4", ...(pinned ? [] : ["        with:", "          version: 10"]), "      - name: Install the project", "        run: pnpm install --frozen-lockfile"];
   }
   if (await has("yarn.lock")) return ["      - name: Install the project", "        run: corepack enable && yarn install --frozen-lockfile"];
@@ -213,9 +222,24 @@ async function installOf(): Promise<string[]> {
   return [];
 }
 
+/** The commit of the AEOM this command runs from, when it is a git checkout: the check installs that very one. */
+async function ownCommit(): Promise<string | null> {
+  const here = dirname(fileURLToPath(import.meta.url));
+  return promisify(execFile)("git", ["-C", here, "rev-parse", "HEAD"]).then((r) => r.stdout.trim() || null, () => null);
+}
+
 /** Writes the GitHub workflow that runs aeom review on every pull request, as a check named aeom. */
-async function installCheck(ref: string, force: boolean): Promise<number> {
-  const file = join(".github", "workflows", "aeom.yml");
+async function installCheck(given: string | undefined, force: boolean): Promise<number> {
+  // AEOM pinned: a moving branch would change every project's CI the day it moves.
+  const ref = given ?? (await ownCommit()) ?? "main";
+  // At the repository's root, where GitHub reads workflows; the project installed where its lockfile is, the app reviewed where it lives.
+  const root = (await git(["rev-parse", "--show-toplevel"]).catch(() => "")).trim() || process.cwd();
+  const app = relative(root, process.cwd());
+  let lockDir = process.cwd();
+  while (lockDir.startsWith(root) && !(await installOf(lockDir)).length && lockDir !== root) lockDir = dirname(lockDir);
+  const lockAt = relative(root, lockDir);
+  const install = (await installOf(lockDir)).flatMap((line) => (lockAt && line.startsWith("        run:") ? [`        working-directory: ${lockAt}`, line] : [line]));
+  const file = join(root, ".github", "workflows", "aeom.yml");
   const workflow = [
     "# Written by aeom review --install-check: every pull request held to .aeom/standard.md, with no model.",
     "name: aeom",
@@ -234,28 +258,31 @@ async function installCheck(ref: string, force: boolean): Promise<number> {
     "          fetch-depth: 0",
     "      - uses: actions/setup-node@v4",
     "        with:",
-    ...((await readFile(".nvmrc").then(() => true, () => false)) ? ["          node-version-file: .nvmrc"] : ["          node-version: 22"]),
-    ...(await installOf()),
+    ...((await readFile(join(root, ".nvmrc")).then(() => true, () => false)) ? ["          node-version-file: .nvmrc"] : ["          node-version: 22"]),
+    ...install,
     "      - name: Install AEOM",
     "        run: |",
-    `          git clone --depth 1 --branch ${ref} https://github.com/The-Vibe-Company/all-eyes-on-me "$RUNNER_TEMP/aeom"`,
+    `          git init -q "$RUNNER_TEMP/aeom"`,
+    `          git -C "$RUNNER_TEMP/aeom" fetch -q --depth 1 https://github.com/The-Vibe-Company/all-eyes-on-me ${ref}`,
+    `          git -C "$RUNNER_TEMP/aeom" checkout -q FETCH_HEAD`,
     `          cd "$RUNNER_TEMP/aeom" && corepack pnpm install --frozen-lockfile && corepack pnpm build`,
     `          cd "$RUNNER_TEMP/aeom/packages/core" && npx playwright install --with-deps chromium`,
     "      - name: Hold the pull request to the standard",
+    ...(app ? [`        working-directory: ${app}`] : []),
     `        run: node "$RUNNER_TEMP/aeom/packages/cli/dist/index.js" review --base "origin/\${{ github.base_ref }}" --summary "$GITHUB_STEP_SUMMARY"`,
     "",
   ].join("\n");
   const current = await readFile(file, "utf8").catch(() => null);
   if (current === workflow) {
-    console.log(`${file} already holds this check: nothing to write.`);
+    console.log(`${join(".github", "workflows", "aeom.yml")} already holds this check: nothing to write.`);
     return 0;
   }
   if (current !== null && !force) {
-    console.error(`${file} is someone else's: run again with --force to replace it, or keep it as it is.`);
+    console.error(`${join(".github", "workflows", "aeom.yml")} is someone else's: run again with --force to replace it, or keep it as it is.`);
     return 1;
   }
-  await mkdir(join(".github", "workflows"), { recursive: true });
+  await mkdir(dirname(file), { recursive: true });
   await writeFile(file, workflow);
-  console.log(`Wrote ${file}: every pull request is held to .aeom/standard.md, as a check named aeom. Commit it, then make the check required in the repository's branch rules so a PR outside the standard cannot be merged.`);
+  console.log(`Wrote ${relative(process.cwd(), file) === join("..", "..", ".github", "workflows", "aeom.yml") || app ? join(".github", "workflows", "aeom.yml") : relative(process.cwd(), file)}: every pull request is held to .aeom/standard.md, as a check named aeom. Commit it, then make the check required in the repository's branch rules so a PR outside the standard cannot be merged.`);
   return 0;
 }
