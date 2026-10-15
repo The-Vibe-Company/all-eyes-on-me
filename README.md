@@ -4,6 +4,8 @@ All Eyes On Me is the designer of a product coded by agents: it walks its screen
 
 Today, the first works. You type `/aeom redo` in Claude Code on your app: it says what the run will cost, then takes your front and makes a better one, fixing the UI and the UX on an art direction drawn from your product, or tells you there is nothing to redo.
 
+Its site: [aeom.thevibecompany.co](https://aeom.thevibecompany.co).
+
 > **Status: pre-alpha.** `/aeom` has been run on two real projects besides demo apps: a strategy game in the browser, end to end, and a workout tracker, up to its art directions. It is not on npm yet.
 
 ## What it does today

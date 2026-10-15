@@ -4,6 +4,7 @@ title: La landing est en ligne sur aeom.thevibecompany.co, redéployée à chaqu
 milestone: 01-landing
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 18, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/18 }
 ---
 
@@ -14,9 +15,9 @@ Il tape aeom.thevibecompany.co et tombe sur la landing.
 La landing, toujours à jour avec `main`.
 
 ## C'est fini quand
-- [ ] https://aeom.thevibecompany.co affiche la landing
-- [ ] Un merge dans main met la page en ligne sans geste manuel
-- [ ] Chaque PR qui touche site/ a sa preview
+- [x] https://aeom.thevibecompany.co affiche la landing
+- [x] Un merge dans main met la page en ligne sans geste manuel
+- [x] Chaque PR qui touche site/ a sa preview
 
 ## Comment
 - Un projet Vercel dans l'équipe The Vibe Company, relié au repo, avec `site/` comme racine.
