@@ -6,7 +6,7 @@ Each principle has an id in backticks, then what it asks for. The judge answers 
 
 This is a draft. It gets settled in a dedicated session, then grows with each person's feedback in their personal layer.
 
-What a machine can measure is not here: a pointer cursor on every clickable element, no sideways scrolling, AA contrast and a clean console are checked by `aeom check`. The judge looks at screenshots, so these principles are about what a screenshot shows.
+What a machine can measure is not here: a pointer cursor on every clickable element, no sideways scrolling, AA contrast, a clean console, a header that stays when you scroll, labels on one line, rows of cards of one shape and no text cut without an ellipsis are checked by `aeom check`. The judge looks at screenshots, so these principles are about what a screenshot shows.
 
 - `one-direction` — One art direction, held on every page. No page borrows another style.
 - `consistent-chrome` — The header and the navigation are the same on every page: same place, same look, same order. Buttons share one style everywhere, wherever a page needs them.

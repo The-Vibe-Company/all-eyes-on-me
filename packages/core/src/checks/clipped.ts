@@ -4,14 +4,21 @@ import type { Issue } from "./types.js";
 /**
  * Text is never cut by its box without saying so: a box that hides what
  * overflows it cuts its text with an ellipsis (`text-overflow`) or a clamp
- * (`line-clamp`), and a box that shows it does not let a word spill out of it.
- * Only text the box's edge cuts counts, a line it crosses or a paragraph whose
- * first lines are in and the next ones out: text wholly outside the box, such
- * as another slide of a carousel, is hidden by design. A box of a few pixels,
- * text kept for screen readers, is left alone, and so is a box that scrolls.
+ * (`line-clamp`), here or on a box between it and the text, and a box that
+ * shows what overflows it does not let its text spill out of it.
+ *
+ * Only text the box's edge cuts counts: part of it past the edge, part of it
+ * still inside. Text wholly past the edge is hidden by design, and so is a
+ * block cropped as a whole at the side, such as the slide of a carousel that
+ * peeks in. Text hidden from sight (words kept for screen readers, an
+ * `aria-hidden` watermark, a closed panel) and text in a box that scrolls
+ * sideways on purpose, such as a line of code, are left alone.
  */
 export async function checkClipped(page: Page): Promise<Issue[]> {
-  const found = await page.evaluate(() => {
+  const found = await page.evaluate(async () => {
+    // An animation that reveals a text crosses its box until it ends.
+    const running = document.getAnimations?.().filter((a) => a.effect?.getComputedTiming().endTime !== Infinity) ?? [];
+    await Promise.race([Promise.all(running.map((a) => a.finished.catch(() => undefined))), new Promise((done) => setTimeout(done, 1000))]);
     const name = (el: HTMLElement) => {
       const text = (el.innerText || "").trim().replace(/\s+/g, " ").slice(0, 40);
       const classes = [...el.classList].map((c) => `.${c}`).join("");
@@ -19,8 +26,8 @@ export async function checkClipped(page: Page): Promise<Issue[]> {
     };
     const hides = (v: string) => v === "hidden" || v === "clip";
     const scrolls = (v: string) => v === "auto" || v === "scroll";
-    const clamped = (el: Element) => {
-      const v = getComputedStyle(el).getPropertyValue("-webkit-line-clamp");
+    const clamped = (s: CSSStyleDeclaration) => {
+      const v = s.getPropertyValue("-webkit-line-clamp");
       return !!v && v !== "none";
     };
     const rectsOf = (node: Node) => {
@@ -28,74 +35,77 @@ export async function checkClipped(page: Page): Promise<Issue[]> {
       range.selectNodeContents(node);
       return [...range.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
     };
-    /** The text nodes inside a box, without those of a box that scrolls on its own inside it. */
-    const textsIn = (box: HTMLElement) => {
-      const nodes: Text[] = [];
-      const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
-      for (let node = walker.nextNode(); node && nodes.length < 200; node = walker.nextNode()) {
-        if (!(node.textContent ?? "").trim()) continue;
-        let inner = node.parentElement;
-        let own = true;
-        while (inner && inner !== box) {
-          const s = getComputedStyle(inner);
-          if (scrolls(s.overflowX) || scrolls(s.overflowY)) own = false;
-          inner = inner.parentElement;
-        }
-        if (own) nodes.push(node as Text);
+    /** Hidden from sight: in a box of a pixel or two, clipped away, aria-hidden, or not rendered. */
+    const hidden = (el: Element | null) => {
+      for (let e = el; e && e !== document.body; e = e.parentElement) {
+        const s = getComputedStyle(e);
+        const b = e.getBoundingClientRect();
+        if (b.width < 4 || b.height < 4 || (s.clip && s.clip !== "auto") || s.clipPath !== "none" || e.getAttribute("aria-hidden") === "true") return true;
       }
-      return nodes;
+      return !(el?.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true }) ?? true);
     };
     const found: { element: string; how: "cut-side" | "cut-bottom" | "spill-side" | "spill-bottom" }[] = [];
     for (const el of document.querySelectorAll<HTMLElement>("body *")) {
       if (["INPUT", "TEXTAREA", "SELECT", "SCRIPT", "STYLE", "SVG"].includes(el.tagName.toUpperCase())) continue;
       const box = el.getBoundingClientRect();
-      if (box.width < 4 || box.height < 4) continue;
+      if (box.width < 4 || box.height < 4 || box.right <= 0 || box.left >= window.innerWidth) continue;
       const style = getComputedStyle(el);
       if (style.clipPath !== "none" || (style.clip && style.clip !== "auto")) continue;
       // Glyphs reach past a tight line height, a display title's at line-height 0.9: a third of the font size is not a cut.
       const tol = parseFloat(style.fontSize) * 0.35 || 4;
-      // A run of text the edge cuts: part of it past the edge, part of it still inside. Text wholly past it is hidden by design.
+      // A run of text the edge cuts: part of it past the edge, part of it still inside.
       const cutSide = (rects: DOMRect[]) => rects.some((r) => r.right > box.right + tol) && rects.some((r) => r.left < box.right - tol);
       const cutBottom = (rects: DOMRect[]) => rects.some((r) => r.bottom > box.bottom + tol) && rects.some((r) => r.top < box.bottom - tol);
       if (hides(style.overflowX) || hides(style.overflowY)) {
-        for (const node of textsIn(el)) {
-          const holder = node.parentElement!;
-          const rects = rectsOf(node);
-          const ellipsis = style.textOverflow === "ellipsis" || getComputedStyle(holder).textOverflow === "ellipsis";
-          if (hides(style.overflowX) && !ellipsis && cutSide(rects)) {
-            found.push({ element: name(el), how: "cut-side" });
-            break;
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let seen = 0;
+        for (let node = walker.nextNode(); node && seen < 200; node = walker.nextNode()) {
+          if (!(node.textContent ?? "").trim()) continue;
+          seen++;
+          // Between the text and this box: a box that crops, ellipsizes, clamps or scrolls deals with the text itself;
+          // a block wholly past the side is cropped as a whole.
+          let ellipsis = style.textOverflow === "ellipsis";
+          let clamp = clamped(style);
+          let own = true;
+          let block: Element | null = null;
+          for (let e = node.parentElement; e && e !== el; e = e.parentElement) {
+            const s = getComputedStyle(e);
+            if (hides(s.overflowX) || hides(s.overflowY) || scrolls(s.overflowX) || scrolls(s.overflowY)) own = false;
+            ellipsis ||= s.textOverflow === "ellipsis";
+            clamp ||= clamped(s);
+            if (!block && s.display !== "inline") block = e;
           }
-          if (hides(style.overflowY) && !clamped(el) && !clamped(holder) && cutBottom(rects)) {
-            found.push({ element: name(el), how: "cut-bottom" });
+          if (!own) continue;
+          const rects = rectsOf(node);
+          const cropped = block ? block.getBoundingClientRect().right > box.right + tol : false;
+          const how = hides(style.overflowX) && !ellipsis && !cropped && cutSide(rects) ? "cut-side" : hides(style.overflowY) && !clamp && cutBottom(rects) ? "cut-bottom" : null;
+          // Measured last, on what is cut only: walking the ancestors of every text would be slow on a long page.
+          if (how && !hidden(node.parentElement)) {
+            found.push({ element: name(el), how });
             break;
           }
         }
         continue;
       }
       if (scrolls(style.overflowX) || scrolls(style.overflowY)) continue;
-      // Inside a box that scrolls or cuts, what spills is that box's: a line of code in a block that scrolls sideways.
-      let outer = el.parentElement;
-      let held = false;
-      while (outer && outer !== document.body && !held) {
-        const o = getComputedStyle(outer);
-        held = o.overflowX !== "visible" || o.overflowY !== "visible";
-        outer = outer.parentElement;
-      }
-      if (held) continue;
       // A box that shows what overflows it: its own words must stay inside it.
+      let how: "spill-side" | "spill-bottom" | null = null;
       for (const node of el.childNodes) {
         if (node.nodeType !== Node.TEXT_NODE || !(node.textContent ?? "").trim()) continue;
         const rects = rectsOf(node);
-        if (cutSide(rects)) {
-          found.push({ element: name(el), how: "spill-side" });
-          break;
-        }
-        if (cutBottom(rects)) {
-          found.push({ element: name(el), how: "spill-bottom" });
-          break;
-        }
+        how = cutSide(rects) ? "spill-side" : cutBottom(rects) ? "spill-bottom" : null;
+        if (how) break;
       }
+      if (!how) continue;
+      // Inside a box that crops, what spills is that box's to cut. Inside one that scrolls, a line kept whole on
+      // purpose (code, white-space: pre or nowrap) scrolls with it; any other text that spills still spills.
+      let held = false;
+      for (let outer = el.parentElement; outer && outer !== document.body && !held; outer = outer.parentElement) {
+        const o = getComputedStyle(outer);
+        if (hides(o.overflowX) || hides(o.overflowY)) held = true;
+        else if (scrolls(o.overflowX) && /^(pre|nowrap)$/.test(style.whiteSpace)) held = true;
+      }
+      if (!held && !hidden(el)) found.push({ element: name(el), how });
     }
     return found;
   });

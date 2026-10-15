@@ -1,35 +1,71 @@
 import type { Page } from "playwright";
 import type { Issue } from "./types.js";
 
-/** What holds a label on one line: a button, a tab, a link of the navigation, a chip or a badge. */
-const LABELS = 'button, [role="button"], [role="tab"], nav a, header a';
 /** A class that names a chip, a badge, a pill or a tag, as a whole word of it. */
 const CHIP = /(^|[-_])(badge|chip|pill|tag)s?($|[-_])/i;
+/** A class that makes a link look like a button. */
+const BUTTON_LINK = /(^|[-_])(btn|button|cta)($|[-_])/i;
+/** A label is short: longer, it is a question, a card or a sentence, which may wrap. */
+const LONGEST = 32;
 
-/** A label must hold on one line: one that goes onto two makes its button, tab or chip taller than the others. */
+/**
+ * A label holds on one line: a button, a tab, a link of the site's header or
+ * navigation, a link styled as a button, a chip or a badge whose label goes
+ * onto two lines is taller than the others. Only short labels count, one run
+ * of text with no block of its own inside: a long FAQ question, a clickable
+ * card, the links of a footer may wrap. Text hidden from sight, such as words
+ * kept for screen readers, is not measured.
+ */
 export async function checkWrap(page: Page): Promise<Issue[]> {
   const wrapped = await page.evaluate(
-    ({ labels, chip }) => {
+    ({ chip, buttonLink, longest }) => {
       const isChip = new RegExp(chip.source, chip.flags);
-      const candidates = [...new Set([...document.querySelectorAll<HTMLElement>(labels), ...[...document.querySelectorAll<HTMLElement>("body *")].filter((el) => [...el.classList].some((c) => isChip.test(c)))])];
-      // In the page's order, so a label inside another is said once, with the outer one.
-      candidates.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
-      /** How many lines one run of text takes, from the tops of its boxes. */
-      const lines = (node: Text) => {
+      const isButtonLink = new RegExp(buttonLink.source, buttonLink.flags);
+      const words = (el: Element, re: RegExp) => [...el.classList].some((c) => re.test(c));
+      const candidates = [
+        ...document.querySelectorAll<HTMLElement>('button, [role="button"], [role="tab"], header a, nav a, a'),
+        ...[...document.querySelectorAll<HTMLElement>("body *")].filter((el) => words(el, isChip)),
+      ].filter((el, i, all) => all.indexOf(el) === i);
+      const isLabel = (el: HTMLElement) => {
+        if (el.tagName === "A" && !el.closest("header, nav") && !words(el, isButtonLink) && el.getAttribute("role") !== "button" && el.getAttribute("role") !== "tab") return false;
+        // The links of a footer or a sidebar may wrap.
+        if (el.tagName === "A" && !words(el, isButtonLink) && el.closest("footer, aside")) return false;
+        const text = (el.innerText || "").trim().replace(/\s+/g, " ");
+        if (!text || text.length > longest) return false;
+        // A card or a disclosure with blocks of its own is not a label.
+        return ![...el.querySelectorAll("*")].some((c) => /^(block|flex|grid|list-item|table)$/.test(getComputedStyle(c).display) && (c.textContent ?? "").trim());
+      };
+      /** Hidden from sight: a box of a pixel or two, clipped away, or not rendered. */
+      const hidden = (node: Node, upTo: Element) => {
+        for (let e = node.parentElement; e && e !== upTo.parentElement; e = e.parentElement) {
+          const s = getComputedStyle(e);
+          const b = e.getBoundingClientRect();
+          if (b.width < 4 || b.height < 4 || (s.clip && s.clip !== "auto") || s.clipPath !== "none" || e.getAttribute("aria-hidden") === "true") return true;
+        }
+        return false;
+      };
+      /** How many lines one run of text takes inside the label's box, from the tops of its boxes. */
+      const lines = (node: Text, b: DOMRect) => {
         const range = document.createRange();
         range.selectNodeContents(node);
         const tops: number[] = [];
-        for (const rect of range.getClientRects()) if (rect.width > 0 && !tops.some((t) => Math.abs(t - rect.top) < 3)) tops.push(rect.top);
+        for (const r of range.getClientRects()) {
+          if (r.width === 0 || r.bottom < b.top || r.top > b.bottom) continue;
+          if (!tops.some((t) => Math.abs(t - r.top) < 3)) tops.push(r.top);
+        }
         return tops.length;
       };
+      // In the page's order, so a label inside another is said once, with the outer one.
+      candidates.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
       const found: { element: string; lines: number }[] = [];
       const said: HTMLElement[] = [];
       for (const el of candidates) {
-        const box = el.getBoundingClientRect();
-        if (box.width === 0 || box.height === 0 || said.some((s) => s.contains(el))) continue;
+        const b = el.getBoundingClientRect();
+        if (b.width === 0 || b.height === 0 || b.right <= 0 || b.left >= window.innerWidth || said.some((s) => s.contains(el))) continue;
+        if (!(el.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true }) ?? true) || !isLabel(el)) continue;
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
         let most = 0;
-        for (let node = walker.nextNode(); node; node = walker.nextNode()) if ((node.textContent ?? "").trim()) most = Math.max(most, lines(node as Text));
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) if ((node.textContent ?? "").trim() && !hidden(node, el)) most = Math.max(most, lines(node as Text, b));
         if (most < 2) continue;
         said.push(el);
         const text = (el.innerText || "").trim().replace(/\s+/g, " ").slice(0, 40);
@@ -38,7 +74,7 @@ export async function checkWrap(page: Page): Promise<Issue[]> {
       }
       return found;
     },
-    { labels: LABELS, chip: { source: CHIP.source, flags: CHIP.flags } },
+    { chip: { source: CHIP.source, flags: CHIP.flags }, buttonLink: { source: BUTTON_LINK.source, flags: BUTTON_LINK.flags }, longest: LONGEST },
   );
   return wrapped.map(({ element, lines }) => ({ element, message: `its label goes onto ${lines} lines: keep it on one (a shorter word, a wider box, or an ellipsis)` }));
 }

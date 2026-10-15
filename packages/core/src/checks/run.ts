@@ -47,17 +47,27 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
         const page = await context.newPage();
         const consoleIssues = watchConsole(page);
         await openPage(page, url);
-        const add = (check: CheckName, issues: Issue[]) => findings.push(...issues.map((issue) => ({ check, url, width, ...issue })));
-        add("overflow", await checkOverflow(page));
-        add("wrap", await checkWrap(page));
-        add("uneven", await checkUneven(page));
-        add("clipped", await checkClipped(page));
-        // Last of the layout checks: it scrolls the page, then brings it back to the top.
-        add("header", await checkHeader(page));
+        // A page that goes elsewhere while a check measures it cannot be measured by that check: the others, and the
+        // other pages, still are.
+        const add = async (check: CheckName, measure: () => Promise<Issue[]> | Issue[]) => {
+          let issues: Issue[];
+          try {
+            issues = await measure();
+          } catch {
+            return;
+          }
+          findings.push(...issues.map((issue) => ({ check, url, width, ...issue })));
+        };
+        await add("overflow", () => checkOverflow(page));
+        await add("wrap", () => checkWrap(page));
+        await add("uneven", () => checkUneven(page));
+        await add("clipped", () => checkClipped(page));
+        // Last of the layout checks: it scrolls the page, then brings it back where it was.
+        await add("header", () => checkHeader(page));
         if (width === widest) {
-          add("cursor", await checkCursor(page));
-          add("contrast", await checkContrast(page));
-          add("console", consoleIssues());
+          await add("cursor", () => checkCursor(page));
+          await add("contrast", () => checkContrast(page));
+          await add("console", () => consoleIssues());
         }
       } finally {
         await context.close();
@@ -81,8 +91,10 @@ export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths,
       ...(await checkPages(browser, found.pages.filter((p) => !p.signedOut).map((p) => p.url), widths, signedIn)),
       ...(await checkPages(browser, found.pages.filter((p) => p.signedOut).map((p) => p.url), widths)),
     ];
-    // A check the config leaves out of a page finds nothing there: a route, or any route of its shape.
-    const left = (f: Finding) => (except[f.check] ?? []).some((r) => r === route(f.url) || pageShape(r) === pageShape(route(f.url)));
+    // A check the config leaves out of a page finds nothing there: a route, or any route of its shape, whatever its
+    // query or its last slash.
+    const bare = (r: string) => r.replace(/[?#].*$/, "").replace(/(.)\/+$/, "$1");
+    const left = (f: Finding) => (except[f.check] ?? []).some((r) => bare(r) === bare(route(f.url)) || pageShape(bare(r)) === pageShape(bare(route(f.url))));
     return { url, checkedAt: new Date().toISOString(), widths, checks: CHECKS, pages, errors: found.errors, findings: findings.filter((f) => !left(f)) };
   } finally {
     await browser.close();
