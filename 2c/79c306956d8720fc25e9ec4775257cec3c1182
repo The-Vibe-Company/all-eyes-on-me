@@ -1,0 +1,51 @@
+packages/core/src/run/pr.test.ts
+  s_4ce34ec42d9105::t_7f8b9745454c30 105-112
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_7f8b9745454c30 112-114
+packages/cli/src/commands/pr.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 132
+README.md
+  s_4ce34ec42d9105::t_54b173ec1827b3 59
+packages/core/src/run/pr.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 63-65,90
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_7f8b9745454c30 119-121
+packages/core/src/journey/guard.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 32-33,59-62,65-66,68,80-81,84
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_f474faede30794 212,378-380,386
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_54b173ec1827b3 3,146
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_f474faede30794 75
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_f474faede30794 86,88-96,102-104
+packages/cli/src/commands/guard.test.ts
+  s_4ce34ec42d9105::t_7f8b9745454c30 214-226
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 211,213
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 90,126-127,154,160-162
+  s_4ce34ec42d9105::t_0a5cc12500758d 163
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_54b173ec1827b3 9,11,14-21,25,29,33
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 38-39,255-259
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_1ce1111275e48f 171-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2c79c306956d8720fc25e9ec4775257cec3c1182",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
