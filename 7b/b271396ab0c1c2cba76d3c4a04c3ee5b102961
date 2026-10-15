@@ -1,0 +1,84 @@
+.veebee/milestones/05-construire/tickets/03-from-scratch.md
+  s_4ce34ec42d9105::t_10cfb3b6bb5e0e 7,22,24,32
+README.md
+  s_4ce34ec42d9105::t_10cfb3b6bb5e0e 60
+  s_4ce34ec42d9105::t_a44796140e4ca3 59,97
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_9ad7c9911ab8f6 54,68-69,101-103,136,191-193,201,240,242,368
+  s_4ce34ec42d9105::t_f474faede30794 212,378-380,386
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_fa5ab5da1b6043 106-118,122-125
+  s_4ce34ec42d9105::t_7f8b9745454c30 119-121
+packages/cli/src/commands/guard.test.ts
+  s_4ce34ec42d9105::t_10cfb3b6bb5e0e 208
+  s_4ce34ec42d9105::t_fa5ab5da1b6043 204-207,209-210,212,242
+  s_4ce34ec42d9105::t_7f8b9745454c30 214-226
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 211
+  s_4ce34ec42d9105::t_fd8b7bac005c4a 213,228-242
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_ceb8c3c1cea610 112,114-117,148
+  s_4ce34ec42d9105::t_10cfb3b6bb5e0e 203
+  s_4ce34ec42d9105::t_02c4dcdf190030 8,21-22
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 113,149-150,192,194
+  s_4ce34ec42d9105::t_0a5cc12500758d 195
+  s_4ce34ec42d9105::t_b5d69fe2bf9ed0 23-26,90,92-111,177-186,193,202
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_fa5ab5da1b6043 104-111,115-116
+  s_4ce34ec42d9105::t_7f8b9745454c30 112-114
+packages/cli/src/commands/estimate.test.ts
+  s_4ce34ec42d9105::t_fa5ab5da1b6043 56-58
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_ceb8c3c1cea610 13,82-85,87,97-101,105,202,208,214
+  s_4ce34ec42d9105::t_f474faede30794 86,88-96,102-104
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_ceb8c3c1cea610 7,18-20,43,68-74,76
+  s_4ce34ec42d9105::t_9f8ff8ee47fa65 77-78
+  s_4ce34ec42d9105::t_f474faede30794 75
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_d8beb71abdc239 20,30,92
+  s_4ce34ec42d9105::t_54b173ec1827b3 3,146
+  s_4ce34ec42d9105::t_bf818e39979116 31,105
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_d8beb71abdc239 30
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_49cabce40371cd 1-4,6,8,12,16,25-27,35-37,39-41
+  s_4ce34ec42d9105::t_54b173ec1827b3 11,13,17-23,28,42
+  s_4ce34ec42d9105::t_bf818e39979116 5,7-9,14-15,24,30-35,38
+.veebee/milestones/05-construire/tickets/04-la-vraie-api.md
+  s_4ce34ec42d9105::t_e29728071fd918 20
+  s_4ce34ec42d9105::t_a44796140e4ca3 7
+packages/core/src/run/pr.test.ts
+  s_4ce34ec42d9105::t_7f8b9745454c30 105-112
+packages/cli/src/commands/pr.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 132
+packages/core/src/run/pr.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 63-65,90
+packages/core/src/journey/guard.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 32-33,59-62,65-66,68,80-81,84
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_8c82a9494b1cd1 38-39,255-259
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_1ce1111275e48f 171-188
+site/pages/commands.html
+  s_4ce34ec42d9105::t_9f268bf423e89c 22,82,94-95
+site/pages/index.html
+  s_4ce34ec42d9105::t_9f268bf423e89c 7,104
+site/site.test.mjs
+  s_4ce34ec42d9105::t_9f268bf423e89c 192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7bb271396ab0c1c2cba76d3c4a04c3ee5b102961",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
