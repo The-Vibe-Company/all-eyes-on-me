@@ -1,0 +1,35 @@
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_bf818e39979116 31,105
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_bf818e39979116 5,7-9,14-15,24,30-35,38
+README.md
+  s_4ce34ec42d9105::t_a44796140e4ca3 59,97
+packages/cli/src/commands/guard.ts
+  s_4ce34ec42d9105::t_b5d69fe2bf9ed0 23-26,90,92-111,177-186,193,202
+site/pages/commands.html
+  s_4ce34ec42d9105::t_9f268bf423e89c 22,82,94-95
+site/pages/index.html
+  s_4ce34ec42d9105::t_9f268bf423e89c 7,104
+site/site.test.mjs
+  s_4ce34ec42d9105::t_9f268bf423e89c 192
+.veebee/milestones/05-construire/tickets/04-la-vraie-api.md
+  s_4ce34ec42d9105::t_a44796140e4ca3 7
+packages/cli/src/commands/guard.test.ts
+  s_4ce34ec42d9105::t_fd8b7bac005c4a 213,228-242
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4b4cd6590fb04f46cb704c66fee0e80157212092",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
