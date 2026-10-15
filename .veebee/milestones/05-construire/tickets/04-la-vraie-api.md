@@ -16,6 +16,7 @@ La liste des données que chaque écran attend, celles que l'API fournit, et cel
 ## C'est fini quand
 - [ ] Les données fictives d'un front from scratch passent toutes par un seul module, qui dit quelle donnée attend quel écran
 - [ ] `/aeom build --api <url ou spécification>` remplace ce module par des appels à l'API, sans modifier les écrans
+- [ ] Une API donnée dès le départ, `/aeom build --from-scratch <source> --api <url ou spécification>`, branche les écrans dessus dès le premier run
 - [ ] Les parcours clés se rejouent jusqu'au bout sur l'API, avec ses propres données fictives
 - [ ] Une donnée que l'API ne fournit pas est listée, et l'écran garde sa donnée fictive en le disant
 - [ ] Aucune logique métier n'est écrite côté front pour combler un manque de l'API

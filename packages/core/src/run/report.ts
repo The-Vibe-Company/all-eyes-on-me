@@ -51,7 +51,7 @@ export interface ResultPage {
   journeys: {
     slug: string;
     name: string;
-    status: "kept" | "sent back" | "unchanged";
+    status: "kept" | "sent back" | "unchanged" | "new";
     why: string | null;
     /** Where it broke, before the run and at the end. */
     broke: { before: string | null; after: string | null };
@@ -65,6 +65,8 @@ export interface ResultPage {
   measuredAfter: boolean;
   /** The widths the run measured, and those of the default it left out, as the config or the run declared. */
   widths?: { measured: number[]; leftOut: number[] };
+  /** True for a run that built a front from nothing (`/aeom build --from-scratch`): no before, every screen and journey new. */
+  built?: boolean;
   /** What blocked journeys would need, named by `aeom features`, never built. */
   features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
 }
@@ -96,7 +98,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const before = await json<CaptureManifest>(join(runDir, "before", "captures", "manifest.json"));
   // A run of the journeys only (--ux) takes no snapshot of the screens: its replays are what it shows.
   const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
-  if (!before && !replayBefore) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
+  // A run that built a front from nothing has no before: only what it built.
+  const built = !before && !replayBefore && (await first(runDir, ["end", "after"], join("captures", "manifest.json"))) !== null;
+  if (!before && !replayBefore && !built) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
   const verdict = await json<SavedVerdict>(join(runDir, "verdict.json"));
   const keepStyle = verdict?.keepStyle === true;
 
@@ -129,7 +133,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     const failingAfter = c?.after?.failing ?? [];
     const d = decided?.find((x) => x.page === page);
     const decision = d?.verdict;
-    const status: ResultPage["screens"][number]["status"] =
+    const status: ResultPage["screens"][number]["status"] = built ? (erroredAfter.includes(page) ? "does not load" : "new") :
       erroredAfter.includes(page) || (erroredBefore.includes(page) && !a) ? "does not load"
       : !decision ? (c?.verdict === "new" ? "new" : "unchanged")
       : decision === "better" ? "kept" : decision === "new" || decision === "missing" ? decision : "sent back";
@@ -184,7 +188,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     return b ? `it broke at step ${b.step}: ${b.reason}` : null;
   };
   const widest = (r: JourneyReport["journeys"][number] | undefined) => r?.runs.reduce<(typeof r.runs)[number] | undefined>((w, x) => (!w || x.width > w.width ? x : w), undefined);
-  const journeys: ResultPage["journeys"] = (replayBefore?.journeys ?? []).map((j) => {
+  // Built from nothing, each journey is the one the run made: it stands on its own replay, with no before.
+  const empty = (j: JourneyReport["journeys"][number]) => ({ ...j, runs: [] as JourneyReport["journeys"][number]["runs"] });
+  const journeys: ResultPage["journeys"] = (built ? (replayAfter?.journeys ?? []).map(empty) : replayBefore?.journeys ?? []).map((j) => {
     const a = replayAfter?.journeys.find((x) => x.slug === j.slug);
     const verdictOfJourney = ratchet.find((r) => r.slug === j.slug);
     const widths = [...new Set([...j.runs, ...(a?.runs ?? [])].map((r) => r.width))].sort((x, y) => x - y);
@@ -192,7 +198,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       slug: j.slug,
       name: j.name,
       // Without duels, nothing better sends nobody back: the journey is as it was.
-      status: verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
+      status: built ? "new" : verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
       why: verdictOfJourney?.why ?? null,
       broke: { before: broke(j), after: broke(a) },
       steps: { before: widest(j)?.counts.steps ?? null, after: a ? (widest(a)?.counts.steps ?? null) : null },
@@ -230,9 +236,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     features = { entries, more: Number.isInteger(saved.more) ? saved.more : 0 };
   }
   // Each width once, narrowest first, whatever wrote the manifest: anything else is not a list of widths.
-  const measured = usableWidths(before?.widths ?? replayBefore?.widths);
+  const measured = usableWidths(before?.widths ?? replayBefore?.widths ?? (built ? after?.widths : undefined));
   const widths = measured ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
-  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}) };
+  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}) };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -358,7 +364,7 @@ function widthsHtml(widths: ResultPage["widths"]): string {
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${r.built ? "What the run built" : nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
   const named = r.features?.entries.length ? r.features : null;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 

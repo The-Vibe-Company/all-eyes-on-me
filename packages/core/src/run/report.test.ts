@@ -103,3 +103,21 @@ test("the page says at its head the widths measured when they are not the defaul
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("a run that built a front from nothing has no before: its page shows what it built, each screen new", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-built-"));
+  try {
+    await mkdir(join(dir, "end", "captures"), { recursive: true });
+    await mkdir(join(dir, "end", "reports"), { recursive: true });
+    await writeFile(join(dir, "end", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [{ url: "http://x/", path: "/", files: [{ width: 1280, file: "index@1280.png" }] }, { url: "http://x/voies.html", path: "/voies.html", files: [{ width: 1280, file: "voies-html@1280.png" }] }], errors: [] }));
+    await writeFile(join(dir, "end", "reports", "check.json"), JSON.stringify({ url: "http://x", checkedAt: "", widths: [1280], checks: ["cursor"], pages: ["http://x/", "http://x/voies.html"], errors: [], findings: [{ check: "cursor", url: "http://x/voies.html", width: 1280, message: "no pointer" }] }));
+    await writeFile(join(dir, "built"), "");
+    const page = await readRun(dir, "run-1");
+    assert.equal(page.built, true);
+    assert.deepEqual(page.screens.map((s) => [s.page, s.status]), [["/", "new"], ["/voies.html", "new"]]);
+    assert.deepEqual(page.screens[1]!.widths, [{ width: 1280, before: null, after: "end/captures/voies-html@1280.png" }]);
+    assert.match(resultHtml(page), /<h1>What the run built<\/h1>/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

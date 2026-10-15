@@ -5,6 +5,7 @@ import { parseArgs, promisify } from "node:util";
 import { ConfigError, guardJourneys, loadConfig, type JourneyReport, type ServerCall } from "@aeom/core";
 
 export const GUARD_HELP = `Usage: aeom guard <before-dir> <after-dir> [options]
+       aeom guard --from-scratch <after-dir> [options]
 
 Tells a change of navigation, copy or state from a feature. Compares the
 server calls of the journeys replayed before and after (each folder holds the
@@ -17,7 +18,9 @@ Options:
                        the calls are compared
   --feature "<ask>"    What the user asked for explicitly, in their words
   --allow <what>       A call, such as "POST /api/orders", or a file that the
-                       request needs; repeat it; needs --feature`;
+                       request needs; repeat it; needs --feature
+  --from-scratch       A front built from nothing, on fake data: compared with
+                       nothing, so any call it makes is refused`;
 
 const git = (args: string[]) => promisify(execFile)("git", args).then(({ stdout }) => stdout);
 
@@ -81,8 +84,14 @@ export async function runGuard(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
-    options: { base: { type: "string" }, feature: { type: "string" }, allow: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } },
+    options: { base: { type: "string" }, feature: { type: "string" }, allow: { type: "string", multiple: true }, "from-scratch": { type: "boolean" }, help: { type: "boolean", short: "h" } },
   });
+  // A front built from nothing is compared with nothing: it may make no call at all, but those an API asked for allows.
+  if (values["from-scratch"] && positionals.length !== 1) {
+    console.error(`--from-scratch compares a replay with nothing: give one folder, the replay of the front built.`);
+    return 1;
+  }
+  if (!values.help && values["from-scratch"]) positionals.unshift(positionals[0]!);
   if (values.help || positionals.length !== 2) {
     console.log(GUARD_HELP);
     return values.help ? 0 : 1;
@@ -112,8 +121,9 @@ export async function runGuard(argv: string[]): Promise<number> {
     }
     return report as JourneyReport;
   };
-  const before = await read(positionals[0]!);
   const after = await read(positionals[1]!);
+  // From scratch, the before is the same journeys, calling nothing.
+  const before = values["from-scratch"] ? (after ? { ...after, journeys: after.journeys.map((j) => ({ ...j, runs: j.runs.map((r) => ({ ...r, calls: [] })) })) } : null) : await read(positionals[0]!);
   if (!before || !after) return 1;
   const missing = missingReplays(before, after, { finished: true });
   if (missing.length) {
@@ -152,6 +162,7 @@ export async function runGuard(argv: string[]): Promise<number> {
   }
   // What was let through is a call or a file that changed: say only what holds for everything else.
   if (allowed.length) console.log(`\nNothing else: every other call was made before${values.base ? ", and no other protected file changed" : ""}.`);
+  else if (values["from-scratch"]) console.log(`No call to a server: the front runs on its own data${values.base ? ", and no protected file changed" : ""}.`);
   else console.log(`No feature added: every call was made before${values.base ? ", and no protected file changed" : ""}.`);
   return 0;
 }

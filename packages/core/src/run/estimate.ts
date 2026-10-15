@@ -10,7 +10,7 @@ import { DEFAULT_WIDTHS } from "../capture/capture.js";
  * tokens are the agents' own: the session that coordinates the run is apart.
  */
 
-export type RunMode = "judge" | "full" | "keep-style" | "ux" | "prompt";
+export type RunMode = "judge" | "full" | "keep-style" | "ux" | "prompt" | "scratch";
 
 export interface Phase {
   phase: string;
@@ -77,6 +77,19 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
       // The session reads the prompt and the charter, then writes the workers' briefs.
       { phase: "Read the prompt", agents: 0, tokens: 0, minutes: 2 },
       { phase: `${named} from the prompt, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+    ]);
+  }
+  if (mode === "scratch") {
+    // No front to judge first: the sheet from the source, the directions, the kit, a worker per screen, then the measure.
+    const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
+    const critique = journeys ? VOTES : 0;
+    return withTotal(mode, [
+      { phase: "Write the product sheet and its journeys", agents: 0, tokens: 0, minutes: 10 },
+      { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+      { phase: "The kit, on the direction chosen", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit },
+      { phase: "The screens of the key journeys", agents: screens, tokens: screens * WORKER.tokens, minutes: MINUTES.page },
+      { phase: "Measure the screens and the journeys", agents: VOTES + critique, tokens: VOTES * pj.tokens + critique * jj.tokens, minutes: pj.minutes + (critique ? jj.minutes : 0) },
+      { phase: "The standard, the result page and the PR", agents: 0, tokens: 0, minutes: MINUTES.end },
     ]);
   }
   if (mode === "ux") {
@@ -175,18 +188,18 @@ export function estimateText(estimate: Estimate, { screens, journeys, widths = D
   const lines = rows.map((r) => row(r));
   const broken = estimate.ifBroken ? `\n\n${row({ ...estimate.ifBroken, label: brokenLabel })} more` : "";
   const notes = [
-    ...(estimate.mode === "judge" || estimate.mode === "prompt" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
+    ...(estimate.mode === "judge" || estimate.mode === "prompt" || estimate.mode === "scratch" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
     "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
     estimate.mode === "prompt"
       ? "The direction workers run on the session's own model, the judge on Sonnet."
       : estimate.mode === "judge"
       ? "The judges run on Sonnet."
-      : estimate.mode === "full"
+      : estimate.mode === "full" || estimate.mode === "scratch"
         ? "The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run."
         : "The judges and the workers run on Sonnet.",
   ];
   // The default widths go unsaid, as everywhere else.
   const at = widths.join(",") === DEFAULT_WIDTHS.join(",") ? "" : `, at ${widths.join(", ")} px`;
-  const head = estimate.mode === "prompt" ? `From a prompt, two screens for each direction${at}` : `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}`;
+  const head = estimate.mode === "prompt" ? `From a prompt, two screens for each direction${at}` : estimate.mode === "scratch" ? `From scratch, ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}` : `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}`;
   return `${head}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
 }
