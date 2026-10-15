@@ -36,6 +36,8 @@ On the same demo given one brand charter, run with the style kept, the checks we
 - It never builds a feature, unless you ask in so many words.
 - It never sends a capture out of your machine. Captures, the result page and your feedback stay local. What leaves is the run's branch and a pull request in words, when the repository has a remote and `gh` is signed in (`--sans-pr` stops at the branch).
 
+**Every pull request, held to the standard.** `aeom review` reads what a branch changes against `.aeom/standard.md`, with no model: a colour, a font, a size or a space written in hard outside the tokens, a button or a header made by hand while the kit has one, each with its file and its line, then the checks on the screens it touches and a header that differs from the rest. `aeom review --install-check` writes the workflow that runs it on every pull request as a CI check named aeom, its summary in words.
+
 ## Try it
 
 AEOM is not on npm yet. From the source, with Node 22, pnpm and Claude Code:
@@ -94,7 +96,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 
 None of this is done yet:
 - **Level 1, finished.** A bench of three apps with defects noted by hand, measuring what AEOM finds and fixes.
-- **Level 2, keep.** `/aeom review`: on every pull request, the new screens are held to the standard. What can be measured blocks the CI check, with no model. The judges say in a comment whether it is still the same product.
+- **Level 2, keep, the rest.** The journeys a PR crosses, replayed; the judges saying in a comment whether it is still the same product; a PR that changes the standard on purpose.
 - **Level 3, build, the rest.** The mockup from a spec or a prompt is here (`/aeom build --from-scratch`, `--api`); next, with a front already there, what is asked in one sentence, inside the standard, and building in a framework the project already holds.
 - **Later.**
   - The judges learn your taste from your feedback, which today is only counted.

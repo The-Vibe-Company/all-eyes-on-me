@@ -1,12 +1,13 @@
 import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { checkSite, headerDifference, headerLinks, loadConfig, readStandard, reviewCode, route, screensTouched } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const REVIEW_HELP = `Usage: aeom review [--base <branch>] [--url <url> | --start "<command>" | --dir <folder>] [options]
+       aeom review --install-check [--aeom-ref <ref>] [--force]
 
 Holds the commits of this branch to the standard of the front, in
 .aeom/standard.md as the base holds it, with no model. In the front's code
@@ -20,9 +21,20 @@ Exits with 1 when something is outside the standard, with 2 when nothing is
 in the code but the screens touched could not be measured, and with 0 when
 everything was measured and holds.
 
+With --install-check, writes .github/workflows/aeom.yml: on every pull
+request, GitHub installs the project and AEOM, starts the app with the
+config's start and url, runs aeom review against the PR's base, and shows
+the result as a check named aeom, its summary in words. No model is called.
+
 Options:
   --base <branch>      What the branch is compared with (default: the remote's
                        default branch, then main or master)
+  --summary <file>     Also write the result in Markdown, words only, to this
+                       file, such as $GITHUB_STEP_SUMMARY
+  --install-check      Write the GitHub workflow, as above
+  --aeom-ref <ref>     With --install-check, the version of AEOM it installs
+                       (default main)
+  --force              With --install-check, replace a workflow of that name
 ${APP_OPTIONS_HELP}`;
 
 /** Git as a review reads it: paths as they are, from this folder, with the usual prefixes whatever the user's settings. */
@@ -32,11 +44,12 @@ const DIFF = ["--no-color", "--no-ext-diff", "--relative", "--src-prefix=a/", "-
 const MOST = 200;
 
 export async function runReview(argv: string[]): Promise<number> {
-  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, base: { type: "string" } } }).values;
+  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, base: { type: "string" }, summary: { type: "string" }, "install-check": { type: "boolean" }, "aeom-ref": { type: "string" }, force: { type: "boolean" } } }).values;
   if (parsed.help) {
     console.log(REVIEW_HELP);
     return 0;
   }
+  if (parsed["install-check"]) return installCheck(parsed["aeom-ref"] ?? "main", Boolean(parsed.force));
   // The branch against what it will be merged into, from where they parted: the first of these that git knows.
   const candidates = parsed.base ? [parsed.base] : [(await git(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).catch(() => "")).trim(), "origin/main", "origin/master", "main", "master"].filter(Boolean);
   let base = "";
@@ -91,6 +104,7 @@ export async function runReview(argv: string[]): Promise<number> {
   for (const shape of touched.unmeasured) notes.push(`${shape} was not measured: no route of its shape is known. Add one to "pages" in .aeom/config.json.`);
 
   let measured = false;
+  let startFailure = "";
   if (routes.length) {
     const values = await withConfig(parsed);
     if (!values.url) notes.push(`No app to start: .aeom/config.json has no url, so the screens were not measured, only the code read.`);
@@ -101,6 +115,7 @@ export async function runReview(argv: string[]): Promise<number> {
         const url = values.url;
         const signedOut = values.public?.split(",");
         const except = !servingFolder() && config.except ? config.except : {};
+        let failure = "";
         const started = await withApp({ ...values, url }, async () => {
           try {
             const session = await signInFromConfig(url);
@@ -145,8 +160,11 @@ export async function runReview(argv: string[]): Promise<number> {
             notes.push(`The screens could not be measured: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
           }
           return 0;
-        });
-        if (started !== 0) notes.push(`The app did not start, as said above: the screens were not measured.`);
+        }, (message, output) => (failure = `${message}${output ? `\n\n\`\`\`\n${output.slice(-2000)}\n\`\`\`` : ""}`));
+        if (started !== 0) {
+          notes.push(`The app did not start, as said above: the screens were not measured.`);
+          if (failure) startFailure = failure;
+        }
       }
     }
   }
@@ -168,5 +186,76 @@ export async function runReview(argv: string[]): Promise<number> {
     code = 2;
   } else lines.push(routes.length ? `Nothing outside the standard.` : `No screen touched, and nothing outside the standard.`);
   console.log(lines.join("\n"));
+  // The check's summary, words only: what is outside the standard, and why nothing could be measured when it could not.
+  if (parsed.summary) {
+    const md = [`## aeom review`, "", `\`${branch}\` against \`${base}\`, held to \`.aeom/standard.md\`: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
+    for (const [where, what] of shown) md.push(`- \`${where}\` ${what}`);
+    if (rows.length > MOST) md.push(`- … and ${rows.length - MOST} more.`);
+    if (shown.length) md.push("");
+    for (const note of notes) md.push(note.startsWith("The app did not start") && startFailure ? `The app did not start: ${startFailure}` : note, "");
+    md.push(`**${lines.at(-1)}**`, "");
+    await appendFile(parsed.summary, md.join("\n"));
+  }
   return code;
+}
+
+/** The project's package manager, from its lockfile: how GitHub installs it. */
+async function installOf(): Promise<string[]> {
+  const has = (file: string) => readFile(file).then(() => true, () => false);
+  if (await has("pnpm-lock.yaml")) {
+    // pnpm's action reads the version from package.json when the project pins one there, and refuses a second one.
+    const pinned = await readFile("package.json", "utf8").then((t) => /"packageManager"\s*:\s*"pnpm@/.test(t), () => false);
+    return ["      - uses: pnpm/action-setup@v4", ...(pinned ? [] : ["        with:", "          version: 10"]), "      - name: Install the project", "        run: pnpm install --frozen-lockfile"];
+  }
+  if (await has("yarn.lock")) return ["      - name: Install the project", "        run: corepack enable && yarn install --frozen-lockfile"];
+  if ((await has("bun.lockb")) || (await has("bun.lock"))) return ["      - uses: oven-sh/setup-bun@v2", "      - name: Install the project", "        run: bun install --frozen-lockfile"];
+  if (await has("package-lock.json")) return ["      - name: Install the project", "        run: npm ci"];
+  return [];
+}
+
+/** Writes the GitHub workflow that runs aeom review on every pull request, as a check named aeom. */
+async function installCheck(ref: string, force: boolean): Promise<number> {
+  const file = join(".github", "workflows", "aeom.yml");
+  const workflow = [
+    "# Written by aeom review --install-check: every pull request held to .aeom/standard.md, with no model.",
+    "name: aeom",
+    "on:",
+    "  pull_request:",
+    "permissions:",
+    "  contents: read",
+    "jobs:",
+    "  aeom:",
+    "    name: aeom",
+    "    runs-on: ubuntu-latest",
+    "    timeout-minutes: 30",
+    "    steps:",
+    "      - uses: actions/checkout@v4",
+    "        with:",
+    "          fetch-depth: 0",
+    "      - uses: actions/setup-node@v4",
+    "        with:",
+    ...((await readFile(".nvmrc").then(() => true, () => false)) ? ["          node-version-file: .nvmrc"] : ["          node-version: 22"]),
+    ...(await installOf()),
+    "      - name: Install AEOM",
+    "        run: |",
+    `          git clone --depth 1 --branch ${ref} https://github.com/The-Vibe-Company/all-eyes-on-me "$RUNNER_TEMP/aeom"`,
+    `          cd "$RUNNER_TEMP/aeom" && corepack pnpm install --frozen-lockfile && corepack pnpm build`,
+    `          cd "$RUNNER_TEMP/aeom/packages/core" && npx playwright install --with-deps chromium`,
+    "      - name: Hold the pull request to the standard",
+    `        run: node "$RUNNER_TEMP/aeom/packages/cli/dist/index.js" review --base "origin/\${{ github.base_ref }}" --summary "$GITHUB_STEP_SUMMARY"`,
+    "",
+  ].join("\n");
+  const current = await readFile(file, "utf8").catch(() => null);
+  if (current === workflow) {
+    console.log(`${file} already holds this check: nothing to write.`);
+    return 0;
+  }
+  if (current !== null && !force) {
+    console.error(`${file} is someone else's: run again with --force to replace it, or keep it as it is.`);
+    return 1;
+  }
+  await mkdir(join(".github", "workflows"), { recursive: true });
+  await writeFile(file, workflow);
+  console.log(`Wrote ${file}: every pull request is held to .aeom/standard.md, as a check named aeom. Commit it, then make the check required in the repository's branch rules so a PR outside the standard cannot be merged.`);
+  return 0;
 }
