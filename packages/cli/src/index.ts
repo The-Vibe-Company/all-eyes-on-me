@@ -11,6 +11,7 @@ import { runCompare, runSnapshot } from "./commands/run.js";
 import { runFeatures } from "./commands/features.js";
 import { runPr } from "./commands/pr.js";
 import { runReport } from "./commands/report.js";
+import { runReview } from "./commands/review.js";
 import { runStandard } from "./commands/standard.js";
 import { runEstimate } from "./commands/estimate.js";
 import { runRunState } from "./commands/run-state.js";
@@ -42,6 +43,7 @@ Commands:
   standard    Write the standard of the front, keeping the user's edits
   estimate    Say what a run would cost, phase by phase, before it starts
   run         Keep where a run is, and say how to take it up after a stop
+  review      Hold a branch's changes to the standard of the front, with no model
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#what-comes-next`;
@@ -65,6 +67,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   estimate: runEstimate,
   run: runRunState,
   standard: runStandard,
+  review: runReview,
 };
 
 const [command, ...rest] = process.argv.slice(2);

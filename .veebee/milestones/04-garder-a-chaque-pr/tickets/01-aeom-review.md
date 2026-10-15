@@ -4,6 +4,7 @@ title: aeom review dit en quoi les écrans d'une PR s'écartent du standard
 milestone: 04-garder-a-chaque-pr
 depends_on: [03-la-commande-unique/12]
 design: null
+status: done
 tracker: { tool: github, id: 60, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/60 }
 ---
 
