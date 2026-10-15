@@ -89,3 +89,15 @@ test("one width instead of two costs the judges about half of what they look at,
   assert.match(estimateText(one, { screens: 8, journeys: 4, widths: [1280] }), /^For 8 screens and 4 key journeys, at 1280 px:\n/);
   assert.match(estimateText(both, { screens: 8, journeys: 4, widths: [390, 1280] }), /^For 8 screens and 4 key journeys:\n/, "the default widths go unsaid");
 });
+
+test("from a prompt, the cost is three direction workers and one judge, in minutes: no understanding, no page wave", () => {
+  const prompt = estimateRun({ screens: 2, journeys: 0, mode: "prompt" });
+  assert.deepEqual(prompt.phases.map((p) => p.phase), ["Read the prompt", "Three directions from the prompt, for you to choose"]);
+  assert.equal(prompt.total.agents, 3 + 1);
+  assert.ok(prompt.total.minutes <= 10, `${prompt.total.minutes} minutes`);
+  assert.ok(prompt.total.tokens < 400_000);
+  const text = estimateText(prompt, { screens: 2, journeys: 0 });
+  assert.match(text, /^From a prompt, two screens for each direction:\n/);
+  assert.doesNotMatch(text, /only when the verdict finds something to redo/);
+  assert.match(text, /The direction workers run on the session's own model, the judge on Sonnet\./);
+});

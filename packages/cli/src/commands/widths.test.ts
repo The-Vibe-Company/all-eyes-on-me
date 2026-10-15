@@ -130,3 +130,25 @@ test("without widths in the config, the platform the product sheet saw gives the
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom capture and aeom check serve a folder of static pages themselves, with no app and no sign-in", async () => {
+  const dir = await project({ url: "http://localhost:1", start: "exit 1", login: { path: "/connexion", account: "nope.json", submit: "Entrer" }, pages: ["/app-only"] });
+  try {
+    const folder = join(dir, "direction");
+    await mkdir(folder);
+    await writeFile(join(folder, "index.html"), `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><h1>Accueil</h1><a href="liste.html">Liste</a>`);
+    await writeFile(join(folder, "liste.html"), `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><h1>Liste</h1>`);
+    const captured = await run(dir, ["capture", "--dir", folder, "--pages", "/,/liste.html", "--widths", "1280", "--out", join(dir, "shots")]);
+    assert.equal(captured.code, 0, captured.out);
+    const manifest = JSON.parse(await readFile(join(dir, "shots", "manifest.json"), "utf8"));
+    assert.deepEqual(manifest.pages.map((p: { path: string }) => p.path), ["/", "/liste.html"]);
+    const checked = await run(dir, ["check", "--dir", folder, "--widths", "1280", "--out", join(dir, "reports")]);
+    assert.equal(checked.code, 0, checked.out);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, "reports", "check.json"), "utf8")).pages.map((u: string) => new URL(u).pathname).sort(), ["/", "/liste.html"], "the folder's own links, not the app's pages");
+    const missing = await run(dir, ["capture", "--dir", join(dir, "nowhere")]);
+    assert.equal(missing.code, 1);
+    assert.match(missing.out, /--dir .*nowhere is not a folder/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

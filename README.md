@@ -54,6 +54,8 @@ mkdir -p ~/.claude/skills
 ln -s "$PWD/skills/aeom" "$PWD/skills/aeom-judge" ~/.claude/skills/
 ```
 
+**From a prompt, with no app yet.** `/aeom --depuis prompt.md`, such as the prompt `/style` writes, draws three directions in a few minutes: two static pages each, in plain HTML and CSS, keeping what the charter fixes and varying what it leaves open. The sixteen checks run on each, a judge screens out the ugly and the dated, and you choose. The whole mockup on the chosen direction comes next.
+
 Then, in your project:
 - it is a git repository with a clean working tree;
 - your app starts locally with one command, on fake data;

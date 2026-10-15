@@ -1,10 +1,11 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, platformOf, usableWidths, WIDTH_RANGE, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
+import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, platformOf, serveFolder, usableWidths, WIDTH_RANGE, type ServedFolder, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
+  dir: { type: "string" },
   start: { type: "string" },
   widths: { type: "string" },
   timeout: { type: "string", default: "30" },
@@ -20,7 +21,13 @@ export const APP_OPTIONS_HELP = `  --url <url>          Where the app answers, s
                        .aeom/config.json, or where .aeom/product.md saw the
                        front is used: 390 on mobile, 1280 on desktop; or
                        ${DEFAULT_WIDTHS.join(",")})
+  --dir <folder>       Serve this folder of static pages instead of an app, such
+                       as a direction drawn from a prompt: no app, no sign-in,
+                       none of the config's url, start or pages
   --timeout <seconds>  How long to wait for the app to answer (default 30)`;
+
+/** The folder of static pages this command serves, when it was given --dir: stopped when the work ends. */
+let served: ServedFolder | undefined;
 
 /** The widths of the platform the product sheet saw the front is used on; undefined when it does not say, or only guesses. */
 export async function sheetWidths(): Promise<number[] | undefined> {
@@ -58,6 +65,8 @@ export async function withApp(values: { url: string; start?: string; timeout?: s
     return await work();
   } finally {
     await app?.stop();
+    await served?.stop();
+    served = undefined;
   }
 }
 
@@ -70,7 +79,23 @@ export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : 
  * used only when --url is not given either: an explicit --url means an app
  * that is already running there.
  */
-export async function withConfig<T extends { url?: string; start?: string; pages?: string; widths?: string }>(values: T): Promise<T & { public?: string }> {
+export async function withConfig<T extends { url?: string; start?: string; pages?: string; widths?: string; dir?: string }>(values: T): Promise<T & { public?: string }> {
+  // A folder of static pages is its own site: served here, none of the app's url, start, pages or sign-in.
+  if (values.dir !== undefined) {
+    const isFolder = await stat(values.dir).then((s) => s.isDirectory(), () => false);
+    if (!isFolder) {
+      console.error(`--dir ${values.dir} is not a folder: give the folder of static pages to serve.`);
+      process.exit(1);
+    }
+    let widths = values.widths;
+    try {
+      widths ??= (await loadConfig()).widths?.join(",");
+    } catch (error) {
+      if (!(error instanceof ConfigError)) throw error;
+    }
+    served = await serveFolder(values.dir);
+    return { ...values, url: served.url, start: undefined, ...(widths !== undefined ? { widths } : {}) };
+  }
   let config;
   try {
     config = await loadConfig();
@@ -103,6 +128,8 @@ export async function withConfig<T extends { url?: string; start?: string; pages
  * session is ever printed.
  */
 export async function signInFromConfig(url: string): Promise<{ signedIn: SignedIn; account: Record<string, string>; relogin: () => Promise<SignedIn>; kind: "form" | "state" | "script" } | null | "failed"> {
+  // A folder of static pages has no sign-in, whatever the project's app needs.
+  if (served) return null;
   let login;
   try {
     login = (await loadConfig()).login;

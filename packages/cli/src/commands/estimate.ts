@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { ConfigError, estimateRun, estimateText, loadConfig, type RunMode } from "@aeom/core";
 import { parseWidths, sheetWidths } from "./app.js";
 
-const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>]
+const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --depuis] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>]
 
 Says what a run of /aeom would cost before it starts: how many agents, how many
 tokens and how long, phase by phase, at most. The screens are the config's
@@ -15,6 +15,8 @@ journeys, the files in .aeom/journeys.
   --garder-le-style  Keep the app's style, as the config's "style": "keep" does
   --ux               The journeys alone, as /aeom --ux: no direction, no page
                      wave (/aeom --directions is a run with --journeys 0)
+  --depuis           Directions drawn from a prompt (/aeom --depuis), with no
+                     app: two screens of static pages each, for you to choose
   --directions <n>   Build this many directions (default 3); with a style
                      kept in the config, build them anyway
   --autonome         Nobody chooses the direction: the judges screen them and
@@ -35,7 +37,7 @@ const count = (value: string | undefined, what: string, least: number): number |
 export async function runEstimate(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, help: { type: "boolean", short: "h" } },
+    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(USAGE);
@@ -54,6 +56,12 @@ export async function runEstimate(argv: string[]): Promise<number> {
   const given = { screens: count(values.screens, "screens", 1), journeys: count(values.journeys, "journeys", 0), directions: count(values.directions, "directions", 1) };
   for (const v of Object.values(given)) if (typeof v === "string") return (console.error(v), 1);
 
+  // From a prompt, there is no app to count: each direction draws two screens.
+  if (values.depuis) {
+    const estimate = estimateRun({ screens: 2, journeys: 0, mode: "prompt", directions: (given.directions as number | undefined) ?? 3, widths: widths.length });
+    console.log(estimateText(estimate, { screens: 2, journeys: 0, widths }));
+    return 0;
+  }
   let screens = given.screens as number | undefined;
   if (screens === undefined && config.pages) screens = config.pages.length + (config.public?.filter((p) => !config.pages!.includes(p)).length ?? 0);
   if (screens === undefined) {
