@@ -44,14 +44,14 @@ test("the page links to the repository to star it", () => {
   assert.match(page, /<a [^>]*href="https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me"[^>]*>Star on GitHub(?:<span [^>]*data-stars[^>]*><\/span>)?<\/a>/);
 });
 
-async function withSite(run) {
+async function withSite(run, env = {}) {
   const port = await new Promise((resolve) => {
     const s = createServer().listen(0, () => {
       const { port } = s.address();
       s.close(() => resolve(port));
     });
   });
-  const server = spawn("node", [new URL("site/server.mjs", root).pathname], { env: { ...process.env, PORT: String(port) }, stdio: "ignore" });
+  const server = spawn("node", [new URL("site/server.mjs", root).pathname], { env: { ...process.env, ...env, PORT: String(port) }, stdio: "ignore" });
   try {
     let response;
     for (let i = 0; i < 40 && !response; i++) {
@@ -62,6 +62,33 @@ async function withSite(run) {
     server.kill();
   }
 }
+
+test("pages load posthog-js, and /api/stats answers only to its bearer token", async () => {
+  await withSite(async (url) => {
+    for (const path of ["/", "/commands"]) {
+      const html = await (await fetch(`${url}${path}`)).text();
+      assert.match(html, /window\.AEOM_POSTHOG_KEY="phc_t2nnd67anazLHswBGWQNA62esC2v4im5PBaV7QhyhPKw"/, `${path} carries the public key`);
+      assert.match(html, /src="\/shared\/analytics\.js"/, `${path} loads posthog-js`);
+    }
+    const analytics = await fetch(`${url}/shared/analytics.js`);
+    assert.equal(analytics.status, 200);
+    assert.match(await analytics.text(), /capture_pageview: true/);
+    assert.equal((await fetch(`${url}/api/stats`)).status, 401);
+    assert.equal((await fetch(`${url}/api/stats`, { headers: { authorization: "Bearer wrong" } })).status, 401);
+    const post = await fetch(`${url}/api/stats`, { method: "POST", headers: { authorization: "Bearer secret" } });
+    assert.equal(post.status, 405);
+    assert.equal(post.headers.get("allow"), "GET");
+    const ok = await fetch(`${url}/api/stats`, { headers: { authorization: "Bearer secret" } });
+    assert.equal(ok.status, 200);
+    assert.deepEqual(await ok.json(), {
+      total_users: null,
+      new_users_1d: null,
+      new_users_7d: null,
+      active_users_1d: null,
+      active_users_7d: null,
+    });
+  }, { STATS_TOKEN: "secret", POSTHOG_KEY: "" });
+});
 
 test("the site starts with one command and serves the page", async () => {
   await withSite(async (url, response) => {
