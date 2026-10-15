@@ -29,6 +29,9 @@ export const APP_OPTIONS_HELP = `  --url <url>          Where the app answers, s
 /** The folder of static pages this command serves, when it was given --dir: stopped when the work ends. */
 let served: ServedFolder | undefined;
 
+/** True when this command serves a folder of static pages: the project's config belongs to its app, not to it. */
+export const servingFolder = () => served !== undefined;
+
 /** The widths of the platform the product sheet saw the front is used on; undefined when it does not say, or only guesses. */
 export async function sheetWidths(): Promise<number[] | undefined> {
   const sheet = await readFile(".aeom/product.md", "utf8").catch(() => undefined);
@@ -82,6 +85,10 @@ export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : 
 export async function withConfig<T extends { url?: string; start?: string; pages?: string; widths?: string; dir?: string }>(values: T): Promise<T & { public?: string }> {
   // A folder of static pages is its own site: served here, none of the app's url, start, pages or sign-in.
   if (values.dir !== undefined) {
+    if (values.url !== undefined || values.start !== undefined) {
+      console.error(`--dir serves a folder: it goes with neither --url nor --start.`);
+      process.exit(1);
+    }
     const isFolder = await stat(values.dir).then((s) => s.isDirectory(), () => false);
     if (!isFolder) {
       console.error(`--dir ${values.dir} is not a folder: give the folder of static pages to serve.`);

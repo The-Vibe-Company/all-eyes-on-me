@@ -44,7 +44,7 @@ const WORKER = { tokens: 130_000 };
 const SHARED_WORKER = { tokens: 150_000 };
 const SCREENING_JUDGE = { tokens: 60_000, minutes: 2 };
 /** A direction drawn from a prompt: two screens of static HTML and CSS, no worktree, no install, no build. */
-const PROMPT_WORKER = { tokens: 80_000, minutes: 5 };
+const PROMPT_WORKER = { tokens: 80_000, minutes: 6 };
 const DUEL_JUDGE = { tokens: 60_000, minutes: 2 };
 const JOURNEY_DUEL_JUDGE = { tokens: 80_000, minutes: 3 };
 const MINUTES = { understand: 25, direction: 25, kit: 15, page: 15, promotion: 10, journey: 15, end: 10 };
@@ -74,7 +74,8 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     // The prompt is the brief: no understanding phase, no app, no judge of an existing front.
     const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
     return withTotal(mode, [
-      { phase: "Read the prompt", agents: 0, tokens: 0, minutes: 1 },
+      // The session reads the prompt and the charter, then writes the workers' briefs.
+      { phase: "Read the prompt", agents: 0, tokens: 0, minutes: 2 },
       { phase: `${named} from the prompt, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
     ]);
   }

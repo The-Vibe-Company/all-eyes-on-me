@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
@@ -145,6 +146,21 @@ test("aeom capture and aeom check serve a folder of static pages themselves, wit
     const checked = await run(dir, ["check", "--dir", folder, "--widths", "1280", "--out", join(dir, "reports")]);
     assert.equal(checked.code, 0, checked.out);
     assert.deepEqual(JSON.parse(await readFile(join(dir, "reports", "check.json"), "utf8")).pages.map((u: string) => new URL(u).pathname).sort(), ["/", "/liste.html"], "the folder's own links, not the app's pages");
+    // The project's config belongs to its app: its exceptions and its reset never reach a folder of pages.
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:1", reset: `touch ${join(dir, "reset-ran")}`, except: { "line-length": ["/"] } }));
+    await writeFile(join(folder, "index.html"), `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><p style="width:1100px">${"Une ligne bien trop longue pour être lue d'un trait. ".repeat(12)}</p>`);
+    const strict = await run(dir, ["check", "--dir", folder, "--pages", "/", "--widths", "1280", "--out", join(dir, "reports2")]);
+    assert.equal(strict.code, 1, "the project's exceptions do not hide what fails on the folder");
+    assert.match(strict.out, /line-length/);
+    await mkdir(join(dir, "journeys"));
+    await writeFile(join(dir, "journeys", "open.json"), JSON.stringify({ name: "Open", steps: [{ do: "open", path: "/" }] }));
+    const replayed = await run(dir, ["journey", "--dir", folder, "--journeys", join(dir, "journeys"), "--widths", "1280", "--out", join(dir, "replay")]);
+    assert.equal(replayed.code, 0, replayed.out);
+    assert.equal(existsSync(join(dir, "reset-ran")), false, "the app's reset is not run on a folder of pages");
+    assert.match((await run(dir, ["journey", "--dir", folder])).out, /With --dir, say which journeys to replay: --journeys <folder>/);
+    const both = await run(dir, ["capture", "--dir", folder, "--url", "http://localhost:1"]);
+    assert.equal(both.code, 1);
+    assert.match(both.out, /--dir serves a folder: it goes with neither --url nor --start/);
     const missing = await run(dir, ["capture", "--dir", join(dir, "nowhere")]);
     assert.equal(missing.code, 1);
     assert.match(missing.out, /--dir .*nowhere is not a folder/);
