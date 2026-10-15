@@ -97,7 +97,7 @@ test("the site starts with one command and serves the page", async () => {
     for (const path of ["/commands", "/commands/"]) {
       const sub = await fetch(`${url}${path}`);
       assert.equal(sub.status, 200, `${path} is served`);
-      assert.match(await sub.text(), /Three commands\./);
+      assert.match(await sub.text(), /Four commands\./);
     }
     const post = await fetch(`${url}/api/stars`, { method: "POST" });
     assert.equal(post.status, 405, "/api/stars only answers GET, like the Vercel function");
@@ -136,7 +136,7 @@ test("the site builds to static files a host serves as is", () => {
       assert.ok(existsSync(join(out, href)), `${href} is linked but not built`);
     }
     assert.ok(existsSync(join(out, "shared/kit.css")));
-    assert.match(readFileSync(join(out, "commands/index.html"), "utf8"), /Three commands\./, "the commands page is built");
+    assert.match(readFileSync(join(out, "commands/index.html"), "utf8"), /Four commands\./, "the commands page is built");
     assert.doesNotMatch(readFileSync(join(out, "commands/index.html"), "utf8"), /<!-- (include|missing partial):/);
   } finally {
     rmSync(out, { recursive: true, force: true });
@@ -186,9 +186,11 @@ test("the build refuses any folder whose emptying would delete the site", () => 
   }
 });
 
-test("the page says the three things AEOM does, the one not built yet marked as coming", () => {
-  for (const what of ["It walks your product like a user.", "It redesigns what gets in the way.", "It keeps the line."]) assert.ok(page.includes(what), `${what} is missing`);
+test("the page says the four things AEOM does, the ones not built yet marked as coming", () => {
+  for (const what of ["It walks your product like a user.", "It redesigns what gets in the way.", "It keeps the line.", "It mocks up what you describe."]) assert.ok(page.includes(what), `${what} is missing`);
   assert.match(page.split("It keeps the line.")[0].split("It redesigns what gets in the way.")[1] ?? "", /class="soon"/, "keeping every pull request to the standard is not built yet: it says so");
+  assert.match(page.split("It mocks up what you describe.")[0].split("It keeps the line.")[1] ?? "", /class="soon"/, "a mockup from a spec or a prompt is not built yet: it says so");
+  assert.match(page.split("It mocks up what you describe.")[1]?.split("</section>")[0] ?? "", /spec or a prompt/, "the mockup starts from a spec or a prompt");
   assert.doesNotMatch(page, /before@|looks\//, "no screenshot of a shop: the page explains, it does not show a demo");
   // The prose only: what a drawing shows, such as a terminal's lines, is not read as text to wade through.
   let prose = page.replace(/<(script|style)[\s\S]*?<\/\1>/g, "");
@@ -208,14 +210,14 @@ test("the page says the three things AEOM does, the one not built yet marked as 
 });
 
 test("each thing AEOM does on the home page leads to the command that does it", () => {
-  for (const id of ["judge", "redo", "check"]) assert.match(page, new RegExp(`<a href="/commands#${id}"><code>[^<]+</code>`), `the home page leads to ${id}`);
+  for (const id of ["judge", "redo", "check", "build"]) assert.match(page, new RegExp(`<a href="/commands#${id}"><code>[^<]+</code>`), `the home page leads to ${id}`);
   assert.match(readFileSync(new URL("site/shared/header.html", root), "utf8"), /<a href="\/commands">Commands<\/a>/, "the menu leads to the commands page");
 });
 
-test("the commands page shows three commands, each with when and what it does, the one not built yet marked as coming", () => {
+test("the commands page shows four commands, each with when and what it does, the ones not built yet marked as coming", () => {
   const skill = readFileSync(new URL("skills/aeom/SKILL.md", root), "utf8");
   const blocks = [...commands.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)];
-  assert.deepEqual(blocks.map(([, id]) => id), ["judge", "redo", "check"]);
+  assert.deepEqual(blocks.map(([, id]) => id), ["judge", "redo", "check", "build"]);
   for (const [block, id] of blocks) {
     const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?<\/p>/);
     assert.ok(command, `${id} names its command`);
@@ -229,7 +231,9 @@ test("the commands page shows three commands, each with when and what it does, t
     assert.equal(Boolean(soon), !built, built ? `/aeom ${verb} works: it is not « Soon »` : `/aeom ${verb} is not built yet: it says « Soon »`);
     assert.match(block, /<p class="when"><b>When<\/b> [^<]+<\/p>/, `${id} says when to use it`);
     assert.ok((block.match(/<li>/g) ?? []).length >= 3, `${id} says what it does`);
-    assert.ok(commands.includes(`href="#${id}"`), `the top of the page leads to ${id}`);
+    const card = commands.match(new RegExp(`<a class="cmds__card[^"]*" href="#${id}">[\\s\\S]*?</a>`))?.[0];
+    assert.ok(card, `the top of the page leads to ${id}`);
+    assert.equal(/class="soon"/.test(card), !built, `the card of ${id} says « Soon » exactly when its command is not built yet`);
   }
   // What the terminals print is what the CLI prints.
   const verdict = readFileSync(new URL("packages/cli/src/commands/verdict.ts", root), "utf8");

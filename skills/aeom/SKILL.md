@@ -1,6 +1,6 @@
 ---
 name: aeom
-description: Run All Eyes On Me on a web project: take its front and make a better one. Three commands: /aeom judge (the same as --juger), /aeom redo (the same as /aeom alone), and /aeom review, not built yet. Without an option, AEOM understands the product (.aeom/product.md, its key journeys), judges every screen and replays every journey; if nothing fails it says there is nothing to redo; a front with a direction of its own is offered an improvement with its style kept (recommended) or new directions; for new directions it draws three art directions from the product (from its fiction and its illustrations when it is a game; --directions <n> for more), shows them to the user, who chooses one (with --autonome, the judges pick one in a knockout), rebuilds the pages and their journeys on it in one wave (a journey wave of its own only for a journey that still breaks), keeps only what got better on a run branch, writes the standard of the front (.aeom/standard.md), and opens a pull request in words. --garder-le-style (or "style": "keep" in .aeom/config.json) keeps a client's existing style instead; --sans-pr stops at the branch; --juger (or --diagnostic, or the user asking only to judge) stops at the verdict, for six judges; before the first judge, AEOM says what the run will cost and waits for the go; --autonome asks nothing, neither the go nor the choice of the direction; --forcer-directions and --ux force their own mode; --reprendre takes up a run whose session closed, from .aeom/runs/<run>/state.json. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
+description: Run All Eyes On Me on a web project: take its front and make a better one. Four commands: /aeom judge, /aeom redo, /aeom review and /aeom build, the last two not built yet. Without an option, AEOM understands the product (.aeom/product.md, its key journeys), judges every screen and replays every journey; if nothing fails it says there is nothing to redo; a front with a direction of its own is offered an improvement with its style kept (recommended) or new directions; for new directions it draws three art directions from the product (from its fiction and its illustrations when it is a game; --directions <n> for more), shows them to the user, who chooses one (with --autonome, the judges pick one in a knockout), rebuilds the pages and their journeys on it in one wave (a journey wave of its own only for a journey that still breaks), keeps only what got better on a run branch, writes the standard of the front (.aeom/standard.md), and opens a pull request in words. --garder-le-style (or "style": "keep" in .aeom/config.json) keeps a client's existing style instead; --sans-pr stops at the branch; --juger (or --diagnostic, or the user asking only to judge) stops at the verdict, for six judges; before the first judge, AEOM says what the run will cost and waits for the go; --autonome asks nothing, neither the go nor the choice of the direction; --forcer-directions and --ux force their own mode; --reprendre takes up a run whose session closed, from .aeom/runs/<run>/state.json. Use when the user types /aeom or asks AEOM to fix, polish or redesign a project's frontend.
 ---
 
 # /aeom
@@ -19,13 +19,14 @@ This file holds what every run needs. The rest waits in its own file, read only 
 
 When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section. Every worker replies with a short report, ten lines at most, as **Briefing any worker** says, which you keep in the run's folder; every judge writes its votes in a file and replies with its path.
 
-## The three commands
+## The four commands
 
-The user types a verb after `/aeom`, or the option it stands for; both mean the same:
+The user types a verb after `/aeom`, or the option it stands for:
 
 - **`/aeom judge`** is `/aeom --juger`: judge the front, and stop at the verdict.
 - **`/aeom redo`** is `/aeom` with no option: judge, then redo what fails (« Without an option » below). Options follow the verb: `/aeom redo --garder-le-style`.
-- **`/aeom review`** will hold a pull request to the standard of the front: it is not built yet. Say so in one line, with the README's « What comes next » (Level 2, keep), and stop.
+- **`/aeom review`** will hold a pull request to the standard: not built yet.
+- **`/aeom build`** will mock up a front from a spec or a prompt: not built yet. For either, say so in one line, with the README's « What comes next », and stop.
 
 A run keeps its options under their own names: `/aeom judge` is marked `--option juger`.
 
