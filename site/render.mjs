@@ -1,6 +1,7 @@
 // What the server and the static build share: which pages exist, which files
 // are published, and how a page gets its partials.
 import { readFile } from "node:fs/promises";
+import { posthogKeyScript } from "./analytics.mjs";
 
 export const PAGES = { "/": "index.html", "/commands": "commands.html" };
 export const TYPES = { ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".json": "application/json; charset=utf-8" };
@@ -27,6 +28,7 @@ export async function insertPartials(html, partialFor = partial) {
   return html;
 }
 
-export async function renderPage(file) {
-  return insertPartials(String(await read(`./pages/${file}`)));
+export async function renderPage(file, env = process.env) {
+  const html = await insertPartials(String(await read(`./pages/${file}`)));
+  return html.replace("<!-- posthog-key -->", () => posthogKeyScript(env));
 }

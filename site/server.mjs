@@ -8,6 +8,7 @@
 import { createServer } from "node:http";
 import { PAGES, TYPES, read, renderPage } from "./render.mjs";
 import { starsResponse } from "./stars.mjs";
+import { statsResponse } from "./stats.mjs";
 
 const PORT = Number(process.env.PORT ?? 4400);
 
@@ -24,18 +25,32 @@ async function serveFile(res, folder, name) {
   }
 }
 
+/** The incoming request as a Fetch Request, so an API can read its headers. */
+function asRequest(req) {
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(req.headers)) {
+    if (Array.isArray(value)) for (const item of value) headers.append(name, item);
+    else if (value !== undefined) headers.append(name, value);
+  }
+  return new Request(new URL(req.url ?? "/", "http://localhost"), { method: req.method, headers });
+}
+
+async function send(res, answer) {
+  res.writeHead(answer.status, Object.fromEntries(answer.headers));
+  res.end(await answer.text());
+}
+
 createServer(async (req, res) => {
   const path = new URL(req.url ?? "/", "http://localhost").pathname;
-  if (path === "/api/stars") {
-    // Like the Vercel function, which only exports GET.
+  if (path === "/api/stars" || path === "/api/stats") {
+    // Like the Vercel functions, which only export GET.
     if (req.method !== "GET") {
       res.writeHead(405, { allow: "GET", "content-type": "text/plain; charset=utf-8" });
       res.end("Method Not Allowed");
       return;
     }
-    const answer = await starsResponse();
-    res.writeHead(answer.status, Object.fromEntries(answer.headers));
-    res.end(await answer.text());
+    const answer = path === "/api/stats" ? statsResponse(asRequest(req)) : await starsResponse();
+    await send(res, answer);
     return;
   }
   const asset = path.match(/^\/(shared|run)\/((?:[a-z0-9-]+\/)*[a-z0-9@._-]+)$/);
