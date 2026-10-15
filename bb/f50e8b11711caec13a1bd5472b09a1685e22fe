@@ -1,0 +1,31 @@
+packages/cli/src/commands/review.test.ts
+  s_4ce34ec42d9105::t_c5b63f5672f814 4-5,246-272
+  s_4ce34ec42d9105::t_724c21ee8ae170 273-276
+site/pages/commands.html
+  s_4ce34ec42d9105::t_f0e15a7babe45b 76
+packages/cli/src/commands/review.ts
+  s_4ce34ec42d9105::t_65e3294b774998 8,22-27,94-97,176-183,210-213,217,227-230,234-235,238-240,254,273,285-286,294-295,300-302,304,313-314,322-326
+packages/core/src/review/review.test.ts
+  s_4ce34ec42d9105::t_991db25e5d7f97 3,84-86,168,179-185
+  s_4ce34ec42d9105::t_9d51d98d9a1961 186
+packages/core/src/review/review.ts
+  s_4ce34ec42d9105::t_991db25e5d7f97 275,278-279,282,305-308,317-328
+packages/core/src/journey/replay.ts
+  s_4ce34ec42d9105::t_65e3294b774998 89-90,362,376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbf50e8b11711caec13a1bd5472b09a1685e22fe",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
