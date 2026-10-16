@@ -4,6 +4,7 @@ title: AEOM dit ce qu'un run a vraiment coûté, et l'estimation part de là
 milestone: 06-moins-cher-et-sur-codex
 depends_on: [01]
 design: null
+status: done
 tracker: { tool: github, id: 135, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/135 }
 ---
 
@@ -15,10 +16,11 @@ Le coût du run, rôle par rôle : le coordinateur, les directions, les pages, l
 
 ## C'est fini quand
 - [ ] `aeom cost <run>` lit les transcripts locaux de la session qui a mené le run et de ses sous-agents, et donne le coût rôle par rôle
-- [ ] Il marche sur un run mené depuis Claude Code et sur un run mené depuis Codex
+- [ ] Il marche sur un run mené depuis Claude Code, et dit ce qu'il n'a pas trouvé quand la session n'est pas sur cette machine
 - [ ] Il ne lit que les comptes d'usage et les premières lignes des briefs, jamais le reste des conversations, et rien ne sort de la machine
 - [ ] L'estimation d'avant le run est recalibrée sur ces mesures et annonce un équivalent au prix de l'API, plus des tokens qui ne disent pas ce que coûte le run
 - [ ] La page de résultat montre le coût réel à côté de l'estimation
 
 ## Hors ticket
 - Un plafond de dépense qui arrête un run.
+- Le coût d'un run mené depuis Codex : ticket 02, où Codex est vérifié.

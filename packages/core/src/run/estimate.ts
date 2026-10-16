@@ -16,13 +16,18 @@ export interface Phase {
   phase: string;
   agents: number;
   tokens: number;
+  /** The share of those tokens on the session's own model: the direction workers'. */
+  sessionTokens?: number;
   minutes: number;
+  /** At the API's list prices, the session's share at Opus's. */
+  dollars?: number;
 }
 
 export interface Estimate {
   mode: RunMode;
   phases: Phase[];
-  total: { agents: number; tokens: number; minutes: number };
+  /** Its dollars include the session that coordinates the run, `coordinator`. */
+  total: { agents: number; tokens: number; minutes: number; dollars: number; coordinator: number };
   /** The journey wave a run adds only when a journey still breaks after the pages, at most: apart from the total. */
   ifBroken?: Phase;
 }
@@ -47,6 +52,15 @@ const SCREENING_JUDGE = { tokens: 60_000, minutes: 2 };
 const PROMPT_WORKER = { tokens: 80_000, minutes: 6 };
 const DUEL_JUDGE = { tokens: 60_000, minutes: 2 };
 const JOURNEY_DUEL_JUDGE = { tokens: 80_000, minutes: 3 };
+/**
+ * Dollars per million tokens counted here, measured with `aeom cost` on the
+ * same run of Road to Mastock (8 screens, 4 key journeys, 10 October 2026),
+ * at the API's list prices: its agents, general ones all on Opus 5.5, cost
+ * $91 for 5.0 M tokens counted, and its session $30. A Sonnet agent costs
+ * half an Opus one. AEOM's own agents carry less: at most, then.
+ */
+const DOLLARS_PER_MILLION = { opus: 18, sonnet: 9, coordinator: 6 };
+const dollarsOf = (p: Phase) => ((p.tokens - (p.sessionTokens ?? 0)) * DOLLARS_PER_MILLION.sonnet + (p.sessionTokens ?? 0) * DOLLARS_PER_MILLION.opus) / 1_000_000;
 const MINUTES = { understand: 25, direction: 25, kit: 15, page: 15, promotion: 10, journey: 15, end: 10 };
 /** The screens a direction is built on, two or three, which the page wave leaves: two, to count at most. */
 const DIRECTION_SCREENS = 2;
@@ -76,7 +90,7 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     return withTotal(mode, [
       // The session reads the prompt and the charter, then writes the workers' briefs.
       { phase: "Read the prompt", agents: 0, tokens: 0, minutes: 2 },
-      { phase: `${named} from the prompt, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+      { phase: `${named} from the prompt, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
     ]);
   }
   if (mode === "replug") {
@@ -100,9 +114,9 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
             const duels = Math.max(directions - 1, 0);
             const duelVotes = duels ? duels - 1 + VOTES : 0;
             const rounds = directions > 1 ? Math.ceil(Math.log2(directions)) : 0;
-            return { phase: `${named} and the knockout`, agents: directions + VOTES + duelVotes, tokens: directions * PROMPT_WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes };
+            return { phase: `${named} and the knockout`, agents: directions + VOTES + duelVotes, tokens: directions * PROMPT_WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes };
           })()
-        : { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
+        : { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
       { phase: "The kit, on the direction chosen", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit },
       { phase: "The screens of the key journeys", agents: screens, tokens: screens * WORKER.tokens, minutes: MINUTES.page },
       { phase: "Measure the screens and the journeys", agents: VOTES + critique, tokens: VOTES * pj.tokens + critique * jj.tokens, minutes: pj.minutes + (critique ? jj.minutes : 0) },
@@ -110,7 +124,7 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     ]);
     // The screens that fail go back once to their workers, then the measure again.
     const ifBroken = { phase: "If screens go back once", agents: screens + VOTES, tokens: screens * WORKER.tokens + VOTES * pj.tokens, minutes: MINUTES.page + pj.minutes };
-    return { ...built, ifBroken };
+    return { ...built, ifBroken: priced(ifBroken) };
   }
   if (mode === "ux") {
     // The journeys judged, then the pages measured before they change, the workers, both versions judged, the duels.
@@ -145,11 +159,12 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
           // With nobody to choose, the judges do: the screening, then one judge decides a duel, three the final.
           agents: directions + VOTES + duelVotes,
           tokens: directions * WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens,
+          sessionTokens: directions * WORKER.tokens,
           minutes: MINUTES.direction + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes,
         });
       } else {
         // The person chooses among them: their workers, and one judge who screens out the ugly, the dated and the worse than now.
-        phases.push({ phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * WORKER.tokens + SCREENING_JUDGE.tokens, minutes: MINUTES.direction + SCREENING_JUDGE.minutes });
+        phases.push({ phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * WORKER.tokens + SCREENING_JUDGE.tokens, sessionTokens: directions * WORKER.tokens, minutes: MINUTES.direction + SCREENING_JUDGE.minutes });
       }
       rebuilt = Math.min(DIRECTION_SCREENS, screens);
     } else {
@@ -182,17 +197,22 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
           minutes: MINUTES.journey + jj.minutes + pj.minutes + (style ? sj.minutes : 0),
         }
       : undefined;
-    return { ...withTotal(mode, phases), ...(ifBroken ? { ifBroken } : {}) };
+    return { ...withTotal(mode, phases), ...(ifBroken ? { ifBroken: priced(ifBroken) } : {}) };
   }
   return withTotal(mode, phases);
 }
 
+/** A phase with its dollars, the session's share of its work included: it reads what each agent returns. */
+const priced = (p: Phase): Phase => ({ ...p, dollars: dollarsOf(p) + (p.tokens * DOLLARS_PER_MILLION.coordinator) / 1_000_000 });
+
 function withTotal(mode: RunMode, phases: Phase[]): Estimate {
   const total = phases.reduce((t, p) => ({ agents: t.agents + p.agents, tokens: t.tokens + p.tokens, minutes: t.minutes + p.minutes }), { agents: 0, tokens: 0, minutes: 0 });
-  return { mode, phases, total };
+  const coordinator = (total.tokens * DOLLARS_PER_MILLION.coordinator) / 1_000_000;
+  const dollars = phases.reduce((t, p) => t + dollarsOf(p), 0) + coordinator;
+  return { mode, phases: phases.map((p) => ({ ...p, dollars: dollarsOf(p) })), total: { ...total, dollars, coordinator } };
 }
 
-const millions = (tokens: number) => `≈ ${(tokens / 1_000_000).toFixed(1)} M tokens`;
+const dollars = (d: number) => `≈ $${d < 9.95 ? d.toFixed(1) : Math.round(d)}`;
 const duration = (minutes: number) => {
   const m = Math.round(minutes);
   return m < 60 ? `≈ ${m} min` : `≈ ${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}`;
@@ -200,16 +220,21 @@ const duration = (minutes: number) => {
 
 /** The estimate as a table, phase by phase, then what it leaves out. */
 export function estimateText(estimate: Estimate, { screens, journeys, widths = DEFAULT_WIDTHS }: { screens: number; journeys: number; widths?: number[] }): string {
-  const rows = [...estimate.phases.map((p) => ({ ...p, label: p.phase })), { ...estimate.total, label: "Total, at most" }];
-  const brokenLabel = estimate.ifBroken ? `${estimate.ifBroken.phase}, at most` : "";
-  const width = Math.max(...rows.map((r) => r.label.length), brokenLabel.length);
   const agents = (n: number) => (n ? `${n} agent${n === 1 ? "" : "s"}` : "no agent");
-  const row = (r: { label: string; agents: number; tokens: number; minutes: number }, label = r.label.padEnd(width)) => `${label}  ${agents(r.agents).padStart(9)}  ${(r.tokens ? millions(r.tokens) : "the session").padEnd(16)}  ${duration(r.minutes)}`;
-  const lines = rows.map((r) => row(r));
-  const broken = estimate.ifBroken ? `\n\n${row({ ...estimate.ifBroken, label: brokenLabel })} more` : "";
+  // The phases, then the session that coordinates them, which reads what every agent returns, then the total.
+  const rows: [string, string, string, string][] = [
+    ...estimate.phases.map((p): [string, string, string, string] => [p.phase, agents(p.agents), p.tokens ? dollars(p.dollars ?? 0) : "the session", duration(p.minutes)]),
+    ["The session that coordinates", "", dollars(estimate.total.coordinator), "all along"],
+    ["Total, at most", agents(estimate.total.agents), dollars(estimate.total.dollars), duration(estimate.total.minutes)],
+  ];
+  const broken = estimate.ifBroken ? [`${estimate.ifBroken.phase}, at most`, agents(estimate.ifBroken.agents), dollars(estimate.ifBroken.dollars ?? 0), duration(estimate.ifBroken.minutes)] : null;
+  const width = Math.max(...rows.map((r) => r[0].length), broken?.[0]!.length ?? 0);
+  const row = ([label, who, cost, time]: string[]) => `${label!.padEnd(width)}  ${who!.padStart(9)}  ${cost!.padEnd(11)}  ${time}`.trimEnd();
+  const lines = rows.map(row);
+  const broken_ = broken ? `\n\n${row(broken)} more` : "";
   const notes = [
     ...(estimate.mode === "judge" || estimate.mode === "prompt" || estimate.mode === "scratch" || estimate.mode === "replug" ? [] : ["The phases after the judges run only when the verdict finds something to redo."]),
-    "Tokens are the agents' own: the session that coordinates the run reads what each one returns, and adds about as much again on a long run.",
+    `Dollars at the API's list prices, as aeom cost measured a run of 8 screens and 4 key journeys; the session that coordinates the run is counted at Opus's prices, half on Sonnet. A Claude plan counts the same use its own way. Once the run ends, aeom cost says what it really cost.`,
     estimate.mode === "prompt"
       ? "The direction workers run on the session's own model, the judge on Sonnet."
       : estimate.mode === "judge"
@@ -221,5 +246,5 @@ export function estimateText(estimate: Estimate, { screens, journeys, widths = D
   // The default widths go unsaid, as everywhere else.
   const at = widths.join(",") === DEFAULT_WIDTHS.join(",") ? "" : `, at ${widths.join(", ")} px`;
   const head = estimate.mode === "prompt" ? `From a prompt, two screens for each direction${at}` : estimate.mode === "replug" ? `Plugging the front into its API, ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}` : estimate.mode === "scratch" ? `From scratch, ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}` : `For ${screens} screen${screens === 1 ? "" : "s"} and ${journeys} key journey${journeys === 1 ? "" : "s"}${at}`;
-  return `${head}:\n\n${lines.join("\n")}${broken}\n\n${notes.join("\n")}`;
+  return `${head}:\n\n${lines.join("\n")}${broken_}\n\n${notes.join("\n")}`;
 }

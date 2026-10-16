@@ -18,6 +18,7 @@ Le même run : le coût annoncé avant les juges, les captures envoyées au fil 
 - [ ] `aeom-worker` et `aeom-judge` existent comme agents Codex (`~/.codex/agents/*.toml`), avec un modèle léger et un effort de raisonnement réglés, sans apps, plugins ni mémoires
 - [ ] Les skills disent ce qu'il faut faire sur chacun des deux hôtes : lancer un agent, poser une question (`AskUserQuestion` / `request_user_input`), montrer une capture
 - [ ] Un `$aeom judge` complet tourne depuis Codex sur l'app d'exemple, du coût annoncé jusqu'au verdict
+- [ ] `aeom cost` lit aussi les transcripts de Codex (`~/.codex/sessions`) et dit ce qu'a coûté un run mené depuis Codex
 - [ ] Rien de ce qui marche dans Claude Code ne change
 
 ## Comment
@@ -25,4 +26,3 @@ Codex lit les skills au format SKILL.md et lance les agents définis dans `~/.co
 
 ## Hors ticket
 - Un run mené depuis Claude Code qui délègue ses workers à Codex.
-- Le coût mesuré d'un run Codex : ticket 03.

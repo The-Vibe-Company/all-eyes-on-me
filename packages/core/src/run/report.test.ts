@@ -140,3 +140,21 @@ test("a run on an API keeps its address, and one that plugged an existing front 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("the page says what the run cost, measured by aeom cost, next to what aeom estimate said before it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-cost-"));
+  try {
+    await mkdir(join(dir, "before", "captures"), { recursive: true });
+    await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [390, 1280], pages: [], errors: [] }));
+    assert.equal((await readRun(dir, "run-1")).cost, undefined, "nothing measured, nothing estimated: no section");
+    await writeFile(join(dir, "estimate.json"), JSON.stringify({ total: { dollars: 64.2 } }));
+    await writeFile(join(dir, "cost.json"), JSON.stringify({ total: { dollars: 41.7 }, roles: [{ role: "coordinator", agents: 0, dollars: 20.1 }, { role: "judges", agents: 6, dollars: 3.4 }] }));
+    const page = await readRun(dir, "run-1");
+    assert.deepEqual(page.cost, { measured: 41.7, estimated: 64.2, roles: [{ role: "coordinator", agents: 0, dollars: 20.1 }, { role: "judges", agents: 6, dollars: 3.4 }] });
+    const html = resultHtml({ ...PAGE, cost: page.cost! });
+    assert.match(html, /<h2>What it cost<\/h2><p>≈ \$42, measured by aeom cost from this machine's transcripts; estimated before the run at ≈ \$64 at most\.<\/p>/);
+    assert.match(html, /<li>judges, 6 agents: ≈ \$3\.40<\/li>/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
