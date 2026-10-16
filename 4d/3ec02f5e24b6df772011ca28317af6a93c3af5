@@ -1,0 +1,104 @@
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_68ffa4e6e84d9b 3
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 23
+  s_4ce34ec42d9105::t_9e931d54da2ab4 13,27
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/02-aeom-depuis-codex.md
+  s_4ce34ec42d9105::t_fb62c3ad230498 1-6,8-20,22-28
+  s_4ce34ec42d9105::t_b86853594653fa 7
+  s_4ce34ec42d9105::t_833dd91748e4dd 21
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_108af5676d5c21 32-53,60-63,66-67,69-76
+  s_4ce34ec42d9105::t_7414699f8e89ac 68
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 54-59,64-65
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_68ffa4e6e84d9b 3,19,30
+  s_4ce34ec42d9105::t_9e931d54da2ab4 20
+  s_4ce34ec42d9105::t_ca38c2667e729a 17
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/01-un-run-moins-cher.md
+  s_4ce34ec42d9105::t_fb62c3ad230498 1-6,9-37
+  s_4ce34ec42d9105::t_b86853594653fa 8
+  s_4ce34ec42d9105::t_a5eb4e064f9bf3 7
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_68ffa4e6e84d9b 3-7,34
+  s_4ce34ec42d9105::t_9e931d54da2ab4 11
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_68ffa4e6e84d9b 3
+  s_4ce34ec42d9105::t_9e931d54da2ab4 11,15,20
+README.md
+  s_4ce34ec42d9105::t_ffad1b3dd14800 57-58,62
+  s_4ce34ec42d9105::t_7d3a14053b6124 119
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 61
+  s_4ce34ec42d9105::t_8226708f246b08 96
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_68ffa4e6e84d9b 18,23-25,56
+  s_4ce34ec42d9105::t_9e931d54da2ab4 22,26,133
+  s_4ce34ec42d9105::t_7414699f8e89ac 28,43
+  s_4ce34ec42d9105::t_bb17ed32a06c45 27
+  s_4ce34ec42d9105::t_363452e1d2b27c 97,99,108
+agents/claude/aeom-judge.md
+  s_4ce34ec42d9105::t_8cbed8f4c9eb93 1-2,4-11
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 3
+agents/claude/aeom-worker.md
+  s_4ce34ec42d9105::t_8cbed8f4c9eb93 1-14,16-17
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 15
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/03-le-vrai-cout.md
+  s_4ce34ec42d9105::t_fb62c3ad230498 1-6,9-18,20-25
+  s_4ce34ec42d9105::t_b86853594653fa 8
+  s_4ce34ec42d9105::t_c465d4a3ab9757 7,19,26
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 8,15-16,67-68,97,116
+skills/aeom/phase-prompt.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 13,16
+  s_4ce34ec42d9105::t_8dc6c7427b7411 10
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_2df07cc6b5f13f 19-20,22-23,29-30,55,57-63,93,117,119,127,162,167,200,205-207,210-212
+  s_4ce34ec42d9105::t_04ef31df2b3057 56,215,224-234,237,249
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_ebe17df792a003 76-77,251-263,418-423,425-426
+packages/cli/src/commands/cost.ts
+  s_4ce34ec42d9105::t_6c7e80da785dba 1-3,5-32,35-45,47-73
+  s_4ce34ec42d9105::t_b57a01d84a7add 4,33-34,46
+packages/core/src/run/cost.ts
+  s_4ce34ec42d9105::t_6a4a7331821499 131
+  s_4ce34ec42d9105::t_255f525a4ea589 1,3-130,132-142,146-209
+  s_4ce34ec42d9105::t_5b83bc9bef8e41 2,143-145
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_962b381e73b31a 53-55,57-58,126-138
+  s_4ce34ec42d9105::t_baa1e872cecaee 139
+packages/core/src/run/cost.test.ts
+  s_4ce34ec42d9105::t_9a099d77e80ede 1-63,66-67,71-75
+  s_4ce34ec42d9105::t_98722e1e4aa0b0 64-65,68-70
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_4db16820126fa6 143-160
+packages/cli/src/commands/cost.test.ts
+  s_4ce34ec42d9105::t_5b83bc9bef8e41 1-41
+site/pages/commands.html
+  s_4ce34ec42d9105::t_8226708f246b08 100,105
+  s_4ce34ec42d9105::t_e1874726cc79af 40,58
+packages/cli/src/commands/estimate.test.ts
+  s_4ce34ec42d9105::t_53145c93510e1f 50-51
+  s_4ce34ec42d9105::t_3c2432bb6f8a1d 52-53
+  s_4ce34ec42d9105::t_ce18340bdbc169 54-56
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_6a4a7331821499 10
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_03bc013e14b074 1,4,7,10,34-36,47,69,86,101-107
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_813d2ec3c71358 17,46,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d3ec02f5e24b6df772011ca28317af6a93c3af5",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
