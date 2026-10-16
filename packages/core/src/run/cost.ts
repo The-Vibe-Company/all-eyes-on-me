@@ -33,8 +33,10 @@ export interface RoleCost {
   written: number;
   output: number;
   models: string[];
-  /** At the API's list prices; null when a model AEOM has no price for took part. */
+  /** At the API's list prices, the calls of a model AEOM has no price for left out; null when none has one. */
   dollars: number | null;
+  /** The calls of a model with no price here. */
+  unpriced: number;
 }
 
 export interface RunCost {
@@ -43,7 +45,7 @@ export interface RunCost {
   to: string;
   sessions: number;
   roles: RoleCost[];
-  total: { agents: number; calls: number; dollars: number | null };
+  total: { agents: number; calls: number; dollars: number | null; unpriced: number };
 }
 
 interface Price {
@@ -55,25 +57,41 @@ interface Price {
 }
 
 /**
- * Per million tokens, platform.claude.com/docs/en/about-claude/pricing, October 2026.
+ * Per million tokens, platform.claude.com/docs/en/about-claude/pricing, October 2026,
+ * by family and version, a model's dated name included (`claude-opus-4-1-20250805` is Opus 4.1).
  * Haiku 5.5 costs five times more on a prompt over 100,000 tokens.
  */
-const PRICES: [RegExp, Price, Price?][] = [
-  [/opus-5-5/, { input: 4, write5m: 5, write1h: 8, read: 0.2, output: 20 }],
-  [/opus-(5|4-\d)(?!-\d)|opus-4-\d/, { input: 5, write5m: 6.25, write1h: 10, read: 0.5, output: 25 }],
-  [/sonnet-5-5/, { input: 2, write5m: 2.5, write1h: 4, read: 0.1, output: 10 }],
-  [/sonnet-5(?!-\d)/, { input: 2, write5m: 2.5, write1h: 4, read: 0.2, output: 10 }],
-  [/sonnet-4-\d/, { input: 3, write5m: 3.75, write1h: 6, read: 0.3, output: 15 }],
-  [/haiku-5-5/, { input: 0.1, write5m: 0.125, write1h: 0.2, read: 0.01, output: 0.5 }, { input: 0.5, write5m: 0.625, write1h: 1, read: 0.05, output: 2.5 }],
-  [/fable-5-1/, { input: 10, write5m: 12.5, write1h: 20, read: 0.25, output: 50 }],
-];
+const PRICES: Record<string, Price | [Price, Price]> = {
+  "opus-5.5": { input: 4, write5m: 5, write1h: 8, read: 0.2, output: 20 },
+  "opus-5": { input: 5, write5m: 6.25, write1h: 10, read: 0.5, output: 25 },
+  "opus-4.8": { input: 5, write5m: 6.25, write1h: 10, read: 0.5, output: 25 },
+  "opus-4.7": { input: 5, write5m: 6.25, write1h: 10, read: 0.5, output: 25 },
+  "opus-4.6": { input: 5, write5m: 6.25, write1h: 10, read: 0.5, output: 25 },
+  "opus-4.5": { input: 5, write5m: 6.25, write1h: 10, read: 0.5, output: 25 },
+  "opus-4.1": { input: 15, write5m: 18.75, write1h: 30, read: 1.5, output: 75 },
+  "opus-4": { input: 15, write5m: 18.75, write1h: 30, read: 1.5, output: 75 },
+  "sonnet-5.5": { input: 2, write5m: 2.5, write1h: 4, read: 0.1, output: 10 },
+  "sonnet-5": { input: 2, write5m: 2.5, write1h: 4, read: 0.2, output: 10 },
+  "sonnet-4.6": { input: 3, write5m: 3.75, write1h: 6, read: 0.3, output: 15 },
+  "sonnet-4.5": { input: 3, write5m: 3.75, write1h: 6, read: 0.3, output: 15 },
+  "haiku-5.5": [{ input: 0.1, write5m: 0.125, write1h: 0.2, read: 0.01, output: 0.5 }, { input: 0.5, write5m: 0.625, write1h: 1, read: 0.05, output: 2.5 }],
+  "haiku-4.5": { input: 1, write5m: 1.25, write1h: 2, read: 0.1, output: 5 },
+  "fable-5.1": { input: 10, write5m: 12.5, write1h: 20, read: 0.25, output: 50 },
+  "fable-5": { input: 10, write5m: 12.5, write1h: 20, read: 1, output: 50 },
+};
+
+/** `claude-opus-5-5` is `opus-5.5`, `claude-opus-4-1-20250805` is `opus-4.1`: a version's digits are one each, a date eight. */
+const versionOf = (model: string) => {
+  const m = /(opus|sonnet|haiku|fable)-(\d)(?:-(\d)(?!\d))?/.exec(model);
+  return m ? `${m[1]}-${m[2]}${m[3] ? `.${m[3]}` : ""}` : null;
+};
 
 /** One call at its model's list price, in dollars; null for a model with no price here. */
 export function priceOf(u: Usage): number | null {
-  const found = PRICES.find(([model]) => model.test(u.model));
+  const version = versionOf(u.model);
+  const found = version ? PRICES[version] : undefined;
   if (!found) return null;
-  const [, price, long] = found;
-  const p = long && u.input + u.read + u.written5m + u.written1h > 100_000 ? long : price;
+  const p = Array.isArray(found) ? (u.input + u.read + u.written5m + u.written1h > 100_000 ? found[1] : found[0]) : found;
   return (u.input * p.input + u.written5m * p.write5m + u.written1h * p.write1h + u.read * p.read + u.output * p.output) / 1_000_000;
 }
 
@@ -101,7 +119,7 @@ export const projectKey = (path: string) => path.replace(/[^A-Za-z0-9]/g, "-");
 const claudeHomeOf = () => process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
 
 /** A transcript's calls inside the window, each message once, and whether it names the run. */
-async function readTranscript(file: string, run: string, from: string, to: string): Promise<{ calls: Usage[]; names: boolean; brief: string }> {
+async function readTranscript(file: string, run: string, from: string, to: string): Promise<{ calls: Map<string, Usage>; names: boolean; brief: string }> {
   const calls = new Map<string, Usage>();
   let names = false;
   let brief = "";
@@ -109,32 +127,34 @@ async function readTranscript(file: string, run: string, from: string, to: strin
   for await (const line of lines) {
     if (!names && line.includes(run)) names = true;
     if (!line.includes('"usage"') && brief) continue;
-    let entry: { type?: string; timestamp?: string; message?: { id?: string; model?: string; usage?: Record<string, unknown>; content?: unknown } };
+    let entry: { type?: string; timestamp?: string; isMeta?: boolean; message?: { id?: string; model?: string; usage?: Record<string, unknown>; content?: unknown } };
     try {
       entry = JSON.parse(line);
     } catch {
       continue;
     }
     const message = entry.message;
-    if (!brief && entry.type === "user" && message) {
+    if (!brief && entry.type === "user" && message && !(entry as { isMeta?: boolean }).isMeta) {
       const content = message.content;
-      brief = typeof content === "string" ? content : Array.isArray(content) ? content.map((b: { text?: string }) => b?.text ?? "").join(" ") : "";
-      brief = brief.slice(0, 600);
+      const texts = typeof content === "string" ? [content] : Array.isArray(content) ? content.filter((b: { type?: string }) => b?.type === "text").map((b: { text?: string }) => b.text ?? "") : [];
+      brief = texts.filter((t) => !t.trimStart().startsWith("<system-reminder")).join(" ").trim().slice(0, 600);
     }
     if (entry.type !== "assistant" || !message?.usage || !message.model || message.model.startsWith("<")) continue;
     const at = entry.timestamp ?? "";
     if (at < from || at > to) continue;
     const u = message.usage as Record<string, number | Record<string, number> | undefined>;
     const n = (k: string) => (typeof u[k] === "number" ? (u[k] as number) : 0);
+    // The writes, split by how long the cache keeps them when the usage says it; five minutes otherwise.
     const split = (u.cache_creation ?? {}) as Record<string, number>;
     const hour = typeof split.ephemeral_1h_input_tokens === "number" ? split.ephemeral_1h_input_tokens : 0;
-    const call: Usage = { model: message.model, input: n("input_tokens"), read: n("cache_read_input_tokens"), written1h: hour, written5m: Math.max(0, n("cache_creation_input_tokens") - hour), output: n("output_tokens") };
+    const five = typeof split.ephemeral_5m_input_tokens === "number" ? split.ephemeral_5m_input_tokens : Math.max(0, n("cache_creation_input_tokens") - hour);
+    const call: Usage = { model: message.model, input: n("input_tokens"), read: n("cache_read_input_tokens"), written1h: hour, written5m: five, output: n("output_tokens") };
     // A message is logged once per block of its content: the same id, its count growing to the last.
     const id = message.id ?? `${at}-${calls.size}`;
     const seen = calls.get(id);
     if (!seen || call.output >= seen.output) calls.set(id, call);
   }
-  return { calls: [...calls.values()], names, brief };
+  return { calls, names, brief };
 }
 
 /** The transcript files of a project's sessions, its worktrees' included, changed since the run started. */
@@ -157,21 +177,27 @@ async function projectSessions(cwd: string, from: string, claudeHome: string): P
 /** What a run cost, role by role: the sessions of the project that name it, and their agents, inside its window. */
 export async function runCost({ run, cwd, from, to, claudeHome = claudeHomeOf() }: { run: string; cwd: string; from: string; to: string; claudeHome?: string }): Promise<RunCost> {
   const roles = new Map<Role, { agents: number; calls: Usage[] }>(ROLES.map((r) => [r, { agents: 0, calls: [] }]));
+  // A message once for the whole run: a session taken up again copies the messages it takes up into its own file.
+  const counted = new Set<string>();
+  const fresh = (calls: Map<string, Usage>) => [...calls].filter(([id]) => !counted.has(id) && counted.add(id)).map(([, call]) => call);
   let sessions = 0;
   for (const { dir, id } of await projectSessions(cwd, from, claudeHome)) {
     const main = await readTranscript(join(dir, `${id}.jsonl`), run, from, to);
     if (!main.names) continue;
     sessions++;
-    roles.get("coordinator")!.calls.push(...main.calls);
+    roles.get("coordinator")!.calls.push(...fresh(main.calls));
     const agentsDir = join(dir, id, "subagents");
     for (const file of (await readdir(agentsDir).catch(() => [] as string[])).filter((f) => f.endsWith(".jsonl"))) {
       const agent = await readTranscript(join(agentsDir, file), run, from, to);
-      if (!agent.calls.length) continue;
-      const meta = await readFile(join(agentsDir, file.replace(/\.jsonl$/, ".meta.json")), "utf8").then((t) => JSON.parse(t) as { agentType?: string }, () => ({}) as { agentType?: string });
-      const role = meta.agentType === "aeom-judge" ? "judges" : roleOf(agent.brief);
+      const calls = fresh(agent.calls);
+      if (!calls.length) continue;
+      // The agent's type, then what the session called it when it launched it, then its brief.
+      const meta = await readFile(join(agentsDir, file.replace(/\.jsonl$/, ".meta.json")), "utf8").then((t) => JSON.parse(t) as { agentType?: string; description?: string }, () => ({}) as { agentType?: string; description?: string });
+      const named = roleOf(meta.description ?? "");
+      const role = meta.agentType === "aeom-judge" ? "judges" : named !== "other" ? named : roleOf(agent.brief);
       const r = roles.get(role)!;
       r.agents++;
-      r.calls.push(...agent.calls);
+      r.calls.push(...calls);
     }
   }
   const costs: RoleCost[] = [];
@@ -186,11 +212,12 @@ export async function runCost({ run, cwd, from, to, claudeHome = claudeHomeOf() 
       written: calls.reduce((t, c) => t + c.written5m + c.written1h, 0),
       output: calls.reduce((t, c) => t + c.output, 0),
       models: [...new Set(calls.map((c) => c.model))].sort(),
-      dollars: priced.some((d) => d === null) ? null : priced.reduce((t: number, d) => t + d!, 0),
+      dollars: priced.every((d) => d === null) ? null : priced.reduce((t: number, d) => t + (d ?? 0), 0),
+      unpriced: priced.filter((d) => d === null).length,
     });
   }
-  const dollars = costs.some((c) => c.dollars === null) ? null : costs.reduce((t, c) => t + c.dollars!, 0);
-  return { run, from, to, sessions, roles: costs, total: { agents: costs.reduce((t, c) => t + c.agents, 0), calls: costs.reduce((t, c) => t + c.calls, 0), dollars } };
+  const dollars = costs.every((c) => c.dollars === null) ? null : costs.reduce((t, c) => t + (c.dollars ?? 0), 0);
+  return { run, from, to, sessions, roles: costs, total: { agents: costs.reduce((t, c) => t + c.agents, 0), calls: costs.reduce((t, c) => t + c.calls, 0), dollars, unpriced: costs.reduce((t, c) => t + c.unpriced, 0) } };
 }
 
 const LABELS: Record<Role, string> = { coordinator: "Coordinator", directions: "Directions", kit: "Kit", pages: "Pages", journeys: "Journeys", judges: "Judges", other: "Other agents" };
@@ -205,5 +232,6 @@ export function costText(cost: RunCost): string {
   const widths = rows[0]!.map((_, i) => Math.max(...rows.map((r) => r[i]!.length)));
   const table = rows.map((r) => r.map((cell, i) => (i === 0 || i === 6 ? cell.padEnd(widths[i]!) : cell.padStart(widths[i]!))).join("  ").trimEnd());
   const head = `${cost.run}, from ${plural(cost.sessions, "session")} and ${plural(cost.total.agents, "agent")}, ${cost.from.slice(0, 16).replace("T", " ")} to ${cost.to.slice(0, 16).replace("T", " ")} UTC:`;
-  return `${head}\n\n${table.join("\n")}\n\nAt the API's list prices of each model; a Claude plan counts the same use its own way. Read is what each call reads again from the cache, most of what a run costs: the longer an agent's context and the more calls it makes, the more it reads.`;
+  const unpriced = cost.total.unpriced ? `\n${plural(cost.total.unpriced, "call")} of a model with no price here, left out of the dollars.` : "";
+  return `${head}\n\n${table.join("\n")}${unpriced}\n\nAt the API's list prices of each model; a Claude plan counts the same use its own way. Read is what each call reads again from the cache, most of what a run costs: the longer an agent's context and the more calls it makes, the more it reads.`;
 }

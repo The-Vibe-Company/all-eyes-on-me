@@ -35,6 +35,19 @@ test("aeom cost says what the latest run cost, role by role, from this machine's
     assert.match(stdout, /Total +1 agent +3 calls[^\n]*≈ \$0\.50/);
     assert.ok(existsSync(join(run, "cost.json")));
     assert.equal(JSON.parse(readFileSync(join(run, "cost.json"), "utf8")).total.calls, 3);
+
+    // The same session redoes the front at 16:10: the first run's window stops there, its half hour cut short.
+    const next = join(project, ".aeom", "runs", "run-20261010-1810");
+    await mkdir(next, { recursive: true });
+    await writeFile(join(next, "state.json"), JSON.stringify({ run: "run-20261010-1810", started: "2026-10-10T16:10:00Z", phase: "understand", step: null, options: [], vars: {}, branchAt: null, agents: [], history: [] }));
+    const first = await promisify(execFile)("node", [AEOM, "cost", run], { cwd: project, env });
+    assert.match(first.stdout, /Coordinator +the session +1 call /, "m2, at 16:20, is the next run's");
+    // A run with no state starts at the time its name gives, on this machine's clock.
+    const old = join(project, ".aeom", "runs", "run-20261010-1505");
+    await mkdir(old, { recursive: true });
+    await writeFile(join(sessions, "s3.jsonl"), [JSON.stringify({ type: "user", timestamp: "2026-10-10T15:05:00.000Z", message: { content: "RUN=run-20261010-1505" } }), call("2026-10-10T15:06:00.000Z", "o1", "claude-opus-5-5")].join("\n"));
+    const named = await promisify(execFile)("node", [AEOM, "cost", old, "--json"], { cwd: project, env: { ...env, TZ: "UTC" } });
+    assert.equal(JSON.parse(named.stdout).from, "2026-10-10T15:05:00.000Z");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

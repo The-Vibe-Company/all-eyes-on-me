@@ -70,7 +70,7 @@ Then, in your project:
 - for the pull request at the end, the repository has a remote and `gh` is signed in;
 - type `/aeom judge` in Claude Code for a first look, then `/aeom redo` to redo what fails (`/aeom` alone is the same as `/aeom redo`).
 
-A full run is long and spawns many agents: some twenty-five subagents (judges, workers), all on Sonnet but the direction workers, on your session's model, and under three million tokens for eight screens and four journeys. `aeom estimate` says it for your project before anything starts, and `/aeom` asks before its first judge. For a first look at a project, `/aeom judge` stops at the verdict. If the session closes in the middle, `/aeom --reprendre` takes the run up where it stopped: every run keeps its state in `.aeom/runs/<run>/state.json`.
+A full run is long and spawns many agents: some twenty-five subagents (judges, workers), all on Sonnet but the direction workers, on your session's model, and about $50 at most at the API's list prices for eight screens and four journeys, the session that coordinates them included. `aeom estimate` says it for your project before anything starts, `/aeom` asks before its first judge, and `aeom cost` says after the run what it really cost. For a first look at a project, `/aeom judge` stops at the verdict. If the session closes in the middle, `/aeom --reprendre` takes the run up where it stopped: every run keeps its state in `.aeom/runs/<run>/state.json`.
 
 ## Commands
 

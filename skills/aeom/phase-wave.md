@@ -10,7 +10,7 @@ Every worktree of the run goes outside the project, next to its main checkout: `
 
 **Every worker is an `aeom-worker` agent**, as **AEOM's agents** in SKILL.md says: launch it with the Agent tool's `subagent_type: "aeom-worker"`. It runs on Sonnet, whatever model this session coordinates on, with only the tools a worker uses: no MCP server, no browser pane, no list of skills, which a general agent re-reads at every step. Kit, pages, promotion, journeys: all of them. The direction workers are `aeom-worker` agents too, on this session's own model (section 2b, step 3). When the Agent tool lists no `aeom-worker`, launch `general-purpose` with `model: "sonnet"` (a direction worker with this session's model), as that paragraph says. A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
 
-Every brief, kit or page, also says:
+Every brief opens with « You are an AEOM <direction, kit, page, promotion or journey> worker », and its launch's `description` names the same role and its screen: `aeom cost` tells the roles of a run by them. Every brief, kit or page, also says:
 
 - **Run the CLI from inside the worktree.** The worker runs `aeom ...` from inside its worktree, so the app it starts is the worktree's copy. Inside the AEOM repository itself, where a fresh worktree has no build, it is `node "$MAIN/packages/cli/dist/index.js" ...`.
 - **Its own port.** Give each worker a different port for its checks (`--start "PORT=<port> ..." --url http://localhost:<port>`), so two workers never test each other's app.

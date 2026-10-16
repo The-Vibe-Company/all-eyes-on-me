@@ -1,7 +1,7 @@
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { costText, readRunState, runCost as costOfRun } from "@aeom/core";
+import { costText, readRunState, runCost as costOfRun, type RunState } from "@aeom/core";
 
 export const COST_HELP = `Usage: aeom cost [<run folder>] [--json]
 
@@ -15,8 +15,8 @@ cost.json in the run's folder, which the result page shows.
 
 The run is the latest in .aeom/runs by default. Its window runs from its start
 to its last mark in state.json, half an hour more for the end of a finished
-run; a run with no state, from the time its name gives to its folder's last
-change.
+run; a run with no state, from the time its name gives, on this machine's
+clock, to its folder's last change. Never past the start of the next run.
 
   --json    Write the cost as JSON`;
 
@@ -53,21 +53,45 @@ export async function runCost(argv: string[]): Promise<number> {
   return 0;
 }
 
-/** From the run's start to its last mark, or to now while it goes on; from its name and its folder without a state. */
-async function windowOf(dir: string, run: string): Promise<{ from: string; to: string } | null> {
-  const now = new Date();
+/** A time as an ISO string, or null when it is none. */
+const iso = (t: string | number | Date | undefined) => {
+  const ms = t instanceof Date ? t.getTime() : typeof t === "number" ? t : t ? Date.parse(t) : NaN;
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+};
+
+/** When a run started: its state's start, or the time its name gives, on this machine's clock. */
+async function startOf(dir: string, run: string): Promise<{ at: string; state: RunState | null } | null> {
   const state = await readFile(join(dir, "state.json"), "utf8").then((t) => readRunState(JSON.parse(t), run), () => null);
-  if (state?.started) {
-    const last = state.history.at(-1)?.at;
-    const to = state.phase === "done" && last ? new Date(Math.min(Date.parse(last) + AFTER, now.getTime())) : now;
-    return { from: state.started, to: to.toISOString() };
-  }
+  const started = iso(state?.started);
+  if (started) return { at: started, state };
   const named = /^run-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(run);
   if (!named) return null;
-  // The name is the time on the machine that started it, this one.
   const [, y, mo, d, h, mi] = named.map(Number) as number[];
-  const from = new Date(y!, mo! - 1, d!, h!, mi!);
-  let last = from.getTime();
-  for (const entry of await readdir(dir).catch(() => [] as string[])) last = Math.max(last, await stat(join(dir, entry)).then((s) => s.mtimeMs, () => 0));
-  return { from: from.toISOString(), to: new Date(Math.min(last + AFTER, now.getTime())).toISOString() };
+  const at = iso(new Date(y!, mo! - 1, d!, h!, mi!));
+  return at ? { at, state: null } : null;
+}
+
+/**
+ * From the run's start to its last mark, half an hour more once it is done, or to now while it goes on; from its name
+ * and its folder's last change without a state. Never past the start of the next run in the same folder: a session
+ * that judges, then redoes, runs both.
+ */
+async function windowOf(dir: string, run: string): Promise<{ from: string; to: string } | null> {
+  const now = Date.now();
+  const start = await startOf(dir, run);
+  if (!start) return null;
+  let to: number;
+  const last = start.state ? Date.parse(start.state.history.at(-1)?.at ?? "") : NaN;
+  if (start.state) to = start.state.phase === "done" && Number.isFinite(last) ? last + AFTER : now;
+  else {
+    let changed = Date.parse(start.at);
+    for (const entry of await readdir(dir).catch(() => [] as string[])) changed = Math.max(changed, await stat(join(dir, entry)).then((s) => s.mtimeMs, () => 0));
+    to = changed + AFTER;
+  }
+  const runs = resolve(dir, "..");
+  for (const other of (await readdir(runs).catch(() => [] as string[])).filter((n) => n.startsWith("run-") && n !== run)) {
+    const next = await startOf(join(runs, other), other);
+    if (next && next.at > start.at) to = Math.min(to, Date.parse(next.at));
+  }
+  return { from: start.at, to: iso(Math.min(to, now))! };
 }

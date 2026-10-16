@@ -73,3 +73,59 @@ test("aeom cost sums a run's coordinator and agents, role by role, inside the ru
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test("prices follow the model's family and version, dated names included; a model with no price leaves the rest priced", () => {
+  const one = (model: string) => priceOf({ model, input: 1_000_000, written5m: 0, written1h: 0, read: 0, output: 0 });
+  assert.equal(one("claude-opus-4-1-20250805"), 15);
+  assert.equal(one("claude-opus-4-20250514"), 15);
+  assert.equal(one("claude-opus-4-5-20251101"), 5);
+  assert.equal(one("claude-sonnet-5-20261001"), 2);
+  assert.equal(one("claude-haiku-4-5-20251001"), 1);
+  // Haiku 5.5 costs five times more on a prompt over 100,000 tokens.
+  assert.equal(priceOf({ model: "claude-haiku-5-5", input: 50_000, written5m: 0, written1h: 0, read: 0, output: 0 }), 0.005);
+  assert.equal(priceOf({ model: "claude-haiku-5-5", input: 200_000, written5m: 0, written1h: 0, read: 0, output: 0 }), 0.1);
+});
+
+test("a message is counted once in the whole run, at its last count; writes split by the cache's hour or five minutes; roles from the agent's type, its launch and its brief", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aeom-cost-"));
+  try {
+    const project = "/Users/x/Dev/Boutique";
+    const dir = join(home, "projects", projectKey(project));
+    await mkdir(join(dir, "s1", "subagents"), { recursive: true });
+    const nested = { input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 0, cache_creation: { ephemeral_5m_input_tokens: 1_000_000, ephemeral_1h_input_tokens: 1_000_000 } };
+    await writeFile(
+      join(dir, "s1.jsonl"),
+      [
+        prompt("RUN=run-20261010-1700"),
+        line("2026-10-10T17:01:00.000Z", "m1", "claude-opus-5-5", usage({ output_tokens: 10 })),
+        line("2026-10-10T17:01:00.000Z", "m1", "claude-opus-5-5", usage({ output_tokens: 500 })), // the last block of the same message
+        line("2026-10-10T17:02:00.000Z", "m2", "claude-opus-5-5", nested as never),
+        line("2026-10-10T17:03:00.000Z", "m3", "some-model-with-no-price"),
+      ].join("\n"),
+    );
+    // The same session taken up again: it copies the messages it takes up into a file of its own.
+    await writeFile(join(dir, "s2.jsonl"), [prompt("--reprendre run-20261010-1700"), line("2026-10-10T17:01:00.000Z", "m1", "claude-opus-5-5", usage({ output_tokens: 500 }))].join("\n"));
+    const sub = join(dir, "s1", "subagents");
+    await writeFile(join(sub, "agent-1.jsonl"), [JSON.stringify({ type: "user", isMeta: true, message: { content: "Warmup" } }), JSON.stringify({ type: "user", message: { content: [{ type: "text", text: "<system-reminder>a page worker</system-reminder>" }, { type: "text", text: "Rebuild the page /pricing in your worktree" }] } }), line("2026-10-10T17:10:00.000Z", "a1", "claude-sonnet-5-5")].join("\n"));
+    await writeFile(join(sub, "agent-1.meta.json"), JSON.stringify({ agentType: "aeom-worker", description: "Page worker /pricing" }));
+    await writeFile(join(sub, "agent-2.jsonl"), [prompt("Read the brief in brief.md"), line("2026-10-10T17:11:00.000Z", "a2", "claude-sonnet-5-5")].join("\n"));
+    await writeFile(join(sub, "agent-2.meta.json"), JSON.stringify({ agentType: "aeom-judge", description: "Vote 1" }));
+    await writeFile(join(sub, "agent-3.jsonl"), [prompt("Rebuild the page /pricing in your worktree"), line("2026-10-10T17:12:00.000Z", "a3", "claude-sonnet-5-5")].join("\n"));
+
+    const cost = await runCost({ run: "run-20261010-1700", cwd: project, from: "2026-10-10T17:00:00.000Z", to: "2026-10-10T18:00:00.000Z", claudeHome: home });
+    assert.equal(cost.sessions, 2);
+    const by = Object.fromEntries(cost.roles.map((r) => [r.role, r]));
+    assert.equal(by.coordinator!.calls, 3, "m1 once across both files, m2, m3");
+    assert.equal(by.coordinator!.output, 500 + 500, "m1 at its last count, 500 and not 510, and m3's");
+    assert.equal(by.coordinator!.written, 1_000 + 2_000_000 + 1_000, "the five minutes' writes kept when the usage only splits them");
+    assert.equal(by.coordinator!.unpriced, 1);
+    // m1: $0.035; m2: 1 M written for five minutes ($5) and 1 M for the hour ($8): $13.035, the unpriced call left out.
+    assert.ok(Math.abs(by.coordinator!.dollars! - 13.035) < 0.0001, String(by.coordinator!.dollars));
+    assert.equal(by.pages!.agents, 1, "the launch's description says a page worker, though its brief does not");
+    assert.equal(by.judges!.agents, 1, "an aeom-judge agent is a judge");
+    assert.equal(by.other!.agents, 1, "a brief that says nothing of its role, launched with no name: other");
+    assert.match(costText(cost), /1 call of a model with no price here, left out of the dollars\./);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
