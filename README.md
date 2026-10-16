@@ -121,9 +121,16 @@ None of this is done yet:
 State lives in files:
 - `.aeom/` in the project's repository: the product sheet, the standard of the front, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
 - `~/.aeom/taste/` on your machine: your feedback on each verdict.
+- `~/.aeom/install-id` on your machine: the random id AEOM's usage count knows it by (see [What it sends](#what-it-sends)).
 - `.aeom-worktrees/<project>/`, next to the project: the workers' copies during a run, kept out of the project so its own tools never walk into them.
 
 The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
+
+## What it sends
+
+To know how many people install AEOM and use it, `aeom` sends one request to PostHog each time it runs: a random id made on the first run and kept in `~/.aeom/install-id`, AEOM's version, the OS, the architecture, Node's version and the command's name (`unknown` for one it does not know). Nothing about your project: no path, no repository, no argument, no capture, no email. PostHog sees the connection's address, from which it reads a country. The first run says so in one line on stderr.
+
+`AEOM_TELEMETRY=0` or `DO_NOT_TRACK=1` turns it off, and nothing is sent in CI. The request is given up after one second: a command never waits longer for it, nor fails because of it.
 
 ## Development
 
