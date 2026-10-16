@@ -1,0 +1,45 @@
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 11
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 22,26,133
+  s_4ce34ec42d9105::t_7414699f8e89ac 28,43
+  s_4ce34ec42d9105::t_bb17ed32a06c45 27
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 8,15-16,67-68,97,116
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 20
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 23
+  s_4ce34ec42d9105::t_9e931d54da2ab4 13,27
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_7414699f8e89ac 68
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 54-59,64-65
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 11,15,20
+skills/aeom/phase-prompt.md
+  s_4ce34ec42d9105::t_9e931d54da2ab4 13,16
+agents/claude/aeom-judge.md
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 3
+agents/claude/aeom-worker.md
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 15
+README.md
+  s_4ce34ec42d9105::t_1ae379ae7eb3c4 61
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/01-un-run-moins-cher.md
+  s_4ce34ec42d9105::t_a5eb4e064f9bf3 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2a9f5ef2d15ce66c0eea3ce87aea5d36ebf95238",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
