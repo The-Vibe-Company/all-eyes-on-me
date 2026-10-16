@@ -29,3 +29,48 @@ test("SKILL.md keeps what every run needs, and stays under 6,000 words", () => {
   assert.ok(words < 6000, `SKILL.md is ${words} words: move a phase to its own file`);
   for (const phase of ["phase-understand.md", "phase-directions.md", "phase-wave.md", "phase-prompt.md", "phase-build.md"]) assert.match(read("SKILL.md"), new RegExp(`\\]\\(${phase}\\)`), `SKILL.md says when to read ${phase}`);
 });
+
+// A run launches its workers and judges as AEOM's own agents: Sonnet, and only
+// the tools they use, so no step re-reads the MCP servers and skills of a general agent.
+const agents = new URL("../agents/claude/", import.meta.url);
+const frontmatter = (text) => Object.fromEntries(text.split("---")[1].trim().split("\n").map((l) => [l.slice(0, l.indexOf(":")).trim(), l.slice(l.indexOf(":") + 1).trim()]));
+
+test("the agents a run launches run on Sonnet, with only the tools they use", () => {
+  const used = new Set(["Read", "Write", "Edit", "Bash", "Glob", "Grep"]);
+  for (const name of ["aeom-worker", "aeom-judge"]) {
+    const meta = frontmatter(readFileSync(new URL(`${name}.md`, agents), "utf8"));
+    assert.equal(meta.name, name);
+    assert.equal(meta.model, "sonnet", `${name} runs on Sonnet`);
+    const tools = meta.tools.split(",").map((t) => t.trim());
+    for (const tool of tools) assert.ok(used.has(tool), `${name} has ${tool}, which no AEOM agent uses`);
+  }
+  assert.equal(frontmatter(readFileSync(new URL("aeom-judge.md", agents), "utf8")).omitClaudeMd, "true", "a judge reads principles, not the project's rules");
+  assert.match(readFileSync(new URL("../README.md", import.meta.url), "utf8"), /ln -s "\$PWD\/agents\/claude\/aeom-worker\.md" "\$PWD\/agents\/claude\/aeom-judge\.md" ~\/\.claude\/agents\//);
+});
+
+test("every worker and judge is launched as an AEOM agent, with a way when the agents are not installed", () => {
+  const wave = read("phase-wave.md");
+  const judge = readFileSync(new URL("./aeom-judge/SKILL.md", import.meta.url), "utf8");
+  assert.match(wave, /`subagent_type: "aeom-worker"`[\s\S]*lists no `aeom-worker`[\s\S]*`general-purpose` with `model: "sonnet"` \(a direction worker with this session's model\)/);
+  // Every run reads SKILL.md, a judging alone included: the fallback and the install line are said there, once.
+  const agentsPart = read("SKILL.md").split("**AEOM's agents.**")[1]?.split("\n\n")[0] ?? "";
+  assert.match(agentsPart, /never the Skill tool/);
+  assert.match(agentsPart, /`general-purpose` with `model: "sonnet"` \(a direction worker with this session's model\)/);
+  assert.match(agentsPart, /ln -s "\$A"\/agents\/claude\/aeom-\*\.md ~\/\.claude\/agents\//);
+  assert.match(judge, /`subagent_type: "aeom-judge"`[\s\S]*lists no `aeom-judge`, launch `general-purpose` with `model: "sonnet"`/);
+  for (const file of [...files.map((f) => `aeom/${f}`), "aeom-judge/SKILL.md"]) {
+    const text = readFileSync(new URL(`./${file}`, import.meta.url), "utf8");
+    assert.doesNotMatch(text, /\b(worker|judge|voter)s? on Sonnet\b|lighter model/i, `${file} names a model where it should name the agent`);
+    // The agent and the judge skill share a name: a launch always says « agent ».
+    assert.doesNotMatch(text, /\ban? `aeom-(worker|judge)`(?! agent)/, `${file} launches an AEOM agent without saying it is one`);
+  }
+  // The directions keep the session's own model.
+  assert.match(read("phase-directions.md"), /each an `aeom-worker` agent \(\*\*Briefing any worker\*\*\) on this session's own model/);
+});
+
+test("the session reads little: captures sent unopened, no browser pane, no polling", () => {
+  const section = read("SKILL.md").split("## What the session reads")[1]?.split("\n## ")[0] ?? "";
+  assert.match(section, /never open it to show it/);
+  assert.match(section, /never in a browser pane/);
+  assert.match(section, /never `sleep` to poll/);
+});
