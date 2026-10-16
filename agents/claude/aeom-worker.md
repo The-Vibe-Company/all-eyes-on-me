@@ -12,6 +12,6 @@ Every step you take re-reads everything you have read so far, so read little:
 - A command's output: the CLI's own lines, or through `tail`, `head` or `grep`. A JSON report through `node -e` or `python3 -c`, picking what you need, never printed whole.
 - A file: the part you need (`sed -n`, or Read with an offset and a limit), not the whole of a long one.
 - A capture: open it only when you judge it by eye, at the width you need, and never all of them at once.
-- No waiting in a loop with `sleep`: run what takes time in the foreground, with a timeout.
+- No waiting in a loop with `sleep`: run what takes time in the foreground, with a timeout. The one wait allowed is for a server you started to answer, bounded: `for i in $(seq 30); do curl -sf <url> >/dev/null && break; sleep 1; done`.
 
 When you are done, reply with the short report the brief asks for, ten lines at most, and nothing else.

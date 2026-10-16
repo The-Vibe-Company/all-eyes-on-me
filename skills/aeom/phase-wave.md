@@ -8,7 +8,7 @@ Every worktree of the run goes outside the project, next to its main checkout: `
 
 ## Briefing any worker
 
-**Every worker is an `aeom-worker`**, the agent AEOM installs: launch it with the Agent tool's `subagent_type: "aeom-worker"`. It runs on Sonnet, whatever model this session coordinates on, with only the tools a worker uses: no MCP server, no browser pane, no list of skills, which a general agent re-reads at every step. Kit, pages, promotion, journeys: all of them. The direction workers are `aeom-worker` too, on this session's own model (section 2b, step 3). When the Agent tool lists no `aeom-worker`, the agents are not installed: launch `general-purpose` with `model: "sonnet"`, and tell the user once to link them as the README's « Try it » says, then restart Claude Code. A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
+**Every worker is an `aeom-worker` agent**, as **AEOM's agents** in SKILL.md says: launch it with the Agent tool's `subagent_type: "aeom-worker"`. It runs on Sonnet, whatever model this session coordinates on, with only the tools a worker uses: no MCP server, no browser pane, no list of skills, which a general agent re-reads at every step. Kit, pages, promotion, journeys: all of them. The direction workers are `aeom-worker` agents too, on this session's own model (section 2b, step 3). When the Agent tool lists no `aeom-worker`, launch `general-purpose` with `model: "sonnet"` (a direction worker with this session's model), as that paragraph says. A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
 
 Every brief, kit or page, also says:
 

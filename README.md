@@ -58,7 +58,7 @@ mkdir -p ~/.claude/agents
 ln -s "$PWD/agents/claude/aeom-worker.md" "$PWD/agents/claude/aeom-judge.md" ~/.claude/agents/
 ```
 
-The two agents, `aeom-worker` and `aeom-judge`, are what a run launches: on Sonnet, with only the tools they use, so a run costs about half what it does with general agents. Restart Claude Code once after linking them: a new `agents` folder is read when it starts.
+The two agents, `aeom-worker` and `aeom-judge`, are what a run launches: on Sonnet, with only the tools they use, so no step of theirs re-reads the MCP servers and skills a general agent carries. Restart Claude Code once after linking them: a new `agents` folder is read when it starts.
 
 **From a prompt, with no app yet.** `/aeom --depuis prompt.md`, such as the prompt `/style` writes, draws three directions in a few minutes: two static pages each, in plain HTML and CSS, keeping what the charter fixes and varying what it leaves open. The sixteen checks run on each, a judge screens out the ugly and the dated, and you choose. The whole mockup on the chosen direction comes next.
 

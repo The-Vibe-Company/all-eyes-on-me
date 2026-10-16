@@ -19,11 +19,13 @@ This file holds what every run needs. The rest waits in its own file, read only 
 - **Section 2d**, `/aeom --depuis <prompt.md>`, three directions from a prompt with no app: [phase-prompt.md](phase-prompt.md), with only **A run that stops** from this file.
 - **Section 2e**, `/aeom build --from-scratch` or `--api`, a front from a spec: [phase-build.md](phase-build.md).
 
-When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section. 
+When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section.
 
 ## What the session reads
 
-Every step of a run re-reads all the session has read so far: read little. Send a capture, never open it to show it (`SendUserFile` sends a file unread). Look at the app through `aeom capture`, never in a browser pane. Read a report through the CLI's own lines or a filter, never whole. A worker replies with its short report, ten lines at most, which you keep in the run's folder; a judge with the path of its votes. Launch the agents of one step in one message, then wait for their notifications: never `sleep` to poll them.
+Every step of a run re-reads all the session has read so far: read little. Send a capture, never open it to show it: `SendUserFile` sends a file unread when the session has it, otherwise give its path. Look at the app through `aeom capture`, never in a browser pane. Read a report through the CLI's own lines or a filter, never whole. A worker replies with its short report, ten lines at most, which you keep in the run's folder; a judge with the path of its votes. Launch the agents of one step in one message, then wait for their notifications: never `sleep` to poll them.
+
+**AEOM's agents.** A worker is an `aeom-worker` agent, a judge an `aeom-judge` agent: the Agent tool's `subagent_type`, never the Skill tool. Both run on Sonnet with only their tools; a direction worker passes `model` set to this session's own model. When the Agent tool lists neither, they are not installed: launch `general-purpose` with `model: "sonnet"` (a direction worker with this session's model), and at the end of the run give the user, once, the line that installs them: `A="$(cd "$(readlink ~/.claude/skills/aeom)/../.." && pwd)"; mkdir -p ~/.claude/agents && ln -s "$A"/agents/claude/aeom-*.md ~/.claude/agents/`, then restart Claude Code.
 
 ## The four commands
 
@@ -38,7 +40,7 @@ A run keeps its options under their own names: `/aeom judge` is marked `--option
 
 ## 0. Before you start
 
-- **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README), check that the app starts with that command (`aeom capture --start "<command>" --url <url> --pages / --out .aeom/runs/start-check`, which starts the app and stops it after), and only then write the file; ask the user once only if nothing says it. Prefer the app built for production (`npm run build && npm start`, or the project's own) to its development server: a development server compiles each page on its first visit and keeps requests open, so captures are slow and a page's network never goes quiet. AEOM waits a few seconds at most for it, then takes the page as it is.
+- **The app.** `.aeom/config.json` gives `url` and `start`. If it is missing, find how the project starts (its package.json scripts, README), check that the app starts with that command (`aeom capture --start "<command>" --url <url> --pages / --out .aeom/runs/start-check`, which starts the app and stops it after), and only then write the file; ask the user once only if nothing says it. Prefer the app built for production (`npm run build && npm start`, or the project's own) to its development server: a development server compiles each page on its first visit and keeps requests open, so captures are slow and a page's network never goes quiet.
 - **Which pages.** Without more, AEOM visits every page the links lead to from `url`. Give the config `pages`, the routes to visit instead, when the app has many pages of one kind (one of each kind is enough) or pages no link reaches; `public`, the routes to see signed out, such as a public home page or the sign-in page, which a signed-in visitor never sees; and `home`, the route a signed-in user lands on, when `/` sends them elsewhere: the first screen the directions are built on (section 2b). A link that makes a record at each visit, such as `/sessions/new` sending to `/sessions/123`, then `/sessions/124`, lands on a new route every time: the verdict, `aeom compare` and the result page pair such routes by their shape (`/sessions/:id`), so they count as one screen.
 - **Which widths.** 390 and 1280 px, until the product sheet says where the front is used (section 2c, step 5): 390 for a phone, 1280 for a computer. The config's `widths` or `/aeom --widths <list>` override it. Never guess it: what the sheet only supposes, the user answers. Before the first capture, `mkdir -p .aeom/runs/$RUN` and make the run's first mark (**A run that stops**) with `--set "WIDTHS=<the option, else what aeom product --widths says, 390,1280 when it exits 2>"`: every `aeom estimate`, `aeom capture`, `aeom check` and `aeom journey` of the run, the workers' and the judges' included, takes `--widths "$WIDTHS"`, so a run taken up keeps its widths (`390,1280` when its state has none).
 - **A check that does not apply.** The config's `"except": {"header": ["/"]}`, the user's, leaves a check out of a page.
@@ -128,7 +130,7 @@ If the project has key journeys (`.aeom/journeys/`), replay them now, before any
 
 ## 2. Plan
 
-Read `.aeom/reports/check.json` and `.aeom/reports/judge.json`, and the project tree. Sort the files into two groups:
+Read what fails in `.aeom/reports/check.json` and `.aeom/reports/judge.json` through a filter (`node -e` or `python3 -c`: page, width, check or principle, reason), never whole, and the project tree. Sort the files into two groups:
 
 - **Shared**: what more than one page uses (tokens, global CSS, the header or layout, shared components). In `examples/ugly-app` this is `shared/`.
 - **Per page**: what only one page uses. In `examples/ugly-app` this is one file per page in `pages/`.

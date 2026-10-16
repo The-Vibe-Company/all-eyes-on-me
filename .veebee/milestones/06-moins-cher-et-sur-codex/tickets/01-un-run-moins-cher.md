@@ -4,6 +4,7 @@ title: Un run coûte deux fois moins, sans rien changer à ce qu'il rend
 milestone: 06-moins-cher-et-sur-codex
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 133, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/133 }
 ---
 

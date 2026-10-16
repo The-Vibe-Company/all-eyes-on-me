@@ -5,15 +5,15 @@ description: Judge every captured page of a web app against the AEOM base princi
 
 # AEOM judge
 
-You run the judge on the latest captures. One subagent votes on everything first; two more vote, independently, only on what it failed; then `aeom judge` counts. What the first one passed stands on its vote: most of a front passes, and three votes on all of it cost three times as much for little. Launch every voter as an `aeom-judge`, the agent AEOM installs (the Agent tool's `subagent_type: "aeom-judge"`): it runs on Sonnet with only what a judge uses, and without the project's CLAUDE.md, since judging against written principles needs neither the model that coordinates the run nor the project's rules. When the Agent tool lists no `aeom-judge`, launch `general-purpose` with `model: "sonnet"`. Nothing calls an API.
+You run the judge on the latest captures. One subagent votes on everything first; two more vote, independently, only on what it failed; then `aeom judge` counts. What the first one passed stands on its vote: most of a front passes, and three votes on all of it cost three times as much for little. Launch every judge of this skill, voter or not, as an `aeom-judge` agent, the agent AEOM installs (the Agent tool's `subagent_type: "aeom-judge"`, not this skill): it runs on Sonnet with only what a judge uses, and without the project's CLAUDE.md, since judging against written principles needs neither the model that coordinates the run nor the project's rules. When the Agent tool lists no `aeom-judge`, launch `general-purpose` with `model: "sonnet"`. Nothing calls an API.
 
 ## Steps
 
 1. **Fresh captures.** Run `aeom capture` right before judging, every time, with `--widths "$WIDTHS"` when the run noted its widths, so the judges never see an older state of the app. It reads `url` and `start` from `.aeom/config.json`; without that file, pass `--url` and `--start`.
 2. **Clear the last verdict.** Delete `.aeom/reports/judge.json`, create `.aeom/reports/judge/` if it does not exist, and delete the `*.json` files in it, so neither an old verdict nor old votes, nor an old list of what to judge, can pass for this run's.
 3. **Measuring again?** When the pages were judged before in this run and a snapshot holds that verdict (`before`, `after`…), run `aeom judge --changed-since <that snapshot>`: it writes in the votes folder `to-judge.json`, the pages whose captures changed. The voters judge only those; the others keep the snapshot's verdict. When none changed, go to step 6.
-4. **One voter first.** Launch one `aeom-judge`, with the voter brief below and the number 1. Give it nothing else: no earlier verdict, no opinion of yours.
-5. **Two more on what it failed.** Run `aeom judge --to-confirm`: it writes in the votes folder `to-confirm.json`, what voter 1 failed. When it says there is nothing to confirm, go to step 6. Otherwise launch two `aeom-judge` at once, in the background, each with the confirm brief below and its number (2, 3), and nothing else: independent votes are the whole point.
+4. **One voter first.** Launch one `aeom-judge` agent, with the voter brief below and the number 1. Give it nothing else: no earlier verdict, no opinion of yours.
+5. **Two more on what it failed.** Run `aeom judge --to-confirm`: it writes in the votes folder `to-confirm.json`, what voter 1 failed. When it says there is nothing to confirm, go to step 6. Otherwise launch two `aeom-judge` agents at once, in the background, each with the confirm brief below and its number (2, 3), and nothing else: independent votes are the whole point.
 6. **Count.** Run `aeom judge`. It writes `.aeom/reports/judge.json`, prints what fails, and exits with 1 when anything fails.
 7. **Votes missing or refused.** If `aeom judge` names missing voters or votes it cannot count, relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
 
@@ -64,8 +64,8 @@ The same, one vote first and three on what it fails, on the key journeys instead
 
 1. **Fresh replays.** Run `aeom journey` right before judging, with `--widths "$WIDTHS"` when the run noted its widths.
 2. **Clear the last verdict.** Delete `.aeom/reports/judge-journeys.json` and the `*.json` files of `.aeom/reports/judge-journeys/` (or of the votes folder the run passes), creating the folder if needed.
-3. **One voter first**, with the journey brief below and the number 1, an `aeom-judge`. Nothing else.
-4. **Two more on what it failed**: `aeom judge --journeys --to-confirm` writes `to-confirm.json` in the journeys' votes folder. When there is something to confirm, launch voters 2 and 3 at once with the journey brief, told to judge only the journeys and principles `to-confirm.json` lists, without reading what voter 1 said.
+3. **One voter first**, with the journey brief below and the number 1, an `aeom-judge` agent. Nothing else.
+4. **Two more on what it failed**: `aeom judge --journeys --to-confirm` writes `to-confirm.json` in the journeys' votes folder. When there is something to confirm, launch voters 2 and 3 at once, each an `aeom-judge` agent, with the journey brief, told to judge only the journeys and principles `to-confirm.json` lists, without reading what voter 1 said.
 5. **Count**: `aeom judge --journeys`. A journey that broke on replay is a failure on its own, with no vote needed; the voters still judge what its steps show.
 6. **Votes missing or refused**: relaunch only those voters, then count again.
 
@@ -94,7 +94,7 @@ The same, one vote first and three on what it fails, on the key journeys instead
 
 ## Comparing journeys
 
-After the fleet rebuilt the journeys, three judges choose, journey by journey, between the old version and the new one. Launch them at once, each an `aeom-judge` with the duel brief below and its number, and nothing else.
+After the fleet rebuilt the journeys, three judges choose, journey by journey, between the old version and the new one. Launch them at once, each an `aeom-judge` agent with the duel brief below and its number, and nothing else.
 
 ### The journey duel brief
 
@@ -113,7 +113,7 @@ After the fleet rebuilt the journeys, three judges choose, journey by journey, b
 
 ## Judging a kept style
 
-When a run keeps the app's style, three judges check, page by page, that it did. Launch them at once, each with the style brief below and its number, and nothing else. Then count: `aeom judge --style-kept --captures <after-dir>/captures --votes <votes-dir> --out <out-dir>`.
+When a run keeps the app's style, three judges check, page by page, that it did. Launch them at once, each an `aeom-judge` agent with the style brief below and its number, and nothing else. Then count: `aeom judge --style-kept --captures <after-dir>/captures --votes <votes-dir> --out <out-dir>`.
 
 ### The style brief
 

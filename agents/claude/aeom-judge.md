@@ -1,6 +1,6 @@
 ---
 name: aeom-judge
-description: An AEOM judge, launched by /aeom and /aeom-judge only. It votes on captures or replays against written principles, writes its vote in its own file, and replies in one line.
+description: An AEOM judge, launched by /aeom and /aeom-judge only. It judges captures or replays against written principles, as its brief says, and replies in one line.
 tools: Read, Write, Bash, Glob, Grep
 model: sonnet
 omitClaudeMd: true

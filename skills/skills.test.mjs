@@ -51,14 +51,21 @@ test("the agents a run launches run on Sonnet, with only the tools they use", ()
 test("every worker and judge is launched as an AEOM agent, with a way when the agents are not installed", () => {
   const wave = read("phase-wave.md");
   const judge = readFileSync(new URL("./aeom-judge/SKILL.md", import.meta.url), "utf8");
-  assert.match(wave, /`subagent_type: "aeom-worker"`[\s\S]*lists no `aeom-worker`[\s\S]*`general-purpose` with `model: "sonnet"`/);
+  assert.match(wave, /`subagent_type: "aeom-worker"`[\s\S]*lists no `aeom-worker`[\s\S]*`general-purpose` with `model: "sonnet"` \(a direction worker with this session's model\)/);
+  // Every run reads SKILL.md, a judging alone included: the fallback and the install line are said there, once.
+  const agentsPart = read("SKILL.md").split("**AEOM's agents.**")[1]?.split("\n\n")[0] ?? "";
+  assert.match(agentsPart, /never the Skill tool/);
+  assert.match(agentsPart, /`general-purpose` with `model: "sonnet"` \(a direction worker with this session's model\)/);
+  assert.match(agentsPart, /ln -s "\$A"\/agents\/claude\/aeom-\*\.md ~\/\.claude\/agents\//);
   assert.match(judge, /`subagent_type: "aeom-judge"`[\s\S]*lists no `aeom-judge`, launch `general-purpose` with `model: "sonnet"`/);
   for (const file of [...files.map((f) => `aeom/${f}`), "aeom-judge/SKILL.md"]) {
     const text = readFileSync(new URL(`./${file}`, import.meta.url), "utf8");
     assert.doesNotMatch(text, /\b(worker|judge|voter)s? on Sonnet\b|lighter model/i, `${file} names a model where it should name the agent`);
+    // The agent and the judge skill share a name: a launch always says « agent ».
+    assert.doesNotMatch(text, /\ban? `aeom-(worker|judge)`(?! agent)/, `${file} launches an AEOM agent without saying it is one`);
   }
   // The directions keep the session's own model.
-  assert.match(read("phase-directions.md"), /each an `aeom-worker` \(\*\*Briefing any worker\*\*\) on this session's own model/);
+  assert.match(read("phase-directions.md"), /each an `aeom-worker` agent \(\*\*Briefing any worker\*\*\) on this session's own model/);
 });
 
 test("the session reads little: captures sent unopened, no browser pane, no polling", () => {
