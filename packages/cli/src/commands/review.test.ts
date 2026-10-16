@@ -13,7 +13,7 @@ const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
 let dir: string;
 const run = async (args: string[]) => {
   try {
-    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd: dir, env: { ...process.env, AEOM_HOME: join(dir, ".home") } });
+    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd: dir, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(dir, ".home") } });
     return { code: 0, out: stdout + stderr };
   } catch (error) {
     const e = error as { code: number; stdout: string; stderr: string };
@@ -80,7 +80,7 @@ test("a branch that touches no screen passes without starting anything; with no 
   try {
     execFileSync("git", ["init", "-q", "-b", "main"], { cwd: bare });
     execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "start"], { cwd: bare });
-    const none = await promisify(execFile)("node", [AEOM, "review"], { cwd: bare, env: { ...process.env, AEOM_HOME: join(bare, ".home") } }).then(() => ({ code: 0, out: "" }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
+    const none = await promisify(execFile)("node", [AEOM, "review"], { cwd: bare, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(bare, ".home") } }).then(() => ({ code: 0, out: "" }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
     assert.equal(none.code, 1);
     assert.match(none.out, /No standard in \.aeom\/standard\.md: run \/aeom first, which writes it from the front as it is\./);
   } finally {
@@ -134,7 +134,7 @@ test("a deleted page is not measured; the base is found without being given; the
 
 test("aeom review --install-check writes the GitHub workflow that holds every PR to the standard, with the project's own install, and never overwrites another one", async () => {
   const repo = await mkdtemp(join(tmpdir(), "aeom-review-ci-"));
-  const inRepo = (args: string[]) => promisify(execFile)("node", [AEOM, ...args], { cwd: repo, env: { ...process.env, AEOM_HOME: join(repo, ".home") } }).then((r) => ({ code: 0, out: r.stdout + r.stderr }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
+  const inRepo = (args: string[]) => promisify(execFile)("node", [AEOM, ...args], { cwd: repo, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(repo, ".home") } }).then((r) => ({ code: 0, out: r.stdout + r.stderr }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
   try {
     await writeFile(join(repo, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
     const first = await inRepo(["review", "--install-check"]);
@@ -193,7 +193,7 @@ test("in a monorepo, the check is written at the repository's root, installs whe
     execFileSync("git", ["init", "-q"], { cwd: repo });
     await writeFile(join(repo, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
     await mkdir(join(repo, "apps", "web"), { recursive: true });
-    const { stdout } = await promisify(execFile)("node", [AEOM, "review", "--install-check"], { cwd: join(repo, "apps", "web"), env: { ...process.env, AEOM_HOME: join(repo, ".home") } });
+    const { stdout } = await promisify(execFile)("node", [AEOM, "review", "--install-check"], { cwd: join(repo, "apps", "web"), env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(repo, ".home") } });
     assert.match(stdout, /Wrote \.github\/workflows\/aeom\.yml/);
     const workflow = (await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8");
     assert.match(workflow, /- name: Install the project\n        run: pnpm install --frozen-lockfile\n/, "at the root, where the lockfile is");
@@ -209,7 +209,7 @@ test("a review that stops before it starts still says why in the check's summary
     execFileSync("git", ["init", "-q", "-b", "main"], { cwd: bare });
     execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "start"], { cwd: bare });
     const summary = join(bare, "summary.md");
-    await promisify(execFile)("node", [AEOM, "review", "--summary", summary], { cwd: bare, env: { ...process.env, AEOM_HOME: join(bare, ".home") } }).catch(() => undefined);
+    await promisify(execFile)("node", [AEOM, "review", "--summary", summary], { cwd: bare, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(bare, ".home") } }).catch(() => undefined);
     assert.match((await import("node:fs")).readFileSync(summary, "utf8"), /^## aeom review\n\nNo standard in `\.aeom\/standard\.md`: run \/aeom first/);
   } finally {
     await rm(bare, { recursive: true, force: true });

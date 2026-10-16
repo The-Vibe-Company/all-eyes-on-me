@@ -17,6 +17,7 @@ import { runEstimate } from "./commands/estimate.js";
 import { runCost } from "./commands/cost.js";
 import { runRunState } from "./commands/run-state.js";
 import { runVerdict } from "./commands/verdict.js";
+import { commandName, ping } from "./telemetry.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -74,6 +75,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
 };
 
 const [command, ...rest] = process.argv.slice(2);
+const pinged = ping(commandName(command, Object.keys(COMMANDS)), version);
 if (command === "--version" || command === "-v") {
   console.log(version);
 } else if (command && COMMANDS[command]) {
@@ -82,3 +84,4 @@ if (command === "--version" || command === "-v") {
   console.log(HELP);
   if (command && command !== "--help" && command !== "-h") process.exitCode = 1;
 }
+await pinged;
