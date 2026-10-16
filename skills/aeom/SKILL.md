@@ -15,11 +15,15 @@ This file holds what every run needs. The rest waits in its own file, read only 
 
 - **Section 2c**, understanding the product (the product sheet, the key journeys, their critique, and with `--ux` the journey wave): [phase-understand.md](phase-understand.md), at the start of every run.
 - **Section 2b**, the directions: [phase-directions.md](phase-directions.md), once a run is to build directions.
-- **Briefing any worker** and **sections 3 to 5**, the kit, the page wave and the measure: [phase-wave.md](phase-wave.md), once a run is to change the app.
+- **Where workers work**, **Briefing any worker** and **sections 3 to 5**, the kit, the page wave and the measure: [phase-wave.md](phase-wave.md), before a run's first worker.
 - **Section 2d**, `/aeom --depuis <prompt.md>`, three directions from a prompt with no app: [phase-prompt.md](phase-prompt.md), with only **A run that stops** from this file.
 - **Section 2e**, `/aeom build --from-scratch` or `--api`, a front from a spec: [phase-build.md](phase-build.md).
 
-When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section. Every worker replies with a short report, ten lines at most, as **Briefing any worker** says, which you keep in the run's folder; every judge writes its votes in a file and replies with its path.
+When this file says « section 2b » or « section 4 », read that file first; a step named `2b.4`, `2c.10.3` or `4`, as `aeom run` prints it, is in the file of its section. 
+
+## What the session reads
+
+Every step of a run re-reads all the session has read so far: read little. Send a capture, never open it to show it (`SendUserFile` sends a file unread). Look at the app through `aeom capture`, never in a browser pane. Read a report through the CLI's own lines or a filter, never whole. A worker replies with its short report, ten lines at most, which you keep in the run's folder; a judge with the path of its votes. Launch the agents of one step in one message, then wait for their notifications: never `sleep` to poll them.
 
 ## The four commands
 
@@ -40,7 +44,6 @@ A run keeps its options under their own names: `/aeom judge` is marked `--option
 - **A check that does not apply.** The config's `"except": {"header": ["/"]}`, the user's, leaves a check out of a page.
 - **A sign-in, when the app needs one.** AEOM signs in only with a fake account, never a real one: the project's own test account, or one the user gives. Give the config a `login`, one of three: a form AEOM fills, `{ "path": "/connexion", "account": "<a JSON file of the account's fields by label>", "submit": "<the button's name>" }`, which finds each field by its label, a label beside it, its placeholder or its name; a session saved in a file, `{ "state": "<file>" }`, a browser state as Playwright saves it or a list of cookies (`[{ "name": "session", "value": "…" }]`), when the form cannot be filled; or a command that prints such a session, `{ "script": "<command>" }`, run with `AEOM_URL` set, when the session expires or a reset ends it. The account and session files are never committed. Capture, check and journeys then sign in once, before they start, and journeys again after each `reset`, which may sign everyone out; they never print or report the account's values. No fake account and no way to make one: stop and ask the user for one.
 - **What only a feature touches.** Give the config a `protected` list of the files that hold the app's data or logic, as globs: the database schema and migrations, the API routes, the server code, such as `["src/lib/db/**", "src/app/api/**"]`. `aeom guard` refuses any change to them.
-- **Where workers work.** Every worktree of the run goes outside the project, next to its main checkout: `ROOT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"; WT="$(dirname "$ROOT")/.aeom-worktrees/$(basename "$ROOT")"; mkdir -p "$WT"`. Inside the project, its own tools would walk into them: TypeScript including `**/*.ts`, the linter, the tests, a bundler taking the project's lockfile for the root of each copy. A worktree there has no dependencies of its own: before its worker starts, give it the project's, with the project's package manager (`pnpm install --frozen-lockfile --prefer-offline` links them from pnpm's store, quickly and with little disk), or by linking the main checkout's, `ln -s "$ROOT/node_modules" node_modules`, after adding `node_modules` once to `$(git rev-parse --git-common-dir)/info/exclude` so the link is never committed; if the app does not start on the link (some bundlers refuse dependencies outside their root), install them. If the session cannot write next to the project, say so once and use `.aeom/worktrees` instead; then remove each worker's worktree as soon as it is merged or refused, so none is left when the project's own checks run (section 5).
 - **A clean tree.** `git status` must be clean. Never stash or discard the user's work: stop and say so. `.aeom/product.md`, `.aeom/product.base.md`, `.aeom/standard.md`, `.aeom/standard.base.md`, `.aeom/journeys/` and `.aeom/config.json` do not count: AEOM writes them while it understands the product (section 2c) and after « rien à refaire » (the standard), and the user's uncommitted corrections there are exactly what the next run keeps.
 - **A style to keep.** `/aeom --garder-le-style` keeps the app's existing style, for a client with a brand charter: no directions, no tournament. `"style": "keep"` in `.aeom/config.json` does the same on every run, without the option; it is the user's to write. `/aeom --forcer-directions` overrides it for that run, and says so.
 - **A run left halfway.** Before a new run, `aeom run status`: when the latest run did not reach its end (its phase is not `done`), tell the user where it stopped and ask whether to take it up (`/aeom --reprendre`, section **A run that stops**) or start a new one.
@@ -48,7 +51,7 @@ A run keeps its options under their own names: `/aeom judge` is marked `--option
 
 ## Show as you go
 
-The user follows the run through its captures. Send images into the session (as files, or their paths) every time something visible lands, unasked:
+The user follows the run through its captures. Send images into the session (as files, or their paths), never opened, every time something visible lands, unasked:
 
 - **Before**: the captures of section 1, with the count of what fails.
 - **The directions**, once screened (section 2b, step 6): the sheet with the front as it is, then each one left.

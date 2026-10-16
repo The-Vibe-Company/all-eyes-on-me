@@ -1,10 +1,14 @@
 # /aeom: the wave
 
-Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**Briefing any worker** and sections 3 to 5, once a run changes the app). Everything it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
+Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**Where workers work**, **Briefing any worker** and sections 3 to 5, before a run's first worker). Everything it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
+
+## Where workers work
+
+Every worktree of the run goes outside the project, next to its main checkout: `ROOT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"; WT="$(dirname "$ROOT")/.aeom-worktrees/$(basename "$ROOT")"; mkdir -p "$WT"`. Inside the project, its own tools would walk into them: TypeScript including `**/*.ts`, the linter, the tests, a bundler taking the project's lockfile for the root of each copy. A worktree there has no dependencies of its own: before its worker starts, give it the project's, with the project's package manager (`pnpm install --frozen-lockfile --prefer-offline` links them from pnpm's store, quickly and with little disk), or by linking the main checkout's, `ln -s "$ROOT/node_modules" node_modules`, after adding `node_modules` once to `$(git rev-parse --git-common-dir)/info/exclude` so the link is never committed; if the app does not start on the link (some bundlers refuse dependencies outside their root), install them. If the session cannot write next to the project, say so once and use `.aeom/worktrees` instead; then remove each worker's worktree as soon as it is merged or refused, so none is left when the project's own checks run (section 5).
 
 ## Briefing any worker
 
-**Every worker runs on Sonnet**, as the judges do: launch it with the Agent tool's `model: "sonnet"`, whatever model this session coordinates on. Kit, pages, promotion, journeys: all of them. The direction workers are the one exception, on this session's own model (section 2b, step 3). A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
+**Every worker is an `aeom-worker`**, the agent AEOM installs: launch it with the Agent tool's `subagent_type: "aeom-worker"`. It runs on Sonnet, whatever model this session coordinates on, with only the tools a worker uses: no MCP server, no browser pane, no list of skills, which a general agent re-reads at every step. Kit, pages, promotion, journeys: all of them. The direction workers are `aeom-worker` too, on this session's own model (section 2b, step 3). When the Agent tool lists no `aeom-worker`, the agents are not installed: launch `general-purpose` with `model: "sonnet"`, and tell the user once to link them as the README's « Try it » says, then restart Claude Code. A worker builds on a brief, a kit and principles written down; the session keeps its own model for deciding.
 
 Every brief, kit or page, also says:
 
@@ -27,7 +31,7 @@ Create a worktree for the kit worker from the run branch:
 git worktree add "$WT/$RUN-kit" -b aeom/$RUN-kit aeom/$RUN
 ```
 
-Note the commit the worktree started from (`KIT_BASE=$(git rev-parse aeom/$RUN)`), then launch one subagent with the kit brief below. When it is done, check its diff touches only shared files (`git -C "$WT/$RUN-kit" diff --name-only $KIT_BASE HEAD`). Anything else: refuse the worker's work, say why. Otherwise merge it into the run branch.
+Note the commit the worktree started from (`KIT_BASE=$(git rev-parse aeom/$RUN)`), then launch one `aeom-worker` with the kit brief below. When it is done, check its diff touches only shared files (`git -C "$WT/$RUN-kit" diff --name-only $KIT_BASE HEAD`). Anything else: refuse the worker's work, say why. Otherwise merge it into the run branch.
 
 **Kit brief.** Give the worker: the worktree path, the shared files it may edit, the kit failures with their reasons, the base principles (`aeom principles`), and the kit candidates the last run left, if any: the most recent `.aeom/runs/*/kit-candidates.md` other than this run's (`ls -t .aeom/runs/*/kit-candidates.md | grep -v "/$RUN/" | head -1`), pasted in full. Ask it to:
 

@@ -54,7 +54,11 @@ export PATH="$HOME/.local/bin:$PATH"                           # and in your she
 aeom --help
 mkdir -p ~/.claude/skills
 ln -s "$PWD/skills/aeom" "$PWD/skills/aeom-judge" ~/.claude/skills/
+mkdir -p ~/.claude/agents
+ln -s "$PWD/agents/claude/aeom-worker.md" "$PWD/agents/claude/aeom-judge.md" ~/.claude/agents/
 ```
+
+The two agents, `aeom-worker` and `aeom-judge`, are what a run launches: on Sonnet, with only the tools they use, so a run costs about half what it does with general agents. Restart Claude Code once after linking them: a new `agents` folder is read when it starts.
 
 **From a prompt, with no app yet.** `/aeom --depuis prompt.md`, such as the prompt `/style` writes, draws three directions in a few minutes: two static pages each, in plain HTML and CSS, keeping what the charter fixes and varying what it leaves open. The sixteen checks run on each, a judge screens out the ugly and the dated, and you choose. The whole mockup on the chosen direction comes next.
 
@@ -111,6 +115,7 @@ None of this is done yet:
 | `packages/cli` | The `aeom` command: the deterministic plumbing agents call (capture, checks, journeys, the guard, the verdict, the result page, the PR). |
 | `packages/core` | Capture (built on Playwright), checks, journeys, the judge's tally, the ratchets, the result page. |
 | `skills/` | The coordinator skill, `/aeom`, and the judges, `/aeom-judge`. They run in Claude Code and launch workers and judges as subagents. `/aeom` is split by phase: `SKILL.md` holds what every run needs, and `phase-understand.md`, `phase-directions.md` and `phase-wave.md` are read only when a run gets there. |
+| `agents/` | The workers and the judges the skills launch, `aeom-worker` and `aeom-judge`: on Sonnet, with only the tools each uses. |
 
 State lives in files:
 - `.aeom/` in the project's repository: the product sheet, the standard of the front, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
