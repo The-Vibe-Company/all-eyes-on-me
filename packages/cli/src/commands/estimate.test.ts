@@ -47,8 +47,13 @@ test("aeom estimate says what a run costs, phase by phase, from the screens and 
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ url: "http://localhost:1", pages: ["/", "/jeu"], public: ["/connexion"], widths: [1280] }));
     const desktop = await run(dir, ["estimate", "--juger"]);
     assert.match(desktop.out, /^For 3 screens and 4 key journeys, at 1280 px:/, "the config's widths");
-    const tokens = (out: string) => Number(/Total, at most +\d+ agents +≈ (\d\.\d) M tokens/.exec(out)?.[1]);
-    assert.ok(tokens(desktop.out) < tokens((await run(dir, ["estimate", "--juger", "--widths", "390,1280"])).out), "one width costs less than two");
+    const dollars = (out: string) => Number(/Total, at most +\d+ agents +≈ \$(\d+(?:\.\d)?)/.exec(out)?.[1]);
+    assert.ok(dollars(desktop.out) < dollars((await run(dir, ["estimate", "--juger", "--widths", "390,1280"])).out), "one width costs less than two");
+    // Kept for the result page, which shows it next to what aeom cost measured.
+    await run(dir, ["estimate", "--juger", "--out", join(dir, "estimate.json")]);
+    const saved = JSON.parse((await import("node:fs")).readFileSync(join(dir, "estimate.json"), "utf8"));
+    assert.ok(Math.abs(saved.total.dollars - dollars(desktop.out)) < 0.1, "the file holds the estimate printed");
+    assert.ok(saved.total.coordinator > 0, "the session that coordinates included");
     assert.match((await run(dir, ["estimate", "--widths", "390"])).out, /^For 3 screens and 4 key journeys, at 390 px:/, "--widths wins over the config");
     const wrong = await run(dir, ["estimate", "--widths", "10"]);
     assert.equal(wrong.code, 1);

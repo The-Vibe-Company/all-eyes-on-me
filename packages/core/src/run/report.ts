@@ -73,6 +73,14 @@ export interface ResultPage {
   replug?: boolean;
   /** What blocked journeys would need, named by `aeom features`, never built. */
   features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
+  /** What the run cost at the API's list prices: measured by `aeom cost`, and estimated before it by `aeom estimate --out`. */
+  cost?: {
+    /** Null when cost.json is missing; its dollars null when no model of the run has a price here. */
+    measured: { dollars: number | null; unpriced: number } | null;
+    /** What the estimate said, the journey wave it adds when a journey still breaks apart, and the mode it was made for. */
+    estimated: { dollars: number; ifBroken: number | null; mode: string } | null;
+    roles: { role: string; agents: number; dollars: number | null }[];
+  };
 }
 
 /** A run folder without what the page needs. */
@@ -246,7 +254,22 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   // Each width once, narrowest first, whatever wrote the manifest: anything else is not a list of widths.
   const measured = usableWidths(before?.widths ?? replayBefore?.widths ?? (built ? after?.widths : undefined));
   const widths = measured ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
-  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}) };
+  // Optional files too: what aeom cost measured, and what aeom estimate said before the run.
+  const measuredCost = await json<{ total?: { dollars?: unknown; unpriced?: unknown }; roles?: { role?: unknown; agents?: unknown; dollars?: unknown }[] }>(join(runDir, "cost.json")).catch(() => null);
+  const estimate = await json<{ mode?: unknown; total?: { dollars?: unknown }; ifBroken?: { dollars?: unknown } }>(join(runDir, "estimate.json")).catch(() => null);
+  const money = (d: unknown) => (typeof d === "number" && Number.isFinite(d) ? d : null);
+  const measuredSpend = measuredCost?.total && typeof measuredCost.total === "object" ? { dollars: money(measuredCost.total.dollars), unpriced: typeof measuredCost.total.unpriced === "number" ? measuredCost.total.unpriced : 0 } : null;
+  const estimatedDollars = money(estimate?.total?.dollars);
+  const estimated = estimatedDollars !== null ? { dollars: estimatedDollars, ifBroken: money(estimate?.ifBroken?.dollars), mode: typeof estimate?.mode === "string" ? estimate.mode : "full" } : null;
+  const cost =
+    measuredSpend || estimated
+      ? {
+          measured: measuredSpend,
+          estimated,
+          roles: (Array.isArray(measuredCost?.roles) ? measuredCost.roles : []).filter((r) => typeof r?.role === "string").map((r) => ({ role: r.role as string, agents: typeof r.agents === "number" ? r.agents : 0, dollars: money(r.dollars) })),
+        }
+      : undefined;
+  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(cost ? { cost } : {}), ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}) };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -401,9 +424,20 @@ export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { 
         .map((f) => `<section class="feature" data-journey="${escape(f.slug)}"><h3>${escape(f.name)}</h3><p>blocks at step ${escape(String(f.step))}: <span class="muted">${escape(f.why)}</span></p><p><strong>${escape(f.missing)}</strong></p><figure class="step">${img(f.capture, `${f.name}, step ${f.step}`)}</figure></section>`)
         .join("")}${named.more ? `<p class="muted">${named.more} more blocked journey${named.more === 1 ? "" : "s"}, not named: three at most per run.</p>` : ""}</section>`
     : "";
+  const usd = (d: number | null) => (d === null ? "no price" : `≈ $${d < 10 ? d.toFixed(2) : Math.round(d)}`);
+  const MODES: Record<string, string> = { judge: "judging only", full: "a whole run", "keep-style": "a run keeping the style", ux: "the journeys alone", prompt: "directions from a prompt", scratch: "a front from scratch", replug: "plugging the front into its API" };
+  const m = r.cost?.measured;
+  const e = r.cost?.estimated;
+  const measuredText = !m ? "Not measured: aeom cost says it once the run ends" : m.dollars === null ? "Measured by aeom cost, but no model of the run has a price here" : `${usd(m.dollars)}, measured by aeom cost from this machine's transcripts${m.unpriced ? `, ${m.unpriced} call${m.unpriced === 1 ? "" : "s"} of a model with no price left out` : ""}`;
+  const estimatedText = e ? `; estimated before the run, for ${MODES[e.mode] ?? e.mode}, at ${usd(e.dollars)} at most${e.ifBroken !== null ? `, ${usd(e.ifBroken)} more if a journey still broke after the pages` : ""}` : "";
+  const cost = r.cost
+    ? `<section id="cost"><h2>What it cost</h2><p>${escape(measuredText + estimatedText)}.</p>${
+        r.cost.roles.length ? `<ul>${r.cost.roles.map((c) => `<li>${escape(c.role)}${c.agents ? `, ${c.agents} agent${c.agents === 1 ? "" : "s"}` : ""}: ${escape(usd(c.dollars))}</li>`).join("")}</ul>` : ""
+      }<p class="muted">At the API's list prices of each model; a Claude plan counts the same use its own way.</p></section>`
+    : "";
   const body = nothing
-    ? `<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}`
-    : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${features}<section id="still"><h2>Still failing</h2>${still}</section>`;
+    ? `<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${cost}`
+    : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${features}<section id="still"><h2>Still failing</h2>${still}</section>${cost}`;
 
   return `<!doctype html>
 <html lang="en">

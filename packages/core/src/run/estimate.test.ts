@@ -50,10 +50,12 @@ test("fewer directions, no journeys, or the style kept cost less, and each says 
 test("the estimate reads as a table, phase by phase, with what is at most and the session apart", () => {
   const text = estimateText(estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6 }), { screens: 8, journeys: 4 });
   assert.match(text, /^For 8 screens and 4 key journeys:\n/);
-  assert.match(text, /Judge the screens and the journeys +6 agents +≈ 0\.\d M tokens +≈ \d+ min/);
-  assert.match(text, /Total, at most +\d+ agents +≈ \d\.\d M tokens +≈ \d h \d\d/);
+  assert.match(text, /Judge the screens and the journeys +6 agents +≈ \$\d+(\.\d)? +≈ \d+ min/);
+  assert.match(text, /The session that coordinates +≈ \$\d+ +all along/);
+  assert.match(text, /Total, at most +\d+ agents +≈ \$\d+ +≈ \d h \d\d/);
   assert.match(text, /only when the verdict finds something to redo/);
-  assert.match(text, /\nIf a journey still breaks after the pages, at most +\d+ agents +≈ \d\.\d M tokens +≈ \d+ min more\n/);
+  assert.match(text, /\nIf a journey still breaks after the pages, at most +\d+ agents +≈ \$\d+(\.\d)? +≈ \d+ min more\n/);
+  assert.match(text, /Dollars at the API's list prices, as aeom cost measured a run/);
   assert.match(text, /the session that coordinates the run/);
   assert.match(text, /The judges and the workers run on Sonnet, but for the direction workers, on the session's own model, as the session that coordinates the run\./);
   const judged = estimateText(estimateRun({ screens: 8, journeys: 4, mode: "judge" }), { screens: 8, journeys: 4 });
@@ -120,4 +122,18 @@ test("plugging an existing front into its API costs one worker and the measure",
   assert.deepEqual(replug.phases.map((p) => p.phase), ["Plug the data module into the API", "Measure the screens and the journeys", "The result page and the PR"]);
   assert.equal(replug.phases[0]!.agents, 1);
   assert.match(estimateText(replug, { screens: 6, journeys: 3 }), /^Plugging the front into its API, 6 screens and 3 key journeys:\n/);
+});
+
+test("the estimate is in dollars at the API's list prices, calibrated on a run aeom cost measured, the session that coordinates included", () => {
+  // Road to Mastock, 10 October 2026: 8 screens, 4 journeys, six directions in a knockout, every agent on Opus: $121 measured.
+  const run = estimateRun({ screens: 8, journeys: 4, mode: "full", directions: 6, autonome: true });
+  const all = run.total.dollars + (run.ifBroken?.dollars ?? 0);
+  // On Sonnet but for the directions, as the run now launches them: about half.
+  assert.ok(all > 60 && all < 100, String(all));
+  assert.ok(run.total.coordinator > 15 && run.total.coordinator < 35, String(run.total.coordinator));
+  const sum = run.phases.reduce((t, p) => t + (p.dollars ?? 0), 0) + run.total.coordinator;
+  assert.ok(Math.abs(sum - run.total.dollars) < 0.01, "the total is its rows");
+  // The directions are on the session's own model: they weigh more than their tokens on Sonnet would.
+  const directions = run.phases.find((p) => /directions/.test(p.phase))!;
+  assert.ok(directions.dollars! > (directions.tokens * 9) / 1_000_000);
 });

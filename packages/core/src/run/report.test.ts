@@ -140,3 +140,24 @@ test("a run on an API keeps its address, and one that plugged an existing front 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("the page says what the run cost, measured by aeom cost, next to what aeom estimate said before it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-cost-"));
+  try {
+    await mkdir(join(dir, "before", "captures"), { recursive: true });
+    await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [390, 1280], pages: [], errors: [] }));
+    assert.equal((await readRun(dir, "run-1")).cost, undefined, "nothing measured, nothing estimated: no section");
+    await writeFile(join(dir, "estimate.json"), JSON.stringify({ mode: "full", total: { dollars: 64.2 }, ifBroken: { dollars: 18 } }));
+    assert.match(resultHtml({ ...PAGE, cost: (await readRun(dir, "run-1")).cost! }), /Not measured: aeom cost says it once the run ends; estimated before the run, for a whole run, at ≈ \$64 at most, ≈ \$18 more if a journey still broke after the pages\./);
+    await writeFile(join(dir, "cost.json"), JSON.stringify({ total: { dollars: 41.7, unpriced: 2 }, roles: [{ role: "coordinator", agents: 0, dollars: 20.1 }, { role: "judges", agents: 6, dollars: 3.4 }] }));
+    const page = await readRun(dir, "run-1");
+    assert.deepEqual(page.cost, { measured: { dollars: 41.7, unpriced: 2 }, estimated: { dollars: 64.2, ifBroken: 18, mode: "full" }, roles: [{ role: "coordinator", agents: 0, dollars: 20.1 }, { role: "judges", agents: 6, dollars: 3.4 }] });
+    const html = resultHtml({ ...PAGE, cost: page.cost! });
+    assert.match(html, /<h2>What it cost<\/h2><p>≈ \$42, measured by aeom cost from this machine&#39;s transcripts, 2 calls of a model with no price left out; estimated before the run, for a whole run, at ≈ \$64 at most/);
+    assert.match(html, /<li>judges, 6 agents: ≈ \$3\.40<\/li>/);
+    await writeFile(join(dir, "cost.json"), JSON.stringify({ total: { dollars: null, unpriced: 5 }, roles: [] }));
+    assert.match(resultHtml({ ...PAGE, cost: (await readRun(dir, "run-1")).cost! }), /Measured by aeom cost, but no model of the run has a price here/, "a cost with no price is measured, not missing");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

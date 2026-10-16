@@ -1,13 +1,13 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, estimateRun, estimateText, loadConfig, localApiBase, type RunMode } from "@aeom/core";
+import { ConfigError, estimateRun, estimateText, loadConfig, localApiBase, type Estimate, type RunMode } from "@aeom/core";
 import { parseWidths, sheetWidths } from "./app.js";
 
-const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --depuis | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>]
+const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --depuis | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>] [--out <file>]
 
 Says what a run of /aeom would cost before it starts: how many agents, how many
-tokens and how long, phase by phase, at most. The screens are the config's
+dollars at the API's list prices and how long, phase by phase, at most. The screens are the config's
 pages (public ones included), or those of the last aeom capture; the key
 journeys, the files in .aeom/journeys.
 
@@ -31,7 +31,9 @@ journeys, the files in .aeom/journeys.
   --widths <list>    Measure at these widths, such as 1280 (default: widths in
                      .aeom/config.json, or where .aeom/product.md saw the
                      front is used, or 390,1280): fewer widths, fewer
-                     captures for each judge to look at`;
+                     captures for each judge to look at
+  --out <file>       Keep the estimate there too, as JSON: the result page
+                     shows it next to what aeom cost measured`;
 
 const count = (value: string | undefined, what: string, least: number): number | string | undefined => {
   if (value === undefined) return undefined;
@@ -42,7 +44,7 @@ const count = (value: string | undefined, what: string, least: number): number |
 export async function runEstimate(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, help: { type: "boolean", short: "h" } },
+    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, out: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(USAGE);
@@ -64,8 +66,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
   // From a prompt, there is no app to count: each direction draws two screens.
   if (values.depuis) {
     const estimate = estimateRun({ screens: 2, journeys: 0, mode: "prompt", directions: (given.directions as number | undefined) ?? 3, widths: widths.length });
-    console.log(estimateText(estimate, { screens: 2, journeys: 0, widths }));
-    return 0;
+    return said(estimate, { screens: 2, journeys: 0, widths }, values.out);
   }
   // An API given is checked first, before anything starts: on this machine only, on its own fake data.
   if (values.api !== undefined && !localApiBase(values.api)) {
@@ -82,8 +83,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
     }
     const journeysFound = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
     const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
-    console.log(estimateText(estimate, { screens: given.screens as number, journeys: journeysFound, widths }));
-    return 0;
+    return said(estimate, { screens: given.screens as number, journeys: journeysFound, widths }, values.out);
   }
   let screens = given.screens as number | undefined;
   if (screens === undefined && config.pages) screens = config.pages.length + (config.public?.filter((p) => !config.pages!.includes(p)).length ?? 0);
@@ -98,6 +98,12 @@ export async function runEstimate(argv: string[]): Promise<number> {
   const journeys = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
   const mode: RunMode = values.juger || values.diagnostic ? "judge" : values.ux ? "ux" : values["garder-le-style"] || (config.style === "keep" && given.directions === undefined) ? "keep-style" : "full";
   const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
-  console.log(estimateText(estimate, { screens, journeys, widths }));
+  return said(estimate, { screens, journeys, widths }, values.out);
+}
+
+/** Prints the estimate, and keeps it in a file when asked: the result page shows it next to what the run really cost. */
+async function said(estimate: Estimate, counts: { screens: number; journeys: number; widths: number[] }, out: string | undefined): Promise<number> {
+  console.log(estimateText(estimate, counts));
+  if (out) await writeFile(out, `${JSON.stringify(estimate, null, 2)}\n`);
   return 0;
 }

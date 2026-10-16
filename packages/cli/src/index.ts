@@ -14,6 +14,7 @@ import { runReport } from "./commands/report.js";
 import { runReview } from "./commands/review.js";
 import { runStandard } from "./commands/standard.js";
 import { runEstimate } from "./commands/estimate.js";
+import { runCost } from "./commands/cost.js";
 import { runRunState } from "./commands/run-state.js";
 import { runVerdict } from "./commands/verdict.js";
 
@@ -42,6 +43,7 @@ Commands:
   pr          Push the run's branch and open a PR, in words, with no capture
   standard    Write the standard of the front, keeping the user's edits
   estimate    Say what a run would cost, phase by phase, before it starts
+  cost        Say what a run really cost, role by role, from this machine's transcripts
   run         Keep where a run is, and say how to take it up after a stop
   review      Hold a branch's changes to the standard of the front, with no model
 
@@ -65,6 +67,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   features: runFeatures,
   pr: runPr,
   estimate: runEstimate,
+  cost: runCost,
   run: runRunState,
   standard: runStandard,
   review: runReview,
