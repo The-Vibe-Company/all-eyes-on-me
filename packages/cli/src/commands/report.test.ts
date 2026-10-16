@@ -13,7 +13,7 @@ const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
 const HOME = join(tmpdir(), `aeom-home-${process.pid}`);
 const run = async (cwd: string, args: string[]) => {
   try {
-    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd, env: { ...process.env, AEOM_HOME: HOME } });
+    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: HOME } });
     return { code: 0, out: stdout + stderr };
   } catch (error) {
     const e = error as { code: number; stdout: string; stderr: string };
@@ -27,7 +27,7 @@ const put = async (file: string, content: unknown) => {
 
 /** `aeom report --serve` on a run, from `cwd`, until stopped. */
 const serving = async (cwd: string, runDir: string, home: string) => {
-  const served = spawn("node", [AEOM, "report", runDir, "--serve", "--port", "0"], { cwd, env: { ...process.env, AEOM_HOME: home } });
+  const served = spawn("node", [AEOM, "report", runDir, "--serve", "--port", "0"], { cwd, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: home } });
   const url = await new Promise<string>((resolve, reject) => {
     let out = "";
     served.stdout.on("data", (d) => { out += d; const m = out.match(/http:\/\/127\.0\.0\.1:\d+\//); if (m) resolve(m[0]); });
@@ -246,7 +246,7 @@ test("each verdict of the page takes « agree » or « disagree » and a reason;
     } finally {
       nothing.stop();
     }
-    await promisify(execFile)("node", [AEOM, "report", ".aeom/runs/run-6"], { cwd: dir, env: { ...process.env, AEOM_HOME: home } });
+    await promisify(execFile)("node", [AEOM, "report", ".aeom/runs/run-6"], { cwd: dir, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: home } });
     assert.match(await readFile(join(R2, "report.html"), "utf8"), /Screens[^<]*<[^>]*>1 of 2/, "the next run's page shows how often AEOM agreed, by category");
   } finally {
     await rm(dir, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
+import { createServer, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,17 +13,24 @@ import { NOTICE, POSTHOG_KEY, commandName, ping, telemetryOn } from "./telemetry
 const AEOM = fileURLToPath(new URL("./index.js", import.meta.url));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
-/** A fetch that keeps what it was asked to send. */
+type Batch = { api_key: string; batch: { event: string; distinct_id: string; properties: Record<string, unknown> }[] };
+
+/** A send that keeps what it was handed. */
 const recorder = () => {
-  const sent: { url: string; body: { api_key: string; batch: { event: string; distinct_id: string; properties: Record<string, unknown> }[] } }[] = [];
-  const fetchImpl = (async (url: string, init: RequestInit) => {
-    sent.push({ url, body: JSON.parse(String(init.body)) });
-    return new Response("{}");
-  }) as typeof fetch;
-  return { sent, fetchImpl };
+  const sent: { url: string; body: Batch; counted: string }[] = [];
+  const send = (url: string, body: string, counted: string) => sent.push({ url, body: JSON.parse(body), counted });
+  return { sent, send };
 };
 
 const exists = (path: string) => stat(path).then(() => true, () => false);
+
+const until = async (ok: () => boolean | Promise<boolean>, what: string) => {
+  const end = Date.now() + 5000;
+  while (!(await ok())) {
+    if (Date.now() > end) throw new Error(`timed out waiting for ${what}`);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+};
 
 test("telemetry is off when asked, in CI, and under AEOM's own tests", () => {
   assert.equal(telemetryOn({}), true);
@@ -49,19 +56,20 @@ test("only a known command's name leaves, never what was typed", () => {
   assert.equal(commandName("constructor", known), "unknown");
 });
 
-test("the first run makes the install's id, says so once, and sends the install with the command", async () => {
+test("the first run makes the install's id, says so once, and sends the install until PostHog took it", async () => {
   const home = await mkdtemp(join(tmpdir(), "aeom-telemetry-"));
   try {
-    const { sent, fetchImpl } = recorder();
+    const { sent, send } = recorder();
     const warned: string[] = [];
     const warn = (line: string) => warned.push(line);
-    await ping("capture", "1.2.3", { env: {}, home, fetchImpl, warn });
+    await ping("capture", "1.2.3", { env: {}, home, send, warn });
 
     const id = (await readFile(join(home, "install-id"), "utf8")).trim();
     assert.match(id, UUID);
     assert.deepEqual(warned, [NOTICE]);
-    assert.equal(sent.length, 1, "one request for both events");
+    assert.equal(sent.length, 1, "one batch for both events");
     assert.equal(sent[0].url, "https://us.i.posthog.com/batch/");
+    assert.equal(sent[0].counted, join(home, "install-counted"));
     assert.equal(sent[0].body.api_key, POSTHOG_KEY);
     assert.deepEqual(sent[0].body.batch.map((e) => e.event), ["cli installed", "cli command"]);
     for (const event of sent[0].body.batch) {
@@ -73,9 +81,14 @@ test("the first run makes the install's id, says so once, and sends the install 
       assert.equal(event.properties.$process_person_profile, false);
     }
 
-    await ping("review", "1.2.3", { env: {}, home, fetchImpl, warn });
+    await ping("judge", "1.2.3", { env: {}, home, send, warn });
     assert.deepEqual(warned, [NOTICE], "the notice is said once");
-    assert.deepEqual(sent[1].body.batch.map((e) => [e.event, e.distinct_id, e.properties.command]), [["cli command", id, "review"]]);
+    assert.deepEqual(sent[1].body.batch.map((e) => [e.event, e.distinct_id]), [["cli installed", id], ["cli command", id]], "the first send never landed: the install goes again");
+
+    await writeFile(sent[1].counted, "");
+    await ping("review", "1.2.3", { env: {}, home, send, warn });
+    assert.deepEqual(sent[2].body.batch.map((e) => [e.event, e.distinct_id, e.properties.command]), [["cli command", id, "review"]]);
+    assert.equal(sent[2].counted, "");
   } finally {
     await rm(home, { recursive: true, force: true });
   }
@@ -84,9 +97,9 @@ test("the first run makes the install's id, says so once, and sends the install 
 test("turned off, nothing is sent and nothing is written", async () => {
   const home = await mkdtemp(join(tmpdir(), "aeom-telemetry-"));
   try {
-    const { sent, fetchImpl } = recorder();
+    const { sent, send } = recorder();
     const warned: string[] = [];
-    await ping("capture", "1.2.3", { env: { AEOM_TELEMETRY: "0" }, home, fetchImpl, warn: (line) => warned.push(line) });
+    await ping("capture", "1.2.3", { env: { AEOM_TELEMETRY: "0" }, home, send, warn: (line) => warned.push(line) });
     assert.equal(sent.length, 0);
     assert.deepEqual(warned, []);
     assert.equal(await exists(join(home, "install-id")), false);
@@ -95,26 +108,16 @@ test("turned off, nothing is sent and nothing is written", async () => {
   }
 });
 
-test("a network that hangs or fails never holds a command past the timeout nor fails it", async () => {
+test("an id file left empty is replaced, rather than silencing every later run", async () => {
   const home = await mkdtemp(join(tmpdir(), "aeom-telemetry-"));
   try {
-    // Holds the event loop the way an open socket does, until the signal gives up.
-    const hangs = ((_: string, init: RequestInit) =>
-      new Promise((_resolve, reject) => {
-        const socket = setTimeout(() => {}, 10_000);
-        init.signal?.addEventListener("abort", () => {
-          clearTimeout(socket);
-          reject(init.signal?.reason);
-        });
-      })) as typeof fetch;
-    const started = Date.now();
-    await ping("capture", "1.2.3", { env: {}, home, fetchImpl: hangs, warn: () => {}, timeoutMs: 50 });
-    assert.ok(Date.now() - started < 1000, "given up at the timeout");
-
-    const fails = (async () => {
-      throw new TypeError("fetch failed");
-    }) as typeof fetch;
-    await ping("capture", "1.2.3", { env: {}, home, fetchImpl: fails, warn: () => {} });
+    await writeFile(join(home, "install-id"), "");
+    await writeFile(join(home, "install-counted"), "");
+    const { sent, send } = recorder();
+    await ping("capture", "1.2.3", { env: {}, home, send, warn: () => {} });
+    const id = (await readFile(join(home, "install-id"), "utf8")).trim();
+    assert.match(id, UUID);
+    assert.deepEqual(sent[0].body.batch.map((e) => [e.event, e.distinct_id]), [["cli installed", id], ["cli command", id]], "a new id is a new install");
   } finally {
     await rm(home, { recursive: true, force: true });
   }
@@ -125,44 +128,63 @@ test("a home it cannot write sends nothing, rather than a new install on every r
   try {
     const home = join(dir, "a-file");
     await writeFile(home, "");
-    const { sent, fetchImpl } = recorder();
-    await ping("capture", "1.2.3", { env: {}, home, fetchImpl, warn: () => {} });
+    const { sent, send } = recorder();
+    await ping("capture", "1.2.3", { env: {}, home, send, warn: () => {} });
     assert.equal(sent.length, 0);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
 });
 
-test("aeom pings on every command, the notice on stderr, stdout unchanged", async () => {
-  const home = await mkdtemp(join(tmpdir(), "aeom-telemetry-"));
+/** A PostHog that keeps each batch and answers only when told to. */
+const fakePostHog = async () => {
   const bodies: string[] = [];
+  const held: ServerResponse[] = [];
   const server = createServer((request, response) => {
     let body = "";
     request.on("data", (chunk) => (body += chunk));
     request.on("end", () => {
       bodies.push(body);
-      response.end("{}");
+      held.push(response);
     });
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/batch/`;
+  const close = () => {
+    server.closeAllConnections();
+    server.close();
+  };
+  return { bodies, held, url, close };
+};
+
+const aeom = (home: string, url: string) => {
+  const env: NodeJS.ProcessEnv = { ...process.env, AEOM_HOME: home, AEOM_TELEMETRY_URL: url };
+  for (const off of ["NODE_TEST_CONTEXT", "CI", "DO_NOT_TRACK", "AEOM_TELEMETRY"]) delete env[off];
+  return promisify(execFile)("node", [AEOM, "--version"], { env });
+};
+
+test("aeom is done before PostHog answers, and the install is counted once PostHog took it", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aeom-telemetry-"));
+  const posthog = await fakePostHog();
   try {
-    const env: NodeJS.ProcessEnv = { ...process.env, AEOM_HOME: home, AEOM_TELEMETRY_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}/batch/` };
-    delete env.NODE_TEST_CONTEXT;
-    delete env.CI;
-    delete env.DO_NOT_TRACK;
-    delete env.AEOM_TELEMETRY;
-    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, "--version"], { env });
+    const { stdout, stderr } = await aeom(home, posthog.url);
     assert.match(stdout, /^\d+\.\d+\.\d+\n$/);
     assert.equal(stderr, `${NOTICE}\n`);
-    assert.equal(bodies.length, 1);
-    const { batch } = JSON.parse(bodies[0]) as { batch: { event: string; properties: { command: string } }[] };
+    await until(() => posthog.held.length === 1, "the batch");
+    const { batch } = JSON.parse(posthog.bodies[0]) as Batch;
     assert.deepEqual(batch.map((e) => [e.event, e.properties.command]), [["cli installed", "version"], ["cli command", "version"]]);
+    assert.equal(await exists(join(home, "install-counted")), false, "not counted before PostHog answers");
 
-    const again = await promisify(execFile)("node", [AEOM, "--version"], { env });
+    posthog.held[0].end("{}");
+    await until(() => exists(join(home, "install-counted")), "the install to be counted");
+
+    const again = await aeom(home, posthog.url);
     assert.equal(again.stderr, "");
-    assert.equal(bodies.length, 2);
+    await until(() => posthog.held.length === 2, "the second batch");
+    assert.deepEqual((JSON.parse(posthog.bodies[1]) as Batch).batch.map((e) => e.event), ["cli command"]);
+    posthog.held[1].end("{}");
   } finally {
-    server.close();
+    posthog.close();
     await rm(home, { recursive: true, force: true });
   }
 });

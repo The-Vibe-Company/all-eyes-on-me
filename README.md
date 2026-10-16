@@ -128,9 +128,9 @@ The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
 
 ## What it sends
 
-To know how many people install AEOM and use it, `aeom` sends one request to PostHog each time it runs: a random id made on the first run and kept in `~/.aeom/install-id`, AEOM's version, the OS, the architecture, Node's version and the command's name (`unknown` for one it does not know). Nothing about your project: no path, no repository, no argument, no capture, no email. PostHog sees the connection's address, from which it reads a country. The first run says so in one line on stderr.
+To know how many people install AEOM and use it, `aeom` sends one request to PostHog each time it runs: a random id made on the first run and kept in `~/.aeom/install-id`, AEOM's version, the OS, the architecture, Node's version and the command's name (`unknown` for one it does not know). Nothing about your project: no path, no repository, no argument, no capture, no email. Like any server, PostHog sees the connection's address: it keeps it, with the rough place it reads from it (country and city). The first run says so in one line on stderr.
 
-`AEOM_TELEMETRY=0` or `DO_NOT_TRACK=1` turns it off, and nothing is sent in CI. The request is given up after one second: a command never waits longer for it, nor fails because of it.
+`AEOM_TELEMETRY=0` or `DO_NOT_TRACK=1` turns it off, and nothing is sent in CI. The request leaves from a process of its own: a command never waits for it, nor fails because of it.
 
 ## Development
 

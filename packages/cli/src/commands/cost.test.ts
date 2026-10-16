@@ -16,7 +16,7 @@ test("aeom cost says what the latest run cost, role by role, from this machine's
   const project = join(root, "boutique");
   const home = join(root, "claude");
   const run = join(project, ".aeom", "runs", "run-20261010-1700");
-  const env = { ...process.env, AEOM_HOME: join(root, ".home"), CLAUDE_CONFIG_DIR: home };
+  const env = { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(root, ".home"), CLAUDE_CONFIG_DIR: home };
   try {
     await mkdir(run, { recursive: true });
     await writeFile(join(run, "state.json"), JSON.stringify({ run: "run-20261010-1700", started: "2026-10-10T15:00:00.000Z", phase: "done", step: null, options: [], vars: {}, branchAt: null, agents: [], history: [{ phase: "done", step: null, at: "2026-10-10T16:00:00.000Z" }] }));

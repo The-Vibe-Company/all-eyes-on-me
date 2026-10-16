@@ -1,7 +1,9 @@
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, link, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { arch, platform } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { aeomHome } from "@aeom/core";
 
 // The landing's PostHog project (site/analytics.mjs). Its project token is public:
@@ -10,7 +12,7 @@ export const POSTHOG_KEY = "phc_t2nnd67anazLHswBGWQNA62esC2v4im5PBaV7QhyhPKw";
 const POSTHOG_BATCH = "https://us.i.posthog.com/batch/";
 
 export const NOTICE =
-  "AEOM counts its installs and the commands they run: it sends a random id, its version, your OS and the command's name, never anything about your project. AEOM_TELEMETRY=0 turns it off.";
+  "AEOM counts its installs and the commands they run: it sends a random id, its version, your OS, its architecture, Node's version and the command's name, never anything about your project. AEOM_TELEMETRY=0 turns it off.";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -35,8 +37,10 @@ export function commandName(command: string | undefined, known: string[]): strin
 }
 
 /**
- * The install's random id, in `~/.aeom/install-id`: the run that makes it is the install.
- * Null when the id cannot be kept, so an unwritable home is not a new install on every run.
+ * The install's random id, in `~/.aeom/install-id`: the run that makes it is the first.
+ * The id appears whole or not at all (written aside, then linked into place), and a file
+ * that holds no id is replaced. Null when no id can be kept, so an unwritable home is not
+ * a new install on every run.
  */
 async function installId(home: string): Promise<{ id: string; first: boolean } | null> {
   const file = join(home, "install-id");
@@ -46,38 +50,64 @@ async function installId(home: string): Promise<{ id: string; first: boolean } |
   };
   const id = await kept();
   if (id) return { id, first: false };
+  const made = randomUUID();
+  const aside = `${file}.${made}`;
   try {
-    const made = randomUUID();
     await mkdir(home, { recursive: true });
-    await writeFile(file, `${made}\n`, { flag: "wx" });
+    await writeFile(aside, `${made}\n`);
+    try {
+      await link(aside, file);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") return null;
+      // Another aeom made it at the same moment: that one is the install.
+      const other = await kept();
+      if (other) return { id: other, first: false };
+      await rename(aside, file);
+    }
     return { id: made, first: true };
   } catch {
-    // Another aeom made it at the same moment: that one is the install.
-    const other = await kept();
-    return other ? { id: other, first: false } : null;
+    return null;
+  } finally {
+    await rm(aside, { force: true }).catch(() => {});
   }
+}
+
+/** Hands the batch to a detached process, so the command neither waits for it nor fails by it. */
+function sendAside(url: string, body: string, counted: string): void {
+  const sender = fileURLToPath(new URL("./telemetry-send.js", import.meta.url));
+  const child = spawn(process.execPath, [sender, url, body, counted], { detached: true, stdio: "ignore", windowsHide: true });
+  child.on("error", () => {});
+  child.unref();
 }
 
 export interface PingOptions {
   env?: NodeJS.ProcessEnv;
   home?: string;
-  fetchImpl?: typeof fetch;
-  timeoutMs?: number;
   warn?: (line: string) => void;
+  /** Sends the batch; `counted` is the file to write once PostHog has taken it. */
+  send?: (url: string, body: string, counted: string) => void;
 }
 
 /**
- * Tells PostHog this command ran, and the install on the first run, after saying so on stderr.
- * It never takes more than `timeoutMs` and never throws: a command never waits on it nor fails by it.
+ * Tells PostHog this command ran, and the install until PostHog has taken it, after
+ * saying so on stderr on the first run. It never throws and never waits on the network.
  */
 export async function ping(command: string, version: string, options: PingOptions = {}): Promise<void> {
   const env = options.env ?? process.env;
   if (!telemetryOn(env)) return;
-  const { fetchImpl = fetch, timeoutMs = 1000, warn = (line: string) => process.stderr.write(`${line}\n`) } = options;
+  const { warn = (line: string) => process.stderr.write(`${line}\n`), send = sendAside } = options;
   try {
-    const install = await installId(options.home ?? aeomHome());
+    const home = options.home ?? aeomHome();
+    const install = await installId(home);
     if (!install) return;
-    if (install.first) warn(NOTICE);
+    // Until a send of it succeeds, the install goes with each command: a first run that
+    // was offline is still counted, and an install is one id, however many times it came.
+    const counted = join(home, "install-counted");
+    if (install.first) {
+      warn(NOTICE);
+      await rm(counted, { force: true });
+    }
+    const pending = await access(counted).then(() => false, () => true);
     const properties = {
       distinct_id: install.id,
       command,
@@ -89,17 +119,13 @@ export async function ping(command: string, version: string, options: PingOption
       $process_person_profile: false,
     };
     const timestamp = new Date().toISOString();
-    const events = [...(install.first ? ["cli installed"] : []), "cli command"];
-    await fetchImpl(env.AEOM_TELEMETRY_URL || POSTHOG_BATCH, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        api_key: POSTHOG_KEY,
-        batch: events.map((event) => ({ event, distinct_id: install.id, properties, timestamp })),
-      }),
-      signal: AbortSignal.timeout(timeoutMs),
+    const events = [...(pending ? ["cli installed"] : []), "cli command"];
+    const body = JSON.stringify({
+      api_key: POSTHOG_KEY,
+      batch: events.map((event) => ({ event, distinct_id: install.id, properties, timestamp })),
     });
+    send(env.AEOM_TELEMETRY_URL || POSTHOG_BATCH, body, pending ? counted : "");
   } catch {
-    // Offline, slow or refused: the command goes on as if nothing was sent.
+    // Nothing about the ping may reach the command.
   }
 }
