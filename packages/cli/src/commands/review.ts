@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
-import { AppStartError, checkSite, guardJourneys, headerDifference, headerLinks, JourneyError, loadConfig, loadJourneys, pageShape, readStandard, replayJourneys, reviewCode, route, routeTouched, screensTouched, serveFolder, startApp, type Journey, type JourneyReport, type ProjectConfig } from "@aeom/core";
+import { AppStartError, checkSite, guardJourneys, headerDifference, headerLinks, JourneyError, loadConfig, loadJourneys, pageShape, readStandard, replayJourneys, reviewCode, route, routeTouched, screensTouched, serveFolder, startApp, STYLE_CHECKS, type Journey, type JourneyReport, type ProjectConfig } from "@aeom/core";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const REVIEW_HELP = `Usage: aeom review [--base <branch>] [--url <url> | --start "<command>" | --dir <folder>] [options]
@@ -114,6 +114,9 @@ export async function runReview(argv: string[]): Promise<number> {
   }
   const captured = await readFile(join(".aeom", "captures", "manifest.json"), "utf8").then((t) => (JSON.parse(t) as { pages?: { path: string }[] }).pages?.map((p) => p.path) ?? [], () => [] as string[]);
   const known = parsed.dir !== undefined ? [] : config.pages ?? captured;
+  // With the style kept, what impeccable bans on a screen is the charter's: said, never refused.
+  const keepStyle = config.style === "keep";
+  const charter: [string, string][] = [];
   const touched = screensTouched(changed, known, parsed.dir !== undefined ? { folder: parsed.dir } : {});
   const routes = touched.all && !touched.routes.length ? ["/"] : touched.routes;
   for (const shape of touched.unmeasured) notes.push(`${shape} was not measured: no route of its shape is known. Add one to "pages" in .aeom/config.json.`);
@@ -147,7 +150,8 @@ export async function runReview(argv: string[]): Promise<number> {
               const line = `${f.check}: ${f.element ? `${f.element}: ` : ""}${f.message}`;
               if (said.has(`${route(f.url)} ${line}`)) continue;
               said.add(`${route(f.url)} ${line}`);
-              rows.push([route(f.url), line]);
+              if (keepStyle && STYLE_CHECKS.includes(f.check)) charter.push([route(f.url), `${line}: the charter's, kept, said, not refused`]);
+              else rows.push([route(f.url), line]);
             }
             for (const e of report.errors) rows.push([route(e.url), `does not load: ${e.reason}`]);
             // The header of each screen touched, against the one most screens it did not touch share.
@@ -245,12 +249,12 @@ export async function runReview(argv: string[]): Promise<number> {
 
   const lines = [`${branch} against ${base}, held to .aeom/standard.md: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
   const shown = rows.slice(0, MOST);
-  const column = Math.max(0, ...shown.map(([where]) => where.length), ...passed.map((n) => n.length), ...features.map(([w]) => w.length)) + 2;
+  const column = Math.max(0, ...shown.map(([where]) => where.length), ...passed.map((n) => n.length), ...features.map(([w]) => w.length), ...charter.map(([w]) => w.length)) + 2;
   for (const [where, what] of shown) lines.push(`✗ ${where.padEnd(column)}${what}`);
   if (rows.length > MOST) lines.push(`… and ${rows.length - MOST} more: the branch rewrites more than it changes.`);
   for (const name of passed) lines.push(`✓ ${name.padEnd(column)}still reaches its end`);
-  for (const [where, what] of features) lines.push(`⚠ ${where.padEnd(column)}${what}`);
-  if (rows.length || passed.length || features.length) lines.push("");
+  for (const [where, what] of [...features, ...charter]) lines.push(`⚠ ${where.padEnd(column)}${what}`);
+  if (rows.length || passed.length || features.length || charter.length) lines.push("");
   if (reviewShots) notes.push(`The journeys' captures are in .aeom/review/, which git does not ignore: add .aeom/review/ to .gitignore, so no capture enters a commit.`);
   if (uncommitted) notes.push(`${uncommitted} uncommitted file${uncommitted === 1 ? "" : "s"} not reviewed: commit ${uncommitted === 1 ? "it" : "them"} first.`);
   if (notes.length) lines.push(...notes, "");
@@ -268,9 +272,9 @@ export async function runReview(argv: string[]): Promise<number> {
     const md = [`## aeom review`, "", `${asCode(branch)} against ${asCode(base)}, held to ${asCode(".aeom/standard.md")}: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
     for (const [where, what] of shown) md.push(`- ${asCode(where)} ${text(what)}`);
     for (const name of passed) md.push(`- ✓ ${text(name)} still reaches its end`);
-    for (const [where, what] of features) md.push(`- ⚠ ${text(where)}: ${text(what)}`);
+    for (const [where, what] of [...features, ...charter]) md.push(`- ⚠ ${text(where)}: ${text(what)}`);
     if (rows.length > MOST) md.push(`- … and ${rows.length - MOST} more.`);
-    if (shown.length || passed.length || features.length) md.push("");
+    if (shown.length || passed.length || features.length || charter.length) md.push("");
     for (const note of notes) md.push(note.startsWith("The app did not start") && startFailure ? `The app did not start: ${startFailure}` : text(note), "");
     md.push(`**${text(lines.at(-1)!)}**`, "");
     await appendFile(parsed.summary, md.join("\n"));

@@ -1,6 +1,10 @@
 export { checkClipped } from "./clipped.js";
 export { checkContrast } from "./contrast.js";
+export { checkBounce } from "./bounce.js";
 export { checkFocus } from "./focus.js";
+export { checkGradientText } from "./gradient-text.js";
+export { checkNestedCard } from "./nested-card.js";
+export { checkSideStripe } from "./side-stripe.js";
 export { checkFontSize } from "./font-size.js";
 export { checkImages } from "./images.js";
 export { checkLabels } from "./labels.js";

@@ -6,12 +6,16 @@ import { openPage } from "../capture/open.js";
 import type { SignedIn } from "../capture/sign-in.js";
 import { route } from "../capture/capture.js";
 import { pageShape } from "../capture/shape.js";
+import { checkBounce } from "./bounce.js";
 import { checkClipped } from "./clipped.js";
 import { checkContrast } from "./contrast.js";
 import { watchConsole } from "./console.js";
 import { checkCursor } from "./cursor.js";
 import { checkFocus } from "./focus.js";
 import { checkFontSize } from "./font-size.js";
+import { checkGradientText } from "./gradient-text.js";
+import { checkNestedCard } from "./nested-card.js";
+import { checkSideStripe } from "./side-stripe.js";
 import { checkImages } from "./images.js";
 import { checkLabels } from "./labels.js";
 import { checkLayoutShift } from "./layout-shift.js";
@@ -25,7 +29,7 @@ import { checkUneven } from "./uneven.js";
 import { checkWrap } from "./wrap.js";
 import type { CheckName, Finding, Issue } from "./types.js";
 
-export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift"];
+export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce"];
 
 /** The routes where a check does not apply, by check, as the config says: a landing page whose header scrolls away on purpose. */
 export type CheckExceptions = Partial<Record<CheckName, string[]>>;
@@ -43,8 +47,8 @@ export interface CheckReport {
 /**
  * Runs every check on every page. Overflow, the header, labels that wrap,
  * uneven rows and cut text are checked at each width, since each width lays
- * the page out anew; cursor, contrast and console once per page, at the
- * widest width.
+ * the page out anew; cursor, contrast, console and what impeccable bans once
+ * per page, at the widest width.
  */
 export async function checkPages(browser: Browser, urls: string[], widths: number[] = DEFAULT_WIDTHS, signedIn?: SignedIn): Promise<Finding[]> {
   const widest = Math.max(...widths);
@@ -86,6 +90,11 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
           await add("console", () => consoleIssues());
           await add("images", () => checkImages(page));
           await add("labels", () => checkLabels(page));
+          // What impeccable bans, read from the styles: the same at every width.
+          await add("gradient-text", () => checkGradientText(page));
+          await add("side-stripe", () => checkSideStripe(page));
+          await add("nested-card", () => checkNestedCard(page));
+          await add("bounce", () => checkBounce(page));
           // Last: it walks the page with the keyboard.
           await add("focus", () => checkFocus(page));
         }
