@@ -49,7 +49,7 @@ createServer(async (req, res) => {
       res.end("Method Not Allowed");
       return;
     }
-    const answer = path === "/api/stats" ? statsResponse(asRequest(req)) : await starsResponse();
+    const answer = path === "/api/stats" ? await statsResponse(asRequest(req)) : await starsResponse();
     await send(res, answer);
     return;
   }
