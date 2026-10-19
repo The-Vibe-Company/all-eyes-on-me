@@ -64,6 +64,24 @@ test("aeom review holds the branch's changes to the standard: the code, with its
   }
 });
 
+test("with the style kept, text filled with a gradient on a screen is the charter's: said, never refused", async () => {
+  git("checkout", "-q", "-b", "feat/marque");
+  await writeFile(join(dir, "front", "marque.html"), page(["Accueil", "Produits"], `<h1 style="background:linear-gradient(90deg,var(--petrole),#111);-webkit-background-clip:text;background-clip:text;color:transparent">Boutique</h1>`));
+  git("add", ".");
+  git("commit", "-q", "-m", "marque");
+  try {
+    const held = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280"]);
+    assert.match(held.out, /✗ \/marque\.html\s+gradient-text: h1 "Boutique": its text is filled with a gradient/, held.out);
+    await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
+    const kept = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280"]);
+    assert.match(kept.out, /⚠ \/marque\.html\s+gradient-text: h1 "Boutique": .*: the charter's, kept, said, not refused/, kept.out);
+    assert.doesNotMatch(kept.out, /✗ \/marque\.html\s+gradient-text/);
+  } finally {
+    await rm(join(dir, ".aeom", "config.json"), { force: true });
+    git("checkout", "-q", "main");
+  }
+});
+
 test("a branch that touches no screen passes without starting anything; with no standard, aeom review says to run /aeom first", async () => {
   git("checkout", "-q", "-b", "fix/server");
   await writeFile(join(dir, "server.mjs"), "// the back, fixed\n");

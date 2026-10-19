@@ -50,7 +50,7 @@ it is unchanged, and nobody is sent back for it. Writes ratchet.json in
 
 Options:
   --strict             Exit with 1 when anything that passed before fails after
-  --keep-style         Leave out the principles that judge the charter itself
+  --keep-style         Leave out the principles and checks that judge the charter itself
                        (also when .aeom/config.json says "style": "keep")
   --journeys           Compare journeys, not pages
   --duels <dir>        The judges' duel votes (default <after-dir>/duels)

@@ -502,6 +502,7 @@ describe("gradient-text", () => {
       <h1 class="hero" style="background:linear-gradient(90deg,#7c3aed,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent">Ship faster</h1>
       <h2 style="background:linear-gradient(90deg,#eee,#ddd)">A gradient behind the text, not in it</h2>
       <p style="-webkit-background-clip:text;background-clip:text;background-color:#333;color:transparent">Clipped, but one colour</p>
+      <h2 class="solid" style="background:linear-gradient(90deg,#7c3aed,#2563eb);-webkit-background-clip:text;background-clip:text;color:#111">A solid fill over it</h2>
       <h3 style="background:linear-gradient(90deg,#7c3aed,#2563eb);background-clip:text;color:transparent;display:none">Hidden</h3>`);
     const issues = await checkGradientText(page);
     assert.deepEqual(issues.map((i) => i.element), ['h1.hero "Ship faster"']);
@@ -516,9 +517,12 @@ describe("side-stripe", () => {
       <ul style="padding:0"><li class="item" style="border:1px solid #eee;border-right:3px solid #2563eb;padding:8px;list-style:none">Right stripe</li></ul>
       <div style="border:2px solid #2563eb;padding:12px">Full border</div>
       <nav><a href="/a" style="display:inline-block;border-right:1px solid #ddd;padding:8px">Hairline</a></nav>
-      <div style="border-left:4px solid transparent;background:#eee;padding:12px">Transparent</div>`);
+      <div style="border-left:4px solid transparent;background:#eee;padding:12px">Transparent</div>
+      <div style="border-left:4px solid oklch(0.6 0.2 25 / 0);background:#eee;padding:12px">Transparent, written in oklch</div>
+      <div class="note" style="background:#f5f5f5;border-left:3px solid #333;padding:12px">A dark grey stands out</div>
+      <div class="pane" style="background:#fafafa;border-right:2px solid #e5e5e5;padding:16px;width:200px">A pale grey divides</div>`);
     const issues = await checkSideStripe(page);
-    assert.deepEqual(issues.map((i) => i.element), ['div.callout "Heads up"', 'li.item "Right stripe"']);
+    assert.deepEqual(issues.map((i) => i.element), ['div.callout "Heads up"', 'li.item "Right stripe"', 'div.note "A dark grey stands out"']);
     assert.match(issues[0]!.message, /a 4 px coloured border on its left side only/);
   });
 });
@@ -530,7 +534,7 @@ describe("nested-card", () => {
       <section class="panel" style="${card}">
         <div class="grid">
           <div class="item" style="${card}"><h3>One</h3><p>A line</p></div>
-          <div class="item" style="box-shadow:0 2px 8px rgba(0,0,0,.2);border-radius:12px;padding:16px"><h3>Two</h3><p>A line</p></div>
+          <div class="item" style="box-shadow:0 2px 8px oklab(0 0 0 / 0.2);border-radius:12px;padding:16px"><h3>Two</h3><p>A line</p></div>
         </div>
       </section>
       <section class="panel" style="${card}"><div class="item" style="${card}"><h3>Three</h3></div></section>
@@ -547,19 +551,27 @@ describe("bounce", () => {
       <style>
         @keyframes pop { from { transform: scale(0) } to { transform: scale(1) } }
         .badge { animation: pop 10s cubic-bezier(.68,-0.55,.27,1.55) }
+        @keyframes wobble { from { transform: rotate(0); animation-timing-function: cubic-bezier(.5,-0.6,.5,1.6) } to { transform: rotate(10deg) } }
+        .wobble { animation: wobble 10s }
       </style>
+      <div class="spring" style="transition:transform .5s linear(0, 1.2 60%, 1)">Spring</div>
+      <div class="wobble">Wobbles</div>
+      <div class="inside" style="transition:transform .3s cubic-bezier(.5,1.1,.5,.5)">Stays inside</div>
+      <div class="nothing" style="transition-property:none;transition-duration:.3s;transition-timing-function:cubic-bezier(.34,1.56,.64,1)">Moves nothing</div>
       <button class="pop" style="transition:transform .3s cubic-bezier(.34,1.56,.64,1)">Pop</button>
       <button class="pop" style="transition:transform .3s cubic-bezier(.34,1.56,.64,1)">Again</button>
       <span class="badge">New</span>`);
     const issues = await checkBounce(page);
-    assert.deepEqual(issues.map((i) => i.element), ['button.pop "Pop"', 'span.badge "New"']);
-    assert.match(issues[0]!.message, /^its transition overshoots \(cubic-bezier\(0\.34, 1\.56, 0\.64, 1\)\), a bounce/);
-    assert.match(issues[1]!.message, /^its animation pop overshoots/);
+    assert.deepEqual(issues.map((i) => i.element), ['div.spring "Spring"', 'button.pop "Pop"', 'span.badge "New"', 'div.wobble "Wobbles"']);
+    assert.match(issues[1]!.message, /^its transition overshoots \(cubic-bezier\(0\.34, 1\.56, 0\.64, 1\)\), a bounce/);
+    assert.match(issues[0]!.message, /^its transition overshoots \(linear\(/);
+    assert.match(issues[2]!.message, /^its animation pop overshoots/);
+    assert.match(issues[3]!.message, /^its animation wobble overshoots \(cubic-bezier\(0\.5, -0\.6, 0\.5, 1\.6\)\)/);
   });
 });
 
 describe("what impeccable bans, and what good fronts still do", () => {
-  test("a card holding fields, buttons, a chip, an image, code or a drop zone; a drawn screen; a chat bubble; a ticket deep in a board; a quote or a lead's rule; table rules; a tab's underline; a skip link; an accordion; fades and slides", async () => {
+  test("a card holding fields, buttons, a chip, an image, code or a drop zone; a drawn screen; a chat bubble; a ticket deep in a board; a quote or a lead's rule; table rules; a tab's underline; a skip link; an accordion; fades and slides; a link, a table's frame, a search box, tabs, an alert, a radio tile, a details, a ring and a dialog in a card", async () => {
     const card = "border:1px solid #ddd;border-radius:12px;padding:16px";
     const page = await pageWith(`
       <form class="card" style="${card}">
@@ -578,6 +590,18 @@ describe("what impeccable bans, and what good fronts still do", () => {
       <div class="chat" style="${card}"><div><p class="bubble" style="border:1px solid #ddd;border-radius:16px;padding:8px 12px;width:200px">A message, text alone</p></div></div>
       <div class="board" style="${card}"><div class="col"><div class="list"><div class="row"><div class="ticket" style="${card}"><b>ENG-1</b><p>Deep in a board</p></div></div></div></div></div>
       <div class="accordion" style="transition:height .3s ease-out">An accordion that eases out</div>
+      <section class="settings" style="${card}">
+        <h2>Settings</h2>
+        <a class="cta" href="/start" style="display:block;border:1px solid #333;border-radius:8px;padding:24px"><span>Start for free</span></a>
+        <div class="frame" style="border:1px solid #ddd;border-radius:6px"><div class="scroll" style="overflow:auto"><table><tr><td>One</td></tr><tr><td>Two</td></tr><tr><td>Three</td></tr></table></div></div>
+        <div class="search" style="border:1px solid #ccc;border-radius:8px;padding:4px"><input style="border:0;height:64px;width:300px"></div>
+        <div role="tablist" style="${card}"><button role="tab">Month</button><button role="tab">Year</button></div>
+        <div role="alert" style="${card}"><strong>Saved</strong><p>Your changes are kept.</p></div>
+        <label class="tile" style="${card};display:block"><input type="radio" name="plan"> <span>Monthly</span></label>
+        <details style="${card}"><summary>More</summary><p>Hidden text</p></details>
+        <div class="ring" style="box-shadow:0 0 0 0 #000;border-radius:8px;padding:24px"><p>A ring of nothing</p></div>
+        <dialog open style="${card};position:static"><div class="inner" style="${card}"><h3>In a dialog</h3></div></dialog>
+      </section>
       <table style="border-collapse:collapse"><tr><td style="border-left:2px solid #333;padding:8px">Cell</td></tr></table>
       <div role="tablist"><a href="/a" style="display:inline-block;border-bottom:3px solid #2563eb;padding:8px">Active tab</a></div>
       <aside style="border-right:1px solid #e5e5e5;padding:16px;width:200px">Sidebar</aside>

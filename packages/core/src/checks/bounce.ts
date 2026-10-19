@@ -2,20 +2,30 @@ import type { Page } from "playwright";
 import type { Issue } from "./types.js";
 
 /**
- * Motion never bounces (impeccable's laws): no transition or animation whose easing
- * overshoots its end and comes back. Read from what each element is given, so a
- * transition that has not run yet is still seen. Said once per kind of element and easing.
+ * Motion never bounces (impeccable's laws): no transition or animation whose easing goes
+ * past its end and comes back, a cubic-bezier whose curve leaves 0 to 1 or a linear()
+ * spring. Read from what each element is given, so a transition that has not run yet is
+ * still seen, and from the keyframes of the animations running. Said once per kind of
+ * element and easing.
  */
 export async function checkBounce(page: Page): Promise<Issue[]> {
   return page.evaluate(() => {
     const list = (value: string) => value.split(/,(?![^(]*\))/).map((v) => v.trim());
     const seconds = (value: string) => (value.endsWith("ms") ? parseFloat(value) / 1000 : parseFloat(value)) || 0;
-    /** An easing that goes past its end and comes back: a y of its curve outside 0 to 1. */
+    const outside = (y: number) => y > 1.001 || y < -0.001;
+    /** Whether an easing goes past its end: the curve sampled, or the points of linear(). */
     const overshoots = (easing: string) => {
-      const m = easing.match(/^cubic-bezier\(([^)]*)\)$/);
-      if (!m) return false;
-      const [, y1, , y2] = m[1]!.split(",").map((n) => parseFloat(n));
-      return [y1!, y2!].some((y) => y < 0 || y > 1);
+      const bezier = easing.match(/^cubic-bezier\(([^)]*)\)$/);
+      if (bezier) {
+        const [, y1, , y2] = bezier[1]!.split(",").map((n) => parseFloat(n)) as [number, number, number, number];
+        for (let i = 1; i < 64; i++) {
+          const t = i / 64;
+          if (outside(3 * (1 - t) ** 2 * t * y1 + 3 * (1 - t) * t ** 2 * y2 + t ** 3)) return true;
+        }
+        return false;
+      }
+      const points = easing.match(/^linear\((.*)\)$/);
+      return points ? points[1]!.split(",").some((point) => outside(parseFloat(point))) : false;
     };
     const kind = (el: Element) => `${el.tagName.toLowerCase()}${[...el.classList].map((c) => `.${c}`).join("")}`;
     const name = (el: Element) => {
@@ -34,9 +44,9 @@ export async function checkBounce(page: Page): Promise<Issue[]> {
       const s = getComputedStyle(el);
       const durations = list(s.transitionDuration);
       const easings = list(s.transitionTimingFunction);
-      list(s.transitionProperty).forEach((_, i) => {
+      list(s.transitionProperty).forEach((prop, i) => {
         const easing = easings[i % easings.length]!;
-        if (seconds(durations[i % durations.length]!) > 0 && overshoots(easing)) say(el, easing, "its transition");
+        if (prop !== "none" && seconds(durations[i % durations.length]!) > 0 && overshoots(easing)) say(el, easing, "its transition");
       });
       const animDurations = list(s.animationDuration);
       const animEasings = list(s.animationTimingFunction);
@@ -44,6 +54,14 @@ export async function checkBounce(page: Page): Promise<Issue[]> {
         const easing = animEasings[i % animEasings.length]!;
         if (anim !== "none" && seconds(animDurations[i % animDurations.length]!) > 0 && overshoots(easing)) say(el, easing, `its animation ${anim}`);
       });
+    }
+    // An easing set inside the keyframes themselves.
+    for (const animation of document.getAnimations()) {
+      const target = (animation.effect as KeyframeEffect | null)?.target;
+      if (!target || !(animation instanceof CSSAnimation)) continue;
+      for (const frame of (animation.effect as KeyframeEffect).getKeyframes()) {
+        if (frame.easing && overshoots(frame.easing)) say(target, frame.easing, `its animation ${animation.animationName}`);
+      }
     }
     return out;
   });
