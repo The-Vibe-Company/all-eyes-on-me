@@ -1,0 +1,50 @@
+skills/aeom/phase-wave.md
+  s_507cebee60b5bb::t_3b8a97d12c29c5 42,46,66
+skills/aeom/SKILL.md
+  s_507cebee60b5bb::t_3b8a97d12c29c5 76,80,138
+packages/cli/src/commands/review.ts
+  s_507cebee60b5bb::t_c6388004c66aa4 8,117-119,153-154,252,256-257,275,277
+packages/cli/src/commands/run.ts
+  s_507cebee60b5bb::t_3b8a97d12c29c5 53
+packages/core/src/checks/bounce.ts
+  s_507cebee60b5bb::t_34c1c1706bba84 5-9,15-16,18-28,47,49,58-64
+  s_71a7332dc6ab6f::t_c0666602abcc69 65
+packages/core/src/checks/nested-card.ts
+  s_507cebee60b5bb::t_8127b2c1dea49b 49
+  s_507cebee60b5bb::t_bb05ec73d402ce 5-11,15-27,29-40,42-44,46,51-52,57,59-65,74-76,88
+  s_507cebee60b5bb::t_e966073f0a3feb 47-48,50
+packages/core/src/checks/side-stripe.ts
+  s_507cebee60b5bb::t_726413e10304ef 7-11,15-41,44,53-55,57-58,60-63
+packages/cli/src/commands/review.test.ts
+  s_507cebee60b5bb::t_c6388004c66aa4 67-84
+packages/core/src/checks/gradient-text.ts
+  s_507cebee60b5bb::t_f48a0847ed91f6 5-7,10-20,25-26,34-35
+packages/core/src/checks/checks.test.ts
+  s_507cebee60b5bb::t_e966073f0a3feb 596
+  s_507cebee60b5bb::t_e52393236ca54a 574
+  s_507cebee60b5bb::t_639b6494accdf4 505,520-523,525,537,554-555,557-560,565-569,593-595,597-604
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bdc4e658be913b127c22c8de21e1404275612395",
+  "prompts": {},
+  "sessions": {
+    "s_507cebee60b5bb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "927fff29-fef5-4c6d-87e1-a1e7d108b975",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    },
+    "s_71a7332dc6ab6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "90f2184a-4777-4dfb-81f7-2a403ba81f99",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
