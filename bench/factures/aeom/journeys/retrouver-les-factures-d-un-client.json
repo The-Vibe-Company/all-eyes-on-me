@@ -1,0 +1,29 @@
+{
+  "name": "Retrouver les factures d'un client",
+  "steps": [
+    {
+      "do": "open",
+      "path": "/"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "link",
+        "name": "Clients"
+      },
+      "lands": "/clients"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "link",
+        "name": "Voir les factures",
+        "nth": 3
+      }
+    },
+    {
+      "do": "see",
+      "text": "F-2026-008"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "app": "factures",
+  "noted": "Noted by hand on 19 October 2026, from the app's code and its captures at 390 and 1280 px, before any AEOM run; not from AEOM's checks or judges. Built by an agent (Sonnet) from an ordinary request, without AEOM.",
+  "defects": [
+    { "id": "ai-default-look", "where": "*", "what": "Cream paper and serif headlines on every page: the look an AI proposes by default when asked for something nice and modern.", "match": ["not-ai-default", "not-generic"] },
+    { "id": "phone-line-fields-unlabeled", "where": "/factures/nouvelle", "what": "On a phone, an invoice line's quantity and price fields have no visible label: « 1 » and « 0,00 » side by side, the column headers hidden.", "match": ["labels", "hierarchy"] },
+    { "id": "phone-invoice-lines-squeezed", "where": "/factures/F-2026-006", "what": "On a phone, the invoice's lines squeeze the description into four lines, start a line with « : », and hide the amount of each line.", "match": ["wrap", "clipped", "density"] },
+    { "id": "create-means-sent", "where": "Créer une facture", "what": "The button says « Créer la facture », and the invoice it creates is marked « Envoyée » though nothing was sent to anyone.", "match": ["same-words", "result-shown"] },
+    { "id": "same-link-text", "where": "/clients", "what": "Six links say « Voir les factures », one per client: a screen reader cannot tell them apart.", "match": ["labels"] }
+  ]
+}

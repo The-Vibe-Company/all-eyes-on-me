@@ -15,6 +15,7 @@ import { runReview } from "./commands/review.js";
 import { runStandard } from "./commands/standard.js";
 import { runEstimate } from "./commands/estimate.js";
 import { runCost } from "./commands/cost.js";
+import { runBench } from "./commands/bench.js";
 import { runRunState } from "./commands/run-state.js";
 import { runVerdict } from "./commands/verdict.js";
 import { commandName, ping } from "./telemetry.js";
@@ -45,6 +46,7 @@ Commands:
   standard    Write the standard of the front, keeping the user's edits
   estimate    Say what a run would cost, phase by phase, before it starts
   cost        Say what a run really cost, role by role, from this machine's transcripts
+  bench       Run AEOM on apps whose defects were noted by hand, and count what it found and fixed
   run         Keep where a run is, and say how to take it up after a stop
   review      Hold a branch's changes to the standard of the front, with no model
 
@@ -69,6 +71,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   pr: runPr,
   estimate: runEstimate,
   cost: runCost,
+  bench: runBench,
   run: runRunState,
   standard: runStandard,
   review: runReview,

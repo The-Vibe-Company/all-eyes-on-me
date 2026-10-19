@@ -1,0 +1,12 @@
+{
+  "name": "Annuler une réservation",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "role": "link", "name": "Mes réservations", "within": { "role": "navigation", "name": "Navigation principale" } }, "lands": "/reservations.html" },
+    { "do": "fill", "target": { "role": "textbox", "name": "L’e-mail utilisé pour réserver" }, "value": "camille@example.com" },
+    { "do": "click", "target": { "role": "button", "name": "Afficher" } },
+    { "do": "click", "target": { "role": "button", "name": "Annuler la réservation", "nth": 1 } },
+    { "do": "click", "target": { "role": "button", "name": "Oui, annuler" } },
+    { "do": "see", "text": "Réservation annulée" }
+  ]
+}

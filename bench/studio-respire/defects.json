@@ -1,0 +1,9 @@
+{
+  "app": "studio-respire",
+  "noted": "Noted by hand on 19 October 2026, from the app's code and its captures at 390 and 1280 px, before any AEOM run; not from AEOM's checks or judges. Built by an agent (Sonnet) from an ordinary request, without AEOM.",
+  "defects": [
+    { "id": "ai-default-look", "where": "*", "what": "Cream paper, a large serif headline with one word in terracotta italics: the look an AI proposes by default when asked for something nice and modern.", "match": ["not-ai-default", "not-generic"] },
+    { "id": "phone-slots-uneven", "where": "/", "what": "On a phone, a class whose places say « Plus que 3 places » wraps onto one more line, and its card is taller than the others in the list.", "match": ["wrap", "uneven"] },
+    { "id": "show-button-misaligned", "where": "/reservations.html", "what": "On a computer, the « Afficher » button sits lower than the e-mail field it goes with.", "match": ["grid", "uneven"] }
+  ]
+}

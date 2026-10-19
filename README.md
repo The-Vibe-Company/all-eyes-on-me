@@ -94,6 +94,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 | `aeom standard` | Write the standard of the front, keeping the user's edits |
 | `aeom estimate` | Say what a run would cost, phase by phase, before it starts |
 | `aeom cost` | Say what a run really cost, role by role, from this machine's transcripts |
+| `aeom bench` | Run AEOM on apps whose defects were noted by hand, and count what it found and fixed |
 | `aeom run` | Keep where a run is, and say how to take it up after a stop |
 | `aeom review` | Hold a branch's changes to the standard of the front, with no model |
 

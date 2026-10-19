@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Respire · Yoga à Lyon</title>
+  <meta name="description" content="Studio Respire, petit studio de yoga à Lyon : le planning de la semaine, des cours en petits groupes, réservation en ligne.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="Studio Respire, accueil">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.25" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="16" r="7" fill="currentColor"/></svg>
+        <span class="brand-name">Respire<small>Studio de yoga · Lyon</small></span>
+      </a>
+      <nav class="site-nav" aria-label="Navigation principale">
+        <a href="/" aria-current="page">Planning</a>
+        <a href="/reservations.html">Mes réservations</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Studio de yoga · Lyon 1<sup>er</sup></p>
+          <h1>Prenez le temps de <em>respirer</em>.</h1>
+          <p class="lead">Des cours en petits groupes, quatre professeurs, deux salles au pied de la Croix-Rousse. Choisissez votre créneau, réservez votre place en trente secondes.</p>
+          <a class="btn" href="#planning">Voir le planning</a>
+        </div>
+        <div class="breath" aria-hidden="true">
+          <span class="ring r3"></span>
+          <span class="ring r2"></span>
+          <span class="ring r1"></span>
+          <span class="breath-label"><span class="in">Inspirez</span><span class="out">Expirez</span></span>
+        </div>
+      </section>
+
+      <section class="section" id="planning" aria-labelledby="planning-title">
+        <div class="section-head">
+          <h2 id="planning-title">La semaine au studio</h2>
+          <div class="chips" id="day-chips" role="group" aria-label="Filtrer par jour"></div>
+        </div>
+        <div id="planning-list" aria-live="polite" aria-busy="true"><p class="loading">Chargement du planning…</p></div>
+      </section>
+
+      <section class="section" aria-labelledby="team-title">
+        <div class="section-head"><h2 id="team-title">Ceux qui vous accueillent</h2></div>
+        <div class="team" id="team-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Studio Respire · 14 rue des Capucins, 69001 Lyon</span>
+      <span>Site de démonstration : données et réservations fictives. <a href="/contact.html">Contact</a></span>
+    </div>
+  </footer>
+  <script type="module" src="/js/planning.js"></script>
+</body>
+</html>

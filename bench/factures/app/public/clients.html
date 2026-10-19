@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clients · Factures</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/"><img src="/favicon.svg" alt="">Factures</a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="/">Tableau de bord</a>
+        <a href="/factures">Factures</a>
+        <a href="/clients" aria-current="page">Clients</a>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="/factures/nouvelle">Nouvelle facture</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-head">
+      <div>
+        <h1>Clients</h1>
+        <p class="sub" id="sub">Pour qui vous travaillez, et ce qu'ils vous doivent.</p>
+      </div>
+    </div>
+
+    <div class="cards" id="cards"><p class="skeleton">Chargement…</p></div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script src="/clients.js"></script>
+</body>
+</html>

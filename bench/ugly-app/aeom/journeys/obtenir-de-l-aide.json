@@ -1,0 +1,8 @@
+{
+  "name": "Obtenir de l'aide",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "role": "link", "name": "Aide" }, "lands": "/aide" },
+    { "do": "see", "text": "Aide" }
+  ]
+}

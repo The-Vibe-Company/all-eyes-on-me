@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nouvelle facture · Factures</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/"><img src="/favicon.svg" alt="">Factures</a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="/">Tableau de bord</a>
+        <a href="/factures" aria-current="page">Factures</a>
+        <a href="/clients">Clients</a>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="/factures/nouvelle">Nouvelle facture</a>
+    </div>
+  </header>
+
+  <main>
+    <a class="back" href="/factures">← Factures</a>
+    <div class="page-head">
+      <div>
+        <h1>Nouvelle facture</h1>
+        <p class="sub">Choisissez le client, ajoutez vos lignes. Le numéro est attribué à la création.</p>
+      </div>
+    </div>
+
+    <form class="form-sheet" id="form" novalidate>
+      <div class="alert" id="error" role="alert" hidden></div>
+
+      <div class="fields">
+        <div class="field">
+          <label for="client">Client</label>
+          <select id="client" name="client" required>
+            <option value="">Choisir un client…</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="issue">Date d'émission</label>
+          <input id="issue" name="issue" type="date" required>
+        </div>
+        <div class="field">
+          <label for="due">Échéance</label>
+          <input id="due" name="due" type="date" required>
+        </div>
+      </div>
+
+      <div class="lines">
+        <div class="line-row head" aria-hidden="true">
+          <span>Libellé</span><span class="right">Quantité</span><span class="right">Prix unitaire (€)</span><span class="right">Montant</span><span></span>
+        </div>
+        <div id="lines"></div>
+        <button class="btn btn-sm" type="button" id="add-line">+ Ajouter une ligne</button>
+      </div>
+
+      <div class="form-foot">
+        <p class="sub" style="margin:0;color:var(--muted);max-width:36ch">Une facture créée est considérée comme envoyée. Gardez-la en brouillon pour la finir plus tard.</p>
+        <div class="total-box">
+          <div class="label">Total</div>
+          <div class="value num" id="total" aria-live="polite">0,00 €</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" type="submit" value="draft">Enregistrer en brouillon</button>
+        <button class="btn btn-primary" type="submit" value="sent">Créer la facture</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="/app.js"></script>
+  <script src="/new-invoice.js"></script>
+</body>
+</html>

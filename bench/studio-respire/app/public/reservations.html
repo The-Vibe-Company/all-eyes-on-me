@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mes réservations · Studio Respire</title>
+  <meta name="description" content="Retrouvez vos réservations au Studio Respire à partir de votre adresse e-mail, et annulez-en une si besoin.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="Studio Respire, accueil">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.25" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="16" r="7" fill="currentColor"/></svg>
+        <span class="brand-name">Respire<small>Studio de yoga · Lyon</small></span>
+      </a>
+      <nav class="site-nav" aria-label="Navigation principale">
+        <a href="/">Planning</a>
+        <a href="/reservations.html" aria-current="page">Mes réservations</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <section class="page-head">
+        <p class="eyebrow">Votre espace</p>
+        <h1>Mes réservations</h1>
+        <form class="lookup" id="lookup" novalidate>
+          <div class="field">
+            <label for="email">L’e-mail utilisé pour réserver</label>
+            <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="email-error" placeholder="prenom@exemple.fr">
+            <p class="field-error" id="email-error"></p>
+          </div>
+          <button class="btn" type="submit">Afficher</button>
+        </form>
+        <p class="hint">Pour essayer : <button class="linklike" type="button" id="try-demo">camille@example.com</button></p>
+      </section>
+
+      <section class="results" id="results" aria-live="polite"></section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Studio Respire · 14 rue des Capucins, 69001 Lyon</span>
+      <span>Site de démonstration : données et réservations fictives. <a href="/contact.html">Contact</a></span>
+    </div>
+  </footer>
+  <script type="module" src="/js/reservations.js"></script>
+</body>
+</html>
