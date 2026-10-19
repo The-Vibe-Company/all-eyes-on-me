@@ -11,7 +11,7 @@ import { DEFAULT_WIDTHS, route, usableWidths } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { blockedJourneys } from "./features.js";
 import type { FeedbackCategory } from "./taste.js";
-import { STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
+import { STYLE_CHECKS, STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
 
 /** What `aeom verdict --out` keeps of a verdict. */
 export interface SavedVerdict {
@@ -125,7 +125,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const reports = async (dir: string) => ({ check: (await json<CheckReport>(join(runDir, dir, "reports", "check.json"))) ?? undefined, judge: (await json<JudgeReport>(join(runDir, dir, "reports", "judge.json"))) ?? undefined });
   const was = await reports("before");
   const now = last ? await reports(last) : null;
-  const ignore = keepStyle ? STYLE_PRINCIPLES : [];
+  const ignore = keepStyle ? [...STYLE_PRINCIPLES, ...STYLE_CHECKS] : [];
   const comparison = now ? comparePages(scorePages(was.check, was.judge, ignore), scorePages(now.check, now.judge, ignore)) : [];
 
   // What section 5 decided, page by page: a page that got better is kept, any other is put back.

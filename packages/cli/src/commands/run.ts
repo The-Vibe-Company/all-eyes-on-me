@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { comparePages, ConfigError, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { comparePages, ConfigError, STYLE_CHECKS, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
@@ -101,7 +101,7 @@ export async function runCompare(argv: string[]): Promise<number> {
     console.error(`Nothing compared: ${beforeDir} was ${what} at ${differ[0]} and ${afterDir} at ${differ[1]}: compare two measures made at the same widths. Capture, check and judge ${afterDir} again with the run's --widths "$WIDTHS". Nothing got better or worse.`);
     return 1;
   }
-  // With the style kept, the principles that judge the charter itself say nothing of what the run did.
+  // With the style kept, the principles and checks that judge the charter itself say nothing of what the run did.
   let keepStyle = Boolean(values["keep-style"]);
   try {
     keepStyle ||= (await loadConfig()).style === "keep";
@@ -110,7 +110,7 @@ export async function runCompare(argv: string[]): Promise<number> {
     console.error(error.message);
     return 1;
   }
-  const ignore = keepStyle ? STYLE_PRINCIPLES : [];
+  const ignore = keepStyle ? [...STYLE_PRINCIPLES, ...STYLE_CHECKS] : [];
   const comparison = comparePages(scorePages(before.check, before.judge, ignore), scorePages(after.check, after.judge, ignore));
   if (comparison.length === 0) {
     console.error(`No page to compare in ${beforeDir} and ${afterDir}.`);

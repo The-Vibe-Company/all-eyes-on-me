@@ -7,6 +7,9 @@ import type { JudgeReport } from "../judge/tally.js";
 /** The principles that judge a style itself: a client's charter fails them by what it is, and keeping it is the point. */
 export const STYLE_PRINCIPLES = ["not-generic", "not-ai-default"];
 
+/** The checks that judge a style itself, from what impeccable bans: a client's charter can hold them, and keeping it is the point. */
+export const STYLE_CHECKS = ["gradient-text", "side-stripe", "nested-card", "bounce"];
+
 /** The principles that say a front has a direction of its own, worth improving rather than replacing. */
 export const IDENTITY_PRINCIPLES = ["one-direction", "not-generic", "not-ai-default"];
 
@@ -24,7 +27,7 @@ export interface RunVerdict {
   failures: Failure[];
   /** What a report leaves out that another one has: a verdict on part of the front decides nothing. */
   missing: string[];
-  /** With the style kept, the principles that judge the style itself fail because of the charter, not of the front: said, never redone. */
+  /** With the style kept, the principles and checks that judge the style itself fail because of the charter, not of the front: said, never redone. */
   keptWithStyle: Failure[];
   /** True only when every screen and journey was measured and nothing fails. */
   nothingToRedo: boolean;
@@ -58,7 +61,8 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
   }
   for (const { where, check: name, elements } of byCheck.values()) {
     const [first, ...others] = [...elements];
-    failures.push({ kind: "check", where, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` });
+    const failure: Failure = { kind: "check", where, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` };
+    (keepStyle && STYLE_CHECKS.includes(name) ? keptWithStyle : failures).push(failure);
   }
   for (const page of judge.pages) {
     for (const v of page.verdicts.filter((v) => !v.pass)) {

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
 import { readFileSync } from "node:fs";
 import { signIn, startApp, type RunningApp } from "../capture/index.js";
-import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole } from "./index.js";
+import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 
@@ -493,5 +493,100 @@ describe("on the ugly app", () => {
     assert.deepEqual(report.pages.map((p) => new URL(p).pathname), ["/produits"]);
     assert.deepEqual(report.errors.map((e) => new URL(e.url).pathname), ["/aide"]);
     assert.ok(report.findings.every((f) => new URL(f.url).pathname === "/produits"));
+  });
+});
+
+describe("gradient-text", () => {
+  test("flags text filled with a gradient, and only that", async () => {
+    const page = await pageWith(`
+      <h1 class="hero" style="background:linear-gradient(90deg,#7c3aed,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent">Ship faster</h1>
+      <h2 style="background:linear-gradient(90deg,#eee,#ddd)">A gradient behind the text, not in it</h2>
+      <p style="-webkit-background-clip:text;background-clip:text;background-color:#333;color:transparent">Clipped, but one colour</p>
+      <h3 style="background:linear-gradient(90deg,#7c3aed,#2563eb);background-clip:text;color:transparent;display:none">Hidden</h3>`);
+    const issues = await checkGradientText(page);
+    assert.deepEqual(issues.map((i) => i.element), ['h1.hero "Ship faster"']);
+    assert.match(issues[0]!.message, /filled with a gradient \(background-clip: text\)/);
+  });
+});
+
+describe("side-stripe", () => {
+  test("flags a coloured border on one side of a box, with or without a hairline around it", async () => {
+    const page = await pageWith(`
+      <div class="callout" style="border-left:4px solid #e11d48;background:#fff1f2;padding:12px">Heads up</div>
+      <ul style="padding:0"><li class="item" style="border:1px solid #eee;border-right:3px solid #2563eb;padding:8px;list-style:none">Right stripe</li></ul>
+      <div style="border:2px solid #2563eb;padding:12px">Full border</div>
+      <nav><a href="/a" style="display:inline-block;border-right:1px solid #ddd;padding:8px">Hairline</a></nav>
+      <div style="border-left:4px solid transparent;background:#eee;padding:12px">Transparent</div>`);
+    const issues = await checkSideStripe(page);
+    assert.deepEqual(issues.map((i) => i.element), ['div.callout "Heads up"', 'li.item "Right stripe"']);
+    assert.match(issues[0]!.message, /a 4 px coloured border on its left side only/);
+  });
+});
+
+describe("nested-card", () => {
+  const card = "border:1px solid #ddd;border-radius:12px;padding:16px";
+  test("flags cards inside a card, once per kind", async () => {
+    const page = await pageWith(`
+      <section class="panel" style="${card}">
+        <div class="grid">
+          <div class="item" style="${card}"><h3>One</h3><p>A line</p></div>
+          <div class="item" style="box-shadow:0 2px 8px rgba(0,0,0,.2);border-radius:12px;padding:16px"><h3>Two</h3><p>A line</p></div>
+        </div>
+      </section>
+      <section class="panel" style="${card}"><div class="item" style="${card}"><h3>Three</h3></div></section>
+      <div class="lone" style="box-shadow:0 2px 8px rgba(0,0,0,.2);border-radius:8px;padding:16px">Alone</div>`);
+    const issues = await checkNestedCard(page);
+    assert.deepEqual(issues.map((i) => i.element), ['div.item "One A line"']);
+    assert.match(issues[0]!.message, /^3 cards like this one sit inside a card \(section\.panel\)/);
+  });
+});
+
+describe("bounce", () => {
+  test("flags a transition or an animation that overshoots, once per kind", async () => {
+    const page = await pageWith(`
+      <style>
+        @keyframes pop { from { transform: scale(0) } to { transform: scale(1) } }
+        .badge { animation: pop 10s cubic-bezier(.68,-0.55,.27,1.55) }
+      </style>
+      <button class="pop" style="transition:transform .3s cubic-bezier(.34,1.56,.64,1)">Pop</button>
+      <button class="pop" style="transition:transform .3s cubic-bezier(.34,1.56,.64,1)">Again</button>
+      <span class="badge">New</span>`);
+    const issues = await checkBounce(page);
+    assert.deepEqual(issues.map((i) => i.element), ['button.pop "Pop"', 'span.badge "New"']);
+    assert.match(issues[0]!.message, /^its transition overshoots \(cubic-bezier\(0\.34, 1\.56, 0\.64, 1\)\), a bounce/);
+    assert.match(issues[1]!.message, /^its animation pop overshoots/);
+  });
+});
+
+describe("what impeccable bans, and what good fronts still do", () => {
+  test("a card holding fields, buttons, a chip, an image, code or a drop zone; a drawn screen; a chat bubble; a ticket deep in a board; a quote or a lead's rule; table rules; a tab's underline; a skip link; an accordion; fades and slides", async () => {
+    const card = "border:1px solid #ddd;border-radius:12px;padding:16px";
+    const page = await pageWith(`
+      <form class="card" style="${card}">
+        <input style="border:1px solid #ccc;border-radius:6px;width:200px;height:40px">
+        <select style="border:1px solid #ccc;border-radius:6px;width:200px;height:40px"><option>A</option></select>
+        <button style="border:1px solid #ccc;border-radius:6px;width:200px;height:48px;transition:background-color .2s ease-out">Go</button>
+        <span class="chip" style="display:inline-block;border:1px solid #ccc;border-radius:99px;padding:2px 8px">New</span>
+        <img alt="" style="border:1px solid #ccc;border-radius:8px;width:200px;height:120px">
+        <pre style="${card}">npm install</pre>
+      </form>
+      <blockquote style="border-left:4px solid #999;padding-left:12px">A quote, set off by its rule</blockquote>
+      <p class="lead" style="border-left:2px solid #111;padding-left:20px">A lead paragraph, set off by its rule</p>
+      <section class="card" style="${card}"><div class="drop" style="border:2px dashed #ccc;border-radius:8px;padding:24px">Drop a file here</div></section>
+      <div class="shot" aria-hidden="true" style="${card};box-shadow:0 20px 40px rgba(0,0,0,.2)"><div class="pane" style="${card}">A drawn screen</div></div>
+      <a class="skip-link" href="#main" style="position:absolute;top:-40px;transition:top .2s ease-out">Skip to content</a>
+      <div class="chat" style="${card}"><div><p class="bubble" style="border:1px solid #ddd;border-radius:16px;padding:8px 12px;width:200px">A message, text alone</p></div></div>
+      <div class="board" style="${card}"><div class="col"><div class="list"><div class="row"><div class="ticket" style="${card}"><b>ENG-1</b><p>Deep in a board</p></div></div></div></div></div>
+      <div class="accordion" style="transition:height .3s ease-out">An accordion that eases out</div>
+      <table style="border-collapse:collapse"><tr><td style="border-left:2px solid #333;padding:8px">Cell</td></tr></table>
+      <div role="tablist"><a href="/a" style="display:inline-block;border-bottom:3px solid #2563eb;padding:8px">Active tab</a></div>
+      <aside style="border-right:1px solid #e5e5e5;padding:16px;width:200px">Sidebar</aside>
+      <div class="toast" style="transition:opacity .2s ease-out, transform .3s cubic-bezier(.16,1,.3,1)">Fades and slides</div>
+      <div style="transition:all .2s">Everything, briefly</div>
+      <div style="transition:width 0s">Instant</div>`);
+    assert.deepEqual(await checkGradientText(page), []);
+    assert.deepEqual(await checkSideStripe(page), []);
+    assert.deepEqual(await checkNestedCard(page), []);
+    assert.deepEqual(await checkBounce(page), []);
   });
 });

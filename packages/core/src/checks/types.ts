@@ -1,4 +1,4 @@
-export type CheckName = "cursor" | "overflow" | "contrast" | "console" | "header" | "wrap" | "uneven" | "clipped" | "tap-size" | "font-size" | "line-length" | "zoom" | "images" | "labels" | "focus" | "layout-shift";
+export type CheckName = "cursor" | "overflow" | "contrast" | "console" | "header" | "wrap" | "uneven" | "clipped" | "tap-size" | "font-size" | "line-length" | "zoom" | "images" | "labels" | "focus" | "layout-shift" | "gradient-text" | "side-stripe" | "nested-card" | "bounce";
 
 /** One problem a check found on a page, before the runner says where. */
 export interface Issue {

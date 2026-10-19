@@ -25,7 +25,7 @@ export interface PageComparison {
   newly: string[];
 }
 
-/** Counts, page by page, what fails, leaving out the principles in `ignore`. Lower is better; 0 is a page that passes everything. */
+/** Counts, page by page, what fails, leaving out the principles and checks in `ignore`. Lower is better; 0 is a page that passes everything. */
 export function scorePages(check: CheckReport | undefined, judge: JudgeReport | undefined, ignore: string[] = []): PageScore[] {
   // A screen checked and judged under two routes of one shape, such as a record made at each visit, is one screen, named as judged.
   const judged = (judge?.pages ?? []).map((p) => p.page);
@@ -33,7 +33,7 @@ export function scorePages(check: CheckReport | undefined, judge: JudgeReport | 
   const name = (url: string) => pairs.get(route(url)) ?? route(url);
   const pages = new Set<string>([...(check?.pages ?? []).map(name), ...judged]);
   return [...pages].map((page) => {
-    const findings = (check?.findings ?? []).filter((f) => name(f.url) === page);
+    const findings = (check?.findings ?? []).filter((f) => name(f.url) === page && !ignore.includes(f.check));
     const checks = new Set(findings.map((f) => f.check)).size;
     // Width by width: a check failing at 390 says nothing of the same check at 1280.
     const atWidth = [...new Set(findings.map((f) => `${f.check}@${f.width}`))].sort();

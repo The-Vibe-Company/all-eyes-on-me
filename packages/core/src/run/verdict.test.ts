@@ -3,7 +3,7 @@ import { test } from "node:test";
 import type { CheckReport } from "../checks/run.js";
 import type { JourneyReport } from "../journey/replay.js";
 import type { JudgeReport } from "../judge/tally.js";
-import { verdictOf } from "./index.js";
+import { scorePages, verdictOf } from "./index.js";
 
 const check = (findings: CheckReport["findings"] = []): CheckReport => ({ url: "http://x", checkedAt: "", widths: [390, 1280], checks: ["cursor", "overflow", "contrast", "console"], pages: ["http://x/", "http://x/commandes"], errors: [], findings });
 const judge = (failing: Record<string, string[]>, ids = ["hierarchy", "states"]): JudgeReport => ({
@@ -92,4 +92,17 @@ test("screens checked at one list of widths and judged or replayed at another de
     "the screens were checked at 1280 px and the journeys replayed at 390, 1280 px: replay them at the same widths",
   ]);
   assert.deepEqual(verdictOf({ check: desktop, judge: judge({ "/": [], "/commandes": [] }) }).missing, [], "a verdict counted before judges said their widths decides as before");
+});
+
+test("with the style kept, what impeccable bans is the charter's, like the principles that judge the style: said, never redone", () => {
+  const finding = (name: CheckReport["findings"][number]["check"], element: string) => ({ check: name, url: "http://x/", width: 1280, element, message: "" });
+  const findings = [finding("gradient-text", 'h1 "Brand"'), finding("cursor", 'div "Go"')];
+  const failing = judge({ "/": ["not-generic"], "/commandes": [] }, ["hierarchy", "not-generic"]);
+  const kept = verdictOf({ check: check(findings), judge: failing, keepStyle: true });
+  assert.deepEqual(kept.failures.map((f) => f.what.split(":")[0]), ["cursor"]);
+  assert.deepEqual(kept.keptWithStyle.map((f) => f.what.split(":")[0]), ["gradient-text", "not-generic"]);
+  const redone = verdictOf({ check: check(findings), judge: failing });
+  assert.deepEqual(redone.failures.map((f) => f.what.split(":")[0]), ["gradient-text", "cursor", "not-generic"]);
+  const [page] = scorePages(check(findings), failing, ["not-generic", "gradient-text"]);
+  assert.deepEqual(page!.failing, ["cursor@1280"], "the run's ratchet counts neither");
 });
