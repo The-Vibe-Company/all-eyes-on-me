@@ -1,0 +1,145 @@
+bench/factures/app/.gitignore
+  s_4ce34ec42d9105::t_e6310ac530e375 1
+bench/factures/app/server.mjs
+  s_4ce34ec42d9105::t_9d3bc1bde3fee0 17-23
+  s_4ce34ec42d9105::t_565f444faf2c8b 1-16,24-195,197-354
+  s_4ce34ec42d9105::t_2dfe4d1937e5e5 196
+bench/factures/app/data/seed.json
+  s_4ce34ec42d9105::t_bcd4d7c7f460e8 1-69
+bench/ugly-app/aeom/journeys/voir-mes-commandes.json
+  s_4ce34ec42d9105::t_9627bf1eacb939 1-9
+bench/factures/app/public/clients.html
+  s_4ce34ec42d9105::t_c0682c5da32b7c 1-37
+bench/studio-respire/app/public/js/contact.js
+  s_4ce34ec42d9105::t_d2d7924b251be6 1-59
+bench/factures/app/public/nouvelle.html
+  s_4ce34ec42d9105::t_951454029883d6 1-78
+packages/core/src/bench/bench.ts
+  s_4ce34ec42d9105::t_0938135764b0f7 1-14,16-62,66-123
+  s_4ce34ec42d9105::t_fa7dff5f239365 15,63-65
+bench/studio-respire/app/server.mjs
+  s_4ce34ec42d9105::t_f975d8731afe47 1-356
+site/pages/commands.html
+  s_4ce34ec42d9105::t_218d2d10148cb4 100,105
+bench/ugly-app/aeom/journeys/obtenir-de-l-aide.json
+  s_4ce34ec42d9105::t_9627bf1eacb939 1-8
+bench/ugly-app/defects.json
+  s_4ce34ec42d9105::t_fa7dff5f239365 1-19
+packages/cli/src/commands/bench.test.ts
+  s_4ce34ec42d9105::t_d52abeaded3f44 1-49,52-66
+  s_4ce34ec42d9105::t_77881d44205eca 50-51
+bench/ugly-app/aeom/journeys/decouvrir-les-produits.json
+  s_4ce34ec42d9105::t_9627bf1eacb939 1-8
+bench/studio-respire/app/public/js/common.js
+  s_4ce34ec42d9105::t_1fbe7e3b0bf093 1-136
+bench/studio-respire/app/public/style.css
+  s_4ce34ec42d9105::t_652393741643bc 1-394
+bench/factures/app/public/invoices.js
+  s_4ce34ec42d9105::t_6c4951c6d02e89 1-91
+README.md
+  s_4ce34ec42d9105::t_218d2d10148cb4 97
+packages/cli/src/commands/bench.ts
+  s_4ce34ec42d9105::t_23c0d22c7dd4a1 1-122
+bench/studio-respire/app/public/js/cours.js
+  s_4ce34ec42d9105::t_7bbe70f1d52b8a 191
+  s_4ce34ec42d9105::t_1c54baa9af2642 1-190,192-203
+bench/factures/app/public/app.js
+  s_4ce34ec42d9105::t_10612996f90811 1-98
+bench/studio-respire/app/public/reservations.html
+  s_4ce34ec42d9105::t_4328dca73bfa15 1-55
+bench/studio-respire/app/public/js/reservations.js
+  s_4ce34ec42d9105::t_642fcf9c9a0b43 1-126
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_00d64679f9113d 18,49,74
+bench/studio-respire/app/public/js/planning.js
+  s_4ce34ec42d9105::t_c1154693f4345c 1-108
+bench/factures/app/public/style.css
+  s_4ce34ec42d9105::t_9b3cac19f95d24 1-1253
+bench/studio-respire/app/public/favicon.svg
+  s_4ce34ec42d9105::t_e9dd6dce7e0d8a 1
+bench/ugly-app/aeom/journeys/ecrire-au-magasin.json
+  s_4ce34ec42d9105::t_9627bf1eacb939 1-10
+bench/factures/app/public/index.html
+  s_4ce34ec42d9105::t_5732c68203f2a3 1-57
+bench/factures/app/public/favicon.svg
+  s_4ce34ec42d9105::t_894ff8b6dec9d3 1
+bench/factures/app/public/facture.html
+  s_4ce34ec42d9105::t_d1dc182949b0c0 1-31
+bench/factures/app/public/factures.html
+  s_4ce34ec42d9105::t_89cad136a6f79a 1-42
+packages/core/src/bench/bench.test.ts
+  s_4ce34ec42d9105::t_3061e5ec19fc07 1-12,14-27,29-53,57-73,75-80
+  s_4ce34ec42d9105::t_fa7dff5f239365 13,28,54-56,74
+packages/core/src/bench/index.ts
+  s_4ce34ec42d9105::t_bf1fd6ab1b1133 1
+bench/studio-respire/app/reset.mjs
+  s_4ce34ec42d9105::t_33ad1ae7da7165 1-8
+bench/factures/app/README.md
+  s_4ce34ec42d9105::t_e6310ac530e375 1-12
+bench/studio-respire/app/.gitignore
+  s_4ce34ec42d9105::t_9477f956f670fe 1-2
+bench/studio-respire/app/README.md
+  s_4ce34ec42d9105::t_1f6075258cddbb 1-12
+bench/factures/app/public/invoice.js
+  s_4ce34ec42d9105::t_f07e15793932da 1-117
+bench/studio-respire/app/data/seed.json
+  s_4ce34ec42d9105::t_61e5a838757f95 1-301
+bench/README.md
+  s_4ce34ec42d9105::t_218d2d10148cb4 1-32
+bench/factures/app/public/new-invoice.js
+  s_4ce34ec42d9105::t_3bef96cac42c72 1-108
+bench/studio-respire/app/public/index.html
+  s_4ce34ec42d9105::t_4d680fc9a172cd 1-67
+bench/ugly-app/aeom/config.json
+  s_4ce34ec42d9105::t_9627bf1eacb939 1-7
+bench/studio-respire/app/public/cours.html
+  s_4ce34ec42d9105::t_3d32efb8b189df 1-39
+packages/core/src/index.ts
+  s_4ce34ec42d9105::t_bf1fd6ab1b1133 12
+bench/factures/app/reset.mjs
+  s_4ce34ec42d9105::t_e6310ac530e375 1-8
+bench/factures/app/public/clients.js
+  s_4ce34ec42d9105::t_980cb4719d02f9 1-44
+bench/studio-respire/app/public/contact.html
+  s_4ce34ec42d9105::t_d91b801a48e5d6 1-46
+bench/factures/app/public/dashboard.js
+  s_4ce34ec42d9105::t_9b3fff9d4fa147 1-97
+bench/factures/aeom/config.json
+  s_4ce34ec42d9105::t_b191bed4e7bec1 1-6
+bench/factures/aeom/journeys/creer-une-facture.json
+  s_4ce34ec42d9105::t_d6a23c095909ff 1-11
+bench/factures/aeom/journeys/encaisser-une-facture-en-retard.json
+  s_4ce34ec42d9105::t_2348b71006fda6 1-10
+bench/factures/aeom/journeys/retrouver-les-factures-d-un-client.json
+  s_4ce34ec42d9105::t_e5700c1d240485 1-29
+bench/factures/defects.json
+  s_4ce34ec42d9105::t_91a3d76b8b91f1 1-11
+bench/studio-respire/aeom/config.json
+  s_4ce34ec42d9105::t_4b72cc6c948329 1-6
+bench/studio-respire/aeom/journeys/annuler-une-reservation.json
+  s_4ce34ec42d9105::t_7f39ec49ab2442 1-12
+bench/studio-respire/aeom/journeys/reserver-un-cours.json
+  s_4ce34ec42d9105::t_59bdc4a98542a7 1-42
+bench/studio-respire/aeom/journeys/trouver-le-studio.json
+  s_4ce34ec42d9105::t_c65872a0d8a07d 1-8
+bench/studio-respire/defects.json
+  s_4ce34ec42d9105::t_980d1fdd1628c2 1-9
+bench/ugly-app/app
+  s_4ce34ec42d9105::t_82d76c9e39354a 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6fe10b5dc64e1eb679879bec755c4a5338adb7aa",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
