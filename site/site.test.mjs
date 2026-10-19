@@ -81,6 +81,7 @@ test("pages load posthog-js, and /api/stats answers only to its bearer token", a
     assert.equal(post.headers.get("allow"), "GET");
     const ok = await fetch(`${url}/api/stats`, { headers: { authorization: "Bearer secret" } });
     assert.equal(ok.status, 200);
+    // No personal key on this server: PostHog is not asked, so each count stays null.
     assert.deepEqual(await ok.json(), {
       total_users: null,
       new_users_1d: null,
@@ -88,7 +89,7 @@ test("pages load posthog-js, and /api/stats answers only to its bearer token", a
       active_users_1d: null,
       active_users_7d: null,
     });
-  }, { STATS_TOKEN: "secret", POSTHOG_KEY: "" });
+  }, { STATS_TOKEN: "secret", POSTHOG_KEY: "", POSTHOG_PERSONAL_API_KEY: "" });
 });
 
 test("the site starts with one command and serves the page", async () => {
