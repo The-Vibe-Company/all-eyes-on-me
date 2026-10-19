@@ -1,0 +1,64 @@
+packages/core/src/checks/nested-card.ts
+  s_507cebee60b5bb::t_b1f7617eea9135 7-9,50-53,55-60
+  s_507cebee60b5bb::t_f361bf3857f95f 6,35,47-48
+  s_507cebee60b5bb::t_6efb4c43bd5ffc 1-5,10-13,15,20,22,28-34,36,39-46,49,54,61-72
+  s_507cebee60b5bb::t_6ada91b0df7458 14,16-19,21,23-27,37-38
+packages/core/src/checks/index.ts
+  s_507cebee60b5bb::t_6ada91b0df7458 5-7
+  s_507cebee60b5bb::t_b1f7617eea9135 3
+packages/core/src/run/report.ts
+  s_507cebee60b5bb::t_d8815aae0af15a 14,128
+packages/core/src/checks/side-stripe.ts
+  s_507cebee60b5bb::t_f361bf3857f95f 7-9,32-34
+  s_507cebee60b5bb::t_6ada91b0df7458 17,19-22
+  s_507cebee60b5bb::t_c18b0296dd00ca 1-6,10-16,18,23-31,35-46
+packages/core/src/checks/checks.test.ts
+  s_507cebee60b5bb::t_f361bf3857f95f 515,519,574-577
+  s_507cebee60b5bb::t_ac1185416f48f6 539
+  s_507cebee60b5bb::t_7b2c331c0772f3 498-514,516-518,520-530,535,537-538,540-543,546-547,550-551,558-561,563-573,581-589,591-592
+  s_507cebee60b5bb::t_6d1c7fdbd74e0b 562
+  s_507cebee60b5bb::t_b1f7617eea9135 9,531-534,536,544-545,548-549,552-557,578-580,590
+packages/core/src/checks/types.ts
+  s_507cebee60b5bb::t_b1f7617eea9135 1
+README.md
+  s_507cebee60b5bb::t_f99e8f550a85bc 16,63
+packages/core/src/run/index.ts
+  s_507cebee60b5bb::t_d8815aae0af15a 4
+site/pages/commands.html
+  s_507cebee60b5bb::t_8c7c298448dc88 40
+packages/core/src/checks/gradient-text.ts
+  s_507cebee60b5bb::t_8230edc50700f8 1-26
+packages/core/src/run/verdict.test.ts
+  s_507cebee60b5bb::t_555ff0ae2ff205 102
+  s_507cebee60b5bb::t_d8815aae0af15a 6,96-101,103-107
+  s_507cebee60b5bb::t_d7279aa47dcf45 108
+packages/cli/src/commands/run.ts
+  s_507cebee60b5bb::t_d8815aae0af15a 4,104,113
+principles/base.md
+  s_507cebee60b5bb::t_f99e8f550a85bc 7,9,13
+packages/core/src/checks/bounce.ts
+  s_507cebee60b5bb::t_b1f7617eea9135 1-50
+packages/core/src/checks/run.ts
+  s_507cebee60b5bb::t_b1f7617eea9135 9,32,97
+  s_507cebee60b5bb::t_6ada91b0df7458 16-18,50-51,93-96
+packages/core/src/run/compare.ts
+  s_507cebee60b5bb::t_d8815aae0af15a 28,36
+packages/core/src/run/verdict.ts
+  s_507cebee60b5bb::t_d8815aae0af15a 10-12,30,64-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "db6b9eeb0254ba82d8f53e03a44ddb1083ea7329",
+  "prompts": {},
+  "sessions": {
+    "s_507cebee60b5bb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "927fff29-fef5-4c6d-87e1-a1e7d108b975",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
