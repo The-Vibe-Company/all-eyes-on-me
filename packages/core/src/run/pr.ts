@@ -78,6 +78,8 @@ export function prBody(page: ResultPage, reportPath: string): { title: string; b
     const among = d.entrants.map(words).join(", ");
     const chosen = !d.decision
       ? `chosen by knockout among ${among}`
+      : d.decision.judges === null && d.entrants.length === 1
+        ? "chosen by the person"
       : d.decision.judges === null
         ? `chosen by the person among ${among}, with no knockout`
         : d.decision.judges === d.champion

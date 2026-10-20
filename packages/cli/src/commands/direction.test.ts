@@ -25,6 +25,7 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages w
     const kept = await run(["direction", "keep", chosen, "--sentence", "The logbook a captain keeps, ruled and dated.", "--source", "the front as it is", "--why", "it feels like the boat"]);
     assert.equal(kept.code, 0, kept.out);
     assert.match(kept.out, /Kept carnet-de-bord in \.aeom\/direction\//);
+    assert.match(kept.out, /Left out, as images a commit would carry: shot\.png/);
     assert.ok(existsSync(join(dir, ".aeom", "direction", "index.html")) && existsSync(join(dir, ".aeom", "direction", "img", "logo.svg")));
     assert.ok(!existsSync(join(dir, ".aeom", "direction", "shot.png")), "no image a commit would carry: the mockup is its pages");
     const saved = JSON.parse(readFileSync(join(dir, ".aeom", "direction", "direction.json"), "utf8"));
@@ -32,7 +33,9 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages w
 
     const shown = await run(["direction", "show"]);
     assert.equal(shown.code, 0);
-    assert.match(shown.out, /^carnet-de-bord: The logbook a captain keeps, ruled and dated\.\nFrom the front as it is, chosen in run-20261020-1500: it feels like the boat\.\nIts pages: \.aeom\/direction\/index\.html/);
+    assert.match(shown.out, /^carnet-de-bord: The logbook a captain keeps, ruled and dated\.\nFrom the front as it is, chosen in run-20261020-1500: it feels like the boat\.\nIts pages: \/\S*\/\.aeom\/direction\/index\.html/, "absolute, for a worker in another folder");
+    assert.equal((await run(["direction", "keep", join(dir, ".aeom", "direction"), "--sentence", "x", "--source", "y"])).code, 1, "never kept over itself");
+    assert.ok(existsSync(join(dir, ".aeom", "direction", "index.html")), "and still there");
 
     // Another one replaces it, and says which it replaced.
     const other = join(dir, ".aeom", "runs", "run-20261020-1600", "directions", "atelier");
@@ -43,6 +46,20 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages w
     assert.ok(!existsSync(join(dir, ".aeom", "direction", "style.css")), "nothing of the one before is left");
 
     assert.equal((await run(["direction", "keep", join(dir, "nowhere"), "--sentence", "x", "--source", "y"])).code, 1, "a folder that is not there");
+
+    // A run builds on it: written in the run as the person's choice, then marked, so no later run builds on it again.
+    const redo = join(dir, ".aeom", "runs", "run-20261021-0900");
+    await mkdir(redo, { recursive: true });
+    const used = await run(["direction", "use", "--run", redo]);
+    assert.equal(used.code, 0, used.out);
+    const tournament = JSON.parse(readFileSync(join(redo, "directions", "tournament.json"), "utf8"));
+    assert.deepEqual([tournament.entrants, tournament.decision.applied, tournament.decision.judges], [["atelier"], "atelier", null]);
+    assert.match(tournament.decision.why, /^chosen with \/aeom directions in run-20261020-1600, from the prompt/);
+    assert.deepEqual(JSON.parse(readFileSync(join(redo, "directions", "sheet.json"), "utf8")), [{ label: "atelier", note: "A workshop's bench." }]);
+    const after = await run(["direction", "show"]);
+    assert.equal(after.code, 2, "already built on");
+    assert.match(after.out, /Already built on, in run-20261021-0900/);
+    assert.equal((await run(["direction", "use", "--run", redo])).code, 1, "not twice");
     assert.equal((await run(["direction", "drop"])).code, 0);
     assert.ok(!existsSync(join(dir, ".aeom", "direction")));
     assert.equal((await run(["direction", "show"])).code, 1);

@@ -137,3 +137,13 @@ test("the estimate is in dollars at the API's list prices, calibrated on a run a
   const directions = run.phases.find((p) => /directions/.test(p.phase))!;
   assert.ok(directions.dollars! > (directions.tokens * 9) / 1_000_000);
 });
+
+test("a run that builds on the direction kept with /aeom directions draws none: the kit carries it, for less", () => {
+  const drawn = estimateRun({ screens: 8, journeys: 4, mode: "full" });
+  const kept = estimateRun({ screens: 8, journeys: 4, mode: "full", kept: true });
+  assert.ok(!kept.phases.some((p) => /directions/i.test(p.phase)), "no directions to draw");
+  assert.ok(kept.phases.some((p) => p.phase === "The kit, on the direction kept"));
+  assert.ok(kept.total.dollars < drawn.total.dollars);
+  const scratch = estimateRun({ screens: 5, journeys: 3, mode: "scratch", kept: true });
+  assert.deepEqual(scratch.phases.map((p) => p.phase).filter((p) => /direction/i.test(p)), ["The kit, on the direction kept"]);
+});

@@ -76,7 +76,7 @@ const NUMBERS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "E
  * `ux` is `/aeom --ux`: the journeys alone, no direction and no page wave;
  * `/aeom --directions` is a full run with no journey judged.
  */
-export function estimateRun({ screens, journeys, mode, directions = 3, autonome = false, widths = CALIBRATED_WIDTHS }: { screens: number; journeys: number; mode: RunMode; directions?: number; autonome?: boolean; widths?: number }): Estimate {
+export function estimateRun({ screens, journeys, mode, directions = 3, autonome = false, widths = CALIBRATED_WIDTHS, kept = false }: { screens: number; journeys: number; mode: RunMode; directions?: number; autonome?: boolean; widths?: number; kept?: boolean }): Estimate {
   const pj = pageJudge(screens, widths);
   // The judges of a kept charter compare each page before and after: three full votes.
   const sj = fullPageJudge(screens, widths);
@@ -108,7 +108,8 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     const critique = journeys ? VOTES : 0;
     const built = withTotal(mode, [
       { phase: "Write the product sheet and its journeys", agents: 0, tokens: 0, minutes: 10 },
-      autonome
+      // A direction kept with /aeom directions: none to draw.
+      ...(kept ? [] : [autonome
         ? (() => {
             // With nobody to choose: three screening judges, then one judge a duel, three the final.
             const duels = Math.max(directions - 1, 0);
@@ -116,8 +117,8 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
             const rounds = directions > 1 ? Math.ceil(Math.log2(directions)) : 0;
             return { phase: `${named} and the knockout`, agents: directions + VOTES + duelVotes, tokens: directions * PROMPT_WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes };
           })()
-        : { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes },
-      { phase: "The kit, on the direction chosen", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit },
+        : { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes }]),
+      { phase: kept ? "The kit, on the direction kept" : "The kit, on the direction chosen", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit },
       { phase: "The screens of the key journeys", agents: screens, tokens: screens * WORKER.tokens, minutes: MINUTES.page },
       { phase: "Measure the screens and the journeys", agents: VOTES + critique, tokens: VOTES * pj.tokens + critique * jj.tokens, minutes: pj.minutes + (critique ? jj.minutes : 0) },
       { phase: "The standard, the result page and the PR", agents: 0, tokens: 0, minutes: MINUTES.end },
@@ -148,7 +149,9 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
   });
   if (mode !== "judge") {
     let rebuilt = 0;
-    if (mode === "full") {
+    if (mode === "full" && kept) {
+      phases.push({ phase: "The kit, on the direction kept", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit });
+    } else if (mode === "full") {
       const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
       if (autonome) {
         const duels = Math.max(directions - 1, 0);

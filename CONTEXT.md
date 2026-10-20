@@ -28,7 +28,8 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 - **Mode**: **redesign** (refonte) on a project that already has a frontend, **launch** (lancement) on one that does not yet. V1 has redesign only.
 - **Direction**: one art direction, built in real code on the home page. AEOM builds three per run by default (`/aeom --directions <n>` for another number), and keeps one; `/aeom --forcer-directions` builds them without waiting for the verdict.
 - **Source** (source): where a direction starts: something from the product's own world that its customers know (an object, a document, a place, a trade). Never a design movement.
-- **Banned looks** (liste noire): the looks an AI proposes by default when asked to be bold, listed in `skills/aeom/directions.md`. A direction one of them describes is removed before the tournament.
+- **Banned looks** (liste noire): the looks an AI proposes by default when asked to be bold, listed in `skills/aeom/directions.md`. A direction one of them describes is named beside it when the person chooses, and removed before the tournament when nobody does (`--autonome`).
+- **Direction kept** (direction gardée): the direction the person chose with `/aeom directions`, as mockups, kept in `.aeom/direction/` until a run builds on it.
 - **Kit** (couche design): the tokens and shared components (header, buttons, layout) every screen uses.
 - **Token**: a named design value (color, size, radius, shadow, spacing). Any value outside the tokens fails a check.
 - **Wave** (vague): one round of parallel work. The **kit wave** has a single worker. The **screen wave** has one worker per screen, each confined to its screen's folder.

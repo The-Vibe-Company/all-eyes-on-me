@@ -260,4 +260,6 @@ test("the cost the terminals of the commands page show is what aeom estimate pri
   for (const row of rows(["--juger"])) assert.ok(shown.includes(row), `/aeom judge shows « ${row} »`);
   const total = rows([]).find((row) => row.startsWith("Total"));
   assert.ok(shown.includes(total), `/aeom redo shows « ${total} »`);
+  const mockups = rows(["--maquettes"]).find((row) => row.startsWith("Total"));
+  assert.ok(shown.includes(mockups), `/aeom directions shows « ${mockups} »`);
 });

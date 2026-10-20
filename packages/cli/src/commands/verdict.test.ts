@@ -152,8 +152,16 @@ test("when something fails, aeom verdict says what comes next: a new direction, 
     assert.equal(fresh.code, 1);
     assert.match(fresh.out, /Next: three art directions by default, drawn from the product sheet\.$/m);
     assert.match((await run(dir, ["verdict", "--keep-style"])).out, /Next: the kit wave fixes the existing style, without a new direction \(--keep-style\)\.$/m);
+    // A direction kept with /aeom directions is what a redo carries; once a run built on it, it is not.
+    await mkdir(join(dir, ".aeom", "direction"), { recursive: true });
+    await writeFile(join(dir, ".aeom", "direction", "direction.json"), JSON.stringify({ slug: "carnet-de-bord", sentence: "s", source: "the front as it is", run: null, kept: "" }));
+    assert.match((await run(dir, ["verdict"])).out, /Next: the direction kept with \/aeom directions, carnet-de-bord, carried into the app\.$/m);
+    await writeFile(join(dir, ".aeom", "direction", "direction.json"), JSON.stringify({ slug: "carnet-de-bord", sentence: "s", source: "the front as it is", run: null, kept: "", applied: "run-1" }));
+    assert.match((await run(dir, ["verdict"])).out, /Next: three art directions by default/);
+    await writeFile(join(dir, ".aeom", "direction", "direction.json"), JSON.stringify({ slug: "carnet-de-bord", sentence: "s", source: "the front as it is", run: null, kept: "" }));
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "keep" }));
     assert.match((await run(dir, ["verdict"])).out, /Next: the kit wave fixes the existing style, without a new direction \("style": "keep" in \.aeom\/config\.json\)\.$/m);
+    assert.doesNotMatch((await run(dir, ["verdict"])).out, /carnet-de-bord/, "a style kept wins over a direction kept");
     await writeFile(join(dir, ".aeom", "config.json"), JSON.stringify({ style: "garder" }));
     const broken = await run(dir, ["verdict"]);
     assert.equal(broken.code, 2);

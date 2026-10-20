@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { ConfigError, estimateRun, estimateText, loadConfig, localApiBase, type Estimate, type RunMode } from "@aeom/core";
 import { parseWidths, sheetWidths } from "./app.js";
 
-const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --maquettes | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>] [--out <file>]
+const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --maquettes | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>] [--direction-gardee] [--out <file>]
 
 Says what a run of /aeom would cost before it starts: how many agents, how many
 dollars at the API's list prices and how long, phase by phase, at most. The screens are the config's
@@ -34,6 +34,8 @@ journeys, the files in .aeom/journeys.
                      .aeom/config.json, or where .aeom/product.md saw the
                      front is used, or 390,1280): fewer widths, fewer
                      captures for each judge to look at
+  --direction-gardee The run builds on the direction kept with /aeom directions:
+                     no directions to draw, the kit carries it
   --out <file>       Keep the estimate there too, as JSON: the result page
                      shows it next to what aeom cost measured`;
 
@@ -46,7 +48,7 @@ const count = (value: string | undefined, what: string, least: number): number |
 export async function runEstimate(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, maquettes: { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, out: { type: "string" }, help: { type: "boolean", short: "h" } },
+    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, maquettes: { type: "boolean" }, "direction-gardee": { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, out: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(USAGE);
@@ -84,7 +86,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
       return 1;
     }
     const journeysFound = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
-    const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
+    const estimate = estimateRun({ screens: given.screens as number, journeys: journeysFound, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length, kept: Boolean(values["direction-gardee"]) });
     return said(estimate, { screens: given.screens as number, journeys: journeysFound, widths }, values.out);
   }
   let screens = given.screens as number | undefined;
@@ -99,7 +101,7 @@ export async function runEstimate(argv: string[]): Promise<number> {
   }
   const journeys = (given.journeys as number | undefined) ?? (await readdir(join(".aeom", "journeys")).catch(() => [] as string[])).filter((f) => f.endsWith(".json")).length;
   const mode: RunMode = values.juger || values.diagnostic ? "judge" : values.ux ? "ux" : values["garder-le-style"] || (config.style === "keep" && given.directions === undefined) ? "keep-style" : "full";
-  const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length });
+  const estimate = estimateRun({ screens, journeys, mode, directions: (given.directions as number | undefined) ?? 3, autonome: Boolean(values.autonome), widths: widths.length, kept: Boolean(values["direction-gardee"]) });
   return said(estimate, { screens, journeys, widths }, values.out);
 }
 

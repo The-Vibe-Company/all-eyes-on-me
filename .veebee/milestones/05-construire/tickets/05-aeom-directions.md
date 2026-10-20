@@ -4,6 +4,7 @@ title: /aeom directions propose trois directions en maquettes, sur un produit ex
 milestone: 05-construire
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 144, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/144 }
 ---
 
