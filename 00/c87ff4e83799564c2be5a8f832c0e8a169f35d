@@ -1,0 +1,66 @@
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_cc3102bae53677 30
+packages/core/src/run/estimate.ts
+  s_4ce34ec42d9105::t_1ff088a8e4bf9c 88,91-93,239,248
+site/site.test.mjs
+  s_4ce34ec42d9105::t_2d41feca631af9 219,222
+  s_4ce34ec42d9105::t_894478168ed916 102,141
+.veebee/milestones/05-construire/tickets/05-aeom-directions.md
+  s_4ce34ec42d9105::t_7c4f62242b7f7d 1-32
+packages/cli/src/commands/direction.test.ts
+  s_4ce34ec42d9105::t_e7896f61cb9388 1-52
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_484546b6c1fd21 55-58
+  s_4ce34ec42d9105::t_90da2cc2d7344d 3,26-36,130-133
+README.md
+  s_4ce34ec42d9105::t_71988756d31e6e 71
+  s_4ce34ec42d9105::t_894478168ed916 86
+  s_4ce34ec42d9105::t_16add9af8030f2 63
+packages/cli/src/commands/direction.ts
+  s_4ce34ec42d9105::t_aa7f541655f83f 1-78
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_d9401b5ad0248d 3
+  s_4ce34ec42d9105::t_d160166f72ea99 14-19,21
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_ba1a3d5f4b052d 3,78
+  s_4ce34ec42d9105::t_90da2cc2d7344d 18,105
+  s_4ce34ec42d9105::t_a305e65836127f 19,30,35,50,80,114,138
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_ec4d31a8dbd743 7,40,67
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_1ff088a8e4bf9c 7
+  s_4ce34ec42d9105::t_885e2efd8b2996 23-26,49,68-69
+packages/cli/src/commands/estimate.test.ts
+  s_4ce34ec42d9105::t_fe85e015ce8479 70,72-73
+packages/core/src/run/estimate.test.ts
+  s_4ce34ec42d9105::t_fe85e015ce8479 95,97,102,104
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_cc3102bae53677 3,27
+  s_4ce34ec42d9105::t_ee52885191dc6d 1-2,4-26,28-35
+site/shared/kit.css
+  s_4ce34ec42d9105::t_2d41feca631af9 3,211,220-221,224,226-231
+site/pages/commands.html
+  s_4ce34ec42d9105::t_894478168ed916 7,120,125
+  s_4ce34ec42d9105::t_2d41feca631af9 16-17,20-23,45-61
+  s_4ce34ec42d9105::t_949aad6f4d308f 62-63
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_d9401b5ad0248d 3
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_484546b6c1fd21 3,18,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00c87ff4e83799564c2be5a8f832c0e8a169f35d",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
