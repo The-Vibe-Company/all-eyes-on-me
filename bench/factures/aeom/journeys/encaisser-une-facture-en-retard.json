@@ -1,0 +1,10 @@
+{
+  "name": "Encaisser une facture en retard",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "role": "link", "name": "Factures", "within": { "role": "navigation", "name": "Navigation principale" } }, "lands": "/factures" },
+    { "do": "click", "target": { "role": "link", "name": "F-2026-006" }, "lands": "/factures/F-2026-006" },
+    { "do": "click", "target": { "role": "button", "name": "Marquer comme payée" } },
+    { "do": "see", "text": "marquée comme payée" }
+  ]
+}

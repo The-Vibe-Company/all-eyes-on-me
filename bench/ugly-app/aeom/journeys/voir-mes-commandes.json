@@ -1,0 +1,9 @@
+{
+  "name": "Voir mes commandes",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "role": "link", "name": "Produits" }, "lands": "/produits" },
+    { "do": "click", "target": { "role": "link", "name": "Voir mes commandes" }, "lands": "/commandes" },
+    { "do": "see", "text": "Mes commandes" }
+  ]
+}

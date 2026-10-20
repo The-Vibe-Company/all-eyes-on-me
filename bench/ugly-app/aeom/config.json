@@ -1,0 +1,7 @@
+{
+  "url": "http://localhost:4317",
+  "start": "node server.mjs",
+  "login": { "path": "/connexion", "account": "fixtures/compte.json", "submit": "Se connecter" },
+  "public": ["/connexion"],
+  "widths": [390, 1280]
+}

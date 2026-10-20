@@ -1,0 +1,42 @@
+{
+  "name": "Réserver un cours",
+  "steps": [
+    {
+      "do": "open",
+      "path": "/"
+    },
+    {
+      "do": "click",
+      "target": {
+        "text": "Vinyasa du soir"
+      }
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Votre nom"
+      },
+      "value": "Inès Martin"
+    },
+    {
+      "do": "fill",
+      "target": {
+        "role": "textbox",
+        "name": "Votre e-mail"
+      },
+      "value": "ines@example.com"
+    },
+    {
+      "do": "click",
+      "target": {
+        "role": "button",
+        "name": "Réserver ma place"
+      }
+    },
+    {
+      "do": "see",
+      "text": "Vinyasa du soir"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Découvrir les produits",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "text": "Découvrir 🎉" }, "lands": "/produits" },
+    { "do": "see", "text": "Lampe" }
+  ]
+}

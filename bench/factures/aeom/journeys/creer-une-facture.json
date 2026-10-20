@@ -1,0 +1,11 @@
+{
+  "name": "Créer une facture",
+  "steps": [
+    { "do": "open", "path": "/factures/nouvelle?client=mouette" },
+    { "do": "fill", "target": { "role": "textbox", "name": "Libellé" }, "value": "Refonte du site" },
+    { "do": "fill", "target": { "role": "spinbutton", "name": "Quantité" }, "value": "2" },
+    { "do": "fill", "target": { "role": "spinbutton", "name": "Prix unitaire en euros" }, "value": "450" },
+    { "do": "click", "target": { "role": "button", "name": "Créer la facture" } },
+    { "do": "see", "text": "Refonte du site" }
+  ]
+}

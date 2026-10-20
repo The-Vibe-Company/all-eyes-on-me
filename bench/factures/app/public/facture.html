@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facture · Factures</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/"><img src="/favicon.svg" alt="">Factures</a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="/">Tableau de bord</a>
+        <a href="/factures" aria-current="page">Factures</a>
+        <a href="/clients">Clients</a>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="/factures/nouvelle">Nouvelle facture</a>
+    </div>
+  </header>
+
+  <main>
+    <a class="back" href="/factures">← Factures</a>
+    <div id="view"><p class="skeleton">Chargement…</p></div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script src="/invoice.js"></script>
+</body>
+</html>

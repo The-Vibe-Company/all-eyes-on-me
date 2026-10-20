@@ -1,0 +1,19 @@
+{
+  "app": "ugly-app",
+  "noted": "Noted by hand from the app's code and its README on 19 October 2026, before any AEOM run; not from AEOM's checks or judges. A defect that spans the site is written \"*\".",
+  "defects": [
+    { "id": "header-differs", "where": "*", "what": "Every page has its own header: a purple gradient on the home page, a black bar with green links on the products, a yellow banner on the orders, a grey bar on the contact page.", "match": ["consistent-chrome"] },
+    { "id": "five-fonts", "where": "*", "what": "Five fonts, one per page: Comic Sans, Georgia, Helvetica, Courier, Verdana.", "match": ["one-direction"] },
+    { "id": "ai-default-home", "where": "/", "what": "The home page has the default look: a purple gradient, decorative emoji, heavily shadowed cards.", "match": ["not-generic", "not-ai-default", "gradient-text"] },
+    { "id": "home-scrolls", "where": "/", "what": "The tagline never wraps: the home page scrolls sideways on a phone.", "match": ["overflow", "wrap"] },
+    { "id": "home-cta-not-a-button", "where": "/", "what": "« Découvrir 🎉 » is a div: no pointer, out of the keyboard's reach.", "match": ["cursor", "focus"] },
+    { "id": "product-buttons-dead", "where": "/produits", "what": "The « Ajouter » buttons show no pointer and do nothing.", "match": ["cursor"] },
+    { "id": "faint-note", "where": "/produits", "what": "The note « Prix TTC… » is light grey on white, below AA contrast.", "match": ["contrast"] },
+    { "id": "faint-labels", "where": "/connexion", "what": "The sign-in labels are light grey at 11 px.", "match": ["contrast", "font-size"] },
+    { "id": "send-not-a-button", "where": "/contact", "what": "« ENVOYER » is a div: no pointer, out of the keyboard's reach.", "match": ["cursor", "focus"] },
+    { "id": "orders-empty", "where": "/commandes", "what": "The empty order list says nothing, and its call to /api/orders fails.", "match": ["states", "console"] },
+    { "id": "aide-500", "where": "/aide", "what": "The « Aide » link leads to a 500 error.", "match": ["does not load"] },
+    { "id": "help-dead-end", "where": "Obtenir de l'aide", "what": "Asking for help ends on an error page with no way back.", "match": ["breaks", "no-dead-end"] },
+    { "id": "orders-hidden", "where": "Voir mes commandes", "what": "The menu has no link to the orders: they are only reachable from the bottom of the products page.", "match": ["next-step", "clear-start", "short"] }
+  ]
+}

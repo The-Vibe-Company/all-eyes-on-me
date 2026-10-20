@@ -1,0 +1,8 @@
+{
+  "name": "Trouver le studio",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "role": "link", "name": "Contact", "within": { "role": "navigation", "name": "Navigation principale" } }, "lands": "/contact.html" },
+    { "do": "see", "text": "Lyon" }
+  ]
+}

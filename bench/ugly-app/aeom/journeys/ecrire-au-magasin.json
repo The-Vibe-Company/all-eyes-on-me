@@ -1,0 +1,10 @@
+{
+  "name": "Écrire au magasin",
+  "steps": [
+    { "do": "open", "path": "/" },
+    { "do": "click", "target": { "role": "link", "name": "Contact" }, "lands": "/contact" },
+    { "do": "fill", "target": { "role": "textbox", "name": "Email" }, "value": "camille@example.com" },
+    { "do": "fill", "target": { "role": "textbox", "name": "Message" }, "value": "Bonjour, la lampe existe-t-elle en blanc ?" },
+    { "do": "click", "target": { "text": "ENVOYER" } }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "freelancer": {
+    "name": "Camille Roussel",
+    "title": "Designer web indépendante",
+    "address": ["14 rue des Tanneurs", "44000 Nantes"],
+    "email": "camille@roussel-studio.example",
+    "siret": "812 345 678 00019",
+    "iban": "FR76 1234 5678 9012 3456 7890 123",
+    "vatNote": "TVA non applicable, art. 293 B du CGI"
+  },
+  "clients": [
+    { "id": "mouette", "name": "Atelier Mouette", "contact": "Élodie Marchand", "email": "elodie@atelier-mouette.example", "phone": "02 40 12 34 56", "address": ["8 quai de la Fosse", "44000 Nantes"] },
+    { "id": "port", "name": "Brasserie du Port", "contact": "Karim Benali", "email": "karim@brasserie-du-port.example", "phone": "05 46 55 12 90", "address": ["21 cours des Dames", "17000 La Rochelle"] },
+    { "id": "lerouge", "name": "Maison Lerouge", "contact": "Hélène Lerouge", "email": "helene@maison-lerouge.example", "phone": "04 78 29 40 11", "address": ["3 rue Mercière", "69002 Lyon"] },
+    { "id": "pivoine", "name": "Studio Pivoine", "contact": "Théo Garnier", "email": "theo@studio-pivoine.example", "phone": "05 56 44 07 38", "address": ["57 rue Notre-Dame", "33000 Bordeaux"] },
+    { "id": "halles", "name": "Coopérative des Halles", "contact": "Sonia Duval", "email": "sonia@cooperative-des-halles.example", "phone": "02 99 30 66 24", "address": ["Place des Lices", "35000 Rennes"] },
+    { "id": "vasseur", "name": "Cabinet Vasseur", "contact": "Paul Vasseur", "email": "p.vasseur@cabinet-vasseur.example", "phone": "03 20 57 18 02", "address": ["12 rue Esquermoise", "59000 Lille"] }
+  ],
+  "invoices": [
+    { "id": "F-2026-001", "clientId": "mouette", "issueDate": "2026-06-03", "dueDate": "2026-07-03", "status": "paid", "paidAt": "2026-06-28", "lines": [
+      { "label": "Identité visuelle : logo et charte graphique", "quantity": 1, "unitPrice": 1800 },
+      { "label": "Déclinaisons papeterie", "quantity": 1, "unitPrice": 600 } ] },
+    { "id": "F-2026-002", "clientId": "port", "issueDate": "2026-06-17", "dueDate": "2026-07-17", "status": "paid", "paidAt": "2026-07-10", "lines": [
+      { "label": "Maquettes du site vitrine", "quantity": 1, "unitPrice": 1400 },
+      { "label": "Intégration HTML/CSS (jours)", "quantity": 3, "unitPrice": 450 } ] },
+    { "id": "F-2026-003", "clientId": "lerouge", "issueDate": "2026-07-08", "dueDate": "2026-08-07", "status": "paid", "paidAt": "2026-08-01", "lines": [
+      { "label": "Refonte de la boutique en ligne : conception (jours)", "quantity": 5, "unitPrice": 480 },
+      { "label": "Rédaction des fiches produits", "quantity": 12, "unitPrice": 35 } ] },
+    { "id": "F-2026-004", "clientId": "pivoine", "issueDate": "2026-07-22", "dueDate": "2026-08-21", "status": "paid", "paidAt": "2026-08-19", "lines": [
+      { "label": "Portfolio en ligne", "quantity": 1, "unitPrice": 1900 },
+      { "label": "Retouche d'images (heures)", "quantity": 8, "unitPrice": 55 } ] },
+    { "id": "F-2026-005", "clientId": "mouette", "issueDate": "2026-08-05", "dueDate": "2026-09-04", "status": "paid", "paidAt": "2026-09-02", "lines": [
+      { "label": "Boutique en ligne : mise en place (jours)", "quantity": 4, "unitPrice": 450 },
+      { "label": "Formation à l'administration de la boutique (heures)", "quantity": 2, "unitPrice": 80 } ] },
+    { "id": "F-2026-006", "clientId": "vasseur", "issueDate": "2026-08-12", "dueDate": "2026-09-11", "status": "late", "paidAt": null, "lines": [
+      { "label": "Site du cabinet : maquettes (jours)", "quantity": 2, "unitPrice": 480 },
+      { "label": "Site du cabinet : développement des pages (jours)", "quantity": 4, "unitPrice": 480 } ] },
+    { "id": "F-2026-007", "clientId": "halles", "issueDate": "2026-08-19", "dueDate": "2026-09-18", "status": "paid", "paidAt": "2026-09-15", "lines": [
+      { "label": "Affiches du marché d'automne", "quantity": 3, "unitPrice": 220 },
+      { "label": "Flyers recto-verso", "quantity": 1, "unitPrice": 340 } ] },
+    { "id": "F-2026-008", "clientId": "lerouge", "issueDate": "2026-08-28", "dueDate": "2026-09-27", "status": "late", "paidAt": null, "lines": [
+      { "label": "Modèle de newsletter", "quantity": 1, "unitPrice": 650 },
+      { "label": "Campagne des vendanges : envois", "quantity": 3, "unitPrice": 180 } ] },
+    { "id": "F-2026-009", "clientId": "port", "issueDate": "2026-09-09", "dueDate": "2026-10-09", "status": "paid", "paidAt": "2026-10-06", "lines": [
+      { "label": "Carte des menus : mise en page", "quantity": 6, "unitPrice": 90 },
+      { "label": "Retouche des photos de plats", "quantity": 20, "unitPrice": 15 } ] },
+    { "id": "F-2026-010", "clientId": "pivoine", "issueDate": "2026-09-16", "dueDate": "2026-10-16", "status": "late", "paidAt": null, "lines": [
+      { "label": "Refonte de la page contact", "quantity": 1, "unitPrice": 420 },
+      { "label": "Optimisation des images (heures)", "quantity": 3, "unitPrice": 60 } ] },
+    { "id": "F-2026-011", "clientId": "mouette", "issueDate": "2026-10-01", "dueDate": "2026-10-31", "status": "paid", "paidAt": "2026-10-15", "lines": [
+      { "label": "Catalogue de printemps : maquette", "quantity": 1, "unitPrice": 1200 },
+      { "label": "Fichiers pour l'imprimeur", "quantity": 1, "unitPrice": 300 } ] },
+    { "id": "F-2026-012", "clientId": "halles", "issueDate": "2026-10-06", "dueDate": "2026-11-05", "status": "sent", "paidAt": null, "lines": [
+      { "label": "Site de la coopérative : audit de l'existant", "quantity": 1, "unitPrice": 700 },
+      { "label": "Site de la coopérative : maquettes (jours)", "quantity": 3, "unitPrice": 480 } ] },
+    { "id": "F-2026-013", "clientId": "vasseur", "issueDate": "2026-10-12", "dueDate": "2026-11-11", "status": "sent", "paidAt": null, "lines": [
+      { "label": "Maintenance mensuelle, octobre", "quantity": 1, "unitPrice": 180 },
+      { "label": "Mise à jour de la page Honoraires (heures)", "quantity": 2, "unitPrice": 70 } ] },
+    { "id": "F-2026-014", "clientId": "port", "issueDate": "2026-10-15", "dueDate": "2026-11-14", "status": "sent", "paidAt": null, "lines": [
+      { "label": "Réservation en ligne : développement", "quantity": 1, "unitPrice": 2200 },
+      { "label": "Réservation en ligne : paramétrage et tests", "quantity": 1, "unitPrice": 400 } ] },
+    { "id": "F-2026-015", "clientId": "pivoine", "issueDate": "2026-10-18", "dueDate": "2026-11-17", "status": "draft", "paidAt": null, "lines": [
+      { "label": "Galerie « Mariages 2026 »", "quantity": 1, "unitPrice": 900 },
+      { "label": "Retouche d'images (heures)", "quantity": 6, "unitPrice": 55 } ] },
+    { "id": "F-2026-016", "clientId": "lerouge", "issueDate": "2026-10-19", "dueDate": "2026-11-18", "status": "draft", "paidAt": null, "lines": [
+      { "label": "Étiquettes de la cuvée d'automne", "quantity": 1, "unitPrice": 750 },
+      { "label": "Déclinaison pour le site", "quantity": 1, "unitPrice": 250 } ] }
+  ]
+}

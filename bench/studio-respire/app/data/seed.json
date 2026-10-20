@@ -1,0 +1,301 @@
+{
+  "studio": {
+    "name": "Studio Respire",
+    "baseline": "Yoga en petits groupes, au pied de la Croix-Rousse",
+    "address": {
+      "street": "14 rue des Capucins",
+      "postalCode": "69001",
+      "city": "Lyon"
+    },
+    "phone": "04 78 00 12 34",
+    "email": "bonjour@studio-respire.example",
+    "hours": [
+      { "days": "Lundi – vendredi", "hours": "7h30 – 20h30" },
+      { "days": "Samedi", "hours": "9h30 – 12h30" },
+      { "days": "Dimanche", "hours": "16h30 – 18h30" }
+    ],
+    "access": [
+      { "mode": "Métro", "text": "Lignes A et C, Hôtel de Ville – Louis Pradel, à 5 minutes à pied." },
+      { "mode": "Vélo’v", "text": "Une station à 100 mètres, au bas de la rue." },
+      { "mode": "À pied", "text": "On monte les pentes : la porte verte, cour intérieure, premier étage." }
+    ],
+    "notes": [
+      "Annulation gratuite à tout moment, depuis « Mes réservations ».",
+      "Tapis, blocs, sangles et couvertures sont prêtés sur place.",
+      "Vestiaires, douche et thé à l’arrivée. Merci d’arriver dix minutes avant le cours."
+    ]
+  },
+  "teachers": [
+    {
+      "id": "ines",
+      "name": "Inès Marchand",
+      "role": "Hatha et yoga du matin",
+      "tone": "clay",
+      "since": "Enseigne depuis 2014",
+      "bio": "Inès a découvert le yoga à Jaipur, puis l’a enseigné pendant dix ans entre Lyon et la Drôme. Elle aime les débuts de journée lents, les respirations qu’on a le temps d’écouter et les consignes simples. Ses cours sont précis sans jamais être austères.",
+      "specialties": ["Hatha", "Pranayama", "Yoga du matin"]
+    },
+    {
+      "id": "louis",
+      "name": "Louis Perrin",
+      "role": "Vinyasa et Ashtanga",
+      "tone": "teal",
+      "since": "Enseigne depuis 2016",
+      "bio": "Ancien danseur contemporain, Louis enchaîne les postures comme on écrit une phrase : avec un rythme, des pauses et un souffle qui porte. Formé à Mysore puis à Lyon, il transmet une pratique exigeante, mais jamais pressée.",
+      "specialties": ["Vinyasa", "Ashtanga", "Équilibres"]
+    },
+    {
+      "id": "salome",
+      "name": "Salomé Dubreuil",
+      "role": "Yin, prénatal et respiration",
+      "tone": "ochre",
+      "since": "Au studio depuis 2019",
+      "bio": "Sage-femme de formation, Salomé a rejoint le studio en 2019 pour y créer le cours prénatal. Elle anime aussi les séances de Yin, où l’on reste longtemps dans quelques postures pour laisser le corps lâcher.",
+      "specialties": ["Yin", "Prénatal", "Respiration"]
+    },
+    {
+      "id": "mathis",
+      "name": "Mathis Roche",
+      "role": "Mobilité, nidra et yoga doux",
+      "tone": "sage",
+      "since": "Au studio depuis 2021",
+      "bio": "Kinésithérapeute, Mathis a rapproché le yoga de la mobilité articulaire. Ses cours s’adressent à celles et ceux qui se disent « pas souples » : on y va doucement, on explique chaque geste, et on termine toujours allongé.",
+      "specialties": ["Mobilité", "Yoga nidra", "Yoga doux"]
+    }
+  ],
+  "classes": [
+    {
+      "id": "hatha-eveil-lundi",
+      "title": "Hatha éveil",
+      "day": 1,
+      "start": "08:00",
+      "duration": 60,
+      "level": "Tous niveaux",
+      "room": "Salle Rhône",
+      "teacherId": "ines",
+      "capacity": 14,
+      "othersBooked": 6,
+      "summary": "Commencer la semaine par des postures lentes et un souffle qu’on prend le temps d’écouter.",
+      "description": "Un cours de Hatha pour mettre le corps en route sans le brusquer. Inès enchaîne des postures tenues quelques respirations, avec des consignes claires et des variantes pour chacun. On sort de la salle plus long, plus calme, prêt pour la journée.",
+      "program": [
+        "Cinq minutes d’arrivée au sol, les yeux fermés",
+        "Salutations au soleil, lentes",
+        "Postures debout et équilibres tenus",
+        "Pranayama et relaxation finale"
+      ],
+      "bring": "Un tapis (prêt possible sur place), une tenue souple, une gourde. Arrivez dix minutes avant pour vous installer."
+    },
+    {
+      "id": "vinyasa-soir-lundi",
+      "title": "Vinyasa du soir",
+      "day": 1,
+      "start": "19:00",
+      "duration": 75,
+      "level": "Intermédiaire",
+      "room": "Salle Rhône",
+      "teacherId": "louis",
+      "capacity": 14,
+      "othersBooked": 11,
+      "summary": "Un flow dynamique pour décharger la journée et finir détendu.",
+      "description": "Louis construit chaque séance autour d’une posture-pivot : on la prépare, on l’approche en flow, puis on la savoure. Le rythme est soutenu, mais le souffle reste le métronome. Quelques bases de Vinyasa sont conseillées.",
+      "program": [
+        "Échauffement des poignets, épaules et hanches",
+        "Deux à trois séries de salutations",
+        "Séquence autour de la posture du jour",
+        "Étirements profonds et savasana"
+      ],
+      "bring": "Un tapis, une serviette si vous transpirez, de l’eau. Évitez les gros repas dans les deux heures qui précèdent."
+    },
+    {
+      "id": "pause-midi-mardi",
+      "title": "Pause méridienne",
+      "day": 2,
+      "start": "12:30",
+      "duration": 45,
+      "level": "Tous niveaux",
+      "room": "Salle Saône",
+      "teacherId": "mathis",
+      "capacity": 10,
+      "othersBooked": 5,
+      "summary": "Quarante-cinq minutes pour desserrer les épaules et repartir au bureau.",
+      "description": "Un cours express pensé pour la pause déjeuner, en tenue de ville si besoin. Mathis cible la nuque, le dos, les hanches et les poignets, tout ce qu’on fige à force de rester assis. Pas de posture compliquée : du soulagement.",
+      "program": [
+        "Mobilité de la nuque et des épaules",
+        "Ouverture des hanches et du bas du dos",
+        "Deux postures de force douce",
+        "Trois minutes de respiration guidée"
+      ],
+      "bring": "Une tenue dans laquelle vous bougez librement. Tapis et blocs fournis."
+    },
+    {
+      "id": "yin-souffle-mardi",
+      "title": "Yin et souffle",
+      "day": 2,
+      "start": "18:30",
+      "duration": 75,
+      "level": "Tous niveaux",
+      "room": "Salle Saône",
+      "teacherId": "salome",
+      "capacity": 10,
+      "othersBooked": 10,
+      "summary": "De longues postures au sol, tenues trois à cinq minutes, pour lâcher prise en profondeur.",
+      "description": "Le Yin s’adresse aux tissus profonds : on s’installe, on laisse la gravité travailler et on observe. Salomé guide la respiration pendant les tenues, et le cours se termine à lumière basse. Idéal en complément d’une pratique plus dynamique.",
+      "program": [
+        "Accueil et respiration allongée",
+        "Six à sept postures tenues au sol",
+        "Coussins et couvertures pour se soutenir",
+        "Relaxation finale à lumière basse"
+      ],
+      "bring": "Des chaussettes chaudes et un pull pour la fin de séance. Coussins, bolsters et couvertures fournis."
+    },
+    {
+      "id": "prenatal-mercredi",
+      "title": "Yoga prénatal",
+      "day": 3,
+      "start": "09:30",
+      "duration": 60,
+      "level": "Prénatal",
+      "room": "Salle Saône",
+      "teacherId": "salome",
+      "capacity": 8,
+      "othersBooked": 3,
+      "summary": "Un cours doux pour accompagner la grossesse, du deuxième au neuvième mois.",
+      "description": "Salomé, sage-femme de formation, propose des postures adaptées, des exercices de périnée et de respiration utiles pour l’accouchement. Le groupe est petit et l’ambiance détendue : on y vient aussi pour échanger. Un avis médical favorable est demandé au premier cours.",
+      "program": [
+        "Respiration abdominale et ancrage du bassin",
+        "Postures debout et à quatre pattes, en douceur",
+        "Travail du dos et du périnée",
+        "Relaxation en position latérale"
+      ],
+      "bring": "Un tapis, un coussin si vous le souhaitez, une bouteille d’eau. Prévenez Salomé de votre terme à l’arrivée."
+    },
+    {
+      "id": "ashtanga-intro-mercredi",
+      "title": "Ashtanga, initiation",
+      "day": 3,
+      "start": "19:15",
+      "duration": 90,
+      "level": "Intermédiaire",
+      "room": "Salle Rhône",
+      "teacherId": "louis",
+      "capacity": 14,
+      "othersBooked": 7,
+      "summary": "La série primaire, posture par posture, au rythme du souffle.",
+      "description": "Un cours guidé de la première série d’Ashtanga, pas à pas, pour comprendre la logique de l’enchaînement avant de pratiquer seul. Louis compte les respirations et corrige avec précision. Exigeant physiquement, il demande un peu d’expérience.",
+      "program": [
+        "Chant d’ouverture, facultatif",
+        "Salutations A et B",
+        "Début de la série primaire, avec variantes",
+        "Trois postures de clôture"
+      ],
+      "bring": "Un tapis antidérapant, une serviette et de l’eau. Pratique à jeun ou trois heures après un repas."
+    },
+    {
+      "id": "reveil-doux-jeudi",
+      "title": "Réveil en douceur",
+      "day": 4,
+      "start": "07:30",
+      "duration": 45,
+      "level": "Tous niveaux",
+      "room": "Salle Rhône",
+      "teacherId": "ines",
+      "capacity": 14,
+      "othersBooked": 4,
+      "summary": "Trois quarts d’heure avant le travail, pour s’étirer et respirer à pleins poumons.",
+      "description": "Un Hatha très doux pour les lève-tôt, ou pour celles et ceux qui veulent le devenir. Inès réveille le corps par des mouvements fluides, cale la respiration, puis laisse trois minutes de silence. À la sortie, la ville est encore calme.",
+      "program": [
+        "Étirements au sol, en lenteur",
+        "Chat-vache et salutations douces",
+        "Respiration en cohérence cardiaque, cinq secondes d’inspire, cinq d’expire",
+        "Silence assis"
+      ],
+      "bring": "Une tenue chaude : la salle se réchauffe progressivement. Tapis fourni sur demande."
+    },
+    {
+      "id": "vinyasa-flow-vendredi",
+      "title": "Vinyasa flow",
+      "day": 5,
+      "start": "18:00",
+      "duration": 60,
+      "level": "Tous niveaux",
+      "room": "Salle Rhône",
+      "teacherId": "louis",
+      "capacity": 14,
+      "othersBooked": 12,
+      "summary": "Le rendez-vous de fin de semaine : un flow fluide, de l’énergie, un sourire à la fin.",
+      "description": "Un Vinyasa accessible à tous, avec des variantes pour chaque posture. Louis propose une trame simple pour que chacun trouve son intensité. Le vendredi, on termine toujours par dix minutes d’étirements au sol.",
+      "program": [
+        "Ouverture assis et respiration",
+        "Flow en quatre temps",
+        "Équilibres sur les mains ou sur un pied, au choix",
+        "Étirements au sol et savasana"
+      ],
+      "bring": "Un tapis, une tenue qui ne glisse pas, de l’eau."
+    },
+    {
+      "id": "mobilite-samedi",
+      "title": "Mobilité et souplesse",
+      "day": 6,
+      "start": "10:00",
+      "duration": 90,
+      "level": "Tous niveaux",
+      "room": "Salle Rhône",
+      "teacherId": "mathis",
+      "capacity": 14,
+      "othersBooked": 8,
+      "summary": "Pour celles et ceux qui se disent « pas souples » : comprendre le mouvement avant de l’étirer.",
+      "description": "Kinésithérapeute, Mathis explique chaque articulation avant de la mettre au travail. On alterne mobilité active, étirements et respiration, avec des outils simples : balles, sangles, blocs. Un bon cours pour reprendre le sport ou desserrer les raideurs.",
+      "program": [
+        "Bilan rapide : où est-ce que ça tire ?",
+        "Mobilité des hanches, de la colonne et des épaules",
+        "Travail avec sangles, balles et blocs",
+        "Une séquence courte à refaire chez soi"
+      ],
+      "bring": "Tout le matériel est fourni. Une tenue près du corps aide à voir les alignements."
+    },
+    {
+      "id": "nidra-dimanche",
+      "title": "Yoga nidra",
+      "day": 7,
+      "start": "17:00",
+      "duration": 60,
+      "level": "Tous niveaux",
+      "room": "Salle Rhône",
+      "teacherId": "mathis",
+      "capacity": 14,
+      "othersBooked": 6,
+      "summary": "Une heure allongé, guidé par la voix : le sommeil conscient, sans s’endormir tout à fait.",
+      "description": "Le yoga nidra se pratique sur le dos, sous une couverture, sans aucun effort. Mathis guide l’attention de zone en zone, puis installe une intention. Beaucoup en sortent reposés, comme après une longue sieste.",
+      "program": [
+        "Installation avec couvertures et coussins",
+        "Scan corporel guidé",
+        "Visualisation et intention",
+        "Retour en douceur, puis thé en fin de séance"
+      ],
+      "bring": "Des vêtements chauds et confortables. Tout le reste est fourni, le thé aussi."
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b-seed-1",
+      "classId": "hatha-eveil-lundi",
+      "name": "Camille Laurent",
+      "email": "camille@example.com",
+      "createdAt": "2026-10-12T09:14:00.000Z"
+    },
+    {
+      "id": "b-seed-2",
+      "classId": "reveil-doux-jeudi",
+      "name": "Camille Laurent",
+      "email": "camille@example.com",
+      "createdAt": "2026-10-12T09:15:00.000Z"
+    },
+    {
+      "id": "b-seed-3",
+      "classId": "nidra-dimanche",
+      "name": "Camille Laurent",
+      "email": "camille@example.com",
+      "createdAt": "2026-10-14T18:40:00.000Z"
+    }
+  ]
+}

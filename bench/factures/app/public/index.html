@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tableau de bord · Factures</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/"><img src="/favicon.svg" alt="">Factures</a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="/" aria-current="page">Tableau de bord</a>
+        <a href="/factures">Factures</a>
+        <a href="/clients">Clients</a>
+      </nav>
+      <a class="btn btn-primary btn-sm" href="/factures/nouvelle">Nouvelle facture</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-head">
+      <div>
+        <p class="eyebrow" id="today"></p>
+        <h1>Tableau de bord</h1>
+        <p class="sub">Ce qui est facturé, ce qui attend d'être payé, ce qui traîne.</p>
+      </div>
+    </div>
+
+    <section class="ledger" id="ledger" aria-label="Chiffres du mois">
+      <p class="skeleton">Chargement…</p>
+    </section>
+
+    <div class="grid-2">
+      <section class="panel" aria-labelledby="collect-title">
+        <div class="panel-head">
+          <h2 id="collect-title">À encaisser</h2>
+          <a href="/factures">Toutes les factures</a>
+        </div>
+        <div id="collect"><p class="skeleton">Chargement…</p></div>
+      </section>
+
+      <section class="panel" aria-labelledby="months-title">
+        <div class="panel-head">
+          <h2 id="months-title">Facturé mois par mois</h2>
+        </div>
+        <div class="panel-body" id="months"><p class="skeleton">Chargement…</p></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script src="/dashboard.js"></script>
+</body>
+</html>
