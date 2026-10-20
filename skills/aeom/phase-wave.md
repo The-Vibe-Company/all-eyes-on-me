@@ -1,6 +1,6 @@
 # /aeom: the wave
 
-Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**Where workers work**, **Briefing any worker** and sections 3 to 5, before a run's first worker). Everything it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
+Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**Where workers work**, **Briefing any worker** and sections 2 to 6, before a run's first worker). Everything it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
 
 ## Where workers work
 
@@ -23,6 +23,17 @@ Every brief opens with « You are an AEOM <direction, kit, page, promotion or jo
 
 If a worker stops without committing, look at its worktree: when the work is there and stays inside its files, commit it yourself and say so.
 
+## 2. Plan
+
+Read what fails in `.aeom/reports/check.json` and `.aeom/reports/judge.json` through a filter (`node -e` or `python3 -c`: page, width, check or principle, reason), never whole, and the project tree. Sort the files into two groups:
+
+- **Shared**: what more than one page uses (tokens, global CSS, the header or layout, shared components). In `examples/ugly-app` this is `shared/`.
+- **Per page**: what only one page uses. In `examples/ugly-app` this is one file per page in `pages/`.
+
+Sort every failure the same way. A failure that shows on several pages, or a principle that compares pages (`one-direction`, `consistent-chrome`, `not-generic`), goes to the kit. Everything else goes to its page. With the style kept, what the verdict leaves to the style goes to nobody: the charter stays.
+
+If the run judged its key journeys (section 2c, step 9; `/aeom --forcer-directions` judges none, so it has no journey findings), their findings are sorted too: `aeom journey --by-page` (from that replay and its critique) says, page by page, which journey breaks there and which principle fails at which step. Each goes to that page's worker. A finding whose fix lives in a shared file, such as a link of the navigation or a state the kit draws, goes to the kit wave when the run has one; otherwise the page's worker names it as a kit candidate, and the promotion of section 4 makes it.
+
 ## 3. Kit wave: one worker
 
 Create a worktree for the kit worker from the run branch:
@@ -40,6 +51,10 @@ Note the commit the worktree started from (`KIT_BASE=$(git rev-parse aeom/$RUN)`
 **Kit brief for a style kept** (step 4). Give the worker the same, and ask instead:
 
 > Keep this app's identity exactly as it is: its colours, its fonts, its logo, its layout conventions. It is the client's charter, not yours to improve. Where pages disagree, the home page's style is the charter, and the others come to it. Gather that style into the shared files as tokens, the header and navigation every page will use, the buttons, links and the empty, error and loading states, and fix only what fails: every clickable thing gets a pointer cursor and a visible hover and focus; the header stays when you scroll; a label holds on one line, repeated items keep one shape and cut text ends with an ellipsis; on a phone, a target is 24 px or 24 px apart and a field's text 16 px; text is 12 px at least, lines 90 characters at most, zoom never forbidden; images keep their shape and room, the keyboard focus shows; a colour changes only where its contrast fails AA, to the nearest shade of the same hue that passes; a missing empty or error state is drawn in the existing style. Never add a colour, a font or a mark the app did not have. `not-generic`, `not-ai-default` and the checks `gradient-text`, `side-stripe`, `nested-card` and `bounce` are not yours to fix: they judge the charter, which stays. Do not edit any page. Write at the top of the main shared file, in a comment, how pages use the kit. Commit your work in the worktree.
+
+**Kit brief for a direction kept** (step 4, a direction `/aeom directions` kept). Give the worker the same, the folder `$MAIN/.aeom/direction/` (absolute: the worker is in its worktree, where it is not) and what `aeom direction show` says of it, and ask instead:
+
+> Carry this direction into the app. It is a mockup of two of its screens, in static pages the person chose: its colours, type, spaces, radii and the look of its components become the app's tokens and kit, in the shared files, so every page takes it through them. Match the mockup where it shows something, and carry the same language to what it does not show, the header and navigation every page uses, the buttons, fields, lists and the empty, error and loading states. Take its look, never its content: the app keeps its own data, words, features and links. Every clickable thing gets a pointer cursor and a visible hover and focus; the header stays when you scroll; a label holds on one line, repeated items keep one shape and cut text ends with an ellipsis; text and colours pass AA. Do not edit any page. Write at the top of the main shared file, in a comment, how pages use the kit. Commit your work in the worktree.
 
 ## 4. Screen wave: one worker per page that still fails, all at once
 
@@ -112,3 +127,7 @@ It says, journey by journey, what the page wave cleared and what still fails. A 
 With the style kept, check that it was, page by page: the style judge of the `aeom-judge` skill, three judges comparing each page before and after, then `aeom judge --style-kept --captures .aeom/runs/$RUN/after/captures --votes .aeom/runs/$RUN/style/votes --out .aeom/runs/$RUN/style`. A page that fails `charter-kept` changed the charter: find what changed it, the page's own diff since `$WAVE_BASE` or the kit's since `$KIT_BASE`. The page's own: put its files back like a page that is not `better`, below, and say why. The kit's, or every page failing: revert the kit's merge and every page merge after it, so the run branch holds the journeys commit alone, show the user the before captures and what the kit changed, and stop the run there.
 
 For every page that is not `better`, unless it is in `no-worker.json` (no worker touched it) or a journey the ratchet kept crosses it (a page whose worker fixed only journey findings keeps its own count, and stays for the journeys it made better), put its files back as they were before the screen wave (`git checkout $WAVE_BASE -- <the page's files>`); when journey files were rewritten for that page's new labels or paths (section 4), put them back too (`git checkout $WAVE_BASE -- .aeom/journeys/<those files>`), and commit. Such a page still renders through the new kit, so it is neither the page before the run nor the page after the wave: capture, check and judge again, snapshot to `.aeom/runs/$RUN/after-revert`, and compare that with `before`. Say which pages were put back, why, and how they now compare. If the kit itself made a page worse, say so: putting the page back cannot undo the kit.
+
+## 6. Show
+
+Show the user, page by page, the capture before and after (from `.aeom/runs/$RUN/before/captures` and `.aeom/runs/$RUN/after/captures`), the comparison table, what changed in the kit, and the kit candidates the workers left. Then the run branch name and the commands to look at it. Remove the worker worktrees (`git worktree remove`) and their branches once merged. With `/aeom --forcer-directions`, the run ends here: write the result page, `aeom report .aeom/runs/$RUN --serve --open` (as **The result page, served** says), the standard of the front (as **The standard of the front** says), then, unless the user typed `--sans-pr` or HEAD was detached (section 0), open the PR, `aeom pr .aeom/runs/$RUN`, as step 8 of the run without an option says, and pass on what it prints.

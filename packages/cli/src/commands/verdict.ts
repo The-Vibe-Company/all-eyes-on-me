@@ -101,11 +101,14 @@ async function verdict(argv: string[]): Promise<number> {
   if (values.out) await mkdir(dirname(values.out), { recursive: true });
   // A front with a direction of its own is improved, its style kept, unless the person asks for new directions.
   const recommend = kept !== null || identity ? "keep" : "directions";
-  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null, identity, recommend }, null, 2) + "\n");
+  // A direction the person kept with /aeom directions, no run built on yet, is what a redo carries, unless the style is kept.
+  const chosen = kept ? null : await readFile(join(".aeom", "direction", "direction.json"), "utf8").then((t) => JSON.parse(t) as { slug?: string; applied?: string }, () => null);
+  const direction = chosen?.slug && !chosen.applied ? chosen.slug : null;
+  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null, identity, recommend, ...(direction ? { direction } : {}) }, null, 2) + "\n");
   console.log(line);
   if (keptWithStyle.length) console.log(`Left to the style kept: ${keptWithStyle.map((f) => `${f.where} ${f.what.split(":")[0]}`).join(", ")}.`);
   if (nothingToRedo) {
-    console.log(`\nNothing to redo: nothing fails.`);
+    console.log(`\nNothing to redo: nothing fails.${direction ? `\nA direction is kept, ${direction}: /aeom redo carries it into the app.` : ""}`);
     return 0;
   }
   const column = Math.max(...failures.map((f) => f.where.length)) + 2;
@@ -115,6 +118,8 @@ async function verdict(argv: string[]): Promise<number> {
   console.log(
     kept
       ? `Next: the kit wave fixes the existing style, without a new direction (${kept}).`
+      : direction
+        ? `Next: the direction kept with /aeom directions, ${direction}, carried into the app.`
       : identity
         ? `Next: the front has a direction of its own (${IDENTITY_PRINCIPLES.join(", ").replace(/, ([^,]+)$/, " and $1")} pass on every screen): improve it, keeping its style (recommended), or ask for new directions.`
         : `Next: three art directions by default, drawn from the product sheet.`,

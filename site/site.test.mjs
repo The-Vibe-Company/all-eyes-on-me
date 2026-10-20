@@ -99,7 +99,7 @@ test("the site starts with one command and serves the page", async () => {
     for (const path of ["/commands", "/commands/"]) {
       const sub = await fetch(`${url}${path}`);
       assert.equal(sub.status, 200, `${path} is served`);
-      assert.match(await sub.text(), /Four commands\./);
+      assert.match(await sub.text(), /Five commands\./);
     }
     const post = await fetch(`${url}/api/stars`, { method: "POST" });
     assert.equal(post.status, 405, "/api/stars only answers GET, like the Vercel function");
@@ -138,7 +138,7 @@ test("the site builds to static files a host serves as is", () => {
       assert.ok(existsSync(join(out, href)), `${href} is linked but not built`);
     }
     assert.ok(existsSync(join(out, "shared/kit.css")));
-    assert.match(readFileSync(join(out, "commands/index.html"), "utf8"), /Four commands\./, "the commands page is built");
+    assert.match(readFileSync(join(out, "commands/index.html"), "utf8"), /Five commands\./, "the commands page is built");
     assert.doesNotMatch(readFileSync(join(out, "commands/index.html"), "utf8"), /<!-- (include|missing partial):/);
   } finally {
     rmSync(out, { recursive: true, force: true });
@@ -216,10 +216,10 @@ test("each thing AEOM does on the home page leads to the command that does it", 
   assert.match(readFileSync(new URL("site/shared/header.html", root), "utf8"), /<a href="\/commands">Commands<\/a>/, "the menu leads to the commands page");
 });
 
-test("the commands page shows four commands, each with when and what it does, the ones not built yet marked as coming", () => {
+test("the commands page shows five commands, each with when and what it does, the ones not built yet marked as coming", () => {
   const skill = readFileSync(new URL("skills/aeom/SKILL.md", root), "utf8");
   const blocks = [...commands.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)];
-  assert.deepEqual(blocks.map(([, id]) => id), ["judge", "redo", "check", "build"]);
+  assert.deepEqual(blocks.map(([, id]) => id), ["judge", "directions", "redo", "check", "build"]);
   for (const [block, id] of blocks) {
     const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?<\/p>/);
     assert.ok(command, `${id} names its command`);
@@ -260,4 +260,6 @@ test("the cost the terminals of the commands page show is what aeom estimate pri
   for (const row of rows(["--juger"])) assert.ok(shown.includes(row), `/aeom judge shows « ${row} »`);
   const total = rows([]).find((row) => row.startsWith("Total"));
   assert.ok(shown.includes(total), `/aeom redo shows « ${total} »`);
+  const mockups = rows(["--maquettes"]).find((row) => row.startsWith("Total"));
+  assert.ok(shown.includes(mockups), `/aeom directions shows « ${mockups} »`);
 });

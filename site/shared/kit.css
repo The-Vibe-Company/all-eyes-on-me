@@ -1,6 +1,6 @@
 /* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
    Pages link this file and include head, header and footer.
-   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --redesign, --keep, --build) with .gaze, .tidy, .line, .draw, .soon, .more, .try; on the commands page, .page-top, .cmds, .cmd, .when, .does, .term (a terminal), .cli, .chips, .film (copy block). */
+   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --directions, --redesign, --keep, --build) with .gaze, .tidy, .line, .draw, .soon, .more, .try; on the commands page, .page-top, .cmds, .cmd, .when, .does, .term (a terminal), .cli, .chips, .film (copy block). */
 
 :root {
   --sun: #ffd84d;
@@ -208,6 +208,7 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .cmds__card--judge { background: var(--paper); }
 .cmds__card--redo { background: var(--ink); color: var(--paper); }
 .cmds__card--redo:hover { color: var(--paper); }
+.cmds__card--directions { background: var(--sun); }
 .cmds__card--check { background: var(--sky); }
 .cmds__card--build { background: var(--pink); }
 .cmds__n { display: flex; align-items: center; gap: 10px; font: 800 18px/1 var(--display); }
@@ -216,11 +217,18 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .cmds__card--redo code { color: var(--sun); }
 .cmds__verb { font: 800 clamp(32px, 3.6vw, 48px)/1 var(--display); letter-spacing: -0.03em; white-space: nowrap; }
 @media (min-width: 760px) { .cmds { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1180px) { .cmds { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1180px) { .cmds { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1500px) { .cmds { grid-template-columns: repeat(5, 1fr); } }
 
 .commands .feature--judge { background: var(--paper); }
+.commands .feature--directions { background: var(--sun); }
 .commands .feature { align-items: start; }
-@media (min-width: 980px) { .commands .feature { grid-template-columns: 0.85fr 1.25fr; gap: 56px; } }
+@media (min-width: 980px) {
+  .commands .feature { grid-template-columns: 0.85fr 1.25fr; gap: 56px; }
+  /* Five commands: the text alternates sides, the directions and the check on the right. */
+  .commands .feature--redesign .feature__text, .commands .feature--build .feature__text { order: 0; }
+  .commands .feature--directions .feature__text, .commands .feature--keep .feature__text { order: 2; }
+}
 .cmd { margin: 0 0 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .cmd code { font: 600 clamp(18px, 1.8vw, 22px)/1 var(--mono); background: var(--ink); color: var(--sun); padding: 8px 12px; border-radius: 10px; }
 .feature--redesign .cmd code { background: var(--sun); color: var(--ink); }

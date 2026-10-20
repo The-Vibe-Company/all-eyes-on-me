@@ -92,16 +92,16 @@ test("one width instead of two costs the judges about half of what they look at,
   assert.match(estimateText(both, { screens: 8, journeys: 4, widths: [390, 1280] }), /^For 8 screens and 4 key journeys:\n/, "the default widths go unsaid");
 });
 
-test("from a prompt, the cost is three direction workers and one judge, in minutes: no understanding, no page wave", () => {
+test("directions in mockups (/aeom directions), whatever their source, cost three direction workers and one judge, in minutes: no understanding, no page wave", () => {
   const prompt = estimateRun({ screens: 2, journeys: 0, mode: "prompt" });
-  assert.deepEqual(prompt.phases.map((p) => p.phase), ["Read the prompt", "Three directions from the prompt, for you to choose"]);
+  assert.deepEqual(prompt.phases.map((p) => p.phase), ["Read the source", "Three directions in mockups, for you to choose"]);
   assert.equal(prompt.total.agents, 3 + 1);
   assert.ok(prompt.total.minutes <= 10, `${prompt.total.minutes} minutes`);
   assert.ok(prompt.total.tokens < 400_000);
   const text = estimateText(prompt, { screens: 2, journeys: 0 });
-  assert.match(text, /^From a prompt, two screens for each direction:\n/);
+  assert.match(text, /^Directions in mockups, two screens each:\n/);
   assert.doesNotMatch(text, /only when the verdict finds something to redo/);
-  assert.match(text, /The direction workers run on the session's own model, the judge on Sonnet\./);
+  assert.match(text, /The direction workers run on the session's own model; the judge, on Sonnet, says what it sees beside each direction and leaves none out\./);
 });
 
 test("from scratch, the cost is the directions, the kit, a worker per screen, the measure and the journeys: no judge of a front that does not exist", () => {
@@ -136,4 +136,14 @@ test("the estimate is in dollars at the API's list prices, calibrated on a run a
   // The directions are on the session's own model: they weigh more than their tokens on Sonnet would.
   const directions = run.phases.find((p) => /directions/.test(p.phase))!;
   assert.ok(directions.dollars! > (directions.tokens * 9) / 1_000_000);
+});
+
+test("a run that builds on the direction kept with /aeom directions draws none: the kit carries it, for less", () => {
+  const drawn = estimateRun({ screens: 8, journeys: 4, mode: "full" });
+  const kept = estimateRun({ screens: 8, journeys: 4, mode: "full", kept: true });
+  assert.ok(!kept.phases.some((p) => /directions/i.test(p.phase)), "no directions to draw");
+  assert.ok(kept.phases.some((p) => p.phase === "The kit, on the direction kept"));
+  assert.ok(kept.total.dollars < drawn.total.dollars);
+  const scratch = estimateRun({ screens: 5, journeys: 3, mode: "scratch", kept: true });
+  assert.deepEqual(scratch.phases.map((p) => p.phase).filter((p) => /direction/i.test(p)), ["The kit, on the direction kept"]);
 });
