@@ -5,7 +5,10 @@ Apps whose defects were noted by hand, to measure what `/aeom` finds and fixes o
 Each app is a folder:
 - `app/`, the app itself: a link to `examples/ugly-app` for the demo, the code itself for the others;
 - `aeom/`, what its project's `.aeom/` starts with: `config.json` (how it starts, its fake account, its reset) and `journeys/`, its key journeys;
-- `defects.json`, the defects noted by hand, each with where it is (a route, `*` for the whole site, or a journey's name), what is wrong, and the checks or principles that would name it. It never goes into the app's project: the run never sees it.
+- `defects.json`, the defects noted by hand, each with where it is (a route, `*` for the whole site, or a journey's name), what is wrong, and the checks or principles that would name it, none when nothing in AEOM names it yet. It never goes into the app's project: the run never sees it.
+- `overlay/`, when the app carries what would tell the run its defects, such as the demo's README written for AEOM's tests: copied over the app, it replaces it.
+
+Only the files git tracks are copied: an app's local data, such as `data/db.json`, stays home.
 
 | App | What it is | Where it comes from |
 | --- | --- | --- |

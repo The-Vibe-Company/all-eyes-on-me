@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { benchText, scoreRun, type DefectList } from "./index.js";
+import { benchText, scoreRun, unscored, type DefectList } from "./index.js";
 import type { ResultPage } from "../run/index.js";
 
 const DEFECTS: DefectList = {
@@ -41,7 +41,7 @@ const page = (over: Partial<ResultPage> = {}): ResultPage => ({
 });
 
 test("a defect is found when the run failed its screen or journey on a check or principle that names it, fixed when the end no longer does, each with its proof", () => {
-  const score = scoreRun({ defects: DEFECTS, page: page(), refused: [], dollars: 31.2 });
+  const score = scoreRun({ defects: DEFECTS, page: page(), refused: [], dollars: 31.2, journeysJudgedAtEnd: true });
   const by = Object.fromEntries(score.defects.map((d) => [d.id, d]));
   assert.equal(by["home-scrolls"]!.found, "/: overflow: the page is 512 px wide in a 390 px window");
   assert.equal(by["home-scrolls"]!.fixed, true);
@@ -70,11 +70,42 @@ test("a journey that breaks at the end where it did not before is a regression; 
 });
 
 test("the bench reads as one line per app, then each defect with its proof, then what the run found beyond them", () => {
-  const text = benchText([scoreRun({ defects: DEFECTS, page: page(), refused: [], dollars: 31.2 }), { app: "factures", run: null, error: "did not start: port 4420 in use", defects: [], found: 0, fixed: 0, total: 5, regressions: [], hiddenFeatures: [], extra: [], dollars: null }]);
-  assert.match(text, /ugly-app +found 4\/5 +fixed 3\/5 +1 regression +0 hidden features +≈ \$31/);
+  const text = benchText([scoreRun({ defects: DEFECTS, page: page(), refused: [], dollars: 31.2, tokens: 180_000_000, journeysJudgedAtEnd: true }), unscored("factures", 5, null, "did not start: port 4420 in use")]);
+  assert.match(text, /ugly-app +found 4\/5 +fixed 3\/5 +1 regression +0 hidden features +≈ \$31, 180 M tokens/);
   assert.match(text, /factures +not measured: did not start: port 4420 in use/);
   assert.match(text, /✓ home-scrolls +found, fixed +\/: overflow/);
   assert.match(text, /◐ faint-text +found, not fixed/);
   assert.match(text, /✗ no-empty-state +not found/);
   assert.match(text, /Beyond the defects noted[\s\S]*\/contact: hierarchy: two buttons compete/);
+});
+
+test("a journey's defect is fixed only when the end replayed the journey, and judged it again when a principle names it; screens and journeys that newly fail are regressions", () => {
+  // The journey was not replayed at the end: its defect is found, not proven fixed.
+  const notReplayed = page({ journeys: [{ slug: "voir-mes-commandes", name: "Voir mes commandes", status: "unchanged", why: null, broke: { before: null, after: null }, steps: { before: 6, after: null }, widths: [], cleared: [], remaining: [] }] });
+  assert.equal(scoreRun({ defects: DEFECTS, page: notReplayed, refused: [], dollars: null, journeysJudgedAtEnd: true }).defects.find((d) => d.id === "orders-hidden")!.fixed, null);
+  // Replayed but not judged again: a principle's defect is not proven fixed either.
+  assert.equal(scoreRun({ defects: DEFECTS, page: page(), refused: [], dollars: null, journeysJudgedAtEnd: false }).defects.find((d) => d.id === "orders-hidden")!.fixed, null);
+  // A journey that breaks needs only the replay; its name is matched whatever its case.
+  const help: DefectList = { app: "ugly-app", noted: "by hand", defects: [{ id: "help", where: "obtenir de l'aide", what: "a 500", match: ["breaks"] }, { id: "aide", where: "/aide", what: "a 500", match: ["does not load"] }] };
+  const helped = page({
+    verdict: { nothingToRedo: false, line: "", failures: [{ kind: "journey", where: "Obtenir de l'aide", what: "it broke at step 2: the page answered 500" }, { kind: "page", where: "/aide", what: "does not load: 500" }] },
+    journeys: [{ slug: "obtenir-de-l-aide", name: "Obtenir de l'aide", status: "kept", why: null, broke: { before: "it broke at step 2", after: null }, steps: { before: 2, after: 3 }, widths: [], cleared: [], remaining: ["short"] }],
+    screens: [{ page: "/panier", status: "does not load", count: null, widths: [{ width: 390, before: "before/captures/panier@390.png", after: null }], cleared: [], still: [], newly: [] }],
+    stillFailing: [],
+  });
+  const score = scoreRun({ defects: help, page: helped, refused: [], dollars: null, journeysJudgedAtEnd: true });
+  assert.deepEqual(score.defects.map((d) => [d.id, d.fixed]), [["help", true], ["aide", true]]);
+  assert.ok(score.regressions.includes("/panier: does not load at the end"), "a screen that loaded before");
+  assert.ok(score.regressions.includes("Obtenir de l'aide: short fails at the end"), "a journey principle that passed before");
+});
+
+test("a route's query is left out when the defect names none; a run with no verdict is said, not scored as nothing found; a defect nothing in AEOM names is said so", () => {
+  const studio: DefectList = { app: "studio", noted: "by hand", defects: [{ id: "slots", where: "/cours.html", what: "uneven", match: ["uneven"] }, { id: "links", where: "/clients", what: "six links say the same", match: [], note: "no check names it" }] };
+  const run = page({ verdict: { nothingToRedo: false, line: "", failures: [{ kind: "check", where: "/cours.html?id=vinyasa", what: "uneven: two cards differ" }] }, stillFailing: [] });
+  const score = scoreRun({ defects: studio, page: run, refused: [], dollars: null });
+  assert.equal(score.defects[0]!.found, "/cours.html?id=vinyasa: uneven: two cards differ");
+  assert.deepEqual(score.extra, []);
+  assert.match(benchText([score]), /✗ links +not found, nothing names it/);
+  const none = scoreRun({ defects: studio, page: page({ verdict: null }), refused: [], dollars: null });
+  assert.match(none.error!, /has no verdict/);
 });

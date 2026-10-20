@@ -1,5 +1,5 @@
-// The ugly demo app: four deliberately bad pages, one broken link, and orders
-// behind a sign-in with a fake account (fixtures/compte.json).
+// A small shop: products, a contact form, and orders behind a sign-in with a
+// fake account (fixtures/compte.json).
 // Start it with `node examples/ugly-app/server.mjs` (PORT defaults to 4317).
 //
 // pages/   one HTML file per page, owned by that page alone
