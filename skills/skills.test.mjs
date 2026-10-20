@@ -27,7 +27,7 @@ test("every section the skill names is a heading of one of its files", () => {
 test("SKILL.md keeps what every run needs, and stays under 6,000 words", () => {
   const words = read("SKILL.md").split(/\s+/).filter(Boolean).length;
   assert.ok(words < 6000, `SKILL.md is ${words} words: move a phase to its own file`);
-  for (const phase of ["phase-understand.md", "phase-directions.md", "phase-wave.md", "phase-prompt.md", "phase-build.md"]) assert.match(read("SKILL.md"), new RegExp(`\\]\\(${phase}\\)`), `SKILL.md says when to read ${phase}`);
+  for (const phase of ["phase-understand.md", "phase-directions.md", "phase-wave.md", "phase-mockups.md", "phase-build.md"]) assert.match(read("SKILL.md"), new RegExp(`\\]\\(${phase}\\)`), `SKILL.md says when to read ${phase}`);
 });
 
 // A run launches its workers and judges as AEOM's own agents: Sonnet, and only

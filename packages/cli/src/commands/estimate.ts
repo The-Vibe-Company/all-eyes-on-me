@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { ConfigError, estimateRun, estimateText, loadConfig, localApiBase, type Estimate, type RunMode } from "@aeom/core";
 import { parseWidths, sheetWidths } from "./app.js";
 
-const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --depuis | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>] [--out <file>]
+const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --maquettes | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>] [--out <file>]
 
 Says what a run of /aeom would cost before it starts: how many agents, how many
 dollars at the API's list prices and how long, phase by phase, at most. The screens are the config's
@@ -20,8 +20,10 @@ journeys, the files in .aeom/journeys.
                      journeys the product sheet lists
   --api <url>        Its API, running on this machine on its own fake data;
                      alone, a front built from scratch plugged into it
-  --depuis           Directions drawn from a prompt (/aeom --depuis), with no
-                     app: two screens of static pages each, for you to choose
+  --maquettes        Directions in mockups (/aeom directions), from the front as
+                     it is, a prompt or a spec: two screens of static pages
+                     each, for you to choose, nothing in the app changed
+                     (--depuis is the same)
   --directions <n>   Build this many directions (default 3); with a style
                      kept in the config, build them anyway
   --autonome         Nobody chooses the direction: the judges screen them and
@@ -44,7 +46,7 @@ const count = (value: string | undefined, what: string, least: number): number |
 export async function runEstimate(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
-    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, out: { type: "string" }, help: { type: "boolean", short: "h" } },
+    options: { juger: { type: "boolean" }, diagnostic: { type: "boolean" }, ux: { type: "boolean" }, depuis: { type: "boolean" }, maquettes: { type: "boolean" }, "from-scratch": { type: "boolean" }, api: { type: "string" }, "garder-le-style": { type: "boolean" }, directions: { type: "string" }, autonome: { type: "boolean" }, screens: { type: "string" }, journeys: { type: "string" }, widths: { type: "string" }, out: { type: "string" }, help: { type: "boolean", short: "h" } },
   });
   if (values.help) {
     console.log(USAGE);
@@ -63,8 +65,8 @@ export async function runEstimate(argv: string[]): Promise<number> {
   const given = { screens: count(values.screens, "screens", 1), journeys: count(values.journeys, "journeys", 0), directions: count(values.directions, "directions", 1) };
   for (const v of Object.values(given)) if (typeof v === "string") return (console.error(v), 1);
 
-  // From a prompt, there is no app to count: each direction draws two screens.
-  if (values.depuis) {
+  // Directions in mockups: whatever the source, each direction draws two screens, and nothing else is counted.
+  if (values.maquettes || values.depuis) {
     const estimate = estimateRun({ screens: 2, journeys: 0, mode: "prompt", directions: (given.directions as number | undefined) ?? 3, widths: widths.length });
     return said(estimate, { screens: 2, journeys: 0, widths }, values.out);
   }

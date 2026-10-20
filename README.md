@@ -60,7 +60,7 @@ ln -s "$PWD/agents/claude/aeom-worker.md" "$PWD/agents/claude/aeom-judge.md" ~/.
 
 The two agents, `aeom-worker` and `aeom-judge`, are what a run launches: on Sonnet, with only the tools they use, so no step of theirs re-reads the MCP servers and skills a general agent carries. Restart Claude Code once after linking them: a new `agents` folder is read when it starts.
 
-**From a prompt, with no app yet.** `/aeom --depuis prompt.md`, such as the prompt `/style` writes, draws three directions in a few minutes: two static pages each, in plain HTML and CSS, keeping what the charter fixes and varying what it leaves open. The checks run on each, a judge screens out the ugly and the dated, and you choose. The whole mockup on the chosen direction comes next.
+**Directions first, nothing touched.** `/aeom directions` draws three art directions in a few minutes, as static pages in plain HTML and CSS: of your own screens with what they hold when you give it nothing, of a prompt (`/aeom directions "a sentence"`, or the prompt `/style` writes, whose charter it keeps), or of a spec (`/aeom directions cahier.md`). No branch, no change to your app. AEOM's checks run on each, a judge says what it sees beside each, leaving none out, and you choose. The one you choose is kept in `.aeom/direction/`: `/aeom redo` then carries it into your app, `/aeom build --from-scratch` builds a front on it.
 
 **From scratch, with no front yet.** `/aeom build --from-scratch cahier.md`, or a sentence in quotes, with `--api <url>` when an API runs on your machine, drafts the product sheet and its key journeys from it, says what the run will cost and waits for your go, then draws three directions for you to pick. On the one you pick, it builds the kit and the screens of the key journeys, on that API, or on fake data kept in one module and named as such, then `/aeom build --api <url>` plugs it in later without touching the screens. It replays each journey to its end, checks that no screen calls a server but that API, and writes the standard, the result page and a pull request. The front is plain HTML, CSS and JavaScript in `front/`, with no build step, which any stack can take over; open it served, `python3 -m http.server 8080 -d front`.
 
@@ -68,7 +68,7 @@ Then, in your project:
 - it is a git repository with a clean working tree;
 - your app starts locally with one command, on fake data;
 - for the pull request at the end, the repository has a remote and `gh` is signed in;
-- type `/aeom judge` in Claude Code for a first look, then `/aeom redo` to redo what fails (`/aeom` alone is the same as `/aeom redo`).
+- type `/aeom judge` in Claude Code for a first look, `/aeom directions` to see other directions for it, then `/aeom redo` to redo what fails (`/aeom` alone is the same as `/aeom redo`).
 
 A full run is long and spawns many agents: some twenty-five subagents (judges, workers), all on Sonnet but the direction workers, on your session's model, and about $50 at most at the API's list prices for eight screens and four journeys, the session that coordinates them included. `aeom estimate` says it for your project before anything starts, `/aeom` asks before its first judge, and `aeom cost` says after the run what it really cost. For a first look at a project, `/aeom judge` stops at the verdict. If the session closes in the middle, `/aeom --reprendre` takes the run up where it stopped: every run keeps its state in `.aeom/runs/<run>/state.json`.
 
@@ -83,6 +83,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 | `aeom snapshot` | Keep a copy of the captures and reports, such as before a fleet run |
 | `aeom compare` | Compare two snapshots page by page |
 | `aeom sheet` | Lay captures side by side in one image |
+| `aeom direction` | Keep the direction chosen, until a run builds on it |
 | `aeom tournament` | Run a knockout between directions, one vote per duel, three for the final |
 | `aeom product` | Write the product sheet AEOM drafted, keeping the user's edits |
 | `aeom journey` | Replay each key journey and capture every step |
