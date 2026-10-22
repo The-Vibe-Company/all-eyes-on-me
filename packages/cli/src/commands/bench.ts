@@ -144,6 +144,8 @@ async function scoreApp(bench: string, out: string, name: string): Promise<AppSc
     const after = await json<JourneyReport>(join(dir, end, "report.json"));
     const config = await json<{ protected?: string[] }>(join(project, ".aeom", "config.json"));
     const refused = before && after && !rewritten.length ? guardJourneys({ before, after, changed, protectedFiles: config?.protected ?? [] }).refused : [];
+    // A run never says what it costs: the bench measures it, from this machine's transcripts.
+    if (!existsSync(join(dir, "cost.json"))) await promisify(execFile)(process.execPath, [process.argv[1]!, "cost", join(".aeom", "runs", run)], { cwd: project, env: process.env }).catch(() => undefined);
     const cost = await json<{ total?: { dollars?: number | null; unpriced?: number }; roles?: { read?: number; written?: number; output?: number }[] }>(join(dir, "cost.json"));
     const tokens = cost?.roles?.length ? cost.roles.reduce((t, r) => t + (r.read ?? 0) + (r.written ?? 0) + (r.output ?? 0), 0) : null;
     return scoreRun({

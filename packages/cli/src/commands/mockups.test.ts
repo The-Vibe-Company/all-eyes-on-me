@@ -30,6 +30,15 @@ test("aeom mockups captures, lays out and checks every direction of a round in o
     assert.match(stdout, /pale +contrast/, "what its checks found, said beside it");
     for (const file of ["sheet.png", "now.png", "carnet.png", "pale.png", "carnet-checks/check.json"]) assert.ok(existsSync(join(directions, file)), file);
     assert.deepEqual(JSON.parse(readFileSync(join(directions, "sheet.json"), "utf8")), [{ label: "now", note: "The front as it is today." }, { label: "carnet", note: "A logbook, ruled and dated." }, { label: "pale" }]);
+    // A round that names its directions takes those alone: an earlier round in the folder is not this one.
+    const env = { ...process.env, AEOM_HOME: join(dir, ".home"), AEOM_TELEMETRY: "0" };
+    const one = await promisify(execFile)("node", [AEOM, "mockups", directions, "carnet", "--widths", "1280"], { cwd: dir, env });
+    assert.match(one.stdout, /^1 direction, laid out in/);
+    const bad = (args: string[]) => promisify(execFile)("node", [AEOM, "mockups", directions, ...args], { cwd: dir, env }).then(() => 0, (e: { code: number }) => e.code);
+    assert.equal(await bad(["--now", "nowhere.png"]), 1, "a capture of the front with no route");
+    assert.equal(await bad(["--now", "/=missing.png"]), 1, "a capture that is not there");
+    assert.equal(await bad(["--note", "ailleurs=x"]), 1, "a note for no direction of the round");
+    assert.equal(await bad(["absent"]), 1, "a slug with no folder");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

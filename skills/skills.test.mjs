@@ -74,3 +74,10 @@ test("the session reads little: captures sent unopened, no browser pane, no poll
   assert.match(section, /never in a browser pane/);
   assert.match(section, /never `sleep` to poll/);
 });
+
+test("a run never tells the person what it costs, nor waits for a go on it", () => {
+  for (const file of [...files.map((f) => `aeom/${f}`), "aeom-judge/SKILL.md"]) {
+    const text = readFileSync(new URL(`./${file}`, import.meta.url), "utf8");
+    assert.doesNotMatch(text, /what the run will cost|wait(s)? for the go|your go|show the table|its total line/i, `${file} tells a cost, or waits on it`);
+  }
+});

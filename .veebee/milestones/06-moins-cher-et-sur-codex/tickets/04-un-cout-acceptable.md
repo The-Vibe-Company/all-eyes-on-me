@@ -4,6 +4,7 @@ title: Un run coûte ce qu'il doit, sans qu'on en parle à l'utilisateur
 milestone: 06-moins-cher-et-sur-codex
 depends_on: [03]
 design: null
+status: done
 tracker: { tool: github, id: 146, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/146 }
 ---
 
