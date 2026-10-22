@@ -1,0 +1,35 @@
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_407b0bf6a620b8 77-83
+bench/README.md
+  s_4ce34ec42d9105::t_2005c0256a52bb 27
+packages/cli/src/commands/mockups.test.ts
+  s_4ce34ec42d9105::t_4b79a1b8d2c15d 33-41
+packages/cli/src/commands/bench.ts
+  s_4ce34ec42d9105::t_2005c0256a52bb 147-148
+packages/cli/src/commands/mockups.ts
+  s_4ce34ec42d9105::t_4b79a1b8d2c15d 9,11-13,26-30,40,48-52,59-69,79,82,85,88-90,96-97,105-111
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_407b0bf6a620b8 139
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_2005c0256a52bb 27-28,30
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_407b0bf6a620b8 9,21
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/04-un-cout-acceptable.md
+  s_4ce34ec42d9105::t_a0a14cf40dd589 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9c8b5a83a942dba4087a4b093e1dc13781acb4c6",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
