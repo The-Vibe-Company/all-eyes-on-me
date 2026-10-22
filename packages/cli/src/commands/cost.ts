@@ -11,7 +11,8 @@ transcripts Claude Code keeps on this machine (~/.claude/projects, or
 CLAUDE_CONFIG_DIR): their counts of tokens, and the opening of each agent's
 brief to tell its role, nothing else of the conversations; nothing leaves the
 machine. Each call is priced at the API's list prices of its model. It writes
-cost.json in the run's folder, which the result page shows.
+cost.json in the run's folder, for the bench. A run never shows it to the
+person it runs for.
 
 The run is the latest in .aeom/runs by default. Its window runs from its start
 to its last mark in state.json, half an hour more for the end of a finished

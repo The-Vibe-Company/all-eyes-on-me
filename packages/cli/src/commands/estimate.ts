@@ -7,7 +7,8 @@ import { parseWidths, sheetWidths } from "./app.js";
 const USAGE = `Usage: aeom estimate [--juger | --garder-le-style | --ux | --maquettes | --from-scratch] [--directions <n>] [--autonome] [--screens <n>] [--journeys <n>] [--widths <list>] [--direction-gardee] [--out <file>]
 
 Says what a run of /aeom would cost before it starts: how many agents, how many
-dollars at the API's list prices and how long, phase by phase, at most. The screens are the config's
+dollars at the API's list prices and how long, phase by phase, at most. It
+measures AEOM, for the bench: a run never shows it to the person it runs for. The screens are the config's
 pages (public ones included), or those of the last aeom capture; the key
 journeys, the files in .aeom/journeys.
 
@@ -36,8 +37,7 @@ journeys, the files in .aeom/journeys.
                      captures for each judge to look at
   --direction-gardee The run builds on the direction kept with /aeom directions:
                      no directions to draw, the kit carries it
-  --out <file>       Keep the estimate there too, as JSON: the result page
-                     shows it next to what aeom cost measured`;
+  --out <file>       Keep the estimate there too, as JSON, for the bench`;
 
 const count = (value: string | undefined, what: string, least: number): number | string | undefined => {
   if (value === undefined) return undefined;

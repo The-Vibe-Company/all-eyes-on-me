@@ -252,14 +252,8 @@ test("the commands page lists the CLI underneath: every command, with its words,
   assert.match(commands, new RegExp(`<h2 id="cli-title">${listed.size} commands underneath\\.</h2>`));
 });
 
-test("the cost the terminals of the commands page show is what aeom estimate prints", () => {
-  const cli = new URL("packages/cli/dist/index.js", root).pathname;
-  const flat = (text) => text.replace(/<[^>]+>/g, "").replace(/[ \t]+/g, " ");
-  const shown = flat(commands);
-  const rows = (args) => execFileSync("node", [cli, "estimate", "--screens", "4", "--journeys", "2", ...args], { encoding: "utf8" }).split("\n").filter((line) => line.includes("≈")).map((line) => flat(line).trim());
-  for (const row of rows(["--juger"])) assert.ok(shown.includes(row), `/aeom judge shows « ${row} »`);
-  const total = rows([]).find((row) => row.startsWith("Total"));
-  assert.ok(shown.includes(total), `/aeom redo shows « ${total} »`);
-  const mockups = rows(["--maquettes"]).find((row) => row.startsWith("Total"));
-  assert.ok(shown.includes(mockups), `/aeom directions shows « ${mockups} »`);
+test("the commands page never tells what a run costs: AEOM measures it for itself, never for the person", () => {
+  const terminals = [...commands.matchAll(/<pre>[\s\S]*?<\/pre>/g)].map(([pre]) => pre).join("\n");
+  assert.doesNotMatch(terminals, /≈ \$|\$\d|M tokens|Total, at most/, "no cost in what the terminals print");
+  assert.doesNotMatch(commands.replace(/<code title="[^"]*">[a-z]+<\/code>/g, ""), /will cost|your go/, "nor in what the commands say they do");
 });
