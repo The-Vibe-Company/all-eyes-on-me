@@ -1,0 +1,57 @@
+packages/cli/src/commands/mockups.test.ts
+  s_4ce34ec42d9105::t_a3f6817f1118b5 1-36
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_31e0f990173d75 7,17
+site/site.test.mjs
+  s_4ce34ec42d9105::t_3267c1615188c3 255-258
+README.md
+  s_4ce34ec42d9105::t_aed7b10e7e759d 5,17,65,73
+  s_4ce34ec42d9105::t_e8fc8a6223f943 87
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_763469fa77dec2 249,405-406
+site/pages/commands.html
+  s_4ce34ec42d9105::t_e8fc8a6223f943 119,124
+  s_4ce34ec42d9105::t_3267c1615188c3 41,60,70,78,114
+packages/cli/src/commands/estimate.ts
+  s_4ce34ec42d9105::t_130cf04bb41834 40
+  s_4ce34ec42d9105::t_7bb5af783d1052 10-11
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_31e0f990173d75 7,22,27-28
+  s_4ce34ec42d9105::t_0e466789386051 29
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_0e466789386051 3,9
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/04-un-cout-acceptable.md
+  s_4ce34ec42d9105::t_a6b7dd14ed0a25 1-36
+packages/cli/src/commands/mockups.ts
+  s_4ce34ec42d9105::t_a09be5bbfed616 1-90
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_0e466789386051 3
+packages/cli/src/commands/cost.ts
+  s_4ce34ec42d9105::t_130cf04bb41834 14-15
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_a3f6817f1118b5 8,42,70
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_31e0f990173d75 3-4,73,103,112,116
+  s_4ce34ec42d9105::t_db51177dd861b3 47,80
+skills/aeom/phase-understand.md
+  s_4ce34ec42d9105::t_0e466789386051 3
+  s_4ce34ec42d9105::t_31e0f990173d75 19
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_763469fa77dec2 144-145,150-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "79db281f8031847c0825fe8577ff006c36556e95",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
