@@ -24,7 +24,7 @@ aeom bench prepare ~/aeom-bench        # each app in a git repository of its own
 aeom bench score ~/aeom-bench          # what each run found and fixed, written to benchmark.json
 ```
 
-A run costs what `aeom estimate` says before it starts; `aeom cost` measures it after, and the score counts it.
+A run never tells the person what it costs: the score measures it with `aeom cost`, from this machine's transcripts.
 
 ## Reading the score
 

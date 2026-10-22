@@ -1,6 +1,6 @@
 # /aeom: the wave
 
-Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**Where workers work**, **Briefing any worker** and sections 2 to 6, before a run's first worker). Everything it does not say here (section 0, **The cost, before the judges**, **The result page, served**, **The standard of the front**) is in SKILL.md.
+Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (**Where workers work**, **Briefing any worker** and sections 2 to 6, before a run's first worker). Everything it does not say here (section 0, **No cost said**, **The result page, served**, **The standard of the front**) is in SKILL.md.
 
 ## Where workers work
 
