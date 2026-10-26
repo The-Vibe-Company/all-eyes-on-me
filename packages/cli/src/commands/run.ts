@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { comparePages, ConfigError, STYLE_CHECKS, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { comparePages, ConfigError, route, STYLE_CHECKS, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
@@ -117,6 +117,19 @@ export async function runCompare(argv: string[]): Promise<number> {
     return 1;
   }
   await writeFile(join(afterDir, "compare.json"), JSON.stringify(comparison, null, 2) + "\n");
+
+  // Two measures judged by other models, or on other principles, may differ by their judges alone.
+  const judgedBy = (j: JudgeReport) => (j.judges ? `${j.judges.models.join(", ") || "a model not named"} on ${j.judges.principles}` : null);
+  const [was, is] = [judgedBy(before.judge!), judgedBy(after.judge!)];
+  if (was && is && was !== is) console.log(`The judges changed between the two measures: ${was}, then ${is}. A principle that flips may be theirs, not the page's.\n`);
+  else if ((was || is) && was !== is) console.log(`Only the ${was ? "first" : "second"} measure says who judged it: ${was ?? is}. A principle that flips may be the judges', not the page's.\n`);
+  // What the product sheet accepts now, and did not at the first measure: better by the sheet, not by the run.
+  const acceptedIn = (m: typeof before) => [
+    ...(m.check!.accepted ?? []).map((f) => `${route(f.url)} ${f.check}: ${f.why} (seen: ${f.source})`),
+    ...m.judge!.pages.flatMap((p) => p.verdicts.filter((v) => v.accepted).map((v) => `${p.page} ${v.principle}: ${v.accepted!.why} (seen: ${v.accepted!.source})`)),
+  ];
+  const since = [...new Set(acceptedIn(after))].filter((a) => !acceptedIn(before).includes(a));
+  if (since.length) console.log(`Accepted since the first measure, as the product sheet says: ${since.join("; ")}. Better by the sheet, not by the run.\n`);
 
   const column = Math.max(...comparison.map((c) => c.page.length)) + 2;
   const mark = { better: "↑ better", same: "= same", worse: "↓ worse", missing: "✗ missing after", new: "+ new page" };

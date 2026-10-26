@@ -90,7 +90,7 @@ async function verdict(argv: string[]): Promise<number> {
   }
 
   const kept = values["keep-style"] ? "--keep-style" : config.style === "keep" ? `"style": "keep" in .aeom/config.json` : null;
-  const { measured: m, failures, missing, keptWithStyle, nothingToRedo, identity } = verdictOf({ check, judge, journeys, journeyJudge, recorded, keepStyle: kept !== null });
+  const { measured: m, failures, missing, keptWithStyle, accepted, judges, nothingToRedo, identity } = verdictOf({ check, judge, journeys, journeyJudge, recorded, keepStyle: kept !== null });
   if (missing.length) {
     console.error(`Cannot decide: ${missing.join(", ")}. Capture, check and judge again${recorded.length ? ", and replay and judge the journeys again" : ""}, so every report covers the same screens and journeys.`);
     return 2;
@@ -104,9 +104,12 @@ async function verdict(argv: string[]): Promise<number> {
   // A direction the person kept with /aeom directions, no run built on yet, is what a redo carries, unless the style is kept.
   const chosen = kept ? null : await readFile(join(".aeom", "direction", "direction.json"), "utf8").then((t) => JSON.parse(t) as { slug?: string; applied?: string }, () => null);
   const direction = chosen?.slug && !chosen.applied ? chosen.slug : null;
-  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, keepStyle: kept !== null, identity, recommend, ...(direction ? { direction } : {}) }, null, 2) + "\n");
+  if (values.out) await writeFile(values.out, JSON.stringify({ nothingToRedo, line, failures, keptWithStyle, accepted, ...(judges ? { judges } : {}), keepStyle: kept !== null, identity, recommend, ...(direction ? { direction } : {}) }, null, 2) + "\n");
   console.log(line);
+  // A verdict that changes with the judges is theirs, not the front's: who judged, on what, is said with it.
+  if (judges) console.log(`Judged by ${judges.models.join(", ") || "a model the voters did not name"}, on ${judges.principles}.`);
   if (keptWithStyle.length) console.log(`Left to the style kept: ${keptWithStyle.map((f) => `${f.where} ${f.what.split(":")[0]}`).join(", ")}.`);
+  if (accepted.length) console.log(`Accepted, as the product sheet says: ${accepted.map((f) => `${f.where} ${f.what}`).join("; ")}.`);
   if (nothingToRedo) {
     console.log(`\nNothing to redo: nothing fails.${direction ? `\nA direction is kept, ${direction}: /aeom redo carries it into the app.` : ""}`);
     return 0;

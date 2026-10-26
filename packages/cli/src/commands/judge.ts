@@ -1,8 +1,11 @@
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
-import { parseArgs } from "node:util";
-import { DEFAULT_PRINCIPLES_FILE, STYLE_KEPT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, VOTERS, type CaptureManifest, type ToConfirm, type JourneyReport, type JudgeReport, type Principle, type Vote } from "@aeom/core";
+import { basename, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseArgs, promisify } from "node:util";
+import { acceptVerdicts, DEFAULT_PRINCIPLES_FILE, STYLE_KEPT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, VOTERS, type CaptureManifest, type ToConfirm, type JourneyReport, type JudgeReport, type Principle, type Vote } from "@aeom/core";
+import { sheetExceptions } from "./app.js";
 
 export const JUDGE_HELP = `Usage: aeom judge [options]
 
@@ -29,6 +32,8 @@ Options:
   --style-kept         Judge whether each page kept the app's charter, from votes
                        that compared it before and after the run
   --voters <n>         How many votes to expect (default ${VOTERS})
+  --product <file>     The product sheet whose accepted exceptions pass as
+                       accepted, said apart (default .aeom/product.md)
 
 One vote first, then three on what it failed:
   --to-confirm         Reads voter 1's vote alone, and writes in the votes
@@ -55,6 +60,7 @@ export async function runJudge(argv: string[]): Promise<number> {
       voters: { type: "string", default: String(VOTERS) },
       "to-confirm": { type: "boolean" },
       "changed-since": { type: "string" },
+      product: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -79,7 +85,8 @@ export async function runJudge(argv: string[]): Promise<number> {
     console.error(`No captures in ${captures}. Run aeom capture first.`);
     return 1;
   }
-  const principles = await loadPrinciples(values.principles ?? (values["style-kept"] ? STYLE_KEPT_PRINCIPLES_FILE : DEFAULT_PRINCIPLES_FILE));
+  const principlesFile = values.principles ?? (values["style-kept"] ? STYLE_KEPT_PRINCIPLES_FILE : DEFAULT_PRINCIPLES_FILE);
+  const principles = await loadPrinciples(principlesFile);
   const all = manifest.pages.map((p) => p.path);
   if (all.length === 0) {
     console.error(`The captures in ${captures} have no page. Run aeom capture again.`);
@@ -110,8 +117,10 @@ export async function runJudge(argv: string[]): Promise<number> {
   if (values["to-confirm"]) return writeToConfirm(votesDir, pages, principles);
 
   let reused: JudgeReport["pages"] = [];
+  let keptJudges: JudgeReport["judges"];
   if (stage) {
     const previous = await readStage<JudgeReport>(join(stage.since, "reports", "judge.json"));
+    keptJudges = previous?.judges;
     const kept = all.filter((p) => !pages.includes(p));
     reused = kept.map((page) => previous?.pages.find((p) => p.page === page)).filter((p): p is JudgeReport["pages"][number] => !!p);
     const lost = kept.filter((page) => !reused.some((p) => p.page === page));
@@ -120,23 +129,32 @@ export async function runJudge(argv: string[]): Promise<number> {
       return 1;
     }
   }
-  const counted = pages.length ? await countVotes({ votesDir, out: values.out, voters: values.voters, keys: pages, principles }) : { judgedAt: new Date().toISOString(), voters: [], principles, pages: [], failures: 0 };
+  const counted = pages.length ? await countVotes({ votesDir, out: values.out, voters: values.voters, keys: pages, principles, principlesFile }) : { judgedAt: new Date().toISOString(), voters: [], principles, pages: [], failures: 0 };
   if (counted === null) return 1;
   // The pages judged again and those that kept their verdict, in the captures' order.
   const merged = all.map((page) => counted.pages.find((p) => p.page === page) ?? reused.find((p) => p.page === page)!).filter(Boolean);
-  const report: JudgeReport & { reused?: string[] } = {
-    ...counted,
-    widths: manifest.widths,
-    pages: merged,
-    failures: merged.reduce((n, p) => n + p.verdicts.filter((v) => !v.pass).length, 0),
-    ...(reused.length ? { reused: reused.map((p) => p.page) } : {}),
-  };
+  // What the product sheet accepts passes, said apart: the pages that kept their verdict too, as the sheet says now.
+  const exceptions = await sheetExceptions(values.product, join(".aeom", "product.md"));
+  if (exceptions === null) return 2;
+  const judges = reused.length ? judgesWith(counted.judges, keptJudges) : counted.judges;
+  const report: JudgeReport & { reused?: string[] } = acceptVerdicts(
+    {
+      ...counted,
+      ...(judges ? { judges } : {}),
+      widths: manifest.widths,
+      pages: merged,
+      failures: merged.reduce((n, p) => n + p.verdicts.filter((v) => !v.pass).length, 0),
+      ...(reused.length ? { reused: reused.map((p) => p.page) } : {}),
+    },
+    exceptions,
+  );
 
   await mkdir(values.out, { recursive: true });
   const reportFile = join(values.out, "judge.json");
   await writeFile(reportFile, JSON.stringify(report, null, 2) + "\n");
 
-  console.log(`Judged ${s(pages.length, "page")} on ${s(principles.length, "principle")}, ${votesSaid(report.voters.length, await readStage<ToConfirm>(join(votesDir, "to-confirm.json")))}${reused.length ? `; ${s(reused.length, "page")} kept its verdict` : ""}\n`);
+  console.log(`Judged ${s(pages.length, "page")} on ${s(principles.length, "principle")}, ${votesSaid(report.voters.length, await readStage<ToConfirm>(join(votesDir, "to-confirm.json")))}${reused.length ? `; ${s(reused.length, "page")} kept its verdict` : ""}${judgesSaid(report)}\n`);
+  acceptedSaid(report.pages.map(({ page, verdicts }) => ({ where: page, verdicts })));
   if (report.failures === 0) {
     console.log(`All ${s(principles.length, "principle")} pass on ${s(all.length, "page")}.`);
     return 0;
@@ -168,7 +186,29 @@ export async function runPrinciples(argv: string[]): Promise<number> {
  * Reads the votes, checks that every expected voter voted and nobody else,
  * and counts them. Prints what is wrong and returns null when it cannot.
  */
-async function countVotes({ votesDir, out, voters: votersText, keys, principles, steps = false }: { votesDir: string; out: string; voters: string; keys: string[]; principles: Principle[]; steps?: boolean }): Promise<JudgeReport | null> {
+/** The commit AEOM runs from, when it runs from its repository: the version of its principles and its judging. */
+const AEOM_COMMIT = await promisify(execFile)("git", ["-C", fileURLToPath(new URL("../../../../", import.meta.url)), "rev-parse", "--short", "HEAD"]).then((r) => r.stdout.trim(), () => "");
+
+/** Which model judged, as the voters said it (« not said » for a voter that did not), and on which principles: a verdict that changes with them is theirs, not the page's. */
+async function judgesOf(votes: Vote[], principlesFile: string): Promise<NonNullable<JudgeReport["judges"]>> {
+  const models = [...new Set(votes.map((v) => (typeof v.model === "string" && v.model.trim() ? v.model.trim() : "not said")))].sort();
+  const sha = createHash("sha256").update(await readFile(principlesFile)).digest("hex").slice(0, 8);
+  return { models, principles: `${basename(principlesFile)} ${sha}${AEOM_COMMIT ? `, AEOM ${AEOM_COMMIT}` : ""}` };
+}
+
+/** The judges of a count that kept some pages' verdicts: those who judged them too. */
+const judgesWith = (now: JudgeReport["judges"], kept: JudgeReport["judges"]): JudgeReport["judges"] =>
+  !kept ? now : !now ? kept : { models: [...new Set([...now.models, ...kept.models])].sort(), principles: now.principles === kept.principles ? now.principles : `${now.principles}; kept pages: ${kept.principles}` };
+
+const judgesSaid = (report: JudgeReport) => (report.judges ? `\nJudged by ${report.judges.models.join(", ") || "a model the voters did not name"}, on ${report.judges.principles}.` : "");
+
+/** What the product sheet accepts, said apart from what fails. */
+function acceptedSaid(places: { where: string; verdicts: JudgeReport["pages"][number]["verdicts"] }[]) {
+  const accepted = places.flatMap(({ where, verdicts }) => verdicts.filter((v) => v.accepted).map((v) => `  ${where}  ${v.principle}: ${v.accepted!.why} (seen: ${v.accepted!.source})`));
+  if (accepted.length) console.log(`Accepted, as the product sheet says:\n${accepted.join("\n")}\n`);
+}
+
+async function countVotes({ votesDir, out, voters: votersText, keys, principles, principlesFile, steps = false }: { votesDir: string; out: string; voters: string; keys: string[]; principles: Principle[]; principlesFile: string; steps?: boolean }): Promise<JudgeReport | null> {
   const canonical = (dir: string) => realpath(dir).catch(() => resolve(dir));
   if ((await canonical(out)) === (await canonical(votesDir))) {
     console.error(`--out and --votes cannot be the same folder: the verdict would be counted as a vote next time.`);
@@ -213,7 +253,7 @@ async function countVotes({ votesDir, out, voters: votersText, keys, principles,
     return null;
   }
   try {
-    return tally(votes, keys, principles, { voters, steps, ...(confirm ? { confirm } : {}) });
+    return { ...tally(votes, keys, principles, { voters, steps, ...(confirm ? { confirm } : {}) }), judges: await judgesOf(votes, principlesFile) };
   } catch (error) {
     if (!(error instanceof JudgeVoteError)) throw error;
     console.error(`Some votes cannot be counted:\n${error.problems.map((p) => `  ${p}`).join("\n")}`);
@@ -231,7 +271,7 @@ interface BrokenJourney {
   capture: string | null;
 }
 
-async function judgeJourneys(values: { captures: string; votes: string; out: string; principles?: string; voters: string; "to-confirm"?: boolean }): Promise<number> {
+async function judgeJourneys(values: { captures: string; votes: string; out: string; principles?: string; voters: string; "to-confirm"?: boolean; product?: string }): Promise<number> {
   let replay: JourneyReport;
   try {
     replay = JSON.parse(await readFile(join(values.captures, "report.json"), "utf8"));
@@ -244,11 +284,16 @@ async function judgeJourneys(values: { captures: string; votes: string; out: str
     console.error(`The report in ${values.captures} has no journey. Run aeom journey again.`);
     return 1;
   }
-  const principles = await loadPrinciples(values.principles ?? JOURNEY_PRINCIPLES_FILE);
+  const principlesFile = values.principles ?? JOURNEY_PRINCIPLES_FILE;
+  const principles = await loadPrinciples(principlesFile);
   if (values["to-confirm"]) return writeToConfirm(values.votes, keys, principles, "journey");
   // A journey's failure names the step where it shows.
-  const votes = await countVotes({ votesDir: values.votes, out: values.out, voters: values.voters, keys, principles, steps: true });
-  if (votes === null) return 1;
+  const counted = await countVotes({ votesDir: values.votes, out: values.out, voters: values.voters, keys, principles, principlesFile, steps: true });
+  if (counted === null) return 1;
+  // What the product sheet accepts on a journey, named by its name or its slug, passes, said apart.
+  const exceptions = await sheetExceptions(values.product, join(".aeom", "product.md"));
+  if (exceptions === null) return 2;
+  const votes = acceptVerdicts(counted, exceptions, { journeys: replay.journeys.map((j) => ({ slug: j.slug, name: j.name })) });
 
   // The widest replay that reached a step shows it best.
   const shotOf = (slug: string, step: number) =>
@@ -276,7 +321,8 @@ async function judgeJourneys(values: { captures: string; votes: string; out: str
   const s = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
   const capture = (file: string | null | undefined) => (file ? `${relative(process.cwd(), join(values.captures, file))}` : "");
   const name = (slug: string) => replay.journeys.find((j) => j.slug === slug)!.name;
-  console.log(`Judged ${s(keys.length, "journey")} on ${s(principles.length, "principle")}, ${votesSaid(votes.voters.length, await readStage<ToConfirm>(join(values.votes, "to-confirm.json")))}\n`);
+  console.log(`Judged ${s(keys.length, "journey")} on ${s(principles.length, "principle")}, ${votesSaid(votes.voters.length, await readStage<ToConfirm>(join(values.votes, "to-confirm.json")))}${judgesSaid(votes)}\n`);
+  acceptedSaid(votes.pages.map(({ page, verdicts }) => ({ where: name(page), verdicts })));
   if (report.failures === 0) {
     console.log(`All ${s(principles.length, "principle")} pass on ${s(keys.length, "journey")}, and every journey goes to its end.`);
     return 0;

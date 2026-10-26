@@ -314,3 +314,29 @@ test("pages that should keep a verdict the snapshot no longer holds are refused,
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom judge counts what the product sheet accepts as accepted, said apart, and keeps which model judged on which principles", async () => {
+  const dir = await setup([]);
+  try {
+    const fails = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: id !== "not-generic", reason: id === "not-generic" ? "a violet everywhere" : "fine" }]));
+    for (const voter of ["1", "2", "3"]) await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, model: "claude-sonnet-5-5", pages: { "/": fails } }));
+    await writeFile(join(dir, "product.md"), "# Radar\n\n## Accepted exceptions\n- `not-generic` on every page: the deep violet is the brand's, chosen. (seen: Victor)\n");
+    const args = ["judge", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out"), "--principles", join(dir, "principles.md")];
+    const { code, out } = await run([...args, "--product", join(dir, "product.md")]);
+    assert.equal(code, 0, out);
+    assert.match(out, /Accepted, as the product sheet says:\n  \/  not-generic: the deep violet is the brand's, chosen\. \(seen: Victor\)/);
+    const report = JSON.parse(await readFile(join(dir, "out", "judge.json"), "utf8"));
+    assert.deepEqual(report.pages[0].verdicts.find((v: { principle: string }) => v.principle === "not-generic").accepted, { why: "the deep violet is the brand's, chosen.", source: "Victor" });
+    assert.deepEqual(report.judges.models, ["claude-sonnet-5-5"]);
+    assert.match(report.judges.principles, /^principles\.md [0-9a-f]{8}/);
+    assert.match(out, /Judged by claude-sonnet-5-5, on principles\.md [0-9a-f]{8}/);
+    // A sheet given that is not there is said: a worker pointed at the wrong one would fix what the run accepts.
+    const lost = await run([...args, "--product", join(dir, "nowhere.md")]);
+    assert.equal(lost.code, 2);
+    assert.match(lost.out, /--product .*nowhere\.md is not there/);
+    // Without the sheet, the same votes fail.
+    assert.equal((await run(args)).code, 1);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

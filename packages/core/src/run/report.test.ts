@@ -155,3 +155,16 @@ test("the page says nothing of what the run cost: AEOM measures it for itself, n
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("the page says apart what the product sheet accepts, with its reason and source, and who judged on which principles", () => {
+  const html = resultHtml({
+    ...PAGE,
+    accepted: [{ kind: "principle", where: "/", what: "not-generic: the deep violet is the brand's, chosen. (seen: Victor)" }],
+    judges: { models: ["claude-sonnet-5-5"], principles: "base.md 1a2b3c4d" },
+  });
+  assert.match(html, /<section id="accepted"><h2>Accepted<\/h2>.*<strong>\/<\/strong> not-generic: the deep violet is the brand&#39;s, chosen\. \(seen: Victor\)/s);
+  assert.match(html, /Judged by claude-sonnet-5-5, on base\.md 1a2b3c4d\./);
+  assert.doesNotMatch(resultHtml(PAGE), /id="accepted"/, "nothing accepted, nothing said");
+  const nothing = resultHtml({ ...NOTHING, accepted: [{ kind: "check", where: "/", what: "contrast: the grey of the charter. (seen: charte.pdf)" }] });
+  assert.match(nothing, /id="accepted"/, "even when nothing is to redo");
+});

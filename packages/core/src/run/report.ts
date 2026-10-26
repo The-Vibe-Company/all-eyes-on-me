@@ -20,6 +20,9 @@ export interface SavedVerdict {
   line: string;
   failures: Failure[];
   keepStyle?: boolean;
+  /** What the product sheet accepted, and who judged: absent in a verdict saved before they were kept. */
+  accepted?: Failure[];
+  judges?: { models: string[]; principles: string };
 }
 
 export interface ResultPage {
@@ -61,6 +64,10 @@ export interface ResultPage {
     remaining: string[];
   }[];
   stillFailing: Failure[];
+  /** What the product sheet accepts, by the person's choice or the spec's: said apart, never redone. */
+  accepted?: Failure[];
+  /** Who judged the last measure, and on which principles. */
+  judges?: { models: string[]; principles: string };
   /** False when the run stopped before measuring its end: what still fails is then what failed before. */
   measuredAfter: boolean;
   /** The widths the run measured, and those of the default it left out, as the config or the run declared. */
@@ -225,12 +232,16 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
 
   // What still fails: the verdict of the last state, screens and journeys.
   let stillFailing: Failure[] = [];
+  let accepted: Failure[] = verdict?.accepted ?? [];
+  let judges = verdict?.judges;
   const measuredAfter = Boolean(now?.check && now.judge);
   if (now?.check && now.judge) {
     // Named as the screens are, by their route before the run when it names the same record-made-at-each-visit screen.
-    stillFailing = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle }).failures.map((f) =>
-      f.kind === "journey" || f.kind === "journey-principle" ? f : { ...f, where: nameAfter(f.where) },
-    );
+    const end = verdictOf({ check: now.check, judge: now.judge, journeys: replayAfter ?? undefined, journeyJudge: critiqueAfter ?? undefined, recorded: replayAfter?.journeys.map((j) => j.slug) ?? [], keepStyle });
+    const named = (f: Failure) => (f.kind === "journey" || f.kind === "journey-principle" ? f : { ...f, where: nameAfter(f.where) });
+    stillFailing = end.failures.map(named);
+    accepted = end.accepted.map(named);
+    judges = end.judges ?? judges;
     // A page that did not load before the run and that the end did not measure: still broken, as far as anyone knows.
     for (const page of erroredBefore) if (!after?.pages.some((p) => p.path === page) && !erroredAfter.includes(page)) stillFailing.push({ kind: "page", where: page, what: "did not load before the run, and was not measured after the run" });
   } else if (verdict) stillFailing = verdict.failures;
@@ -246,7 +257,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   // Each width once, narrowest first, whatever wrote the manifest: anything else is not a list of widths.
   const measured = usableWidths(before?.widths ?? replayBefore?.widths ?? (built ? after?.widths : undefined));
   const widths = measured ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
-  return { run, verdict, direction, screens, journeys, stillFailing, measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}) };
+  return { run, verdict, direction, screens, journeys, stillFailing, ...(accepted.length ? { accepted } : {}), ...(judges ? { judges } : {}), measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}) };
 }
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -372,7 +383,7 @@ function widthsHtml(widths: ResultPage["widths"]): string {
 /** The page, standalone: its styles inline, its images beside it in the run's folder, nothing from the network. */
 export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { agreed: number; total: number }> } = {}): string {
   const nothing = r.verdict?.nothingToRedo === true;
-  const head = `<header><p class="run">${escape(r.run)}</p><h1>${r.replug ? "The front, on its API" : r.built ? "What the run built" : nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
+  const head = `<header><p class="run">${escape(r.run)}</p><h1>${r.replug ? "The front, on its API" : r.built ? "What the run built" : nothing ? "Nothing to redo" : "What the run gave"}</h1>${r.verdict ? `<p class="line">${nothing ? "" : "Before the run. "}${escape(r.verdict.line)}</p>` : ""}${r.judges ? `<p class="muted">Judged by ${escape(r.judges.models.join(", ") || "a model the voters did not name")}, on ${escape(r.judges.principles)}.</p>` : ""}${widthsHtml(r.widths)}${nothing ? say(NOTHING_TO_REDO) : ""}${ratesHtml(rates)}<p class="muted" id="feedback-note" hidden>To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.</p></header>`;
   const named = r.features?.entries.length ? r.features : null;
   const nav = nothing ? "" : `<nav><a href="#direction">Direction</a><a href="#screens">Screens</a><a href="#journeys">Journeys</a>${named ? `<a href="#features">Missing features</a>` : ""}<a href="#still">Still failing</a></nav>`;
 
@@ -396,14 +407,17 @@ export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { 
     r.stillFailing.length ? `<ul>${r.stillFailing.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}${say(ofFailure(f))}</li>`).join("")}</ul>` : r.measuredAfter ? `<p>Nothing.</p>` : ""
   }`;
 
+  const accepted = r.accepted?.length
+    ? `<section id="accepted"><h2>Accepted</h2><p class="muted">What the product sheet accepts, by your choice or your spec's: said, never redone.</p><ul>${r.accepted.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul></section>`
+    : "";
   const features = named
     ? `<section id="features"><h2>Missing features</h2><p class="muted">What a key journey would need to reach its end. AEOM built none of it.</p>${named.entries
         .map((f) => `<section class="feature" data-journey="${escape(f.slug)}"><h3>${escape(f.name)}</h3><p>blocks at step ${escape(String(f.step))}: <span class="muted">${escape(f.why)}</span></p><p><strong>${escape(f.missing)}</strong></p><figure class="step">${img(f.capture, `${f.name}, step ${f.step}`)}</figure></section>`)
         .join("")}${named.more ? `<p class="muted">${named.more} more blocked journey${named.more === 1 ? "" : "s"}, not named: three at most per run.</p>` : ""}</section>`
     : "";
   const body = nothing
-    ? `<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}`
-    : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${features}<section id="still"><h2>Still failing</h2>${still}</section>`;
+    ? `<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${accepted}`
+    : `${direction}<section id="screens"><h2>Screens</h2>${screens}</section>${r.journeys.length ? `<section id="journeys"><h2>Journeys</h2>${journeys}</section>` : ""}${features}<section id="still"><h2>Still failing</h2>${still}</section>${accepted}`;
 
   return `<!doctype html>
 <html lang="en">

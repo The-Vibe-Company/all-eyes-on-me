@@ -29,6 +29,10 @@ export interface RunVerdict {
   missing: string[];
   /** With the style kept, the principles and checks that judge the style itself fail because of the charter, not of the front: said, never redone. */
   keptWithStyle: Failure[];
+  /** What the product sheet accepts, by the person's choice or the spec's: said, never redone. */
+  accepted: Failure[];
+  /** Who judged the screens, and on what. */
+  judges?: { models: string[]; principles: string };
   /** True only when every screen and journey was measured and nothing fails. */
   nothingToRedo: boolean;
   /** True when all of IDENTITY_PRINCIPLES were judged and no screen fails one: the front has a direction of its own. */
@@ -43,6 +47,7 @@ export interface RunVerdict {
 export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [], keepStyle = false }: { check: CheckReport; judge: JudgeReport; journeys?: JourneyReport; journeyJudge?: JudgeReport; recorded?: string[]; keepStyle?: boolean }): RunVerdict {
   const failures: Failure[] = [];
   const keptWithStyle: Failure[] = [];
+  const accepted: Failure[] = [];
   const missing: string[] = [];
   // A screen checked and judged under two routes of one shape, such as a record made at each visit, counts as one, named as judged.
   const checked = new Set(check.pages.map(route));
@@ -64,7 +69,14 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     const failure: Failure = { kind: "check", where, what: `${name}: ${first}${others.length ? ` (and ${others.length} more)` : ""}` };
     (keepStyle && STYLE_CHECKS.includes(name) ? keptWithStyle : failures).push(failure);
   }
+  const acceptedOnce = new Set<string>();
+  for (const f of check.accepted ?? []) {
+    const what = `${f.check}: ${f.why} (seen: ${f.source})`;
+    if (!acceptedOnce.has(`${named(f.url)} ${what}`)) accepted.push({ kind: "check", where: named(f.url), what });
+    acceptedOnce.add(`${named(f.url)} ${what}`);
+  }
   for (const page of judge.pages) {
+    for (const v of page.verdicts.filter((v) => v.accepted)) accepted.push({ kind: "principle", where: page.page, what: `${v.principle}: ${v.accepted!.why} (seen: ${v.accepted!.source})` });
     for (const v of page.verdicts.filter((v) => !v.pass)) {
       const failure: Failure = { kind: "principle", where: page.page, what: `${v.principle}: ${v.reasons[0] ?? ""}` };
       (keepStyle && STYLE_PRINCIPLES.includes(v.principle) ? keptWithStyle : failures).push(failure);
@@ -81,6 +93,7 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     }
   }
   for (const page of journeyJudge?.pages ?? []) {
+    for (const v of page.verdicts.filter((v) => v.accepted)) accepted.push({ kind: "journey-principle", where: name(page.page), what: `${v.principle}: ${v.accepted!.why} (seen: ${v.accepted!.source})` });
     for (const v of page.verdicts.filter((v) => !v.pass)) failures.push({ kind: "journey-principle", where: name(page.page), what: `${v.principle}: ${v.reasons[0] ?? ""}` });
   }
 
@@ -112,6 +125,8 @@ export function verdictOf({ check, judge, journeys, journeyJudge, recorded = [],
     failures,
     missing,
     keptWithStyle,
+    accepted,
+    ...(judge.judges ? { judges: judge.judges } : {}),
     nothingToRedo: failures.length === 0 && missing.length === 0,
     // Only a judgement that asked about all three can say the front has an identity.
     identity:
