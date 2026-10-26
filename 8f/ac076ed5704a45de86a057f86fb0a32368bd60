@@ -1,0 +1,43 @@
+.veebee/milestones/05-construire/tickets/06-les-images-generees.md
+  s_4ce34ec42d9105::t_6e9205b983e186 1-30
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_7087d64c59b72e 9,44,73
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_eb707451a7a952 22
+packages/cli/src/commands/pr.ts
+  s_4ce34ec42d9105::t_765c7b56a35449 22-29,82,85-86,167-168,170
+packages/cli/src/commands/image.ts
+  s_4ce34ec42d9105::t_24effa48e0c118 1-114
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_eb707451a7a952 21,33,35
+README.md
+  s_4ce34ec42d9105::t_7b406b02d6694d 67-77,99
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_eb707451a7a952 48
+site/pages/commands.html
+  s_4ce34ec42d9105::t_7b406b02d6694d 52,119,124
+packages/cli/src/commands/image.test.ts
+  s_4ce34ec42d9105::t_5ca2ae00ac9d40 1-65
+packages/cli/src/commands/direction.ts
+  s_4ce34ec42d9105::t_b6ae70428e390b 3,17-20,107-108
+packages/cli/src/commands/direction.test.ts
+  s_4ce34ec42d9105::t_b6ae70428e390b 13,22,29
+packages/cli/src/commands/pr.test.ts
+  s_4ce34ec42d9105::t_765c7b56a35449 198,211-217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8fac076ed5704a45de86a057f86fb0a32368bd60",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
