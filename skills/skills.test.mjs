@@ -135,3 +135,8 @@ test("no function is lost: every worker keeps what a page lets its users do, and
   assert.match(wave, /One lost from every page that had it was lost by the kit/);
   assert.match(wave, /may only have been renamed: look at the page's code/);
 });
+
+test("the result page speaks the person's language, and a run of directions has its own page, every round in it", () => {
+  assert.match(read("SKILL.md"), /aeom report \.aeom\/runs\/\$RUN --serve --open --lang <the person's language: fr or en>/);
+  assert.match(read("phase-mockups.md"), /8\. \*\*The end\.\*\* Serve the run's page, as \*\*The result page, served\*\* in SKILL\.md says: every round, the last first/);
+});

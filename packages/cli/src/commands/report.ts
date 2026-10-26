@@ -6,7 +6,7 @@ import { basename, extname, join, relative, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { addFeedback, aeomHome, agreementRates, isInside, pageVerdicts, readFeedback, readRun, resultHtml, RunReportError, runKey, type PageVerdict } from "@aeom/core";
 
-const REPORT_HELP = `Usage: aeom report [run-dir] [--open] [--serve [--port <n>]]
+const REPORT_HELP = `Usage: aeom report [run-dir] [--lang <en|fr>] [--open] [--serve [--port <n>]]
 
 Writes the page of what a run gave, report.html, in the run's folder
 (default: the latest one in .aeom/runs): the direction chosen and why, each
@@ -22,7 +22,8 @@ The page shows how often you agreed with AEOM, by category, over every run.
 Options:
   --open        Open the page in the browser
   --serve       Serve the page, and keep what you say of each verdict
-  --port <n>    The port to serve on, 0 to 65535 (default: 0, any free one)`;
+  --port <n>    The port to serve on, 0 to 65535 (default: 0, any free one)
+  --lang <l>    The page's own words in the person's language: en (default) or fr`;
 
 /** The run folder most recently changed in .aeom/runs. */
 export async function latestRun(): Promise<string | null> {
@@ -35,13 +36,17 @@ export async function latestRun(): Promise<string | null> {
 export async function runReport(argv: string[]): Promise<number> {
   let args;
   try {
-    args = parseArgs({ args: argv, allowPositionals: true, options: { open: { type: "boolean" }, serve: { type: "boolean" }, port: { type: "string", default: "0" }, help: { type: "boolean", short: "h" } } });
+    args = parseArgs({ args: argv, allowPositionals: true, options: { open: { type: "boolean" }, serve: { type: "boolean" }, port: { type: "string", default: "0" }, lang: { type: "string", default: "en" }, help: { type: "boolean", short: "h" } } });
   } catch {
     console.log(REPORT_HELP);
     return 1;
   }
   const { positionals, values } = args;
   const port = /^\d{1,5}$/.test(values.port) ? Number(values.port) : NaN;
+  if (values.lang !== "en" && values.lang !== "fr") {
+    console.error(`--lang is en or fr.`);
+    return 1;
+  }
   if (values.help || positionals.length > 1 || !(port <= 65535)) {
     console.log(REPORT_HELP);
     return values.help ? 0 : 1;
@@ -55,7 +60,7 @@ export async function runReport(argv: string[]): Promise<number> {
   let html: string, verdicts: PageVerdict[];
   try {
     const result = await readRun(runDir, basename(runDir));
-    html = resultHtml(result, { rates: agreementRates(await readFeedback(home)) });
+    html = resultHtml(result, { rates: agreementRates(await readFeedback(home)), lang: values.lang });
     verdicts = pageVerdicts(result);
   } catch (error) {
     if (!(error instanceof RunReportError)) throw error;
