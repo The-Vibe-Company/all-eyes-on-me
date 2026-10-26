@@ -443,3 +443,21 @@ test("a page the kit fixed alone, with no worker, says so on the result page; ne
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom report --lang fr writes the page in French; a language it does not speak is refused", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-lang-"));
+  const R = join(dir, ".aeom", "runs", "run-3");
+  try {
+    await snapshot(join(R, "before"), { "/": [] });
+    await put(join(R, "verdict.json"), { nothingToRedo: true, line: "Measured: 1 screen.", failures: [] });
+    const { code, out } = await run(dir, ["report", ".aeom/runs/run-3", "--lang", "fr"]);
+    assert.equal(code, 0, out);
+    const html = await readFile(join(R, "report.html"), "utf8");
+    assert.match(html, /<html lang="fr">/);
+    assert.match(html, /<h1>Rien à refaire<\/h1>/);
+    assert.match(html, /Pas encore d'avis/);
+    assert.equal((await run(dir, ["report", ".aeom/runs/run-3", "--lang", "de"])).code, 1);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

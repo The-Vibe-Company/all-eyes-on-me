@@ -168,3 +168,44 @@ test("the page says apart what the product sheet accepts, with its reason and so
   const nothing = resultHtml({ ...NOTHING, accepted: [{ kind: "check", where: "/", what: "contrast: the grey of the charter. (seen: charte.pdf)" }] });
   assert.match(nothing, /id="accepted"/, "even when nothing is to redo");
 });
+
+test("a run of directions has its page: the front as it is first, every direction of every round in large with its sentence, its comparison and its checks, the last round first, and what the person chose", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-page-directions-"));
+  try {
+    const D = join(dir, "directions");
+    await mkdir(join(D, "lutrin-checks"), { recursive: true });
+    for (const f of ["now.png", "lutrin.png", "verriere.png", "lutrin-mix.png"]) await writeFile(join(D, f), "");
+    await writeFile(join(D, "lutrin-checks", "check.json"), JSON.stringify({ pages: ["http://x/"], errors: [], findings: [{ check: "contrast" }, { check: "contrast" }, { check: "orphan" }] }));
+    const said = (s: string) => ({ slug: s, strong: `${s} reads at a glance.`, weak: `${s} hides the search.`, fit: `${s} is a town hall's desk.` });
+    await writeFile(join(D, "rounds.json"), JSON.stringify([
+      { round: 1, entrants: ["lutrin", "verriere"], notes: { lutrin: "A lectern. Structure: one document in the middle.", verriere: "Glass panes." }, compare: { directions: [said("lutrin"), said("verriere")], start: { slug: "verriere", why: "it keeps the density." } } },
+      { round: 2, entrants: ["lutrin", "verriere", "lutrin-mix"], notes: { "lutrin-mix": "Lutrin with the air of Verrière." }, decision: { applied: "lutrin-mix", why: "Lutrin avec l'air de Verrière." } },
+    ]));
+    const page = await readRun(dir, "run-9");
+    assert.deepEqual(page.rounds?.map((r) => r.round), [2, 1], "the last round first");
+    assert.deepEqual(page.rounds?.[1]?.entrants.find((e) => e.slug === "lutrin")?.checks, ["contrast ×2", "orphan"]);
+    const html = resultHtml(page, { lang: "fr" });
+    assert.match(html, /<html lang="fr">/);
+    assert.match(html, /<h1>Les directions<\/h1>/);
+    assert.match(html, /<img src="directions\/now\.png" alt="Le front tel qu&#39;il est"/);
+    assert.match(html, /<img src="directions\/lutrin-mix\.png"/);
+    assert.match(html, /Point fort\s: <\/span>lutrin reads at a glance\./);
+    assert.match(html, /Point faible\s: <\/span>lutrin hides the search\./);
+    assert.match(html, /Adéquation\s: <\/span>lutrin is a town hall&#39;s desk\./);
+    assert.match(html, /Ses contrôles ont trouvé\s: contrast ×2, orphan/);
+    assert.match(html, /Le tri commencerait par verriere\s: it keeps the density\./);
+    assert.match(html, /Choisie\s: lutrin-mix — Lutrin avec l&#39;air de Verrière\./);
+    assert.ok(html.indexOf("Tour 2") < html.indexOf("Tour 1"), "the last round first");
+    assert.doesNotMatch(html, /Still failing|Screens/, "nothing in English, and no screen to show");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("the page speaks the person's language: its own words in French, data as they were written", () => {
+  const html = resultHtml(PAGE, { lang: "fr" });
+  assert.match(html, /<html lang="fr">/);
+  for (const words of ["Ce que le run a donné", "Écrans", "Parcours", "Encore en échec", "gardé", "renvoyé"]) assert.match(html, new RegExp(words), words);
+  assert.doesNotMatch(html, />(Screens|Journeys|Still failing|Before|After)</);
+  assert.match(resultHtml(PAGE), /<html lang="en">/, "English by default");
+});

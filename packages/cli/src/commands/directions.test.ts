@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -232,6 +232,62 @@ test("the comparison reads a judge's answer wrapped in words, leaves out a direc
     const broken = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "lutrin"], { AEOM_HOME: home });
     assert.equal(broken.code, 0, broken.out);
     assert.equal(JSON.parse(await readFile(join(D, "tournament.json"), "utf8")).decision.applied, "lutrin");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("each start of the tournament keeps a round, its directions and their sentences; compare and decide add their comparison and the choice to it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-rounds-"));
+  const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  try {
+    await mkdir(D, { recursive: true });
+    for (const name of ["lutrin", "verriere", "lutrin-mix"]) await writeFile(join(D, `${name}.png`), "");
+    await writeFile(join(D, "sheet.json"), JSON.stringify([{ label: "now", note: "The front as it is today." }, { label: "lutrin", note: "A lectern." }, { label: "verriere", note: "Glass panes." }]));
+    await run(dir, ["tournament", "start", "--no-knockout", "--dir", D, "lutrin", "verriere"]);
+    const said = { strong: "a.", weak: "b.", fit: "c." };
+    await writeFile(join(D, "screening-1.json"), JSON.stringify({ out: {}, compare: { lutrin: said, verriere: said }, start: { source: "verriere", why: "x." } }));
+    await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);
+    await writeFile(join(D, "sheet.json"), JSON.stringify([{ label: "lutrin" }, { label: "verriere" }, { label: "lutrin-mix", note: "Lutrin with the air of Verrière." }]));
+    await run(dir, ["tournament", "start", "--no-knockout", "--reset", "--dir", D, "lutrin", "verriere", "lutrin-mix"]);
+    await run(dir, ["tournament", "decide", "--dir", D, "--choose", "lutrin-mix", "--why", "Lutrin avec l'air de Verrière."], { AEOM_HOME: home });
+    const rounds = JSON.parse(await readFile(join(D, "rounds.json"), "utf8"));
+    assert.deepEqual(rounds.map((r: { round: number; entrants: string[] }) => [r.round, r.entrants]), [[1, ["lutrin", "verriere"]], [2, ["lutrin", "verriere", "lutrin-mix"]]]);
+    assert.deepEqual(rounds[0].notes, { lutrin: "A lectern.", verriere: "Glass panes." });
+    assert.equal(rounds[0].compare.start.slug, "verriere");
+    assert.equal(rounds[1].compare, undefined, "a comparison belongs to its round");
+    assert.deepEqual(rounds[1].decision, { applied: "lutrin-mix", why: "Lutrin avec l'air de Verrière." });
+    assert.deepEqual(rounds[1].notes, { "lutrin-mix": "Lutrin with the air of Verrière." });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("in the skill's order, compare before start, the round still holds its comparison; a broken list of rounds is set aside, never lost", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-rounds-order-"));
+  const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  try {
+    await mkdir(D, { recursive: true });
+    for (const name of ["lutrin", "verriere"]) await writeFile(join(D, `${name}.png`), "");
+    await writeFile(join(D, "sheet.json"), JSON.stringify([{ label: "lutrin", note: "A lectern." }, { label: "verriere" }]));
+    const said = { strong: "a.", weak: "b.", fit: "c." };
+    await writeFile(join(D, "screening-1.json"), JSON.stringify({ out: {}, compare: { lutrin: said, verriere: said }, start: { source: "verriere", why: "x." } }));
+    await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);
+    await run(dir, ["tournament", "start", "--no-knockout", "--dir", D, "lutrin", "verriere"]);
+    await run(dir, ["tournament", "decide", "--dir", D, "--choose", "lutrin"], { AEOM_HOME: home });
+    const rounds = JSON.parse(await readFile(join(D, "rounds.json"), "utf8"));
+    assert.equal(rounds.length, 1, "one round, opened by the comparison, kept by the start");
+    assert.equal(rounds[0].compare.start.slug, "verriere");
+    assert.equal(rounds[0].decision.applied, "lutrin");
+    assert.deepEqual(rounds[0].notes, { lutrin: "A lectern." });
+
+    await writeFile(join(D, "rounds.json"), "[{");
+    await run(dir, ["tournament", "start", "--no-knockout", "--reset", "--dir", D, "lutrin", "verriere"]);
+    assert.ok((await readdir(D)).some((f) => f.startsWith("rounds.json.broken")), "the broken list is set aside");
   } finally {
     await rm(dir, { recursive: true, force: true });
     await rm(home, { recursive: true, force: true });

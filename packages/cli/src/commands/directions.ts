@@ -1,4 +1,4 @@
-import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { addFeedback, aeomHome, champion, compareDirections, contactSheet, createTournament, decideDirection, type DirectionComparison, nextDuel, runKey, voteDuel, votesNeeded, type Tournament } from "@aeom/core";
@@ -121,6 +121,45 @@ export async function runTournament(argv: string[]): Promise<number> {
   const save = (t: Tournament) => writeFile(file, JSON.stringify(t, null, 2) + "\n");
   const capturePath = (name: string) => join(values.dir!, `${name}.png`);
 
+  // Every round of directions, for the result page: each start opens one, compare and decide fill the one of their directions.
+  const roundsFile = join(values.dir, "rounds.json");
+  type Round = { round: number; entrants: string[]; notes?: Record<string, string>; compare?: DirectionComparison; decision?: { applied: string; why?: string }; at: string };
+  const sameRound = (a: string[], b: string[]) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+  /** The rounds kept so far; a list broken by hand is set aside, never written over. */
+  const readRounds = async (): Promise<Round[]> => {
+    const text = await readFile(roundsFile, "utf8").catch(() => null);
+    if (text === null) return [];
+    try {
+      const rounds = JSON.parse(text) as unknown;
+      if (Array.isArray(rounds)) return rounds.filter((r): r is Round => !!r && typeof r === "object" && Array.isArray((r as Round).entrants));
+    } catch {
+      // Broken: kept aside below.
+    }
+    await rename(roundsFile, `${roundsFile}.broken-${Date.now()}`);
+    return [];
+  };
+  // A round of these directions: the last one when it holds them and nobody chose yet (compare may come before start),
+  // else a new one, each with its sentence as the sheet says it.
+  const openRound = async (entrants: string[], fill: (r: Round) => Round = (r) => r) => {
+    const rounds = await readRounds();
+    const last = rounds.at(-1);
+    if (last && sameRound(last.entrants, entrants) && !last.decision) rounds[rounds.length - 1] = fill(last);
+    else {
+      const sheet = await readJson<{ label?: string; note?: string }[]>(join(values.dir!, "sheet.json"));
+      const notes = Object.fromEntries((Array.isArray(sheet) ? sheet : []).filter((i) => i?.label && entrants.includes(i.label) && i.note).map((i) => [i.label!, i.note!]));
+      rounds.push(fill({ round: (rounds.at(-1)?.round ?? 0) + 1, entrants, ...(Object.keys(notes).length ? { notes } : {}), at: new Date().toISOString() }));
+    }
+    await writeFile(roundsFile, JSON.stringify(rounds, null, 2) + "\n");
+  };
+  /** The last round of these directions takes what was decided on it. */
+  const fillRound = async (entrants: string[], fill: (r: Round) => Round) => {
+    const rounds = await readRounds();
+    const at = rounds.map((r) => sameRound(r.entrants, entrants)).lastIndexOf(true);
+    if (at < 0) return;
+    rounds[at] = fill(rounds[at]!);
+    await writeFile(roundsFile, JSON.stringify(rounds, null, 2) + "\n");
+  };
+
   try {
     if (action === "compare") {
       // The directions on the sheet that opened, the front as it is aside: each is compared, and only those.
@@ -141,6 +180,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       const { comparison, problems } = compareDirections(answer, shown);
       if (!comparison) return (console.error(`The comparison cannot be shown, so nothing was kept:\n${problems.map((p) => `  ${p}`).join("\n")}\nAsk the screening judge again, with the screening brief.`), 1);
       await writeFile(join(values.dir, "compare.json"), JSON.stringify(comparison, null, 2) + "\n");
+      await openRound(comparison.directions.map((d) => d.slug), (r) => ({ ...r, compare: comparison }));
       console.log(`${comparison.directions.map((d) => `${d.slug}\n  Strong: ${d.strong}\n  Weak: ${d.weak}\n  Fit: ${d.fit}`).join("\n\n")}\n\nThe screening would start from ${comparison.start.slug}: ${/[.!?…]$/.test(comparison.start.why) ? comparison.start.why : `${comparison.start.why}.`} Advice only: the person chooses, one direction or a mix.`);
       return 0;
     }
@@ -154,6 +194,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       }
       await mkdir(values.dir, { recursive: true });
       await save(t);
+      await openRound(names);
       console.log(
         !knockout
           ? `${names.length} direction${names.length === 1 ? "" : "s"} recorded, with no knockout: ask the person, then aeom tournament decide --dir ${values.dir} --choose <name>.`
@@ -231,6 +272,7 @@ export async function runTournament(argv: string[]): Promise<number> {
         return 0;
       }
       await save(tournament);
+      await fillRound(t.entrants, (r) => ({ ...r, decision: { applied, ...(values.why?.trim() ? { why: values.why.trim() } : {}) } }));
       if (advice) {
         await addFeedback(aeomHome(), {
           ...(await runKey(dirname(values.dir))),
