@@ -1,0 +1,39 @@
+package.json
+  s_4ce34ec42d9105::t_1294cf37f253dd 12-13
+packages/cli/src/commands/update.test.ts
+  s_4ce34ec42d9105::t_2cdcc1a45f0714 59-62
+  s_4ce34ec42d9105::t_a275fc6ea69b1b 48
+  s_4ce34ec42d9105::t_ea2583be4aa982 1-47,49-58,63-91
+site/pages/commands.html
+  s_4ce34ec42d9105::t_ea6ad30d81369d 119,126
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_ea6ad30d81369d 54
+packages/cli/src/commands/update.ts
+  s_4ce34ec42d9105::t_4944163e526674 1-60
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_1294cf37f253dd 25-26,60,90,104-105
+README.md
+  s_4ce34ec42d9105::t_ea6ad30d81369d 61-62,116
+packages/cli/src/update-check.ts
+  s_4ce34ec42d9105::t_4944163e526674 1-6
+.veebee/milestones/05-construire/tickets/12-aeom-update.md
+  s_4ce34ec42d9105::t_80b58b816aee15 1-29
+packages/cli/src/update.ts
+  s_4ce34ec42d9105::t_4944163e526674 1-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "60f628e77dbb4c68923a6bbdaab74553c1150320",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
