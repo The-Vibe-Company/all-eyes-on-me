@@ -1,6 +1,9 @@
 export { checkClipped } from "./clipped.js";
 export { checkContrast } from "./contrast.js";
 export { checkBounce } from "./bounce.js";
+export { checkAiText } from "./ai-text.js";
+export { checkHollowWords } from "./hollow-words.js";
+export { checkPlaceholder } from "./placeholder.js";
 export { checkFocus } from "./focus.js";
 export { checkGradientText } from "./gradient-text.js";
 export { checkNestedCard } from "./nested-card.js";

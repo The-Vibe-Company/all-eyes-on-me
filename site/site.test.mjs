@@ -242,7 +242,7 @@ test("the commands page shows five commands, each with when and what it does, th
   const next = commands.match(/Next: [^<\n]+/)?.[0];
   assert.ok(next && verdict.includes(next), `the verdict's last line is the CLI's: ${next}`);
   const measured = (help) => help.match(/(\d+) checks? and (\d+) principles?/);
-  const checks = readdirSync(new URL("packages/core/src/checks/", root)).filter((f) => !/^(index|run|types|screen)\.ts$|\.test\.ts$/.test(f) && f.endsWith(".ts")).length;
+  const checks = readdirSync(new URL("packages/core/src/checks/", root)).filter((f) => !/^(index|run|types|screen|text)\.ts$|\.test\.ts$/.test(f) && f.endsWith(".ts")).length;
   assert.equal(Number(measured(commands)?.[1]), checks, "the page counts the checks AEOM runs");
 });
 
