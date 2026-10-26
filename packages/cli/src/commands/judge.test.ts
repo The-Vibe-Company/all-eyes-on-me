@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -19,6 +20,8 @@ const run = async (args: string[]) => {
 };
 
 const PRINCIPLES = ["one-direction", "consistent-chrome", "not-generic", "hierarchy", "grid", "density", "states"];
+/** A reason that names what the voter sees, its own for each page and principle, as a careful vote gives. */
+const seen = (voter: string, page: string, id: string) => `On ${page}, voter ${voter} sees the « Commandes » table for ${id}.`;
 
 async function setup(voters: string[]) {
   const dir = await mkdtemp(join(tmpdir(), "aeom-judge-cli-"));
@@ -27,7 +30,7 @@ async function setup(voters: string[]) {
   await writeFile(join(dir, "principles.md"), PRINCIPLES.map((id) => `- \`${id}\` — ${id} holds.`).join("\n") + "\n");
   await writeFile(join(dir, "captures", "manifest.json"), JSON.stringify({ url: "x", capturedAt: "", widths: [390], pages: [{ url: "http://x/", path: "/", files: [] }], errors: [] }));
   for (const voter of voters) {
-    const verdicts = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: true, reason: "fine" }]));
+    const verdicts = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: true, reason: seen(voter, "/", id) }]));
     await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages: { "/": verdicts } }));
   }
   return dir;
@@ -105,7 +108,7 @@ async function journeys() {
   };
   await writeFile(join(dir, "captures", "report.json"), JSON.stringify(report));
   for (const voter of ["1", "2", "3"]) {
-    const verdicts = (failing: Record<string, number>) => Object.fromEntries(JOURNEY_PRINCIPLES.map((id) => [id, failing[id] ? { pass: false, reason: `The list under "Mes commandes" is blank (voter ${voter}).`, step: failing[id] } : { pass: true, reason: "fine", step: 1 }]));
+    const verdicts = (failing: Record<string, number>) => Object.fromEntries(JOURNEY_PRINCIPLES.map((id) => [id, failing[id] ? { pass: false, reason: `The list under "Mes commandes" is blank for ${id} (voter ${voter}).`, step: failing[id] } : { pass: true, reason: seen(voter, "the first step", id), step: 1 }]));
     await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages: { "see-my-orders": verdicts(voter === "3" ? {} : { "result-shown": voter === "1" ? 3 : 2 }), "get-help": verdicts({}) } }));
   }
   return dir;
@@ -117,7 +120,7 @@ test("aeom judge --journeys counts the votes per journey, and names the step and
     const { code, out } = await run(["judge", "--journeys", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out")]);
     assert.equal(code, 1);
     assert.match(out, /Judged 2 journeys on 6 principles, 3 votes each/);
-    assert.match(out, /See my orders\n\s+✗ result-shown\s+step 2, 3: The list under "Mes commandes" is blank \(voter 1\)\. \(2\/3 fail\)/);
+    assert.match(out, /See my orders\n\s+✗ result-shown\s+step 2, 3: The list under "Mes commandes" is blank for result-shown \(voter 1\)\. \(2\/3 fail\)/);
     assert.match(out, /see-my-orders@1280-02\.png\n\s+\S*see-my-orders@1280-03\.png/, "a capture for each step the failure names");
     assert.match(await readFile(join(dir, "out", "judge-journeys.json"), "utf8"), /"steps": \[\s*2,\s*3\s*\]/);
   } finally {
@@ -206,7 +209,7 @@ async function stagedSetup(failing: Record<string, string[]> = {}) {
   const page = (path: string, file: string) => ({ url: `http://x${path}`, path, files: [{ width: 390, file }] });
   await writeFile(join(dir, "captures", "manifest.json"), JSON.stringify({ url: "x", capturedAt: "", widths: [390], pages: [page("/", "a@390.png"), page("/b", "b@390.png")], errors: [] }));
   const verdicts = (path: string, voter: string, only?: string[]) =>
-    Object.fromEntries(PRINCIPLES.filter((id) => !only || only.includes(id)).map((id) => [id, { pass: !(failing[path] ?? []).includes(id) || voter === "3", reason: `${voter}: ${id}` }]));
+    Object.fromEntries(PRINCIPLES.filter((id) => !only || only.includes(id)).map((id) => [id, { pass: !(failing[path] ?? []).includes(id) || voter === "3", reason: seen(voter, path, id) }]));
   const write = (voter: string, pages: Record<string, unknown>) => writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, pages }));
   await write("1", { "/": verdicts("/", "1"), "/b": verdicts("/b", "1") });
   const args = (...more: string[]) => ["judge", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out"), "--principles", join(dir, "principles.md"), ...more];
@@ -285,7 +288,7 @@ test("a first vote that changed since --to-confirm is refused, never counted on 
     for (const voter of ["2", "3"]) await write(voter, { "/b": verdicts("/b", voter, ["states"]) });
     // Voter 1 relaunched, and now fails more than it did.
     const failing = { "/b": ["states", "grid"] };
-    const again = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: !failing["/b"].includes(id), reason: `1: ${id}` }]));
+    const again = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: !failing["/b"].includes(id), reason: seen("1", "/b", id) }]));
     await write("1", { "/": verdicts("/", "1"), "/b": again });
     const { code, out } = await run(args());
     assert.equal(code, 1);
@@ -318,8 +321,8 @@ test("pages that should keep a verdict the snapshot no longer holds are refused,
 test("aeom judge counts what the product sheet accepts as accepted, said apart, and keeps which model judged on which principles", async () => {
   const dir = await setup([]);
   try {
-    const fails = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: id !== "not-generic", reason: id === "not-generic" ? "a violet everywhere" : "fine" }]));
-    for (const voter of ["1", "2", "3"]) await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, model: "claude-sonnet-5-5", pages: { "/": fails } }));
+    const fails = (voter: string) => Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: id !== "not-generic", reason: id === "not-generic" ? `Voter ${voter}: a deep violet background on every block.` : seen(voter, "/", id) }]));
+    for (const voter of ["1", "2", "3"]) await writeFile(join(dir, "votes", `${voter}.json`), JSON.stringify({ voter, model: "claude-sonnet-5-5", pages: { "/": fails(voter) } }));
     await writeFile(join(dir, "product.md"), "# Radar\n\n## Accepted exceptions\n- `not-generic` on every page: the deep violet is the brand's, chosen. (seen: Victor)\n");
     const args = ["judge", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out"), "--principles", join(dir, "principles.md")];
     const { code, out } = await run([...args, "--product", join(dir, "product.md")]);
@@ -336,6 +339,26 @@ test("aeom judge counts what the product sheet accepts as accepted, said apart, 
     assert.match(lost.out, /--product .*nowhere\.md is not there/);
     // Without the sheet, the same votes fail.
     assert.equal((await run(args)).code, 1);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom judge refuses a vote too thin to count, names its voter and why, and counts nothing", async () => {
+  const dir = await setup(["1", "2", "3"]);
+  try {
+    const thin = Object.fromEntries(PRINCIPLES.map((id) => [id, { pass: true, reason: "Fine." }]));
+    await writeFile(join(dir, "votes", "2.json"), JSON.stringify({ voter: "2", pages: { "/": thin } }));
+    const { code, out } = await run(["judge", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--out", join(dir, "out"), "--principles", join(dir, "principles.md")]);
+    assert.equal(code, 1);
+    assert.match(out, /Votes too thin to count, refused:\n  voter 2: gives the same reason to 7 of 7 verdicts: "Fine\."/);
+    assert.match(out, /Relaunch only those voters, with the same brief/);
+    assert.ok(!existsSync(join(dir, "out", "judge.json")), "nothing is counted");
+    // Voter 1's vote is refused before two more voters are launched on it.
+    await writeFile(join(dir, "votes", "1.json"), JSON.stringify({ voter: "1", pages: { "/": thin } }));
+    const early = await run(["judge", "--to-confirm", "--captures", join(dir, "captures"), "--votes", join(dir, "votes"), "--principles", join(dir, "principles.md")]);
+    assert.equal(early.code, 1);
+    assert.match(early.out, /Voter 1's vote is too thin to count, refused: gives the same reason to 7 of 7 verdicts/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

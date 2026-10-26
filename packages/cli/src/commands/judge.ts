@@ -4,7 +4,7 @@ import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
-import { acceptVerdicts, DEFAULT_PRINCIPLES_FILE, STYLE_KEPT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, VOTERS, type CaptureManifest, type ToConfirm, type JourneyReport, type JudgeReport, type Principle, type Vote } from "@aeom/core";
+import { acceptVerdicts, DEFAULT_PRINCIPLES_FILE, lazyVotes, STYLE_KEPT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, VOTERS, type CaptureManifest, type ToConfirm, type JourneyReport, type JudgeReport, type Principle, type Vote } from "@aeom/core";
 import { sheetExceptions } from "./app.js";
 
 export const JUDGE_HELP = `Usage: aeom judge [options]
@@ -129,7 +129,8 @@ export async function runJudge(argv: string[]): Promise<number> {
       return 1;
     }
   }
-  const counted = pages.length ? await countVotes({ votesDir, out: values.out, voters: values.voters, keys: pages, principles, principlesFile }) : { judgedAt: new Date().toISOString(), voters: [], principles, pages: [], failures: 0 };
+  // Whether a page kept its charter is said in the same words page after page: no vote is too thin for that.
+  const counted = pages.length ? await countVotes({ votesDir, out: values.out, voters: values.voters, keys: pages, principles, principlesFile, lazy: !values["style-kept"] }) : { judgedAt: new Date().toISOString(), voters: [], principles, pages: [], failures: 0 };
   if (counted === null) return 1;
   // The pages judged again and those that kept their verdict, in the captures' order.
   const merged = all.map((page) => counted.pages.find((p) => p.page === page) ?? reused.find((p) => p.page === page)!).filter(Boolean);
@@ -189,9 +190,9 @@ export async function runPrinciples(argv: string[]): Promise<number> {
 /** The commit AEOM runs from, when it runs from its repository: the version of its principles and its judging. */
 const AEOM_COMMIT = await promisify(execFile)("git", ["-C", fileURLToPath(new URL("../../../../", import.meta.url)), "rev-parse", "--short", "HEAD"]).then((r) => r.stdout.trim(), () => "");
 
-/** Which model judged, as the voters said it (« not said » for a voter that did not), and on which principles: a verdict that changes with them is theirs, not the page's. */
+/** Which model judged, as the voters said it (« a model not named » for a voter that did not), and on which principles: a verdict that changes with them is theirs, not the page's. */
 async function judgesOf(votes: Vote[], principlesFile: string): Promise<NonNullable<JudgeReport["judges"]>> {
-  const models = [...new Set(votes.map((v) => (typeof v.model === "string" && v.model.trim() ? v.model.trim() : "not said")))].sort();
+  const models = [...new Set(votes.map((v) => (typeof v.model === "string" && v.model.trim() ? v.model.trim() : "a model not named")))].sort();
   const sha = createHash("sha256").update(await readFile(principlesFile)).digest("hex").slice(0, 8);
   return { models, principles: `${basename(principlesFile)} ${sha}${AEOM_COMMIT ? `, AEOM ${AEOM_COMMIT}` : ""}` };
 }
@@ -208,7 +209,7 @@ function acceptedSaid(places: { where: string; verdicts: JudgeReport["pages"][nu
   if (accepted.length) console.log(`Accepted, as the product sheet says:\n${accepted.join("\n")}\n`);
 }
 
-async function countVotes({ votesDir, out, voters: votersText, keys, principles, principlesFile, steps = false }: { votesDir: string; out: string; voters: string; keys: string[]; principles: Principle[]; principlesFile: string; steps?: boolean }): Promise<JudgeReport | null> {
+async function countVotes({ votesDir, out, voters: votersText, keys, principles, principlesFile, steps = false, lazy = true }: { votesDir: string; out: string; voters: string; keys: string[]; principles: Principle[]; principlesFile: string; steps?: boolean; lazy?: boolean }): Promise<JudgeReport | null> {
   const canonical = (dir: string) => realpath(dir).catch(() => resolve(dir));
   if ((await canonical(out)) === (await canonical(votesDir))) {
     console.error(`--out and --votes cannot be the same folder: the verdict would be counted as a vote next time.`);
@@ -250,6 +251,12 @@ async function countVotes({ votesDir, out, voters: votersText, keys, principles,
           ? `Unexpected voter ${unexpected.join(", ")}: the first vote failed nothing, so it is counted alone. Their votes are left from an earlier judging: delete them, then count again.`
           : `Unexpected voter ${unexpected.join(", ")}: voters are numbered 1 to ${voters}.`,
       );
+    return null;
+  }
+  // A vote too thin to count is refused, and its voter relaunched: a reason names what it sees on the page.
+  const thin = lazy ? lazyVotes(votes) : [];
+  if (thin.length) {
+    console.error(`Votes too thin to count, refused:\n${thin.map((t) => `  voter ${t.voter}: ${t.why}`).join("\n")}\nRelaunch only those voters, with the same brief: each reason names what it sees on the page.`);
     return null;
   }
   try {
@@ -380,6 +387,12 @@ async function writeToConfirm(votesDir: string, keys: string[], principles: Prin
   const first = votes.find((v) => v.voter === "1");
   if (!first) {
     console.error(`No vote from voter 1 in ${votesDir}: launch voter 1 first, on everything.`);
+    return 1;
+  }
+  // Voter 1's vote too thin to count is said before two more voters are launched on it.
+  const thin = lazyVotes([first]);
+  if (thin.length) {
+    console.error(`Voter 1's vote is too thin to count, refused: ${thin[0]!.why}. Relaunch voter 1 alone, with the same brief, then aeom judge --to-confirm again.`);
     return 1;
   }
   const confirm = toConfirm(first, keys, principles);
