@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFileSync, execFile } from "node:child_process";
 import { chmod, cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -208,12 +208,13 @@ test("an image or a capture anywhere in the run's commits is refused before anyt
   }
   const fine = await run((await project({ files: { "public/icon.svg": `<svg viewBox="0 0 8 8"><path d="M0 0h8v8z"/></svg>`, "public/old-hero.jpg": null } })).dir, ["pr", "--dry-run"]);
   assert.equal(fine.code, 0, `an SVG of shapes, and an image taken out, are fine: ${fine.out}`);
-  // An image AEOM generated for the front, listed by the run, goes; a capture beside it still does not.
-  const generated = await project({ files: { "public/hero.png": "png", "public/shot.png": "png" } });
-  await put(join(generated.dir, ".aeom", "runs", "run-1", "assets.txt"), "public/hero.png\n.aeom/captures/x.png\n");
+  // An image AEOM generated for the front goes by its content and its path; a capture beside it, or written over it, does not.
+  const generated = await project({ files: { "public/hero.png": "hero", "public/shot.png": "png", "public/other.png": "other" } });
+  const blob = (content: string) => execFileSync("git", ["hash-object", "--stdin"], { input: content }).toString().trim();
+  await put(join(generated.dir, ".aeom", "runs", "run-1", "assets.txt"), `${blob("hero")} public/hero.png\n${blob("not this")} public/other.png\n`);
   const one = await run(generated.dir, ["pr", "--dry-run"]);
   assert.equal(one.code, 1);
-  assert.match(one.out, /commits public\/shot\.png: no capture leaves/);
+  assert.match(one.out, /commits public\/other\.png, public\/shot\.png: no capture leaves/, "listed by its path, with other content: refused");
   assert.doesNotMatch(one.out, /hero\.png/, "the generated image is not refused");
 });
 

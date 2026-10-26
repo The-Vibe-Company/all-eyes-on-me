@@ -106,6 +106,8 @@ export async function runDirection(argv: string[]): Promise<number> {
   await rm(KEPT, { recursive: true, force: true });
   // The mockup whole, the images generated for it included: its captures are beside its folder, never in it.
   await cp(from, KEPT, { recursive: true });
+  // Its images stay on this machine, should the folder be committed: a run lists the ones it carries into the front.
+  await writeFile(join(KEPT, ".gitignore"), "*.png\n*.jpg\n*.jpeg\n*.webp\n*.gif\n");
   // The run it was chosen in, when the folder is a run's: .aeom/runs/<run>/directions/<slug>.
   const run = basename(dirname(dirname(from))).startsWith("run-") ? basename(dirname(dirname(from))) : null;
   const kept: Kept = { slug: basename(from), sentence: values.sentence.trim(), source: values.source.trim(), ...(values.why?.trim() ? { why: values.why.trim() } : {}), run, kept: new Date().toISOString() };

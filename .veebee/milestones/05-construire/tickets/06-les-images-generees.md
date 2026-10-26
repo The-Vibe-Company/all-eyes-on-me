@@ -4,6 +4,7 @@ title: AEOM génère les images qui servent, dans le style de la direction
 milestone: 05-construire
 depends_on: [05]
 design: null
+status: done
 tracker: { tool: github, id: 148, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/148 }
 ---
 
