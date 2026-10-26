@@ -1,0 +1,52 @@
+packages/core/src/capture/index.ts
+  s_4ce34ec42d9105::t_3f7a0c11cd354a 2
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_17bab18a45baa6 84-97
+skills/aeom/directions.md
+  s_4ce34ec42d9105::t_73d4920d6f58ca 50-57
+  s_4ce34ec42d9105::t_612271479cd8a3 3,31,48
+  s_4ce34ec42d9105::t_9a61e4517b9c77 49
+.veebee/milestones/05-construire/tickets/07-des-directions-vraiment-differentes.md
+  s_4ce34ec42d9105::t_2884f8036cf5aa 7
+  s_4ce34ec42d9105::t_e9b9e7ab336c2b 1-6,9-35
+  s_4ce34ec42d9105::t_1c848d45f330c6 8
+packages/core/src/capture/capture.test.ts
+  s_4ce34ec42d9105::t_032e469893db02 12,375-376,378-380
+  s_4ce34ec42d9105::t_e7041ef2969edd 338-341,343,357-364,377,381-382
+  s_4ce34ec42d9105::t_62d3caa4da258b 336-337,342,344-356,365-374,383-384
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_1f500d4a893b51 29
+  s_4ce34ec42d9105::t_42b9a97ed68dd6 24,28,30
+  s_4ce34ec42d9105::t_ccd747c9ef7349 26-27,33,35
+packages/core/src/capture/capture.ts
+  s_4ce34ec42d9105::t_3f7a0c11cd354a 4,34-35,93,96,103-110,119,165
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_42b9a97ed68dd6 14,24,26
+  s_4ce34ec42d9105::t_4f6749d3d28a39 21
+  s_4ce34ec42d9105::t_c6d0196dc078ef 9,28,30
+packages/cli/src/commands/capture.ts
+  s_4ce34ec42d9105::t_2e483802d9f89a 9-11
+  s_4ce34ec42d9105::t_42b9a97ed68dd6 64
+packages/core/src/capture/content.ts
+  s_4ce34ec42d9105::t_b43c9bc0c5a305 1-2,4-5,11-16,21-35,55,57,59,65,71-74,76-77,80-93
+  s_4ce34ec42d9105::t_c2337d62cf26be 3,6-10,17-20,36,38-54,56,58,60-64,66-70,75,78-79
+  s_4ce34ec42d9105::t_42b9a97ed68dd6 37
+README.md
+  s_4ce34ec42d9105::t_df7916a2c51d31 90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8099c5c3819021a56abcabc5f6f998e1719621cb",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
