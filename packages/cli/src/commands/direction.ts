@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { createTournament, decideDirection } from "@aeom/core";
 
@@ -14,9 +14,10 @@ The direction the person chose with /aeom directions, kept in the project's
 /aeom build --from-scratch builds its front on it, instead of drawing new ones.
 
   keep <folder>  Keep the mockup in that folder (a direction of a run, such as
-                 .aeom/runs/<run>/directions/<slug>): its pages and their
-                 styles, never an image a commit would carry, and what
-                 describes it in .aeom/direction/direction.json. It replaces
+                 .aeom/runs/<run>/directions/<slug>): its pages, their styles
+                 and the images generated for it (its captures are beside
+                 it, never in it), and what describes it in
+                 .aeom/direction/direction.json. It replaces
                  the direction kept before, and says which.
   show           Say which direction is kept, its pages as absolute paths for a
                  worker in another folder; exit 1 when none is, 2 when a run
@@ -27,8 +28,6 @@ The direction the person chose with /aeom directions, kept in the project's
   drop           Forget it: the next run draws new directions`;
 
 const KEPT = join(".aeom", "direction");
-/** The mockup's pages, styles and drawings; a capture or a picture stays in the run. */
-const IMAGE = /\.(png|jpe?g|gif|webp|avif|bmp|tiff?)$/i;
 
 interface Kept {
   slug: string;
@@ -105,14 +104,14 @@ export async function runDirection(argv: string[]): Promise<number> {
   }
   const before = await read();
   await rm(KEPT, { recursive: true, force: true });
-  const left: string[] = [];
-  await cp(from, KEPT, { recursive: true, filter: (src) => (IMAGE.test(src) ? (left.push(relative(from, src)), false) : true) });
+  // The mockup whole, the images generated for it included: its captures are beside its folder, never in it.
+  await cp(from, KEPT, { recursive: true });
+  // Its images stay on this machine, should the folder be committed: a run lists the ones it carries into the front.
+  await writeFile(join(KEPT, ".gitignore"), "*.png\n*.jpg\n*.jpeg\n*.webp\n*.gif\n");
   // The run it was chosen in, when the folder is a run's: .aeom/runs/<run>/directions/<slug>.
   const run = basename(dirname(dirname(from))).startsWith("run-") ? basename(dirname(dirname(from))) : null;
   const kept: Kept = { slug: basename(from), sentence: values.sentence.trim(), source: values.source.trim(), ...(values.why?.trim() ? { why: values.why.trim() } : {}), run, kept: new Date().toISOString() };
   await writeFile(join(KEPT, "direction.json"), `${JSON.stringify(kept, null, 2)}\n`);
   console.log(`Kept ${kept.slug} in ${KEPT}/${before && before.slug !== kept.slug ? `; it replaces ${before.slug}` : ""}. /aeom redo carries it into the app, /aeom build --from-scratch builds on it; aeom direction drop forgets it.`);
-  // A commit carries no image: one the pages show is left out, and said.
-  if (left.length) console.log(`Left out, as images a commit would carry: ${left.join(", ")}. A page that shows one shows a gap.`);
   return 0;
 }

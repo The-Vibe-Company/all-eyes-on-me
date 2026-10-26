@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFileSync, execFile } from "node:child_process";
 import { chmod, cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -195,7 +195,7 @@ test("nothing to redo, or nothing kept: no PR", async () => {
 
 test("an image or a capture anywhere in the run's commits is refused before anything is pushed, whatever its name", async () => {
   const cases: [Record<string, string | null>, RegExp][] = [
-    [{ "pages/shot.png": "png" }, /aeom\/run-1 commits pages\/shot\.png: no image or capture leaves the machine/],
+    [{ "pages/shot.png": "png" }, /aeom\/run-1 commits pages\/shot\.png: no capture leaves the machine, nor any image AEOM did not generate for the front/],
     [{ "captures/écran@1280.png": "png", "public/capture-réglages.PNG": "png" }, /captures\/écran@1280\.png, public\/capture-réglages\.PNG/],
     [{ ".aeom/runs/run-1/journeys-before/créer/sheet@1280.json": "{}" }, /\.aeom\/runs\/run-1\/journeys-before\/créer\/sheet@1280\.json/],
     [{ "public/favicon.ico": "i", "public/a.heic": "h", "public/b.heif": "h", "public/c.jxl": "j", "public/d.apng": "a", "public/e.svgz": "s" }, /public\/a\.heic, public\/b\.heif, public\/c\.jxl, public\/d\.apng, public\/e\.svgz, public\/favicon\.ico/],
@@ -208,6 +208,14 @@ test("an image or a capture anywhere in the run's commits is refused before anyt
   }
   const fine = await run((await project({ files: { "public/icon.svg": `<svg viewBox="0 0 8 8"><path d="M0 0h8v8z"/></svg>`, "public/old-hero.jpg": null } })).dir, ["pr", "--dry-run"]);
   assert.equal(fine.code, 0, `an SVG of shapes, and an image taken out, are fine: ${fine.out}`);
+  // An image AEOM generated for the front goes by its content and its path; a capture beside it, or written over it, does not.
+  const generated = await project({ files: { "public/hero.png": "hero", "public/shot.png": "png", "public/other.png": "other" } });
+  const blob = (content: string) => execFileSync("git", ["hash-object", "--stdin"], { input: content }).toString().trim();
+  await put(join(generated.dir, ".aeom", "runs", "run-1", "assets.txt"), `${blob("hero")} public/hero.png\n${blob("not this")} public/other.png\n`);
+  const one = await run(generated.dir, ["pr", "--dry-run"]);
+  assert.equal(one.code, 1);
+  assert.match(one.out, /commits public\/other\.png, public\/shot\.png: no capture leaves/, "listed by its path, with other content: refused");
+  assert.doesNotMatch(one.out, /hero\.png/, "the generated image is not refused");
 });
 
 test("an image a merge commit brings in itself is refused too", async () => {
