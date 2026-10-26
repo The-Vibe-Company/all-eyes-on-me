@@ -1,0 +1,55 @@
+packages/cli/src/commands/judge.test.ts
+  s_4ce34ec42d9105::t_ed8f75252c984d 333-336,338
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_8638cf241da0c7 7,63,120,123,137-139,143,149,189-190,192,194,196,199-202,274,294-296
+  s_4ce34ec42d9105::t_84fdf1566ca98e 1,5-6,8
+packages/cli/src/commands/product.ts
+  s_4ce34ec42d9105::t_ef699ba5d7ea9c 3,152-155
+packages/core/src/product/product.test.ts
+  s_4ce34ec42d9105::t_6ee847508a203e 232,238
+packages/core/src/judge/tally.ts
+  s_4ce34ec42d9105::t_6ee847508a203e 189-190,196-199
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_9bbdc094ec5094 80
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_8638cf241da0c7 1,4-5,57-58
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_adabd4d13a8e32 125-132
+  s_4ce34ec42d9105::t_04422cbf28b1c8 4
+skills/aeom/phase-build.md
+  s_4ce34ec42d9105::t_9bbdc094ec5094 20,22,42
+packages/cli/src/commands/compare.test.ts
+  s_4ce34ec42d9105::t_adabd4d13a8e32 120-136
+.veebee/milestones/05-construire/tickets/10-les-exceptions.md
+  s_4ce34ec42d9105::t_51811d3f406bbc 7
+packages/cli/src/commands/review.ts
+  s_4ce34ec42d9105::t_8638cf241da0c7 8-9,148
+packages/core/src/product/product.ts
+  s_4ce34ec42d9105::t_6ee847508a203e 13,73
+skills/aeom/product.md
+  s_4ce34ec42d9105::t_9bbdc094ec5094 40,64
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_9bbdc094ec5094 19,26
+packages/cli/src/commands/app.ts
+  s_4ce34ec42d9105::t_253d4ee9a42a8e 4,198-221
+packages/core/src/product/exceptions.ts
+  s_4ce34ec42d9105::t_6ee847508a203e 23-24,26,30,32-34,38-41,45,50,54,63-74
+  s_4ce34ec42d9105::t_59547a5348b501 35
+  s_4ce34ec42d9105::t_95b04995298f51 36-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "101df7e73bb96253cd644350ac8ffe3a9ec849dd",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
