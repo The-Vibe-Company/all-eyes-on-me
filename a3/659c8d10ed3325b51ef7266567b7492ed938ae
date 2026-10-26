@@ -1,0 +1,40 @@
+packages/cli/src/commands/compare.test.ts
+  s_4ce34ec42d9105::t_07e64b9e82274b 137-168
+packages/core/src/run/compare.test.ts
+  s_4ce34ec42d9105::t_defdb53f700fa1 22
+  s_4ce34ec42d9105::t_a6dce27527b734 4-21,23
+  s_4ce34ec42d9105::t_6c16796715c4b1 1-3
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_2f8692269d3dda 2
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_7aef18a1f8a163 129-135
+packages/cli/src/commands/run.ts
+  s_4ce34ec42d9105::t_07e64b9e82274b 4,114-130,160-163
+  s_4ce34ec42d9105::t_fceac9ded8c10c 156
+.veebee/milestones/05-construire/tickets/13-aucune-fonction-perdue.md
+  s_4ce34ec42d9105::t_a6dce27527b734 1-28
+  s_4ce34ec42d9105::t_529b847833265f 29
+packages/core/src/run/lost.ts
+  s_4ce34ec42d9105::t_2f8692269d3dda 1-60,64-75
+  s_4ce34ec42d9105::t_defdb53f700fa1 61-63
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_7aef18a1f8a163 52,80,132
+packages/core/src/run/compare.ts
+  s_4ce34ec42d9105::t_07e64b9e82274b 26-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a3659c8d10ed3325b51ef7266567b7492ed938ae",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
