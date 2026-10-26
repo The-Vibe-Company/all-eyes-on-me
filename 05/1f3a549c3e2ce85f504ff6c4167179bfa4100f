@@ -1,0 +1,43 @@
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_06a740bb9acf86 124-135,156,170-175,253
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_1d38e8fe8fa460 171-191,195-211
+  s_4ce34ec42d9105::t_915d4204807b1f 192-194
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_c96093261b92a6 32
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_59c33c905ce8d8 240-267
+.veebee/milestones/05-construire/tickets/14-une-page-de-resultat-utilisable.md
+  s_4ce34ec42d9105::t_1d38e8fe8fa460 1-6,9-29
+  s_4ce34ec42d9105::t_aee3d3a380d5a5 7-8
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_3407cc15d4a1b6 518,520-521,525,528,530,532-537,539-541,544-548,551,584-585,593
+  s_4ce34ec42d9105::t_8a545a8b12e8ba 67-74,116-154,157,165-166,310,331,357,529,538
+  s_4ce34ec42d9105::t_d2bfa50c9215ff 313-330,332-356,358-372,376,404-405,409,411,415,426-427,432,437,445,455,478,480-483,487,489
+  s_4ce34ec42d9105::t_25a9ce5013b0dd 493-496,498-500,502,505,507,511-513,515
+  s_4ce34ec42d9105::t_3dda508682283a 542-543
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_39b1333b8823ff 6
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_c96093261b92a6 105
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_c96093261b92a6 138-142
+packages/cli/src/commands/report.ts
+  s_4ce34ec42d9105::t_a5bada0d275323 9,25-26,39,46-49,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "051f3a549c3e2ce85f504ff6c4167179bfa4100f",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
