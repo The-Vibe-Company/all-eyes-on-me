@@ -1,0 +1,21 @@
+site/pages/commands.html
+  s_4ce34ec42d9105::t_4dbf1e564f42e3 122
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_e44162150919b5 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0324300f0fc10e27e02fafee4f58fd81ef76e223",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
