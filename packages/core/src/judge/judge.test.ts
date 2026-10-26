@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, type Vote } from "./index.js";
+import { acceptVerdicts, DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, type Vote } from "./index.js";
 
 const refuses = (fn: () => unknown, pattern: RegExp) =>
   assert.throws(fn, (error: unknown) => error instanceof JudgeVoteError && pattern.test(error.message));
@@ -202,4 +202,33 @@ test("a first vote that fails nothing is counted alone; a confirming vote that s
   refuses(() => tally([first, partial("2", { "/commandes": { hierarchy: true } }), partial("3", { "/commandes": { states: true } })], pages, principles, { confirm }), /voter 2, \/commandes: no verdict for states, which voter 1 failed/);
   const extra = tally([first, partial("2", { "/commandes": { states: true }, "/": { hierarchy: false } }), partial("3", { "/commandes": { states: true }, "/": { hierarchy: false } })], pages, principles, { confirm });
   assert.equal(extra.pages.find((p) => p.page === "/")!.verdicts.find((v) => v.principle === "hierarchy")!.votes, "1/1 pass", "what the first vote passed is not reopened");
+});
+
+test("a principle the sheet accepts on a page passes there as accepted, with its reason and source; elsewhere it still fails", () => {
+  const report = tally([vote("1", { "/": ["hierarchy"], "/commandes": ["hierarchy", "states"] }), vote("2", { "/": ["hierarchy"], "/commandes": ["hierarchy", "states"] }), vote("3")], pages, principles);
+  assert.equal(report.failures, 3);
+  const accepted = acceptVerdicts(report, [{ id: "hierarchy", pages: ["/"], why: "two focal points, as the charter asks.", source: "Victor" }, { id: "states", pages: "all", why: "the empty state is the spec's.", source: "CCTP 2.1" }]);
+  const verdict = (page: string, id: string) => accepted.pages.find((p) => p.page === page)!.verdicts.find((v) => v.principle === id)!;
+  assert.deepEqual([verdict("/", "hierarchy").pass, verdict("/", "hierarchy").accepted], [true, { why: "two focal points, as the charter asks.", source: "Victor" }]);
+  assert.equal(verdict("/commandes", "hierarchy").pass, false, "accepted on / only");
+  assert.equal(verdict("/commandes", "states").accepted?.source, "CCTP 2.1");
+  assert.equal(accepted.failures, 1);
+  assert.equal(acceptVerdicts(report, [{ id: "hierarchy", journeys: "all", why: "x", source: "y" }]).failures, 3, "a journey's exception is not a page's");
+});
+
+test("a journey principle the sheet accepts on a journey, by its name or its slug, passes there as accepted", () => {
+  const journeys = ["simuler", "commander"];
+  const jvote = (voter: string): Vote => ({ voter, pages: Object.fromEntries(journeys.map((j) => [j, { "result-shown": { pass: false, reason: `${voter}: no result` } }])) });
+  const report = tally([jvote("1"), jvote("2"), jvote("3")], journeys, [{ id: "result-shown", text: "The result is shown." }]);
+  const accepted = acceptVerdicts(report, [{ id: "result-shown", journeys: ["Simuler une aide"], why: "a simulation, as the spec asks.", source: "CCTP 4.2" }], { journeys: [{ slug: "simuler", name: "Simuler une aide" }, { slug: "commander", name: "Commander" }] });
+  assert.deepEqual(accepted.pages.map((p) => p.verdicts[0]!.pass), [true, false]);
+});
+
+test("what the sheet accepted is counted again from the votes: an exception taken out of the sheet fails again", () => {
+  const report = tally([vote("1", { "/": ["hierarchy"] }), vote("2", { "/": ["hierarchy"] }), vote("3")], pages, principles);
+  const once = acceptVerdicts(report, [{ id: "hierarchy", pages: ["/"], why: "two focal points.", source: "Victor" }]);
+  assert.equal(once.failures, 0);
+  const again = acceptVerdicts(once, []);
+  assert.equal(again.failures, 1);
+  assert.equal(again.pages[0]!.verdicts.find((v) => v.principle === "hierarchy")!.accepted, undefined);
 });

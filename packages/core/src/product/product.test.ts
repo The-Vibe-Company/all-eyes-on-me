@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mergeProduct, platformOf, productBrief, validateProduct, withPlatform } from "./index.js";
+import { acceptedExceptions, mergeProduct, platformOf, productBrief, validateProduct, withPlatform } from "./index.js";
 
 const journey = (name: string, source = "(seen: /)") => `### ${name}\nWhy: a visitor wants it. ${source}\n1. Open \`/\`.\n2. Click "${name}".\n`;
 
@@ -209,4 +209,50 @@ test("the user's answer goes in a sheet written before AEOM said where the front
   assert.deepEqual(validateProduct(answered), []);
   assert.match(answered, /## The main loop[\s\S]*## Where it is used\n`desktop`: Antoine said so\. \(seen: Antoine\)\n\n## Key journeys/);
   assert.equal(platformOf(answered)?.seen, true);
+});
+
+const ACCEPTED = [
+  "## Accepted exceptions",
+  "- `not-generic` on every page: the deep violet background is the brand's, chosen. (seen: Victor)",
+  "- `one-direction` on /eole, /eole/contact: the CCTP 8.3 asks for Eole's own identity. (seen: CCTP 8.3)",
+  "- `contrast` on /: the logo's grey is the charter's. (seen: charte.pdf)",
+  '- `result-shown` on the journey "Simuler une aide": the simulation is what the spec asks. (seen: CCTP 4.2)',
+  "- `motion` on every journey: never a page's. (seen: Victor)",
+].join("\n");
+const withAccepted = (lines = ACCEPTED) => product().replace("## Key journeys", `${lines}\n\n## Key journeys`);
+
+test("an accepted exception names a principle or a check, where it holds, why, and who or what says so", () => {
+  assert.deepEqual(acceptedExceptions(withAccepted()).exceptions.slice(0, 4), [
+    { id: "not-generic", pages: "all", why: "the deep violet background is the brand's, chosen.", source: "Victor" },
+    { id: "one-direction", pages: ["/eole", "/eole/contact"], why: "the CCTP 8.3 asks for Eole's own identity.", source: "CCTP 8.3" },
+    { id: "contrast", pages: ["/"], why: "the logo's grey is the charter's.", source: "charte.pdf" },
+    { id: "result-shown", journeys: ["Simuler une aide"], why: "the simulation is what the spec asks.", source: "CCTP 4.2" },
+  ]);
+  assert.deepEqual(acceptedExceptions(product()).exceptions, [], "a sheet may have none");
+  assert.deepEqual(validateProduct(withAccepted(ACCEPTED.split("\n").slice(0, 5).join("\n")), { known: { pages: ["not-generic", "one-direction", "contrast"], journeys: ["result-shown"] } }), []);
+});
+
+test("an exception with no source, a guess, a name AEOM does not know, or no place is refused, by its line", () => {
+  const problems = validateProduct(
+    withAccepted(["## Accepted exceptions", "- `not-generic` on every page: the brand's violet.", "- `hierarchy` on /: two focal points. (to confirm)", "- `not-a-principle` on /: why not. (seen: Victor)", "- `contrast`: everywhere. (seen: Victor)"].join("\n")),
+    { known: { pages: ["not-generic", "hierarchy", "contrast"], journeys: [] } },
+  ).join("\n");
+  assert.match(problems, /"- `not-generic` on every page: the brand's violet\." says no source: \(seen: <who chose it, or the spec's article>\)/);
+  assert.match(problems, /`hierarchy` on \/ is a guess: only the person or the spec accepts an exception, never AEOM/);
+  assert.match(problems, /`not-a-principle` is no principle or check AEOM knows/);
+  assert.match(problems, /"- `contrast`: everywhere\. \(seen: Victor\)" says neither where nor why/);
+});
+
+test("an exception reads as people write it: curly quotes, a French colon, a source with parentheses, another bullet, Seen in capitals", () => {
+  const { exceptions, problems } = acceptedExceptions(
+    withAccepted(["## Accepted exceptions", "- `result-shown` on the journey “Simuler une aide” : la simulation est voulue. (seen: CCTP 8.3 (annexe B))", "* `contrast` on /: the grey of the charter. (Seen: src/app/(shop)/page.tsx)"].join("\n")),
+  );
+  assert.deepEqual(problems, []);
+  assert.deepEqual(exceptions.map((e) => [e.id, e.journeys ?? e.pages, e.source]), [["result-shown", ["Simuler une aide"], "CCTP 8.3 (annexe B)"], ["contrast", ["/"], "src/app/(shop)/page.tsx"]]);
+});
+
+test("an exception names a principle where it is judged: a page's on pages, a journey's on journeys", () => {
+  const problems = validateProduct(withAccepted(["## Accepted exceptions", "- `not-generic` on every journey: never a journey's. (seen: Victor)", "- `result-shown` on /: never a page's. (seen: Victor)"].join("\n")), { known: { pages: ["not-generic"], journeys: ["result-shown"] } }).join("\n");
+  assert.match(problems, /`not-generic` judges pages, not journeys/);
+  assert.match(problems, /`result-shown` judges journeys, not pages/);
 });

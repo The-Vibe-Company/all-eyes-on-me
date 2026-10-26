@@ -1,7 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, platformOf, serveFolder, usableWidths, WIDTH_RANGE, type ServedFolder, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
+import { acceptedExceptions, type AcceptedException, AppStartError, ConfigError, DEFAULT_WIDTHS, loadConfig, platformOf, serveFolder, usableWidths, WIDTH_RANGE, type ServedFolder, signedInFrom, signInOnce, SignInError, usableSession, startApp, type RunningApp, type SignedIn, type SignIn } from "@aeom/core";
 
 export const APP_OPTIONS = {
   url: { type: "string" },
@@ -195,3 +195,27 @@ export async function signInFromConfig(url: string): Promise<{ signedIn: SignedI
   }
 }
 
+
+/**
+ * The exceptions the product sheet accepts: the sheet given, or `fallback` when there is
+ * one and nothing was given. A sheet given that is not there is said, and null returned:
+ * a worker pointed at the wrong sheet would fix what the run accepts. Lines AEOM cannot
+ * read are said, never used.
+ */
+export async function sheetExceptions(given: string | undefined, fallback?: string): Promise<AcceptedException[] | null> {
+  const file = given ?? fallback;
+  if (!file) return [];
+  let text: string;
+  try {
+    text = await readFile(file, "utf8");
+  } catch {
+    if (given !== undefined) {
+      console.error(`--product ${given} is not there: give the run's product sheet, such as "$MAIN/.aeom/product.md".`);
+      return null;
+    }
+    return [];
+  }
+  const { exceptions, problems } = acceptedExceptions(text);
+  if (problems.length) console.error(`${file}: these accepted exceptions cannot be read, and count for nothing (aeom product says why):\n${problems.map((p) => `  ${p}`).join("\n")}`);
+  return exceptions;
+}

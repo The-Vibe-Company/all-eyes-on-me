@@ -6,7 +6,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
 import { AppStartError, checkSite, guardJourneys, headerDifference, headerLinks, JourneyError, loadConfig, loadJourneys, pageShape, readStandard, replayJourneys, reviewCode, route, routeTouched, screensTouched, serveFolder, startApp, STYLE_CHECKS, type Journey, type JourneyReport, type ProjectConfig } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, sheetExceptions, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const REVIEW_HELP = `Usage: aeom review [--base <branch>] [--url <url> | --start "<command>" | --dir <folder>] [options]
        aeom review --install-check [--aeom-ref <ref>] [--force]
@@ -144,7 +144,9 @@ export async function runReview(argv: string[]): Promise<number> {
               return 0;
             }
             const signedIn = session ? session.signedIn : undefined;
-            const report = await checkSite({ url, widths, paths: routes, ...(signedIn ? { signedIn } : {}), ...(signedOut ? { signedOut } : {}), except, folder: servingFolder() });
+            // What the product sheet accepts is the project's choice: said, never held against the branch.
+            const accepted = (await sheetExceptions(undefined, servingFolder() ? undefined : join(".aeom", "product.md"))) ?? [];
+            const report = await checkSite({ url, widths, paths: routes, ...(signedIn ? { signedIn } : {}), ...(signedOut ? { signedOut } : {}), except, folder: servingFolder(), accepted });
             const said = new Set<string>();
             for (const f of report.findings) {
               const line = `${f.check}: ${f.element ? `${f.element}: ` : ""}${f.message}`;

@@ -6,6 +6,7 @@ import { openPage } from "../capture/open.js";
 import type { SignedIn } from "../capture/sign-in.js";
 import { route } from "../capture/capture.js";
 import { pageShape } from "../capture/shape.js";
+import { acceptedOnPage, type AcceptedException } from "../product/exceptions.js";
 import { checkAiText } from "./ai-text.js";
 import { checkBounce } from "./bounce.js";
 import { checkClipped } from "./clipped.js";
@@ -49,6 +50,8 @@ export interface CheckReport {
   pages: string[];
   errors: PageError[];
   findings: Finding[];
+  /** What the product sheet accepts: found, said apart with its reason and source, never a failure. */
+  accepted?: (Finding & { why: string; source: string })[];
 }
 
 /**
@@ -127,7 +130,7 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
  * checks each one, signed in when given what a signed-in browser keeps; the
  * routes of `signedOut` are checked too, signed out.
  */
-export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths, signedOut, except = {}, folder = false }: { url: string; widths?: number[]; signedIn?: SignedIn; paths?: string[]; signedOut?: string[]; except?: CheckExceptions; folder?: boolean }): Promise<CheckReport> {
+export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths, signedOut, except = {}, folder = false, accepted = [] }: { url: string; widths?: number[]; signedIn?: SignedIn; paths?: string[]; signedOut?: string[]; except?: CheckExceptions; folder?: boolean; accepted?: AcceptedException[] }): Promise<CheckReport> {
   const browser = await chromium.launch();
   try {
     const found = await findPages(browser, { url, paths, signedIn, signedOut });
@@ -143,7 +146,11 @@ export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths,
     // query or its last slash.
     const bare = (r: string) => r.replace(/[?#].*$/, "").replace(/(.)\/+$/, "$1");
     const left = (f: Finding) => (except[f.check] ?? []).some((r) => bare(r) === bare(route(f.url)) || pageShape(bare(r)) === pageShape(bare(route(f.url))));
-    return { url, checkedAt: new Date().toISOString(), widths, checks: folder ? CHECKS.filter((c) => c !== "finish") : CHECKS, pages, errors: found.errors, findings: findings.filter((f) => !left(f)) };
+    // What the product sheet accepts is said apart, with its reason: the config's exceptions are left out unsaid.
+    const kept = findings.filter((f) => !left(f));
+    const accept = (f: Finding) => acceptedOnPage(accepted, f.check, route(f.url));
+    const said = kept.filter(accept).map((f) => ({ ...f, why: accept(f)!.why, source: accept(f)!.source }));
+    return { url, checkedAt: new Date().toISOString(), widths, checks: folder ? CHECKS.filter((c) => c !== "finish") : CHECKS, pages, errors: found.errors, findings: kept.filter((f) => !accept(f)), ...(said.length ? { accepted: said } : {}) };
   } finally {
     await browser.close();
   }

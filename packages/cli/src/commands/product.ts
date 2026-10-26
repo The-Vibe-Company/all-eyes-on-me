@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { ConfigError, loadConfig, mergeProduct, PARTS, platformOf, PLATFORMS, productBrief, validateProduct, withPlatform, type Platform } from "@aeom/core";
+import { CHECKS, ConfigError, DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, STYLE_KEPT_PRINCIPLES_FILE, loadConfig, loadPrinciples, mergeProduct, PARTS, platformOf, PLATFORMS, productBrief, validateProduct, withPlatform, type Platform } from "@aeom/core";
 import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
 
 const PRODUCT = sheetFile("product");
@@ -83,7 +83,7 @@ async function recordUsedOn(platform: string, by: string | undefined): Promise<n
       return 1;
     }
     const text = withPlatform(current, platform as Platform, by.trim());
-    const left = validateProduct(text);
+    const left = validateProduct(text, { known: await knownIds() });
     if (left.length) {
       console.error(`With the answer, ${SHEET} would not be a product sheet, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}`);
       return 1;
@@ -131,7 +131,7 @@ export async function runProduct(argv: string[]): Promise<number> {
     console.error(`Cannot read the draft ${draftFile}: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
-  const problems = validateProduct(draft);
+  const problems = validateProduct(draft, { known: await knownIds() });
   if (problems.length) {
     console.error(`The draft is not a product sheet yet, so nothing was written:\n${problems.map((p) => `  ${p}`).join("\n")}`);
     return 1;
@@ -139,7 +139,7 @@ export async function runProduct(argv: string[]): Promise<number> {
 
   return updateSheet(PRODUCT, (holder) => `Another aeom product (process ${holder}) is writing the sheet. Run again once it is done.`, async ({ sheet: current, base }) => {
     const merged = mergeProduct({ base, current, proposed: draft });
-    const left = validateProduct(merged.text);
+    const left = validateProduct(merged.text, { known: await knownIds() });
     if (left.length) {
       console.error(`With the corrections in .aeom/product.md, the sheet would not be complete, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}\nRestore what is missing in .aeom/product.md, keeping its headings as they are, and run again.`);
       return 1;
@@ -147,4 +147,10 @@ export async function runProduct(argv: string[]): Promise<number> {
     const journeys = merged.added.filter((key) => key.startsWith("journey ")).length;
     return { text: merged.text, base: draft, after: () => (current === undefined ? console.log(`Wrote .aeom/product.md, a first sheet with ${journeys} key journeys`) : sayMerge(".aeom/product.md", merged, "no longer in AEOM's draft")) };
   });
+}
+
+/** What an accepted exception may name, where it is judged: a check or a page's principle on pages, a journey's principle on journeys. */
+async function knownIds(): Promise<{ pages: string[]; journeys: string[] }> {
+  const ids = async (file: string) => (await loadPrinciples(file)).map((p) => p.id);
+  return { pages: [...CHECKS, ...(await ids(DEFAULT_PRINCIPLES_FILE)), ...(await ids(STYLE_KEPT_PRINCIPLES_FILE))], journeys: await ids(JOURNEY_PRINCIPLES_FILE) };
 }

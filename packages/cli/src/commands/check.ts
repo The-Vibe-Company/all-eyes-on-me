@@ -1,8 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { CHECKS, checkSite, loadConfig, route, type Finding } from "@aeom/core";
-import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, servingFolder, signInFromConfig, withApp, withConfig } from "./app.js";
+import { CHECKS, checkSite, loadConfig, route, type CheckReport, type Finding } from "@aeom/core";
+import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, servingFolder, sheetExceptions, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const CHECK_HELP = `Usage: aeom check [--url <url>] [--start "<command>"] [options]
 
@@ -15,10 +15,13 @@ ${APP_OPTIONS_HELP}
   --pages <list>       Check only these routes, comma-separated, such as /,/produits
                        (default: pages in .aeom/config.json, or every page the
                        links lead to). The routes "public" lists in the config
-                       are checked too, signed out.`;
+                       are checked too, signed out.
+  --product <file>     The product sheet whose accepted exceptions are said
+                       apart, never failures (default .aeom/product.md; with
+                       --dir, only the sheet given)`;
 
 export async function runCheck(argv: string[]): Promise<number> {
-  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" }, pages: { type: "string" } } }).values;
+  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, out: { type: "string", default: ".aeom/reports" }, pages: { type: "string" }, product: { type: "string" } } }).values;
   if (parsed.help) {
     console.log(CHECK_HELP);
     return 0;
@@ -50,7 +53,10 @@ export async function runCheck(argv: string[]): Promise<number> {
     }
     // withConfig already read the config: it holds. Its exceptions are the app's, never a folder of pages'.
     const except = servingFolder() ? undefined : (await loadConfig()).except;
-    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}), ...(except ? { except } : {}), folder: servingFolder() });
+    // What the product sheet accepts, the app's own; a folder of mockups only by the sheet given.
+    const accepted = await sheetExceptions(values.product, servingFolder() ? undefined : join(".aeom", "product.md"));
+    if (accepted === null) return 2;
+    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}), ...(except ? { except } : {}), folder: servingFolder(), accepted });
     await mkdir(values.out, { recursive: true });
     const reportFile = join(values.out, "check.json");
     await writeFile(reportFile, JSON.stringify(report, null, 2) + "\n");
@@ -61,6 +67,7 @@ export async function runCheck(argv: string[]): Promise<number> {
       return 1;
     }
     const skipped = report.errors.map((e) => `\n✗ ${route(e.url)}  ${e.reason} (not checked)`).join("");
+    acceptedSaid(report);
     if (report.findings.length === 0) {
       console.log(`\nAll ${report.checks.length} checks pass on ${plural(report.pages.length, "page")} at ${widths.join(", ")} px.${skipped}`);
       return report.errors.length ? 1 : 0;
@@ -86,4 +93,10 @@ export async function runCheck(argv: string[]): Promise<number> {
     console.log(`${plural(report.findings.length, "problem")} on ${plural(byPage.size, "page")}. Report: ${reportPath}`);
     return 1;
   });
+}
+
+/** What the product sheet accepts, said apart, once per page and check. */
+function acceptedSaid(report: CheckReport) {
+  const lines = [...new Set((report.accepted ?? []).map((f) => `  ${route(f.url)}  ${f.check}: ${f.why} (seen: ${f.source})`))];
+  if (lines.length) console.log(`\nAccepted, as the product sheet says:\n${lines.join("\n")}`);
 }

@@ -10,6 +10,7 @@
  * journeys is a journey.
  */
 
+import { acceptedExceptions, type KnownIds } from "./exceptions.js";
 import { threeWay, type SheetMerge } from "../sheet/merge.js";
 
 export const PARTS = ["What it is for", "Who uses it", "The main loop", "Key journeys"] as const;
@@ -69,9 +70,10 @@ function units(text: string): Unit[] {
 const body = (unit: Unit) => unit.text.split("\n").slice(1).join("\n").trim();
 
 /** What is wrong with a sheet, one sentence each; empty when it can be written. */
-export function validateProduct(text: string): string[] {
+export function validateProduct(text: string, { known }: { known?: KnownIds } = {}): string[] {
   const all = units(text);
-  const problems: string[] = [];
+  // The exceptions the sheet accepts, line by line: a principle or check AEOM knows, a place, a reason, a source.
+  const problems: string[] = [...acceptedExceptions(text, known ? { known } : {}).problems];
   const seen = new Set<string>();
   for (const unit of all) {
     if (seen.has(unit.key)) problems.push(`${unit.journey ? unit.key : `"${unit.key}"`} appears more than once`);

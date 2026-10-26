@@ -227,3 +227,23 @@ test("a front with a direction of its own is recommended an improvement, keeping
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom verdict says apart what the product sheet accepts, and who judged on which principles", async () => {
+  const dir = await project();
+  try {
+    const judged = judge({ "/": [], "/commandes": [] });
+    judged.pages[0]!.verdicts[0] = { ...judged.pages[0]!.verdicts[0]!, accepted: { why: "two focal points, as the charter asks.", source: "Victor" } } as (typeof judged.pages)[number]["verdicts"][number];
+    await writeFile(join(dir, ".aeom", "reports", "judge.json"), JSON.stringify({ ...judged, judges: { models: ["claude-sonnet-5-5"], principles: "base.md 1a2b3c4d" } }));
+    const checked = { ...check(), accepted: [{ check: "contrast", url: "http://x/commandes", width: 1280, message: "faint", why: "the grey of the charter.", source: "charte.pdf" }] };
+    await writeFile(join(dir, ".aeom", "reports", "check.json"), JSON.stringify(checked));
+    const { code, out } = await run(dir, ["verdict", "--out", join(dir, "verdict.json")]);
+    assert.equal(code, 0, out);
+    assert.match(out, /Judged by claude-sonnet-5-5, on base\.md 1a2b3c4d\./);
+    assert.match(out, /Accepted, as the product sheet says: \/commandes contrast: the grey of the charter\. \(seen: charte\.pdf\); \/ hierarchy: two focal points, as the charter asks\. \(seen: Victor\)\./);
+    const verdict = JSON.parse(await readFile(join(dir, "verdict.json"), "utf8"));
+    assert.equal(verdict.accepted.length, 2);
+    assert.deepEqual(verdict.judges, { models: ["claude-sonnet-5-5"], principles: "base.md 1a2b3c4d" });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

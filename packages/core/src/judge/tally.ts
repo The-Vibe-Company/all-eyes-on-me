@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { acceptedOnJourney, acceptedOnPage, type AcceptedException } from "../product/exceptions.js";
 import type { Principle } from "./principles.js";
 
 export interface Verdict {
@@ -12,6 +13,8 @@ export interface Verdict {
 /** What one voter decided: for each page, for each principle, pass or fail. */
 export interface Vote {
   voter: string;
+  /** The model the voter runs on, as it says it. */
+  model?: string;
   pages: Record<string, Record<string, Verdict>>;
 }
 
@@ -28,6 +31,8 @@ export interface PrincipleVerdict {
   steps: number[];
   /** For a journey: each step the winning side pointed at, with the reason of the voter who did, in the voters' order. */
   at?: { step: number; reason: string }[];
+  /** The product sheet accepts it failing here, by the person's choice or the spec's: it passes, said apart. */
+  accepted?: { why: string; source: string };
 }
 
 export interface JudgeReport {
@@ -38,6 +43,8 @@ export interface JudgeReport {
   failures: number;
   /** The widths of the captures the voters looked at; absent in a report counted before it was kept. */
   widths?: number[];
+  /** Who judged and on what: the models the voters named, the principles file and its fingerprint. */
+  judges?: { models: string[]; principles: string };
 }
 
 /** Some votes cannot be counted. The message lists every problem. */
@@ -175,4 +182,25 @@ export async function readVotes(dir: string): Promise<Vote[]> {
   }
   if (problems.length) throw new JudgeVoteError(problems);
   return votes;
+}
+
+/**
+ * The verdicts with what the product sheet accepts: a principle failing where an exception
+ * holds passes, marked accepted with its reason and source. What an earlier count accepted
+ * is counted again, as the sheet says now. Pages are matched by route,
+ * journeys (`journeys` given) by slug or name.
+ */
+export function acceptVerdicts<T extends JudgeReport>(report: T, exceptions: AcceptedException[], { journeys }: { journeys?: { slug: string; name?: string }[] } = {}): T {
+  const pages = report.pages.map((page) => ({
+    ...page,
+    verdicts: page.verdicts.map((counted) => {
+      // A verdict accepted before, a page that kept its verdict, fails again unless the sheet accepts it now.
+      const { accepted: before, ...v } = counted;
+      if (before) v.pass = false;
+      if (v.pass) return v;
+      const exception = journeys ? acceptedOnJourney(exceptions, v.principle, journeys.find((j) => j.slug === page.page) ?? { slug: page.page }) : acceptedOnPage(exceptions, v.principle, page.page);
+      return exception ? { ...v, pass: true, accepted: { why: exception.why, source: exception.source } } : v;
+    }),
+  }));
+  return { ...report, pages, failures: pages.reduce((n, p) => n + p.verdicts.filter((v) => !v.pass).length, 0) };
 }

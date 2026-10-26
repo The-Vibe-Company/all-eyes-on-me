@@ -34,6 +34,7 @@ Give each voter this, with `<N>` replaced by its number:
 > ```json
 > {
 >   "voter": "<N>",
+>   "model": "<the model you run on, as your system prompt names it>",
 >   "pages": {
 >     "/commandes": {
 >       "states": { "pass": false, "reason": "The order list is blank, with no message saying there are no orders yet." }
@@ -82,6 +83,7 @@ The same, one vote first and three on what it fails, on the key journeys instead
 > ```json
 > {
 >   "voter": "<N>",
+>   "model": "<the model you run on, as your system prompt names it>",
 >   "pages": {
 >     "see-my-orders": {
 >       "result-shown": { "pass": false, "reason": "After clicking Commandes, the list under Mes commandes is blank, with no word saying there is no order yet.", "step": 3 }

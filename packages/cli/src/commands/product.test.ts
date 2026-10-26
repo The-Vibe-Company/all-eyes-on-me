@@ -282,3 +282,20 @@ test("aeom product --used-on refuses a sheet AEOM never wrote: the user's own pa
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom product refuses an accepted exception that names no principle or check AEOM knows, or that AEOM guessed", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-product-exceptions-"));
+  try {
+    const withExceptions = (lines: string) => sheet().replace("## Key journeys", `## Accepted exceptions\n${lines}\n\n## Key journeys`);
+    await writeFile(join(dir, "draft.md"), withExceptions("- `not-generic` on every page: the deep violet is the brand's, chosen. (seen: Victor)\n- `contrast` on /: the grey of the charter. (seen: charte.pdf)"));
+    const ok = await run(dir, ["product", "draft.md"]);
+    assert.equal(ok.code, 0, ok.out);
+    await writeFile(join(dir, "draft.md"), withExceptions("- `not-a-check` on /: why not. (seen: Victor)\n- `hierarchy` on /: two focal points. (to confirm)"));
+    const refused = await run(dir, ["product", "draft.md"]);
+    assert.equal(refused.code, 1);
+    assert.match(refused.out, /`not-a-check` is no principle or check AEOM knows/);
+    assert.match(refused.out, /`hierarchy` on \/ is a guess: only the person or the spec accepts an exception, never AEOM/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

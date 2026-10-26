@@ -844,3 +844,22 @@ describe("finish", () => {
     }
   });
 });
+
+describe("what the product sheet accepts", () => {
+  test("a check the sheet accepts on a page is said apart, with its reason and source, and fails there no more", async () => {
+    const server = createHttpServer((_, res) => {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(`<!doctype html><title>Boutique</title><main><p style="color:#ccc;background:#fff">Une note pâle</p></main>`);
+    });
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const url = `http://localhost:${(server.address() as { port: number }).port}`;
+    try {
+      const report = await checkSite({ url, paths: ["/"], widths: [1280], accepted: [{ id: "contrast", pages: ["/"], why: "the grey of the charter.", source: "charte.pdf" }] });
+      assert.ok(!report.findings.some((f) => f.check === "contrast"));
+      assert.equal(report.accepted?.[0]?.check, "contrast");
+      assert.deepEqual([report.accepted?.[0]?.why, report.accepted?.[0]?.source], ["the grey of the charter.", "charte.pdf"]);
+    } finally {
+      server.close();
+    }
+  });
+});

@@ -97,3 +97,40 @@ test("two snapshots measured at different widths are not compared: aeom compare 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom compare says when the judges changed between the two measures: a principle that flips may be theirs, not the page's", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-judges-"));
+  try {
+    await snapshot(join(dir, "before"), [], []);
+    await snapshot(join(dir, "after"), [], ["states"]);
+    const judged = async (snap: string, judges: unknown) => {
+      const file = join(dir, snap, "reports", "judge.json");
+      await writeFile(file, JSON.stringify({ ...JSON.parse(await readFile(file, "utf8")), judges }));
+    };
+    await judged("before", { models: ["claude-haiku-5-5"], principles: "base.md 1a2b3c4d" });
+    await judged("after", { models: ["claude-sonnet-5-5"], principles: "base.md 9f8e7d6c" });
+    const { out } = await run(dir, ["compare", "before", "after"]);
+    assert.match(out, /The judges changed between the two measures: claude-haiku-5-5 on base\.md 1a2b3c4d, then claude-sonnet-5-5 on base\.md 9f8e7d6c\. A principle that flips may be theirs, not the page's\./);
+    await judged("after", { models: ["claude-haiku-5-5"], principles: "base.md 1a2b3c4d" });
+    assert.doesNotMatch((await run(dir, ["compare", "before", "after"])).out, /The judges changed/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom compare says what got better by being accepted, not by the run, and warns when only one measure says who judged it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-accepted-"));
+  try {
+    await snapshot(join(dir, "before"), [], ["states"]);
+    await snapshot(join(dir, "after"), [], []);
+    const file = join(dir, "after", "reports", "judge.json");
+    const after = JSON.parse(await readFile(file, "utf8"));
+    after.pages[0].verdicts.find((v: { principle: string }) => v.principle === "states").accepted = { why: "the empty state is the spec's.", source: "CCTP 2.1" };
+    await writeFile(file, JSON.stringify({ ...after, judges: { models: ["claude-sonnet-5-5"], principles: "base.md 9f8e7d6c" } }));
+    const { out } = await run(dir, ["compare", "before", "after"]);
+    assert.match(out, /Accepted since the first measure, as the product sheet says: \/ states: the empty state is the spec's\. \(seen: CCTP 2\.1\)\. Better by the sheet, not by the run\./);
+    assert.match(out, /Only the second measure says who judged it: claude-sonnet-5-5 on base\.md 9f8e7d6c\. A principle that flips may be the judges', not the page's\./);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -6,7 +6,7 @@ import { parseArgs, promisify } from "node:util";
 import { contactSheet } from "@aeom/core";
 import { parseWidths } from "./app.js";
 
-export const MOCKUPS_HELP = `Usage: aeom mockups <directions folder> [<slug>...] [--widths <list>] [--now <route>=<capture>]... [--note <slug>=<sentence>]...
+export const MOCKUPS_HELP = `Usage: aeom mockups <directions folder> [<slug>...] [--widths <list>] [--now <route>=<capture>]... [--note <slug>=<sentence>]... [--product <sheet>]
 
 Every direction of a round of /aeom directions, in one command: the slugs
 given, or else each folder in <directions folder> that holds an index.html.
@@ -19,7 +19,9 @@ captures, each with its sentence. It says, for each, what its checks found.
   --widths <list>          The run's widths (default 390,1280)
   --now <route>=<capture>  A screen of the front as it is, captured: laid out
                            first, as now.png
-  --note <slug>=<sentence> One sentence read under that direction`;
+  --note <slug>=<sentence> One sentence read under that direction
+  --product <sheet>        A product sheet whose accepted exceptions the checks
+                           say apart, such as a spec's`;
 
 const CLI = process.argv[1]!;
 /** The CLI itself, for what it already does: capture and check a folder it serves. */
@@ -36,7 +38,7 @@ interface Shot {
 }
 
 export async function runMockups(argv: string[]): Promise<number> {
-  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { widths: { type: "string" }, now: { type: "string", multiple: true }, note: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } } });
+  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { widths: { type: "string" }, now: { type: "string", multiple: true }, note: { type: "string", multiple: true }, product: { type: "string" }, help: { type: "boolean", short: "h" } } });
   const [dir, ...named] = positionals;
   if (values.help || !dir) {
     console.log(MOCKUPS_HELP);
@@ -81,7 +83,7 @@ export async function runMockups(argv: string[]): Promise<number> {
       const files = pages.map((page) => ({ page, file: manifest?.pages.find((p) => p.path === page)?.files.find((f) => f.width === widest)?.file }));
       if (!manifest || files.some((f) => !f.file)) return { slug, opened: false as const, why: captured.said };
       await contactSheet({ out: join(dir, `${slug}.png`), items: files.map((f) => ({ label: f.page, file: join(shots, f.file!) })), columns: files.length, cellWidth: 640 });
-      await aeom(["check", "--dir", folder, "--widths", widths.join(","), "--out", join(dir, `${slug}-checks`)]);
+      await aeom(["check", "--dir", folder, "--widths", widths.join(","), "--out", join(dir, `${slug}-checks`), ...(values.product ? ["--product", values.product] : [])]);
       const report = await json<{ pages?: unknown[]; errors?: unknown[]; findings?: { check: string }[] }>(join(dir, `${slug}-checks`, "check.json"));
       const counts = new Map<string, number>();
       for (const f of report?.findings ?? []) counts.set(f.check, (counts.get(f.check) ?? 0) + 1);

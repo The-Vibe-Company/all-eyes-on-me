@@ -35,6 +35,10 @@ For a game or a creative product only: what the user should feel, in one or two 
 ## References
 For a game or a creative product only: the games or works it is like, named by the project or guessed. (seen: <file>) or (to confirm)
 
+## Accepted exceptions
+Only when the person or the spec accepts a failure, one line each: what fails, where, why, and who or what says so.
+- `<principle or check>` on <every page | /a, /b | every journey | the journey "<its name>">: <why>. (seen: <who chose it, or the spec's article>)
+
 ## Visual assets
 For a game or a creative product, and for a tool that has some: what already exists, one line per family, with where it is and its style in plain words.
 - `public/illustrations/especes/`: painted animals, heroic and cute, in warm golden light, with a soft painted finish. (seen: public/illustrations/especes/souris.webp)
@@ -57,6 +61,7 @@ Why: what the user is after, in one sentence. (seen: <screen or file>)
   - **The feeling it aims for**: what the project says it wants the player to feel; when nothing says it, a guess marked `(to confirm)`.
   - **References**: the games or works the project names; others you would compare it with are a guess, `(to confirm)`, for the user to confirm.
   - **Visual assets**: every family of illustrations, icons, logos, photos or textures the project holds (`public/`, `assets/`, the logo's component), each described in plain words as a person would see it: what it shows, how it is drawn or painted, its colours and its light. Look at a few of each before you write. These assets are the strongest thing the directions must live with.
+- **Accepted exceptions** are the person's or the spec's, never AEOM's. Each line names a principle or a check in backticks, then `on every page`, `on /a, /b`, `on every journey` or `on the journey "<its name>"`, then why, then its source: the person who chose it, `(seen: Victor)`, or the spec's article, `(seen: CCTP 8.3)`. A guess, `(to confirm)`, is refused. Such as `- \`not-generic\` on every page: the deep violet background is the brand's, chosen. (seen: Victor)`, or `- \`one-direction\` on /eole: the CCTP 8.3 asks for Eole's own identity. (seen: CCTP 8.3)`. When the person says a failure is their choice, write their words with their name; from a spec, write what its requirements make fail (an identity of its own, a colour it imposes, a simulation it asks for), citing the article. The judges and the checks then count it as accepted, said apart with its reason, never as a failure to redo. The part is optional and goes before the journeys.
 - **A journey is the user's goal**, named in their words, never a screen name ("See my orders", not "Commandes page"). Its steps are numbered and each names a screen (by its route) and one action on it, using the label the user sees.
 - **The main journeys first**: the main loop, then what a first-time user does, then what someone does when something goes wrong (a dead link, an empty list).
 - **Every part and every journey says where it comes from**: `(seen: /produits)` for a screen AEOM visited, `(seen: pages/produits.html)` for a file it read. What AEOM supposes without having seen it says `(to confirm)`. A sheet without sources is refused. A source ends the sentence it covers, and covers every word since the previous source: put a guess in a sentence of its own, never in the middle of one AEOM saw.
