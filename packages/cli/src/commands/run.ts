@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { comparePages, ConfigError, route, STYLE_CHECKS, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { comparePages, ConfigError, lostActions, route, STYLE_CHECKS, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
 
 export async function runSnapshot(argv: string[]): Promise<number> {
@@ -37,6 +37,10 @@ const COMPARE_HELP = `Usage: aeom compare <before-dir> <after-dir> [--strict] [-
 
 Compares two snapshots page by page: what fails before and after (checks + principles),
 and what fails after that passed before. Writes compare.json in <after-dir>.
+A link the front had and no page has after, menus included, is lost: its page is
+worse, and lost.json in <after-dir> lists it; a button or a field no page names
+any more is only said, to look at, since it may have been renamed. With --strict,
+a page that broke something or lost a link exits 1.
 
 With --journeys, the ratchet of the journeys: each folder holds a replay
 (report.json, from aeom journey) and its critique (judge-journeys.json, from
@@ -111,7 +115,29 @@ export async function runCompare(argv: string[]): Promise<number> {
     return 1;
   }
   const ignore = keepStyle ? [...STYLE_PRINCIPLES, ...STYLE_CHECKS] : [];
-  const comparison = comparePages(scorePages(before.check, before.judge, ignore), scorePages(after.check, after.judge, ignore));
+  const compared = comparePages(scorePages(before.check, before.judge, ignore), scorePages(after.check, after.judge, ignore));
+  // What the front let its users do, read in what each page holds: a link or an action no page has any more is lost,
+  // and its page is worse, whatever its count.
+  const actions = async (dir: string) => {
+    const manifest = await readFile(join(dir, "captures", "manifest.json"), "utf8").then((t) => JSON.parse(t) as { pages?: { url: string; path: string; content?: string; links?: string }[] }, () => null);
+    const pages = manifest?.pages ?? [];
+    if (!pages.some((p) => p.links)) return null;
+    const read = (file: string | undefined) => (file ? readFile(join(dir, "captures", file), "utf8").catch(() => undefined) : Promise.resolve(undefined));
+    return Promise.all(
+      pages.map(async (p) => {
+        const links = await read(p.links).then((t) => (t ? (JSON.parse(t) as { href: string; name: string }[]) : undefined)).catch(() => undefined);
+        return { page: p.path, url: p.url, content: await read(p.content), ...(links ? { links } : {}) };
+      }),
+    );
+  };
+  const [held, holds] = [await actions(beforeDir), await actions(afterDir)];
+  const { lost, toCheck, unknown } = held && holds ? lostActions(held, holds) : { lost: [], toCheck: [], unknown: `${!held ? beforeDir : afterDir} kept no page's links (captured before AEOM kept them): nothing counted as lost` };
+  if (unknown) console.log(`${unknown}.\n`);
+  const comparison = compared.map((c) => {
+    const gone = lost.filter((l) => l.page === c.page).map((l) => l.what);
+    return gone.length ? { ...c, lost: gone, verdict: c.verdict === "missing" ? c.verdict : ("worse" as const) } : c;
+  });
+  await writeFile(join(afterDir, "lost.json"), JSON.stringify({ lost, toCheck }, null, 2) + "\n");
   if (comparison.length === 0) {
     console.error(`No page to compare in ${beforeDir} and ${afterDir}.`);
     return 1;
@@ -137,11 +163,16 @@ export async function runCompare(argv: string[]): Promise<number> {
   for (const c of comparison) {
     console.log(`${c.page.padEnd(column)}${String(c.before?.total ?? "-").padEnd(8)}${String(c.after?.total ?? "-").padEnd(8)}${mark[c.verdict]}`);
     if (c.before && c.newly.length) console.log(`${"".padEnd(column)}newly failing: ${c.newly.join(", ")}`);
+    for (const what of c.lost ?? []) console.log(`${"".padEnd(column)}lost: ${what}: no page has it any more`);
   }
+  // A name gone may be a name changed: said, for someone to look at, never counted.
+  if (toCheck.length) console.log(`\nTo look at: no page names these any more; renamed, or gone: ${toCheck.map((t) => `${t.page} ${t.what}`).join(", ")}.`);
   // A page missing after broke as a whole: nothing it passed can be said to pass any more.
   const broken = comparison.filter((c) => (c.before && c.newly.length) || c.verdict === "missing");
-  if (values.strict && broken.length) {
-    console.error(`\n${broken.length} page${broken.length === 1 ? "" : "s"} broke something that passed before: ${broken.map((c) => c.page).join(", ")}.`);
+  const losing = [...new Set(lost.map((l) => l.page))];
+  if (values.strict && (broken.length || losing.length)) {
+    if (broken.length) console.error(`\n${broken.length} page${broken.length === 1 ? "" : "s"} broke something that passed before: ${broken.map((c) => c.page).join(", ")}.`);
+    if (losing.length) console.error(`\n${losing.length} page${losing.length === 1 ? "" : "s"} lost what it let its users do: ${losing.join(", ")}.`);
     return 1;
   }
   return 0;

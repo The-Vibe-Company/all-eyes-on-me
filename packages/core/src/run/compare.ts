@@ -23,6 +23,8 @@ export interface PageComparison {
   verdict: "better" | "same" | "worse" | "missing" | "new";
   /** What fails after and passed before: a page can be better and still break something. */
   newly: string[];
+  /** The links and actions it had that no page has after: a page that lost one is worse. */
+  lost?: string[];
 }
 
 /** Counts, page by page, what fails, leaving out the principles and checks in `ignore`. Lower is better; 0 is a page that passes everything. */

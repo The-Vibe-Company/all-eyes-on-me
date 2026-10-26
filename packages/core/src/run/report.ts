@@ -43,7 +43,7 @@ export interface ResultPage {
     /** What fails on it, before the run and at the end, when both were measured. */
     count: { before: number; after: number } | null;
     /** Why the page wave sent it back: as many failing as before, or more, counted on the version it put back. */
-    back?: { verdict: "same" | "worse"; before: number | null; after: number | null };
+    back?: { verdict: "same" | "worse"; before: number | null; after: number | null; lost?: string[] };
     /** True when the kit fixed it alone: nothing failed on it after the kit, so no worker touched it. */
     byKit?: true;
     widths: { width: number; before: string | null; after: string | null }[];
@@ -128,7 +128,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const comparison = now ? comparePages(scorePages(was.check, was.judge, ignore), scorePages(now.check, now.judge, ignore)) : [];
 
   // What section 5 decided, page by page: a page that got better is kept, any other is put back.
-  const decided = (await json<{ page: string; verdict: string; before?: { total: number } | null; after?: { total: number } | null }[]>(join(runDir, "after", "compare.json"))) ?? null;
+  const decided = (await json<{ page: string; verdict: string; before?: { total: number } | null; after?: { total: number } | null; lost?: string[] }[]>(join(runDir, "after", "compare.json"))) ?? null;
   const erroredBefore = before?.errors.map((e) => route(e.url)) ?? [];
   const erroredAfter = after?.errors.map((e) => route(e.url)) ?? [];
   // A page after pairs with the page before of the same route, or of the same shape, such as a record made at each visit.
@@ -157,7 +157,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       // Fixed by the kit: something failed before, it is kept, and no worker touched it.
       ...(noWorker.includes(page) && status === "kept" && (c?.before?.total ?? 0) > 0 ? { byKit: true as const } : {}),
       count: c?.before && c.after ? { before: c.before.total, after: c.after.total } : null,
-      ...(status === "sent back" ? { back: { verdict: decision === "worse" ? ("worse" as const) : ("same" as const), before: d?.before?.total ?? null, after: d?.after?.total ?? null } } : {}),
+      ...(status === "sent back" ? { back: { verdict: decision === "worse" ? ("worse" as const) : ("same" as const), before: d?.before?.total ?? null, after: d?.after?.total ?? null, ...(d?.lost?.length ? { lost: d.lost } : {}) } } : {}),
       widths: widths.map((width) => ({
         width,
         before: b?.files.find((f) => f.width === width) ? `before/captures/${b.files.find((f) => f.width === width)!.file}` : null,
@@ -398,7 +398,7 @@ export function resultHtml(r: ResultPage, { rates }: { rates?: Record<string, { 
     ? `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>${r.replug ? "On its API" : "Built"}</figcaption>${img(w.after, `${what}, ${w.width} px`)}</figure></div></div>` :
     `<div class="pair"><p class="label">${w.width} px</p><div class="sides"><figure><figcaption>Before</figcaption>${img(w.before, `${what} before, ${w.width} px`)}</figure>${nothing ? "" : `<figure><figcaption>After</figcaption>${img(w.after, `${what} after, ${w.width} px`)}</figure>`}</div></div>`;
   const screens = r.screens
-    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.byKit ? `<p class="muted">Fixed by the kit: no worker touched it.</p>` : ""}${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${nothing ? "" : say(ofScreen(s))}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
+    .map((s) => `<section class="screen" data-page="${escape(s.page)}" data-status="${s.status}"><h3>${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${s.status}</span></h3>${s.byKit ? `<p class="muted">Fixed by the kit: no worker touched it.</p>` : ""}${s.count && !nothing ? `<p class="muted">${s.count.before} → ${s.count.after} failing</p>` : ""}${nothing ? "" : say(ofScreen(s))}${list("Lost, so sent back:", s.back?.lost ?? [])}${list("Cleared:", s.cleared)}${list("Still failing:", s.still)}${list("Newly failing:", s.newly)}${s.widths.map((w) => pair(w, s.page)).join("")}</section>`)
     .join("");
   const journeys = r.journeys
     .map((j) => `<section class="journey" data-journey="${escape(j.slug)}" data-status="${j.status}"><h3>${escape(j.name)} <span class="status ${j.status.replace(" ", "-")}">${j.status}</span></h3>${j.broke.before ? `<p>Before the run, ${escape(j.broke.before)}</p>` : ""}${j.broke.after && !nothing ? `<p>At the end, ${escape(j.broke.after)}</p>` : ""}${nothing ? "" : r.built ? `<p>${j.steps.after ?? "?"} steps</p>` : `<p>${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} steps</p>`}${j.why ? `<p class="muted">${escape(j.why)}</p>` : ""}${nothing ? "" : say(ofJourney(j))}${list("Cleared:", j.cleared)}${list("Still failing:", j.remaining)}${j.widths.map((w) => pair(w, j.name)).join("")}</section>`)
