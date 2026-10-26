@@ -81,3 +81,17 @@ test("a run never tells the person what it costs, nor waits for a go on it", () 
     assert.doesNotMatch(text, /what the run will cost|wait(s)? for the go|your go|show the table|its total line/i, `${file} tells a cost, or waits on it`);
   }
 });
+
+test("each direction is drawn on a structure of its own, by a worker who never sees the front as it is, and the screening names two on one skeleton", () => {
+  assert.match(read("directions.md"), /^## A structure of its own$/m);
+  const mockupBrief = read("phase-mockups.md").split("**Mockup brief.**")[1] ?? "";
+  assert.match(mockupBrief, /`<page>\.content\.yml` of step 3, never its capture/);
+  assert.match(mockupBrief, /You never see the front as it is: open no capture of it, none of the project's style sheets or components, and no other direction's folder/);
+  const directionBrief = read("phase-directions.md").split("**Direction brief.**")[1]?.split("**Screening brief.**")[0] ?? "";
+  assert.match(directionBrief, /content\.yml` from section 1, never its capture/);
+  assert.doesNotMatch(directionBrief, /captures of (the|these) screens/, "a direction worker is never shown the front as it is");
+  const screening = read("phase-directions.md").split("**Screening brief.**")[1]?.split("**Duel brief.**")[0] ?? "";
+  assert.match(screening, /each direction's structure/);
+  assert.match(screening, /the same header, the same search bar, the same cards in the same places, only the colours and the type changing/);
+  assert.match(screening, /Of two directions on one skeleton, name only the one that follows its structure less/);
+});

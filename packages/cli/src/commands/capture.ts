@@ -6,7 +6,9 @@ import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, signInFromConfig, w
 export const CAPTURE_HELP = `Usage: aeom capture [--url <url>] [--start "<command>"] [options]
 
 Finds every page of a web app by following its links, and screenshots each
-page at every width.
+page at every width. Beside its screenshots, what each page holds, as a
+screen reader reads it at the widest width, without its look:
+<page>.content.yml, for a worker to redraw it without seeing it.
 
 Options:
 ${APP_OPTIONS_HELP}
@@ -59,6 +61,7 @@ export async function runCapture(argv: string[]): Promise<number> {
     const out = relative(process.cwd(), values.out) || ".";
     for (const page of pages) {
       page.files.forEach(({ file }, i) => console.log(`  ${(i === 0 ? page.path : "").padEnd(column)}${out}/${file}`));
+      console.log(`  ${"".padEnd(column)}${page.content ? `${out}/${page.content}` : "no content: the page could not be read as a screen reader reads it"}`);
     }
     if (errors.length) console.log("");
     for (const error of errors) console.log(`✗ ${route(error.url).padEnd(column)}${error.reason}`);
