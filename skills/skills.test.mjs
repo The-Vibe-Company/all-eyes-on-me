@@ -140,3 +140,9 @@ test("the result page speaks the person's language, and a run of directions has 
   assert.match(read("SKILL.md"), /aeom report \.aeom\/runs\/\$RUN --serve --open --lang <the person's language: fr or en>/);
   assert.match(read("phase-mockups.md"), /8\. \*\*The end\.\*\* Serve the run's page, as \*\*The result page, served\*\* in SKILL\.md says: every round, the last first/);
 });
+
+test("a voter names what it sees in its own words, and a vote too thin to count is relaunched", () => {
+  const judge = readFileSync(new URL("./aeom-judge/SKILL.md", import.meta.url), "utf8");
+  assert.match(judge, /one sentence of your own that names what you see on the screenshot: a word of the page, a part of it, a colour, a number; never « Looks good » or the same sentence twice/);
+  assert.match(judge, /votes too thin to count \(reasons that name nothing on the page, one reason given again and again, a vote that says it did not look or copies another\), relaunch only those voters/);
+});

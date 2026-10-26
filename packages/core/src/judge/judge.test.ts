@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { acceptVerdicts, DEFAULT_PRINCIPLES_FILE, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, type Vote } from "./index.js";
+import { acceptVerdicts, DEFAULT_PRINCIPLES_FILE, lazyVotes, JOURNEY_PRINCIPLES_FILE, JudgeVoteError, loadPrinciples, readVotes, tally, toConfirm, type Vote } from "./index.js";
 
 const refuses = (fn: () => unknown, pattern: RegExp) =>
   assert.throws(fn, (error: unknown) => error instanceof JudgeVoteError && pattern.test(error.message));
@@ -231,4 +231,56 @@ test("what the sheet accepted is counted again from the votes: an exception take
   const again = acceptVerdicts(once, []);
   assert.equal(again.failures, 1);
   assert.equal(again.pages[0]!.verdicts.find((v) => v.principle === "hierarchy")!.accepted, undefined);
+});
+
+const SAID = [
+  ["One focal point: the « Commandes » table, under a slim header.", "The list under Mes commandes is blank, with no word saying there is none.", "The total, 128,40 €, reads first.", "Le tableau vide dit « Aucune commande »."],
+  ["Le titre « Mes commandes » domine.", "Nothing tells the blank list of orders is empty.", "Header: 3 links, sticky; the total leads.", "The empty table says Aucune commande, in grey."],
+  ["The Commandes table is what the eye meets first.", "La liste est vide et rien ne dit pourquoi.", "Le total de 128,40 € passe devant le reste.", "Empty state shown: « Aucune commande » under the table header."],
+];
+const careful = (voter: string, n = 0, extra: Record<string, string> = {}): Vote => ({
+  voter,
+  pages: {
+    "/": { hierarchy: { pass: true, reason: extra.hierarchy ?? SAID[n]![0]! }, states: { pass: false, reason: SAID[n]![1]! } },
+    "/commandes": { hierarchy: { pass: true, reason: SAID[n]![2]! }, states: { pass: true, reason: SAID[n]![3]! } },
+  },
+});
+
+test("a vote whose reasons name something on the page counts, in English and in French, short or long", () => {
+  assert.deepEqual(lazyVotes([careful("1", 0), careful("2", 1), careful("3", 2)]), []);
+});
+
+test("a vote of reasons that name nothing, said again and again, or that owns it did not look, is refused with two of its reasons; one copied on another voter's too", () => {
+  const lazy: Vote = { voter: "2", pages: { "/": { hierarchy: { pass: true, reason: "Looks good." }, states: { pass: true, reason: "Fine" } }, "/commandes": { hierarchy: { pass: true, reason: "Conforme." }, states: { pass: false, reason: "The list under Commandes is blank." } } } };
+  const blind: Vote = careful("1", 0, { hierarchy: "One generic sentence: I did not re-open the captures." });
+  const copy: Vote = careful("3", 0);
+  const refused = lazyVotes([blind, lazy, copy]);
+  assert.deepEqual(refused.map((r) => r.voter), ["1", "2", "3"]);
+  assert.match(refused[0]!.why, /says it did not look: "One generic sentence: I did not re-open the captures\."/);
+  assert.match(refused[1]!.why, /3 of 4 reasons name nothing on the page, such as "Looks good\." and "Fine"/);
+  assert.match(refused[2]!.why, /copies voter 1's reasons: 3 of 4/);
+  const same: Vote = { voter: "1", pages: Object.fromEntries(["/", "/a", "/b"].map((p) => [p, { hierarchy: { pass: true, reason: "The page is clean and the hierarchy is clear." }, states: { pass: true, reason: `The empty list on ${p} says « Rien ».` } }])) };
+  assert.match(lazyVotes([same])[0]?.why ?? "", /gives the same reason to 3 of 6 verdicts: "The page is clean and the hierarchy is clear\."/);
+});
+
+const said = (voter: string, reasons: Record<string, Record<string, string>>): Vote => ({ voter, pages: Object.fromEntries(Object.entries(reasons).map(([page, byId]) => [page, Object.fromEntries(Object.entries(byId).map(([id, reason]) => [id, { pass: true, reason }]))])) });
+
+test("terse careful reasons count, in French and English: a part of the page, a colour, a finding said on three pages of many, a small confirm vote", () => {
+  const terse = said("1", {
+    "/": { hierarchy: "One focal point: the headline.", "consistent-chrome": "The top bar doesn't change between pages.", "not-ai-default": "Not cream with a serif and a terracotta accent.", grid: "Edges and gutters agree.", density: "Trois blocs de même poids, bien espacés.", states: "Les étapes vides le disent." },
+    "/a": { hierarchy: "Le titre en bleu nuit domine.", "consistent-chrome": "The header is the same on every page.", "not-ai-default": "A green palette, no gradient.", grid: "Columns line up with the logo.", density: "Air between the cards.", states: "The error says what to do." },
+    "/b": { hierarchy: "The call-to-action leads.", "consistent-chrome": "The header is the same on every page.", "not-ai-default": "Rien d'un poster suisse.", grid: "Alignment holds.", density: "Dense but readable rows.", states: "Empty search explains itself." },
+    "/c": { hierarchy: "Whitespace frames the form.", "consistent-chrome": "The header is the same on every page.", "not-ai-default": "Photographs, not stock icons.", grid: "Margins agree.", density: "Two columns, little noise.", states: "Loading keeps its room." },
+  });
+  assert.deepEqual(lazyVotes([terse]), []);
+  assert.deepEqual(lazyVotes([said("2", { "/": { states: "The list says nothing when empty." } })]), [], "a confirm vote of one precise reason");
+  assert.deepEqual(lazyVotes([said("2", { "/": { states: "Cohérent." } })]), [], "one thin reason alone never refuses a small vote");
+});
+
+test("what still gives a lazy vote away: two sentences of nothing, straight quotes of nothing, one sentence pasted over most verdicts, an admission in other words", () => {
+  const nothing = said("1", { "/": { hierarchy: "Looks good. Nothing to report.", states: "Conforme. Rien à signaler.", grid: "L'ensemble est cohérent avec l'esprit du principe.", density: "Looks good overall." } });
+  assert.match(lazyVotes([nothing])[0]?.why ?? "", /name nothing on the page/);
+  const pasted = said("1", Object.fromEntries(["/", "/a", "/b", "/c"].map((p) => [p, { hierarchy: "The page follows a single, coherent art direction throughout.", states: "The page follows a single, coherent art direction throughout.", grid: `The grid of ${p} holds its columns.` }])));
+  assert.match(lazyVotes([pasted])[0]?.why ?? "", /gives the same reason to 8 of 12 verdicts/);
+  for (const admit of ["Je n’ai pas regardé les captures.", "I only skimmed the screenshots.", "Based on the previous verdict, it passes.", "I didn’t open the captures."]) assert.match(lazyVotes([said("1", { "/": { hierarchy: admit, states: "The list says nothing when empty." } })])[0]?.why ?? "", /says it did not look/, admit);
 });

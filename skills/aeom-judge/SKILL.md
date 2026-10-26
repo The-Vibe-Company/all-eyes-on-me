@@ -15,7 +15,7 @@ You run the judge on the latest captures. One subagent votes on everything first
 4. **One voter first.** Launch one `aeom-judge` agent, with the voter brief below and the number 1. Give it nothing else: no earlier verdict, no opinion of yours.
 5. **Two more on what it failed.** Run `aeom judge --to-confirm`: it writes in the votes folder `to-confirm.json`, what voter 1 failed. When it says there is nothing to confirm, go to step 6. Otherwise launch two `aeom-judge` agents at once, in the background, each with the confirm brief below and its number (2, 3), and nothing else: independent votes are the whole point.
 6. **Count.** Run `aeom judge`. It writes `.aeom/reports/judge.json`, prints what fails, and exits with 1 when anything fails.
-7. **Votes missing or refused.** If `aeom judge` names missing voters or votes it cannot count, relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
+7. **Votes missing or refused.** If `aeom judge` names missing voters, votes it cannot count, or votes too thin to count (reasons that name nothing on the page, one reason given again and again, a vote that says it did not look or copies another), relaunch only those voters with the same brief, then count again. Never edit a vote yourself.
 
 Pass the same `--captures`, `--votes` and `--out` to every `aeom judge` of one judging, `--changed-since` and `--to-confirm` included, when the run points the judge at its own folders. Step 2 clears that votes folder, whichever it is: a folder judged before, such as a replay's `votes` judged again after a send-back, still holds the last round's votes and lists, and `aeom judge` refuses them. The briefs then name that folder in place of `.aeom/reports/judge/`.
 
@@ -28,7 +28,7 @@ Give each voter this, with `<N>` replaced by its number:
 > 1. Run `aeom principles` to read the principles: an id, then what it asks for.
 > 2. Read `.aeom/captures/manifest.json`. It lists the pages (`path`) and their screenshots (`files`, one per width, in `.aeom/captures/`). A screenshot with `cut` stops at the top of a longer page, whose full height `cut` gives: judge what it shows. If the votes folder holds `to-judge.json`, judge only the pages it lists, and look at the others only to compare.
 > 3. Look at every screenshot of every page, at every width, before deciding anything. Principles such as `consistent-chrome` and `one-direction` compare pages with each other.
-> 4. For each page and each principle, decide `pass` or `fail`, with one sentence that names what you see on the screenshot. Judge only what is visible. When in doubt, fail: a page that is only acceptable does not pass.
+> 4. For each page and each principle, decide `pass` or `fail`, with one sentence of your own that names what you see on the screenshot: a word of the page, a part of it, a colour, a number; never « Looks good » or the same sentence twice. Judge only what is visible, after looking: a vote that says it did not look, or reads another voter's, is refused. When in doubt, fail: a page that is only acceptable does not pass.
 > 5. Write `.aeom/reports/judge/<N>.json`, exactly in this shape, with every page you judge and every principle:
 >
 > ```json
@@ -54,7 +54,7 @@ Give each of voters 2 and 3 this, with `<N>` replaced by its number:
 > 1. Run `aeom principles` to read the principles: an id, then what it asks for.
 > 2. Read `.aeom/reports/judge/to-confirm.json`: for each page, the principles to decide. Read `.aeom/captures/manifest.json` for the screenshots of each page (`files`, one per width, in `.aeom/captures/`; `cut` when the screenshot stops at the top of a longer page).
 > 3. Look at every screenshot of those pages, at every width, and of the other pages when a principle compares pages (`consistent-chrome`, `one-direction`).
-> 4. For each page and each principle listed, decide `pass` or `fail`, with one sentence that names what you see. When in doubt, fail.
+> 4. For each page and each principle listed, decide `pass` or `fail`, with one sentence of your own that names what you see. When in doubt, fail.
 > 5. Write `.aeom/reports/judge/<N>.json` in the voter brief's shape, with only the pages and principles listed.
 >
 > Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.
