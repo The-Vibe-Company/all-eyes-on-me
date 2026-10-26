@@ -10,7 +10,7 @@ import { promisify } from "node:util";
 
 const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
 
-test("aeom direction keeps the direction chosen in .aeom/direction/, its pages without an image, says it, and forgets it on demand", async () => {
+test("aeom direction keeps the direction chosen in .aeom/direction/, its pages and the images generated for it, says it, and forgets it on demand", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-direction-"));
   const run = (args: string[]) => promisify(execFile)("node", [AEOM, ...args], { cwd: dir, env: { ...process.env, AEOM_HOME: join(dir, ".home"), AEOM_TELEMETRY: "0" } }).then((r) => ({ code: 0, out: r.stdout + r.stderr }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
   try {
@@ -19,15 +19,14 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages w
     await writeFile(join(chosen, "index.html"), "<!doctype html><title>Carnet</title>");
     await writeFile(join(chosen, "style.css"), "body { color: #1f3a2e; }");
     await writeFile(join(chosen, "img", "logo.svg"), "<svg></svg>");
-    await writeFile(join(chosen, "shot.png"), "not an image really");
+    await writeFile(join(chosen, "img", "hero.png"), "an illustration generated for it");
 
     assert.equal((await run(["direction", "show"])).code, 1, "nothing kept yet");
     const kept = await run(["direction", "keep", chosen, "--sentence", "The logbook a captain keeps, ruled and dated.", "--source", "the front as it is", "--why", "it feels like the boat"]);
     assert.equal(kept.code, 0, kept.out);
     assert.match(kept.out, /Kept carnet-de-bord in \.aeom\/direction\//);
-    assert.match(kept.out, /Left out, as images a commit would carry: shot\.png/);
     assert.ok(existsSync(join(dir, ".aeom", "direction", "index.html")) && existsSync(join(dir, ".aeom", "direction", "img", "logo.svg")));
-    assert.ok(!existsSync(join(dir, ".aeom", "direction", "shot.png")), "no image a commit would carry: the mockup is its pages");
+    assert.ok(existsSync(join(dir, ".aeom", "direction", "img", "hero.png")), "the images generated for it are the direction's too");
     const saved = JSON.parse(readFileSync(join(dir, ".aeom", "direction", "direction.json"), "utf8"));
     assert.deepEqual({ ...saved, kept: typeof saved.kept }, { slug: "carnet-de-bord", sentence: "The logbook a captain keeps, ruled and dated.", source: "the front as it is", why: "it feels like the boat", run: "run-20261020-1500", kept: "string" });
 

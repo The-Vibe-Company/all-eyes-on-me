@@ -64,6 +64,17 @@ The two agents, `aeom-worker` and `aeom-judge`, are what a run launches: on Sonn
 
 **From scratch, with no front yet.** `/aeom build --from-scratch cahier.md`, or a sentence in quotes, with `--api <url>` when an API runs on your machine, drafts the product sheet and its key journeys from it, then draws three directions for you to pick. On the one you pick, it builds the kit and the screens of the key journeys, on that API, or on fake data kept in one module and named as such, then `/aeom build --api <url>` plugs it in later without touching the screens. It replays each journey to its end, checks that no screen calls a server but that API, and writes the standard, the result page and a pull request. The front is plain HTML, CSS and JavaScript in `front/`, with no build step, which any stack can take over; open it served, `python3 -m http.server 8080 -d front`.
 
+**Images, if you want them.** With an image key, AEOM generates the images that serve, a landing's hero, a section, an empty state, in the style of each direction; without one, it draws in CSS and SVG. In `~/.aeom/.env`:
+
+```bash
+AEOM_IMAGE_KEY=<your OpenAI key>
+# or, for Azure OpenAI:
+AEOM_IMAGE_URL=https://<resource>.openai.azure.com/openai/v1
+AEOM_IMAGE_MODEL=<your gpt-image deployment>
+```
+
+Only the prompt leaves your machine, never a capture or your data. `aeom image --check` says whether it is set.
+
 Then, in your project:
 - it is a git repository with a clean working tree;
 - your app starts locally with one command, on fake data;
@@ -85,6 +96,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 | `aeom sheet` | Lay captures side by side in one image |
 | `aeom direction` | Keep the direction chosen, until a run builds on it |
 | `aeom mockups` | Capture, lay out and check every direction of a round, at once |
+| `aeom image` | Generate an image the front uses, in its direction's style |
 | `aeom tournament` | Run a knockout between directions, one vote per duel, three for the final |
 | `aeom product` | Write the product sheet AEOM drafted, keeping the user's edits |
 | `aeom journey` | Replay each key journey and capture every step |

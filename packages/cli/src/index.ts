@@ -6,6 +6,7 @@ import { runJudge, runPrinciples } from "./commands/judge.js";
 import { runSheet, runTournament } from "./commands/directions.js";
 import { runDirection } from "./commands/direction.js";
 import { runMockups } from "./commands/mockups.js";
+import { runImage } from "./commands/image.js";
 import { runGuard } from "./commands/guard.js";
 import { runJourney } from "./commands/journey.js";
 import { runProduct } from "./commands/product.js";
@@ -40,6 +41,7 @@ Commands:
   tournament  Run a knockout between directions, one vote per duel, three for the final
   direction   Keep the direction chosen, until a run builds on it
   mockups     Capture, lay out and check every direction of a round, at once
+  image       Generate an image the front uses, in its direction's style
   product     Write the product sheet AEOM drafted, keeping the user's edits
   journey     Replay each key journey and capture every step
   guard       Refuse a change that adds a feature instead of fixing a journey
@@ -68,6 +70,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   tournament: runTournament,
   direction: runDirection,
   mockups: runMockups,
+  image: runImage,
   product: runProduct,
   journey: runJourney,
   guard: runGuard,

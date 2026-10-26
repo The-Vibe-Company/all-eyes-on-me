@@ -19,12 +19,14 @@ description says in words what the run kept, sent back and why, the missing
 features, and where the result page is from the repository's root. When the
 branch already has an open PR, its description is updated instead.
 
-No image and no capture leaves the machine. Every commit the PR would carry is
-read, from the base as the remote has it, so the user's own not yet pushed too:
-one that adds or changes a PNG, JPEG, GIF, WebP, AVIF, BMP, TIFF, ICO, HEIC,
-HEIF, JPEG XL, APNG or SVGZ file, or a file of .aeom/runs or .aeom/captures,
-is refused. An SVG may go, being code, unless it holds an image (data:image/
-or <image>). Taking an image out is fine.
+No capture leaves the machine, nor any image but those AEOM generated for the
+front. Every commit the PR would carry is read, from the base as the remote
+has it, so the user's own not yet pushed too: one that adds or changes a PNG,
+JPEG, GIF, WebP, AVIF, BMP, TIFF, ICO, HEIC, HEIF, JPEG XL, APNG or SVGZ file,
+or a file of .aeom/runs or .aeom/captures, is refused, unless the run's
+assets.txt lists it, as aeom image --run does for an image the front uses. An
+SVG may go, being code, unless it holds an image (data:image/ or <image>).
+Taking an image out is fine.
 
 AEOM merges nothing: the PR follows the repository's rules. Without a remote,
 a gh signed in to its host, or the base on the remote, the branch stays here.
@@ -77,10 +79,11 @@ async function remoteOf(base: string): Promise<string | null> {
  * every commit, since a capture added then removed is still in the history,
  * and a merge by what it brings to its first parent.
  */
-async function forbiddenIn(range: string): Promise<string[]> {
+async function forbiddenIn(range: string, generated: Set<string> = new Set()): Promise<string[]> {
   const names = await git(["log", "-z", "--name-only", "--format=", "--diff-filter=d", "--diff-merges=first-parent", range]);
   const files = [...new Set(names.split("\0").filter(Boolean))];
-  const found = files.filter((f) => FORBIDDEN.test(f));
+  // An image AEOM generated for the front, listed by the run, goes; never a file of .aeom/, where the captures are.
+  const found = files.filter((f) => FORBIDDEN.test(f) && !(generated.has(f) && !/(^|\/)\.aeom\//.test(f)));
   if (files.some((f) => SVG.test(f))) found.push(...(await svgsHoldingImages(range)).map((f) => `${f} (it holds an image)`));
   return found;
 }
@@ -161,9 +164,10 @@ async function propose(runDir: string, page: ResultPage, base: string, dry: bool
     console.error(`No branch ${branch} here: run aeom pr in the repository the run changed.`);
     return 1;
   }
-  const forbidden = await forbiddenIn(`${from}..${branch}`);
+  const generated = new Set((await readFile(join(runDir, "assets.txt"), "utf8").catch(() => "")).split("\n").map((l) => l.trim()).filter(Boolean));
+  const forbidden = await forbiddenIn(`${from}..${branch}`, generated);
   if (forbidden.length) {
-    console.error(`${branch} commits ${forbidden.join(", ")}: no image or capture leaves the machine. Take ${forbidden.length === 1 ? "it" : "them"} out of the branch's history, then aeom pr again.`);
+    console.error(`${branch} commits ${forbidden.join(", ")}: no capture leaves the machine, nor any image AEOM did not generate for the front. Take ${forbidden.length === 1 ? "it" : "them"} out of the branch's history, then aeom pr again.`);
     return 1;
   }
 
