@@ -1,0 +1,53 @@
+.veebee/milestones/05-construire/tickets/14-une-page-de-resultat-utilisable.md
+  s_4ce34ec42d9105::t_aee3d3a380d5a5 7-8
+  s_4ce34ec42d9105::t_1d38e8fe8fa460 1-6,9-29
+packages/cli/src/commands/report.ts
+  s_4ce34ec42d9105::t_a5bada0d275323 9,25-26,39,46-49,63
+packages/cli/src/commands/report.test.ts
+  s_4ce34ec42d9105::t_39f1b17049a743 446-463
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_c96093261b92a6 32
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_4b6f41d8c32cd1 105
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_c96093261b92a6 138-142
+packages/core/src/run/report.ts
+  s_4ce34ec42d9105::t_25a9ce5013b0dd 497-500,504-505,508,511,513,517-519,521
+  s_4ce34ec42d9105::t_55060f14a1de1b 363
+  s_4ce34ec42d9105::t_8a545a8b12e8ba 67-70,72-74,111-117,121-128,132-138,140-144,146,148-151,159,167-168,312,333,535
+  s_4ce34ec42d9105::t_3dda508682283a 548-549
+  s_4ce34ec42d9105::t_d2bfa50c9215ff 315-332,334-342,345-351,353-354,357,362,364,366-368,373-376,380,408-409,413,415,419,430-431,436,441,449,459,482,484-487,491,493
+  s_4ce34ec42d9105::t_0473a9eaaf7758 372
+  s_4ce34ec42d9105::t_3407cc15d4a1b6 526,531,534,536,538-543,545-547,550-554,557,590-591,599
+  s_4ce34ec42d9105::t_704ecf2adfad22 360-361,371
+  s_4ce34ec42d9105::t_da9342941f533d 71,118-120,129-131,139,145,147,343-344,352,355-356,358-359,365,369-370,501-502,506,524,527,544
+packages/cli/src/commands/directions.ts
+  s_4ce34ec42d9105::t_07fa4358959328 1,128-154,156,183,197
+  s_4ce34ec42d9105::t_06a740bb9acf86 124-127,155,157-162,275
+packages/core/src/run/report.test.ts
+  s_4ce34ec42d9105::t_1d38e8fe8fa460 171-177,179-191,198-211
+  s_4ce34ec42d9105::t_55060f14a1de1b 192-197
+  s_4ce34ec42d9105::t_08c88f098a442b 178
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_39b1333b8823ff 6
+packages/cli/src/commands/directions.test.ts
+  s_4ce34ec42d9105::t_01205665525123 291-295
+  s_4ce34ec42d9105::t_07fa4358959328 3,268-290
+  s_4ce34ec42d9105::t_59c33c905ce8d8 240-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6cd7fe8f3d348bea164d022528d4380a748f2ff7",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
