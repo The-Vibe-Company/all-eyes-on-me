@@ -31,7 +31,7 @@ All Eyes On Me: the art director of a product coded by agents. It takes your fro
 Usage: aeom <command>
 
 Commands:
-  capture     Find every page of a web app and screenshot it
+  capture     Find every page of a web app, screenshot it, and write what it holds without its look
   check       Run the measurable checks on every page
   judge       Count the judges' votes on the captures
   principles  Print the principles the judge uses
