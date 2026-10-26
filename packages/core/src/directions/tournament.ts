@@ -29,6 +29,8 @@ export interface Decision {
   dropped: string[];
   /** Their words, when they gave any. */
   why?: string;
+  /** The direction the screening advised starting from, and whether the person did. */
+  advised?: { slug: string; followed: boolean };
   at: string;
 }
 

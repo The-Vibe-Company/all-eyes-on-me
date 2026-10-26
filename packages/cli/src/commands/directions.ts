@@ -1,7 +1,7 @@
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { addFeedback, aeomHome, champion, contactSheet, createTournament, decideDirection, nextDuel, runKey, voteDuel, votesNeeded, type Tournament } from "@aeom/core";
+import { addFeedback, aeomHome, champion, compareDirections, contactSheet, createTournament, decideDirection, type DirectionComparison, nextDuel, runKey, voteDuel, votesNeeded, type Tournament } from "@aeom/core";
 
 export async function runSheet(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -62,7 +62,7 @@ Options:
   return 0;
 }
 
-const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status|decide> --dir <dir> [...]
+const TOURNAMENT_HELP = `Usage: aeom tournament <start|next|vote|status|compare|decide> --dir <dir> [...]
 
 A knockout between directions, two by two: one vote decides a duel, three
 the final. The state lives in <dir>/tournament.json; each direction's capture
@@ -75,13 +75,18 @@ is <dir>/<name>.png.
   next                                  Print the next duel and its two captures
   vote --duel <n> --voter <v> --winner <name> --reason "<why>"
   status                                Print every duel, the champion, and what the person decided
+  compare --from <screening.json>       Check the screening judge's comparison: every direction of
+                                        the sheet with its strong point, its weak point and its fit,
+                                        and the one it would start from; keep it in <dir>/compare.json
+                                        and say it in words, as advice for the person
   decide [--choose <name>] [--drop <name>]... [--why "<their words>"]
                                         Keep the person's decision: with no knockout, --choose names
                                         the direction (or --drop all the others); after a knockout,
                                         without --choose or --drop they validate its champion, and
                                         dropping the champion without choosing asks for a new one.
                                         --choose takes any direction captured in <dir>. A decision on
-                                        the judges' champion also goes to their taste, in ~/.aeom/taste.`;
+                                        the judges' champion also goes to their taste, in ~/.aeom/taste,
+                                        and so does whether the person followed the comparison's advice.`;
 
 const ASK = "Show the person the directions and ask them: aeom tournament decide (it validates), --choose <name> or --drop <name>; with /aeom --autonome, the champion applies as it is.";
 
@@ -102,11 +107,12 @@ export async function runTournament(argv: string[]): Promise<number> {
       choose: { type: "string" },
       drop: { type: "string", multiple: true },
       why: { type: "string" },
+      from: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
   const [action, ...names] = positionals;
-  if (values.help || !action || !values.dir || !["start", "next", "vote", "status", "decide"].includes(action)) {
+  if (values.help || !action || !values.dir || !["start", "next", "vote", "status", "compare", "decide"].includes(action)) {
     console.log(TOURNAMENT_HELP);
     return values.help ? 0 : 1;
   }
@@ -116,6 +122,28 @@ export async function runTournament(argv: string[]): Promise<number> {
   const capturePath = (name: string) => join(values.dir!, `${name}.png`);
 
   try {
+    if (action === "compare") {
+      // The directions on the sheet that opened, the front as it is aside: each is compared, and only those.
+      const sheet = await readJson<{ label?: unknown }[]>(join(values.dir, "sheet.json"));
+      const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png" && f !== "now.png").map((f) => f.slice(0, -4));
+      const shown = Array.isArray(sheet) ? sheet.map((i) => String(i?.label ?? "")).filter((l) => l && l !== "now" && captured.includes(l)) : captured;
+      if (!values.from) return (console.error(`aeom tournament compare --dir <dir> --from <the screening judge's answer>.`), 1);
+      // The judge's object, even said in words or in a code block around it.
+      const said = await readFile(values.from, "utf8").catch(() => null);
+      const object = said?.slice(said.indexOf("{"), said.lastIndexOf("}") + 1) ?? "";
+      let answer: unknown = null;
+      try {
+        answer = JSON.parse(object);
+      } catch {
+        answer = null;
+      }
+      if (!answer || typeof answer !== "object") return (console.error(`${values.from} holds no JSON object: ask the screening judge again, for only the object the screening brief asks for.`), 1);
+      const { comparison, problems } = compareDirections(answer, shown);
+      if (!comparison) return (console.error(`The comparison cannot be shown, so nothing was kept:\n${problems.map((p) => `  ${p}`).join("\n")}\nAsk the screening judge again, with the screening brief.`), 1);
+      await writeFile(join(values.dir, "compare.json"), JSON.stringify(comparison, null, 2) + "\n");
+      console.log(`${comparison.directions.map((d) => `${d.slug}\n  Strong: ${d.strong}\n  Weak: ${d.weak}\n  Fit: ${d.fit}`).join("\n\n")}\n\nThe screening would start from ${comparison.start.slug}: ${/[.!?…]$/.test(comparison.start.why) ? comparison.start.why : `${comparison.start.why}.`} Advice only: the person chooses, one direction or a mix.`);
+      return 0;
+    }
     if (action === "start") {
       const knockout = !values["no-knockout"];
       const t = createTournament(names, { votesPerDuel: Number(values.votes), finalVotes: Number(values["final-votes"]), knockout });
@@ -172,6 +200,13 @@ export async function runTournament(argv: string[]): Promise<number> {
       const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png" && f !== "now.png").map((f) => f.slice(0, -4));
       const drop = values.drop ?? [];
       const { tournament, rerun } = decideDirection(t, { choose: values.choose, drop, why: values.why, at: new Date().toISOString(), directions: captured });
+      // The comparison's advice, when the screening gave one on this round's directions: whether the person followed it,
+      // a variant or a mix of the advised one included, kept to measure the screening against them.
+      const compared = await readJson<DirectionComparison>(join(values.dir, "compare.json"));
+      const round = (names: string[]) => JSON.stringify([...names].sort());
+      const advice = compared?.start?.slug && Array.isArray(compared.directions) && round(compared.directions.map((d) => d.slug)) === round(t.entrants) ? compared.start.slug : null;
+      const follows = (name: string | undefined) => !!advice && !!name && (name === advice || name.startsWith(`${advice}-`));
+      if (advice && tournament.decision) tournament.decision.advised = { slug: advice, followed: follows(tournament.decision.applied) };
       // No knockout played: the person chose alone, and there is no champion to agree with.
       const judges = t.duels.some((d) => d.votes.length > 0) ? champion(t) : null;
       const applied = tournament.decision?.applied;
@@ -196,6 +231,18 @@ export async function runTournament(argv: string[]): Promise<number> {
         return 0;
       }
       await save(tournament);
+      if (advice) {
+        await addFeedback(aeomHome(), {
+          ...(await runKey(dirname(values.dir))),
+          id: `direction-advice:${advice}`,
+          category: "direction",
+          verdict: `The screening's advice: start from ${advice}`,
+          agree: follows(applied),
+          ...(said ? { why: said } : {}),
+          at: new Date().toISOString(),
+        });
+        console.log(follows(applied) ? `The screening advised ${advice}: the person followed it${applied === advice ? "" : `, as ${applied}`}.` : `The screening advised ${advice}: the person chose otherwise.`);
+      }
       console.log(
         judges === null
           ? `The run applies ${applied}, chosen by the person, with no knockout.`
@@ -234,4 +281,13 @@ export async function runTournament(argv: string[]): Promise<number> {
   }
   console.log(TOURNAMENT_HELP);
   return 1;
+}
+
+/** A JSON file, or null when it is missing or broken: an optional file never stops a decision. */
+async function readJson<T>(file: string): Promise<T | null> {
+  try {
+    return JSON.parse(await readFile(file, "utf8")) as T;
+  } catch {
+    return null;
+  }
 }

@@ -115,3 +115,14 @@ test("every list of what the style kept leaves to the charter names the same che
     }
   }
 });
+
+test("the person chooses with a comparison, never in their place, and may choose a mix", () => {
+  const screening = read("phase-directions.md").split("**Screening brief.**")[1]?.split("**Duel brief.**")[0] ?? "";
+  assert.match(screening, /"compare": \{"<source>": \{"strong": "<…>", "weak": "<…>", "fit": "<…>"\}\}, "start": \{"source": "<one of them>", "why": "<…>"\}/);
+  for (const file of ["phase-directions.md", "phase-mockups.md"]) {
+    assert.match(read(file), /aeom tournament compare --dir "\$MAIN\/\.aeom\/runs\/\$RUN\/directions" --from/, `${file} checks the comparison before it asks`);
+    assert.match(read(file), /the screening's advice, said as advice/);
+    assert.match(read(file), /a mix of two \(« Lutrin with the air of Verrière »\)/);
+    assert.match(read(file), /\*\*A mix\*\*/);
+  }
+});
