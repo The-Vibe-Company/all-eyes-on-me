@@ -6,6 +6,7 @@ import { openPage } from "../capture/open.js";
 import type { SignedIn } from "../capture/sign-in.js";
 import { route } from "../capture/capture.js";
 import { pageShape } from "../capture/shape.js";
+import { checkAiText } from "./ai-text.js";
 import { checkBounce } from "./bounce.js";
 import { checkClipped } from "./clipped.js";
 import { checkContrast } from "./contrast.js";
@@ -14,7 +15,9 @@ import { checkCursor } from "./cursor.js";
 import { checkFocus } from "./focus.js";
 import { checkFontSize } from "./font-size.js";
 import { checkGradientText } from "./gradient-text.js";
+import { checkHollowWords } from "./hollow-words.js";
 import { checkNestedCard } from "./nested-card.js";
+import { checkPlaceholder } from "./placeholder.js";
 import { checkSideStripe } from "./side-stripe.js";
 import { checkImages } from "./images.js";
 import { checkLabels } from "./labels.js";
@@ -29,7 +32,7 @@ import { checkUneven } from "./uneven.js";
 import { checkWrap } from "./wrap.js";
 import type { CheckName, Finding, Issue } from "./types.js";
 
-export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce"];
+export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce", "placeholder", "ai-text", "hollow-words"];
 
 /** The routes where a check does not apply, by check, as the config says: a landing page whose header scrolls away on purpose. */
 export type CheckExceptions = Partial<Record<CheckName, string[]>>;
@@ -95,6 +98,10 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
           await add("side-stripe", () => checkSideStripe(page));
           await add("nested-card", () => checkNestedCard(page));
           await add("bounce", () => checkBounce(page));
+          // What the page says: the same at every width.
+          await add("placeholder", () => checkPlaceholder(page));
+          await add("ai-text", () => checkAiText(page));
+          await add("hollow-words", () => checkHollowWords(page));
           // Last: it walks the page with the keyboard.
           await add("focus", () => checkFocus(page));
         }

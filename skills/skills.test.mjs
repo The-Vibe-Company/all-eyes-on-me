@@ -95,3 +95,13 @@ test("each direction is drawn on a structure of its own, by a worker who never s
   assert.match(screening, /the same header, the same search bar, the same cards in the same places, only the colours and the type changing/);
   assert.match(screening, /Of two directions on one skeleton, name only the one that follows its structure less/);
 });
+
+test("every worker writes only the product's own words, and the checks that name what slips through are said to it", () => {
+  const rule = read("phase-wave.md").split("- **Only the product's own words.**")[1]?.split("\n")[0] ?? "";
+  assert.match(rule, /« click here »/);
+  assert.match(rule, /a banner saying it is a mockup/);
+  assert.match(rule, /« \[PRIX\] »/);
+  assert.match(rule, /`placeholder`, `ai-text`, `hollow-words`/);
+  assert.match(read("phase-mockups.md").split("**Mockup brief.**")[1] ?? "", /Only the product's own words: no sentence about the interface or the demo/);
+  assert.match(read("phase-build.md").split("**Screen brief.**")[1] ?? "", /no sentence about the interface or the demo, no hole to fill, no hollow word/);
+});

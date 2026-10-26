@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
 import { readFileSync } from "node:fs";
 import { signIn, startApp, type RunningApp } from "../capture/index.js";
-import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce } from "./index.js";
+import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce, checkPlaceholder, checkAiText, checkHollowWords } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 
@@ -612,5 +612,97 @@ describe("what impeccable bans, and what good fronts still do", () => {
     assert.deepEqual(await checkSideStripe(page), []);
     assert.deepEqual(await checkNestedCard(page), []);
     assert.deepEqual(await checkBounce(page), []);
+  });
+});
+
+describe("placeholder", () => {
+  test("names every hole left unfilled, in the text, the title, a field's hint, a menu's choice or an image's alt, once in each", async () => {
+    const page = await pageWith(`<title>Dès [PRIX]</title>
+      <p class="prix">Dès [PRIX] par mois</p>
+      <p>Livraison : [À DÉFINIR]</p>
+      <p>Prix :<br>[MONTANT €]</p>
+      <p>Soit [PRIX (TTC)] au total</p>
+      <h2>Bonjour {{prenom}}</h2>
+      <p>Lorem ipsum dolor sit amet.</p>
+      <p>Total : NaN €</p>
+      <span>undefined</span>
+      <div>[object Object]</div>
+      <p>Ouvert de XX:XX à XX:XX</p>
+      <p>TODO : écrire le texte</p>
+      <input placeholder="[Votre nom]">
+      <select><option>[CHOISIR UNE VILLE]</option><option>Paris</option></select>
+      <img alt="[IMAGE]" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+      <p>Dès [PRIX] par mois</p>`);
+    const issues = await checkPlaceholder(page);
+    const found = issues.map((i) => i.message.match(/"(.*?)"/)?.[1]);
+    assert.deepEqual(found.sort(), ["NaN", "TODO :", "XX:XX", "[CHOISIR UNE VILLE]", "[IMAGE]", "[MONTANT €]", "[PRIX (TTC)]", "[PRIX]", "[PRIX]", "[Votre nom]", "[object Object]", "[À DÉFINIR]", "undefined", "{{prenom}}", "Lorem ipsum"].sort());
+    assert.deepEqual(issues.filter((i) => i.message.includes('"[PRIX]"')).map((i) => i.element), ['p.prix "Dès [PRIX] par mois"', "title"], "the page's text, and its title too");
+    assert.ok(issues.some((i) => i.element === 'p "Prix : [MONTANT €]"'), "a line break keeps words apart");
+    assert.match(issues[0]!.message, /a hole left unfilled/);
+  });
+});
+
+describe("ai-text", () => {
+  test("names text about the interface or the demo, in French and in English, once per sentence", async () => {
+    const page = await pageWith(`
+      <div class="bandeau">Maquette de démonstration</div>
+      <p>Ce bouton vous permet d'ajouter un produit à votre commande.</p>
+      <p>Cette section regroupe vos dernières commandes.</p>
+      <p><a href="/aide">Cliquez<br>ici</a> pour en savoir plus.</p>
+      <p>Ici, vous pouvez gérer vos adresses.</p>
+      <p>Voici votre démo : trois écrans du produit.</p>
+      <footer><small>Données fictives</small></footer>
+      <p>Mode démo</p>
+      <p>Ceci est un prototype.</p>
+      <p>This section shows your latest orders.</p>
+      <p>Here you can manage your team.</p>
+      <p>Here’s your demo.</p>
+      <p>Sample data, for demonstration purposes.</p>`);
+    const issues = await checkAiText(page);
+    assert.deepEqual(issues.map((i) => i.message.match(/"(.*?)"/)?.[1]), ["Maquette de démonstration", "Ce bouton vous permet", "Cette section regroupe", "Cliquez ici", "Ici, vous pouvez", "Voici votre démo", "Données fictives", "Mode démo", "Ceci est un prototype", "This section shows", "Here you can", "Here’s your demo", "Sample data"]);
+    assert.equal(issues[0]!.element, 'div.bandeau "Maquette de démonstration"');
+    assert.match(issues[0]!.message, /text about the interface or the demo, not the product/);
+  });
+});
+
+describe("hollow-words", () => {
+  test("names the hollow words of marketing, in French and in English, each once", async () => {
+    const page = await pageWith(`
+      <h1>Révolutionnez votre façon de vendre</h1>
+      <p>Un outil sans<br>effort, qui booste vos ventes en toute simplicité.</p>
+      <p>A seamless platform to supercharge your team, effortlessly.</p>
+      <p>Révolutionnez vos stocks.</p>`);
+    const words = (await checkHollowWords(page)).map((i) => i.message.match(/"(.*?)"/)?.[1]?.toLowerCase());
+    assert.deepEqual(words.sort(), ["booste vos", "effortlessly", "en toute simplicité", "révolutionnez", "sans effort", "seamless", "supercharge"].sort());
+  });
+});
+
+describe("copy a good front writes, never flagged", () => {
+  test("an error message, legal notes, a note or a tag between brackets, a column named TODO, a menu, a game, a demo one books, a brand, words used for what they mean", async () => {
+    const page = await pageWith(`<title>Commandes · Boutique</title>
+      <p role="alert">Ce champ est obligatoire.</p>
+      <p>Cette page n'existe pas : revenez à l'accueil.</p>
+      <p>Cette page contient des liens d'affiliation. Ce formulaire contient des données personnelles.</p>
+      <p>Ce menu contient des allergènes. Cette carte liste nos plats. Cette carte affiche vos points de vie.</p>
+      <p>Une note [1] et une autre [sic]. Brochure [PDF], version [FR], [NEW], [BETA], Louis [II].</p>
+      <p>Une chaise du XXe siècle, taille XXL, réf. XX-200.</p>
+      <p>Événements à venir : date à définir. Lieu : TBD.</p>
+      <h3>TODO</h3>
+      <p>Expédié sous 48 h, retour gratuit pendant 30 jours.</p>
+      <p>Null part ailleurs, vous ne trouverez ces lampes.</p>
+      <p>Réservez une démo. Découvrez une maquette de démonstration interactive. Download sample data. Load demo data, or work on fake data named as such.</p>
+      <p>Press here to start. Ouvrir un booster. La fusée propulse les satellites. Imprimantes tout-en-un. Leverage 10x. Next Generation Tour. Une idée révolutionnaire en 1789.</p>
+      <button aria-label="Empower">E</button>
+      <img alt="Unleash logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+      <select><option>Paris</option><option>Lyon</option></select>
+      <button>Ajouter au panier</button>
+      <a href="/commandes">Voir mes commandes</a>
+      <code>const x = undefined; // TODO: x</code>
+      <pre>{{ template }}</pre>
+      <textarea>[PRIX]</textarea>
+      <div style="display:none">[PRIX] Cliquez ici, révolutionnez</div>`);
+    assert.deepEqual(await checkPlaceholder(page), []);
+    assert.deepEqual(await checkAiText(page), []);
+    assert.deepEqual(await checkHollowWords(page), []);
   });
 });
