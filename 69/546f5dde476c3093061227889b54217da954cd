@@ -1,0 +1,37 @@
+packages/core/src/checks/run.ts
+  s_4ce34ec42d9105::t_07728fa9535dfb 140-141,146
+packages/core/src/checks/orphan.ts
+  s_4ce34ec42d9105::t_07728fa9535dfb 14-16,24,28,31,33-34,37-38,41-44
+packages/core/src/checks/nested-radius.ts
+  s_4ce34ec42d9105::t_07728fa9535dfb 46-51,74-75,77-80,82
+packages/core/src/checks/motion.ts
+  s_4ce34ec42d9105::t_07728fa9535dfb 48-49
+packages/cli/src/commands/check.ts
+  s_4ce34ec42d9105::t_07728fa9535dfb 65
+packages/core/src/checks/checks.test.ts
+  s_4ce34ec42d9105::t_b472380e59b0f6 725-727,741-746,771-774,786-792,821,826-844
+packages/core/src/checks/finish.ts
+  s_4ce34ec42d9105::t_07728fa9535dfb 2,7,33-36,38-49,69-71,78-81,89-90
+packages/cli/src/commands/review.ts
+  s_4ce34ec42d9105::t_2b8aefa6c6e943 147
+packages/cli/src/commands/widths.test.ts
+  s_4ce34ec42d9105::t_17a1323fbeefc9 31-35
+.veebee/milestones/05-construire/tickets/09-les-finitions.md
+  s_4ce34ec42d9105::t_992190bc0f6655 7,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "69546f5dde476c3093061227889b54217da954cd",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
