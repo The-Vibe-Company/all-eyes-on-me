@@ -134,3 +134,37 @@ test("aeom compare says what got better by being accepted, not by the run, and w
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom compare names a link the front lost, makes its page worse, keeps the list, says a button gone to look at, and --strict exits 1 on it", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-lost-"));
+  try {
+    const captured = async (snap: string, links: { href: string; name: string }[] | null, lines: string[]) => {
+      await mkdir(join(dir, snap, "captures"), { recursive: true });
+      const page = { url: "http://x/", path: "/", files: [{ width: 1280, file: "index@1280.png" }], content: "index.content.yml", ...(links ? { links: "index.links.json" } : {}) };
+      await writeFile(join(dir, snap, "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [page], errors: [] }));
+      await writeFile(join(dir, snap, "captures", "index.content.yml"), `# / at 1280 px\n${lines.join("\n")}\n`);
+      if (links) await writeFile(join(dir, snap, "captures", "index.links.json"), JSON.stringify(links));
+    };
+    await snapshot(join(dir, "before"), ["contrast"], ["states"]);
+    await snapshot(join(dir, "after"), [], []);
+    await captured("before", [{ href: "https://github.com/acme/radar", name: "Dossier GitHub" }, { href: "http://x/aide", name: "Aide" }], ['- button "Sauvegarder"']);
+    await captured("after", [{ href: "http://x/aide/", name: "Aide et contact" }], ['- button "Enregistrer"']);
+    const { code, out } = await run(dir, ["compare", "before", "after"]);
+    assert.equal(code, 0, out);
+    assert.match(out, /\/\s+2\s+0\s+↓ worse\n\s+lost: link "Dossier GitHub" to https:\/\/github\.com\/acme\/radar: no page has it any more/);
+    assert.match(out, /To look at: no page names these any more; renamed, or gone: \/ button "Sauvegarder"\./);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, "after", "lost.json"), "utf8")).lost, [{ page: "/", what: 'link "Dossier GitHub" to https://github.com/acme/radar' }]);
+    assert.equal(JSON.parse(await readFile(join(dir, "after", "compare.json"), "utf8"))[0].verdict, "worse", "section 5 sends it back as it does a page that got worse");
+    const strict = await run(dir, ["compare", "before", "after", "--strict"]);
+    assert.equal(strict.code, 1);
+    assert.match(strict.out, /lost what it let its users do/);
+
+    // Captured before AEOM kept the links: said, nothing counted as lost.
+    await captured("before", null, []);
+    const old = await run(dir, ["compare", "before", "after"]);
+    assert.match(old.out, /before kept no page's links \(captured before AEOM kept them\): nothing counted as lost/);
+    assert.match(old.out, /↑ better/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

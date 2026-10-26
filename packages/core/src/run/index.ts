@@ -1,4 +1,5 @@
 export { comparePages, scorePages, type PageComparison, type PageScore } from "./compare.js";
+export { lostActions } from "./lost.js";
 export { ConfigError, loadConfig, type LoginConfig, type ProjectConfig } from "./config.js";
 export { isInside, snapshot, SnapshotPathError } from "./snapshot.js";
 export { IDENTITY_PRINCIPLES, STYLE_CHECKS, STYLE_PRINCIPLES, verdictOf, type Failure, type RunVerdict } from "./verdict.js";

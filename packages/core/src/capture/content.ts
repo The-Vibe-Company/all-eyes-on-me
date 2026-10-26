@@ -91,3 +91,21 @@ export async function pageContent(page: Page): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Every link of the page's DOM, those a menu hides included, with its target as the
+ * browser resolves it and its name: its text, its label, its title or its image's alt.
+ * Null when the page cannot be read.
+ */
+export async function pageLinks(page: Page): Promise<{ href: string; name: string }[] | null> {
+  try {
+    return await page.evaluate(() =>
+      [...document.querySelectorAll("a[href]")].map((a) => ({
+        href: (a as HTMLAnchorElement).href,
+        name: ((a as HTMLElement).innerText || a.textContent || a.getAttribute("aria-label") || a.getAttribute("title") || a.querySelector("img")?.getAttribute("alt") || "").trim().replace(/\s+/g, " ").slice(0, 80),
+      })),
+    );
+  } catch {
+    return null;
+  }
+}

@@ -363,11 +363,16 @@ test("each page's content is written beside its captures, as a screen reader rea
     assert.match(content, /^\s*- … 35 more heading, paragraph, button$/m);
     assert.match(content, /button "Valider la commande"/, "and what comes after them");
     assert.doesNotMatch(content, /c0392b|carte-produit/, "nothing of its look");
+    // Every link of the DOM too, the one the phone's menu hides included, its target resolved.
+    assert.equal(manifest.pages[0]!.links, "index.links.json");
+    const links = JSON.parse(readFileSync(join(dir, "index.links.json"), "utf8")) as { href: string; name: string }[];
+    assert.ok(links.some((l) => l.href === `${url}/commandes` && l.name === "Commandes"));
 
     // A new capture in the same folder takes the old content away with the old captures.
     const again = await capture({ url, outDir: dir, widths: [390], paths: ["/commandes"] });
     assert.equal(again.pages[0]!.content, "commandes.content.yml");
     assert.ok(!existsSync(join(dir, "index.content.yml")));
+    assert.ok(!existsSync(join(dir, "index.links.json")));
   } finally {
     server.close();
     await rm(dir, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type Browser, type Locator, type Page } from "playwright";
-import { pageContent } from "./content.js";
+import { pageContent, pageLinks } from "./content.js";
 import { discoverPages, normalize, visitPages, type PageError } from "./discover.js";
 import { openPage, pinFixed } from "./open.js";
 import type { SignedIn } from "./sign-in.js";
@@ -33,6 +33,8 @@ export interface CapturedPage {
   files: { width: number; file: string; cut?: number }[];
   /** What the page holds, read at the widest width as a screen reader reads it, relative to the output folder. */
   content?: string;
+  /** Every link of its DOM, menus hidden or not, with its target as the browser resolves it: what `aeom compare` reads for a link lost. */
+  links?: string;
   /** Captured signed out, as a page the config marks public. */
   signedOut?: true;
 }
@@ -94,6 +96,7 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
     for (const { url: pageUrl, signedOut: out } of pages) {
       const files: CapturedPage["files"] = [];
       let content: string | undefined;
+      let links: string | undefined;
       for (const width of widths) {
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn && !out ? { storageState: signedIn } : {}) });
         try {
@@ -107,6 +110,11 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
               content = `${slug(pageUrl)}.content.yml`;
               await writeFile(join(outDir, content), `# ${route(pageUrl)} at ${width} px: what the page holds, as a screen reader reads it, without its look.\n${text}\n`);
             }
+            const found = await pageLinks(page);
+            if (found) {
+              links = `${slug(pageUrl)}.links.json`;
+              await writeFile(join(outDir, links), `${JSON.stringify(found)}\n`);
+            }
           }
           const file = `${slug(pageUrl)}@${width}.png`;
           await pinFixed(page);
@@ -116,7 +124,7 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
           await context.close();
         }
       }
-      captured.push({ url: pageUrl, path: route(pageUrl), files, ...(content ? { content } : {}), ...(out ? { signedOut: true as const } : {}) });
+      captured.push({ url: pageUrl, path: route(pageUrl), files, ...(content ? { content } : {}), ...(links ? { links } : {}), ...(out ? { signedOut: true as const } : {}) });
     }
 
     const manifest: CaptureManifest = { url, capturedAt: new Date().toISOString(), widths, pages: captured, errors };
@@ -162,7 +170,7 @@ async function clearPrevious(outDir: string): Promise<void> {
   } catch {
     return;
   }
-  const files = previous.pages?.flatMap((page) => [...page.files.map((f) => f.file), ...(page.content ? [page.content] : [])]) ?? [];
+  const files = previous.pages?.flatMap((page) => [...page.files.map((f) => f.file), ...(page.content ? [page.content] : []), ...(page.links ? [page.links] : [])]) ?? [];
   await Promise.all([...files, "manifest.json"].map((file) => rm(join(outDir, file), { force: true })));
 }
 

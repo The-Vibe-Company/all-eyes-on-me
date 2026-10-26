@@ -38,6 +38,8 @@ function screenLine(s: ResultPage["screens"][number]): string {
   // Sent back by what the page wave measured: the counts of the version that was put back.
   const counts = s.back && s.back.before !== null && s.back.after !== null ? { before: s.back.before, after: s.back.after } : s.count;
   const worse = s.back ? s.back.verdict === "worse" : Boolean(s.count && s.count.after > s.count.before);
+  // A page that lost a link is sent back for it, whatever its count.
+  if (s.back?.lost?.length) return `- ${code(s.page)} sent back: it lost what it let its users do.${list("Lost", s.back.lost)}${list("Still failing", s.still)}`;
   return `- ${code(s.page)} sent back, ${worse ? "worse than before" : "the same as before"}${counts ? `: ${counts.before} → ${counts.after} failing` : ""}.${list("Still failing", s.still)}${list("Newly failing", s.newly)}`;
 }
 

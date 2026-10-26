@@ -126,3 +126,12 @@ test("the person chooses with a comparison, never in their place, and may choose
     assert.match(read(file), /\*\*A mix\*\*/);
   }
 });
+
+test("no function is lost: every worker keeps what a page lets its users do, and the measure puts back what is lost", () => {
+  const wave = read("phase-wave.md");
+  assert.match(wave, /Every link, button and field it has stays reachable, here or on another page: `aeom compare` names what is lost/);
+  assert.match(wave, /keeping every link the app's navigation had/);
+  assert.match(wave, /`lost\.json`, beside the comparison\), makes its page worse/);
+  assert.match(wave, /One lost from every page that had it was lost by the kit/);
+  assert.match(wave, /may only have been renamed: look at the page's code/);
+});
