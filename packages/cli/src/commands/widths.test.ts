@@ -28,8 +28,11 @@ before(async () => {
   // A desktop tool: its link to the orders is hidden on a phone, so the journey breaks there only.
   server = createServer((req, res) => {
     if (req.url === "/never") hits.never = (hits.never ?? 0) + 1;
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-    const viewport = `<meta name="viewport" content="width=device-width, initial-scale=1">`;
+    // A finished page: its title, its icon, what it says when shared, and a 404 that leads back.
+    const known = ["/", "/orders", "/never"].includes(req.url ?? "");
+    res.writeHead(known ? 200 : 404, { "content-type": "text/html; charset=utf-8" });
+    const viewport = `<meta name="viewport" content="width=device-width, initial-scale=1"><title>Tri du matin · Tournées</title><link rel="icon" href="data:,"><meta name="description" content="Les tournées du matin, triées."><meta property="og:image" content="https://tournees.test/og.png">`;
+    if (!known) return res.end(`${viewport}<h1>Page introuvable</h1><a href="/">Accueil</a>`);
     res.end(req.url === "/orders" ? `${viewport}<h1>Commandes</h1>` : `${viewport}<style>@media (max-width: 600px) { nav { display: none } }</style><nav><a href="/orders">Commandes</a></nav><h1>Tri du matin</h1>`);
   });
   await new Promise<void>((resolve) => server.listen(0, resolve));

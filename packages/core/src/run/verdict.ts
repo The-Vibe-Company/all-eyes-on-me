@@ -8,7 +8,7 @@ import type { JudgeReport } from "../judge/tally.js";
 export const STYLE_PRINCIPLES = ["not-generic", "not-ai-default"];
 
 /** The checks that judge a style itself, from what impeccable bans: a client's charter can hold them, and keeping it is the point. */
-export const STYLE_CHECKS = ["gradient-text", "side-stripe", "nested-card", "bounce"];
+export const STYLE_CHECKS = ["gradient-text", "side-stripe", "nested-card", "bounce", "nested-radius", "motion"];
 
 /** The principles that say a front has a direction of its own, worth improving rather than replacing. */
 export const IDENTITY_PRINCIPLES = ["one-direction", "not-generic", "not-ai-default"];

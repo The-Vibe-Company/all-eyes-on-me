@@ -105,3 +105,13 @@ test("every worker writes only the product's own words, and the checks that name
   assert.match(read("phase-mockups.md").split("**Mockup brief.**")[1] ?? "", /Only the product's own words: no sentence about the interface or the demo/);
   assert.match(read("phase-build.md").split("**Screen brief.**")[1] ?? "", /no sentence about the interface or the demo, no hole to fill, no hollow word/);
 });
+
+test("every list of what the style kept leaves to the charter names the same checks as the CLI", () => {
+  const verdict = readFileSync(new URL("../packages/core/src/run/verdict.ts", import.meta.url), "utf8");
+  const checks = JSON.parse(verdict.match(/STYLE_CHECKS = (\[[^\]]*\])/)[1]);
+  for (const file of ["SKILL.md", "phase-wave.md"]) {
+    for (const list of read(file).matchAll(/`gradient-text`[^.:)]*/g)) {
+      for (const check of checks) assert.ok(list[0].includes(`\`${check}\``), `${file} leaves ${check} out of a list of the charter's checks: ${list[0]}`);
+    }
+  }
+});
