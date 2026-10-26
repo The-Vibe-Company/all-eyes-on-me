@@ -22,6 +22,8 @@ import { runBench } from "./commands/bench.js";
 import { runRunState } from "./commands/run-state.js";
 import { runVerdict } from "./commands/verdict.js";
 import { commandName, ping } from "./telemetry.js";
+import { runUpdate } from "./commands/update.js";
+import { updateNotice } from "./update.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -55,6 +57,7 @@ Commands:
   bench       Run AEOM on apps whose defects were noted by hand, and count what it found and fixed
   run         Keep where a run is, and say how to take it up after a stop
   review      Hold a branch's changes to the standard of the front, with no model
+  update      Bring AEOM up to date, or say how far behind it is
 
 Run aeom <command> --help for its options.
 Roadmap: https://github.com/The-Vibe-Company/all-eyes-on-me#what-comes-next`;
@@ -84,6 +87,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   run: runRunState,
   standard: runStandard,
   review: runReview,
+  update: runUpdate,
 };
 
 const [command, ...rest] = process.argv.slice(2);
@@ -97,3 +101,5 @@ if (command === "--version" || command === "-v") {
   if (command && command !== "--help" && command !== "-h") process.exitCode = 1;
 }
 await pinged;
+// Never when the command was update itself, which says it already.
+if (command !== "update") await updateNotice().catch(() => {});

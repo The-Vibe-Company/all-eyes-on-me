@@ -26,7 +26,8 @@ captures, each with its sentence. It says, for each, what its checks found.
 const CLI = process.argv[1]!;
 /** The CLI itself, for what it already does: capture and check a folder it serves. */
 const aeom = (args: string[]) =>
-  promisify(execFile)(process.execPath, [CLI, ...args], { maxBuffer: 1 << 26, env: process.env }).then(
+  // A child says nothing of AEOM's version: its last line is what went wrong, or nothing.
+  promisify(execFile)(process.execPath, [CLI, ...args], { maxBuffer: 1 << 26, env: { ...process.env, AEOM_UPDATE_CHECK: "0" } }).then(
     () => ({ code: 0, said: "" }),
     (e: { code?: number; stderr?: string }) => ({ code: e.code ?? 1, said: (e.stderr ?? "").trim().split("\n").filter(Boolean).at(-1) ?? "" }),
   );

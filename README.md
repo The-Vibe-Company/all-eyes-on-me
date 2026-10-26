@@ -58,6 +58,8 @@ mkdir -p ~/.claude/agents
 ln -s "$PWD/agents/claude/aeom-worker.md" "$PWD/agents/claude/aeom-judge.md" ~/.claude/agents/
 ```
 
+To update it later, `aeom update`: it pulls the latest version, installs and builds it. Once a day at most, AEOM looks whether one is out (a `git fetch`, nothing else sent) and says so after a command; `AEOM_UPDATE_CHECK=0` turns it off.
+
 The two agents, `aeom-worker` and `aeom-judge`, are what a run launches: on Sonnet, with only the tools they use, so no step of theirs re-reads the MCP servers and skills a general agent carries. Restart Claude Code once after linking them: a new `agents` folder is read when it starts.
 
 **Directions first, nothing touched.** `/aeom directions` draws three art directions in a few minutes, as static pages in plain HTML and CSS: of your own screens with what they hold when you give it nothing, of a prompt (`/aeom directions "a sentence"`, or the prompt `/style` writes, whose charter it keeps), or of a spec (`/aeom directions cahier.md`). No branch, no change to your app. AEOM's checks run on each, a judge says what it sees beside each, leaving none out, and you choose. The one you choose is kept in `.aeom/direction/`: `/aeom redo` then carries it into your app, `/aeom build --from-scratch` builds a front on it.
@@ -111,6 +113,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 | `aeom bench` | Run AEOM on apps whose defects were noted by hand, and count what it found and fixed |
 | `aeom run` | Keep where a run is, and say how to take it up after a stop |
 | `aeom review` | Hold a branch's changes to the standard of the front, with no model |
+| `aeom update` | Bring AEOM up to date, or say how far behind it is |
 
 ## What comes next
 
@@ -146,6 +149,8 @@ The vocabulary is defined in [CONTEXT.md](./CONTEXT.md).
 To know how many people install AEOM and use it, `aeom` sends one request to PostHog each time it runs: a random id made on the first run and kept in `~/.aeom/install-id`, AEOM's version, the OS, the architecture, Node's version and the command's name (`unknown` for one it does not know). Nothing about your project: no path, no repository, no argument, no capture, no email. Like any server, PostHog sees the connection's address: it keeps it, with the rough place it reads from it (country and city). The first run says so in one line on stderr.
 
 `AEOM_TELEMETRY=0` or `DO_NOT_TRACK=1` turns it off, and nothing is sent in CI. The request leaves from a process of its own: a command never waits for it, nor fails because of it.
+
+Once a day at most, AEOM also runs `git fetch` in its own checkout, to say when a newer version is out: GitHub sees the fetch, nothing else leaves. It is kept in `~/.aeom/update.json`, off whenever telemetry is, and `AEOM_UPDATE_CHECK=0` turns it off alone.
 
 ## Development
 
