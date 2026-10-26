@@ -1,0 +1,33 @@
+packages/core/src/judge/judge.test.ts
+  s_4ce34ec42d9105::t_6249c43f7afddd 263
+  s_4ce34ec42d9105::t_cebcda745df9ac 266,269,276-277,281,283,285
+  s_4ce34ec42d9105::t_ac98031fa2d04c 264-265,267-268,270-275,278-280,282,284
+packages/cli/src/commands/judge.ts
+  s_4ce34ec42d9105::t_a10e486a5dfb60 132-133,212,257,392-395
+  s_4ce34ec42d9105::t_3958373d228c29 193
+  s_4ce34ec42d9105::t_62c126bcf01d1c 396-397
+packages/cli/src/commands/judge.test.ts
+  s_4ce34ec42d9105::t_3958373d228c29 3,356-361
+  s_4ce34ec42d9105::t_c3f37de9ffdfa8 354
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_3958373d228c29 57
+packages/core/src/judge/lazy.ts
+  s_4ce34ec42d9105::t_ab511138e00132 13-17
+  s_4ce34ec42d9105::t_6249c43f7afddd 3-12,18-30,32-33,35,37-41,44-46,50-55,58-59,61,70-71,75-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9b007ad4ce9f025ed552c763591c9a1146a9b63d",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
