@@ -87,7 +87,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 
 | Command | What it does |
 | --- | --- |
-| `aeom capture` | Find every page of a web app and screenshot it |
+| `aeom capture` | Find every page of a web app, screenshot it, and write what it holds without its look |
 | `aeom check` | Run the measurable checks on every page |
 | `aeom judge` | Count the judges' votes on the captures |
 | `aeom principles` | Print the principles the judge uses |

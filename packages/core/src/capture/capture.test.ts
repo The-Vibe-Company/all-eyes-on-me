@@ -9,7 +9,7 @@ import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
-import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, findField, pageShape, pairRoutes, pinFixed, signedInFrom, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
+import { AppStartError, capture, MAX_CAPTURE_HEIGHT, normalize, findField, pageShape, pairRoutes, pinFixed, signedInFrom, shortenContent, signIn, SignInError, slug, startApp, type RunningApp } from "./index.js";
 import { checkSite } from "../checks/index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
@@ -331,6 +331,55 @@ test("a very long page is captured down to a cap, and the manifest says how tall
     server.close();
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("each page's content is written beside its captures, as a screen reader reads it at the widest width: its texts, links, buttons and fields, a long list shortened, nothing of its look", async () => {
+  const items = Array.from({ length: 40 }, (_, i) => `<li class="carte-produit"><h3>Produit ${i}</h3><p>12,${i} €</p><button>Ajouter au panier</button></li>`).join("");
+  // Links alike are as many actions: all kept. Rows whose names hold a colon, and cards of plain blocks, are records: shortened.
+  const categories = Array.from({ length: 12 }, (_, i) => `<li><a href="/rayon-${i}">Rayon ${i}</a></li>`).join("");
+  const rows = Array.from({ length: 30 }, (_, i) => `<tr><td>Commande #${i}</td><td>Statut: payée</td></tr>`).join("");
+  const cards = Array.from({ length: 40 }, (_, i) => `<div><h3>Avis ${i}</h3><p>Très bien</p><button>Répondre</button></div>`).join("");
+  const { server, url } = await serve({
+    "/": html(`<style>.carte-produit { color: #c0392b } @media (max-width: 600px) { nav { display: none } }</style><header><a href="/">Boutique</a><nav><a href="/commandes">Commandes</a></nav></header><main><h1>Nos produits</h1><label>Chercher <input name="q" placeholder="Un produit"></label><ul>${items}</ul><ul>${categories}</ul><table>${rows}</table>${cards}<button>Valider la commande</button></main>`),
+    "/commandes": html(`<h1>Commandes</h1>`),
+  });
+  const dir = await mkdtemp(join(tmpdir(), "aeom-capture-content-"));
+  try {
+    const manifest = await capture({ url, outDir: dir, widths: [390, 1280], paths: ["/"] });
+    assert.equal(manifest.pages[0]!.content, "index.content.yml");
+    const content = readFileSync(join(dir, "index.content.yml"), "utf8");
+    assert.match(content, /heading "Nos produits" \[level=1\]/);
+    assert.match(content, /textbox "Chercher"/);
+    assert.match(content, /link "Commandes"/, "read at the widest width, where the menu shows");
+    assert.match(content, /heading "Produit 4" \[level=3\][\s\S]*button "Ajouter au panier"/);
+    assert.doesNotMatch(content, /Produit 5\b/, "a long list keeps its first items");
+    assert.match(content, /^\s*- … 35 more listitem$/m, "and says how many it leaves out");
+    assert.match(content, /link "Rayon 11"/, "every link of a list of links");
+    assert.match(content, /row "Commande #4 Statut: payée"/);
+    assert.doesNotMatch(content, /Commande #5\b/);
+    assert.match(content, /^\s*- … 25 more row$/m);
+    assert.match(content, /heading "Avis 4" \[level=3\]/);
+    assert.doesNotMatch(content, /Avis 5\b/);
+    assert.match(content, /^\s*- … 35 more heading, paragraph, button$/m);
+    assert.match(content, /button "Valider la commande"/, "and what comes after them");
+    assert.doesNotMatch(content, /c0392b|carte-produit/, "nothing of its look");
+
+    // A new capture in the same folder takes the old content away with the old captures.
+    const again = await capture({ url, outDir: dir, widths: [390], paths: ["/commandes"] });
+    assert.equal(again.pages[0]!.content, "commandes.content.yml");
+    assert.ok(!existsSync(join(dir, "index.content.yml")));
+  } finally {
+    server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a page's content past 500 lines is cut in the middle, its end kept, and says how much was left out", () => {
+  const text = shortenContent(Array.from({ length: 620 }, (_, i) => `- paragraph: Ligne ${i}`).join("\n"));
+  const lines = text.split("\n");
+  assert.equal(lines.length, 501);
+  assert.equal(lines[400], "- … cut here: 120 more lines");
+  assert.equal(lines.at(-1), "- paragraph: Ligne 619", "what ends the page, often its last actions, is kept");
 });
 
 test("a sign-in form whose labels name no field is still filled, by the label's text, its placeholder or the field's name", async () => {

@@ -1,6 +1,7 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type Browser, type Locator, type Page } from "playwright";
+import { pageContent } from "./content.js";
 import { discoverPages, normalize, visitPages, type PageError } from "./discover.js";
 import { openPage, pinFixed } from "./open.js";
 import type { SignedIn } from "./sign-in.js";
@@ -30,6 +31,8 @@ export interface CapturedPage {
   path: string;
   /** One screenshot per width, relative to the output folder; `cut`, the page's full height when the capture stops at MAX_CAPTURE_HEIGHT. */
   files: { width: number; file: string; cut?: number }[];
+  /** What the page holds, read at the widest width as a screen reader reads it, relative to the output folder. */
+  content?: string;
   /** Captured signed out, as a page the config marks public. */
   signedOut?: true;
 }
@@ -87,14 +90,24 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
     await mkdir(outDir, { recursive: true });
 
     const captured: CapturedPage[] = [];
+    const widest = Math.max(...widths);
     for (const { url: pageUrl, signedOut: out } of pages) {
       const files: CapturedPage["files"] = [];
+      let content: string | undefined;
       for (const width of widths) {
         const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 800 }, ...(signedIn && !out ? { storageState: signedIn } : {}) });
         try {
           const page = await context.newPage();
           await openPage(page, pageUrl);
           await scrollThrough(page);
+          // Its content once, where the most of it shows: a worker can redraw the screen from it without seeing its look.
+          if (width === widest) {
+            const text = await pageContent(page);
+            if (text !== null) {
+              content = `${slug(pageUrl)}.content.yml`;
+              await writeFile(join(outDir, content), `# ${route(pageUrl)} at ${width} px: what the page holds, as a screen reader reads it, without its look.\n${text}\n`);
+            }
+          }
           const file = `${slug(pageUrl)}@${width}.png`;
           await pinFixed(page);
           const cut = await screenshotCapped(page, join(outDir, file));
@@ -103,7 +116,7 @@ export async function capture({ url, outDir, widths = DEFAULT_WIDTHS, maxPages, 
           await context.close();
         }
       }
-      captured.push({ url: pageUrl, path: route(pageUrl), files, ...(out ? { signedOut: true as const } : {}) });
+      captured.push({ url: pageUrl, path: route(pageUrl), files, ...(content ? { content } : {}), ...(out ? { signedOut: true as const } : {}) });
     }
 
     const manifest: CaptureManifest = { url, capturedAt: new Date().toISOString(), widths, pages: captured, errors };
@@ -149,7 +162,7 @@ async function clearPrevious(outDir: string): Promise<void> {
   } catch {
     return;
   }
-  const files = previous.pages?.flatMap((page) => page.files.map((f) => f.file)) ?? [];
+  const files = previous.pages?.flatMap((page) => [...page.files.map((f) => f.file), ...(page.content ? [page.content] : [])]) ?? [];
   await Promise.all([...files, "manifest.json"].map((file) => rm(join(outDir, file), { force: true })));
 }
 
