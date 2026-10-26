@@ -50,7 +50,7 @@ export async function runCheck(argv: string[]): Promise<number> {
     }
     // withConfig already read the config: it holds. Its exceptions are the app's, never a folder of pages'.
     const except = servingFolder() ? undefined : (await loadConfig()).except;
-    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}), ...(except ? { except } : {}) });
+    const report = await checkSite({ url, widths, ...(paths ? { paths } : {}), ...(signedOut ? { signedOut } : {}), ...(session ? { signedIn: session.signedIn } : {}), ...(except ? { except } : {}), folder: servingFolder() });
     await mkdir(values.out, { recursive: true });
     const reportFile = join(values.out, "check.json");
     await writeFile(reportFile, JSON.stringify(report, null, 2) + "\n");
@@ -62,7 +62,7 @@ export async function runCheck(argv: string[]): Promise<number> {
     }
     const skipped = report.errors.map((e) => `\n✗ ${route(e.url)}  ${e.reason} (not checked)`).join("");
     if (report.findings.length === 0) {
-      console.log(`\nAll ${CHECKS.length} checks pass on ${plural(report.pages.length, "page")} at ${widths.join(", ")} px.${skipped}`);
+      console.log(`\nAll ${report.checks.length} checks pass on ${plural(report.pages.length, "page")} at ${widths.join(", ")} px.${skipped}`);
       return report.errors.length ? 1 : 0;
     }
 

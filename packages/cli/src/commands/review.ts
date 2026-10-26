@@ -144,7 +144,7 @@ export async function runReview(argv: string[]): Promise<number> {
               return 0;
             }
             const signedIn = session ? session.signedIn : undefined;
-            const report = await checkSite({ url, widths, paths: routes, ...(signedIn ? { signedIn } : {}), ...(signedOut ? { signedOut } : {}), except });
+            const report = await checkSite({ url, widths, paths: routes, ...(signedIn ? { signedIn } : {}), ...(signedOut ? { signedOut } : {}), except, folder: servingFolder() });
             const said = new Set<string>();
             for (const f of report.findings) {
               const line = `${f.check}: ${f.element ? `${f.element}: ` : ""}${f.message}`;

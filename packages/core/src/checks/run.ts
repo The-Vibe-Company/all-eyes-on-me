@@ -18,6 +18,10 @@ import { checkGradientText } from "./gradient-text.js";
 import { checkHollowWords } from "./hollow-words.js";
 import { checkNestedCard } from "./nested-card.js";
 import { checkPlaceholder } from "./placeholder.js";
+import { checkFinish, checkNotFound } from "./finish.js";
+import { checkMotion } from "./motion.js";
+import { checkNestedRadius } from "./nested-radius.js";
+import { checkOrphan } from "./orphan.js";
 import { checkSideStripe } from "./side-stripe.js";
 import { checkImages } from "./images.js";
 import { checkLabels } from "./labels.js";
@@ -32,7 +36,7 @@ import { checkUneven } from "./uneven.js";
 import { checkWrap } from "./wrap.js";
 import type { CheckName, Finding, Issue } from "./types.js";
 
-export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce", "placeholder", "ai-text", "hollow-words"];
+export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce", "placeholder", "ai-text", "hollow-words", "nested-radius", "orphan", "motion", "finish"];
 
 /** The routes where a check does not apply, by check, as the config says: a landing page whose header scrolls away on purpose. */
 export type CheckExceptions = Partial<Record<CheckName, string[]>>;
@@ -53,7 +57,7 @@ export interface CheckReport {
  * the page out anew; cursor, contrast, console and what impeccable bans once
  * per page, at the widest width.
  */
-export async function checkPages(browser: Browser, urls: string[], widths: number[] = DEFAULT_WIDTHS, signedIn?: SignedIn): Promise<Finding[]> {
+export async function checkPages(browser: Browser, urls: string[], widths: number[] = DEFAULT_WIDTHS, signedIn?: SignedIn, { folder = false }: { folder?: boolean } = {}): Promise<Finding[]> {
   const widest = Math.max(...widths);
   const findings: Finding[] = [];
   for (const url of urls) {
@@ -79,6 +83,7 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
         await add("overflow", () => checkOverflow(page));
         await add("wrap", () => checkWrap(page));
         await add("uneven", () => checkUneven(page));
+        await add("orphan", () => checkOrphan(page));
         await add("clipped", () => checkClipped(page));
         await add("tap-size", () => checkTapSize(page));
         await add("font-size", () => checkFontSize(page));
@@ -102,6 +107,10 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
           await add("placeholder", () => checkPlaceholder(page));
           await add("ai-text", () => checkAiText(page));
           await add("hollow-words", () => checkHollowWords(page));
+          await add("nested-radius", () => checkNestedRadius(page));
+          await add("motion", () => checkMotion(page));
+          // What a finished page has, a page anyone can open more: never asked of a mockup, which is no site.
+          if (!folder) await add("finish", () => checkFinish(page, { public: !signedIn }));
           // Last: it walks the page with the keyboard.
           await add("focus", () => checkFocus(page));
         }
@@ -118,20 +127,23 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
  * checks each one, signed in when given what a signed-in browser keeps; the
  * routes of `signedOut` are checked too, signed out.
  */
-export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths, signedOut, except = {} }: { url: string; widths?: number[]; signedIn?: SignedIn; paths?: string[]; signedOut?: string[]; except?: CheckExceptions }): Promise<CheckReport> {
+export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths, signedOut, except = {}, folder = false }: { url: string; widths?: number[]; signedIn?: SignedIn; paths?: string[]; signedOut?: string[]; except?: CheckExceptions; folder?: boolean }): Promise<CheckReport> {
   const browser = await chromium.launch();
   try {
     const found = await findPages(browser, { url, paths, signedIn, signedOut });
     const pages = found.pages.map((p) => p.url);
     const findings = [
-      ...(await checkPages(browser, found.pages.filter((p) => !p.signedOut).map((p) => p.url), widths, signedIn)),
-      ...(await checkPages(browser, found.pages.filter((p) => p.signedOut).map((p) => p.url), widths)),
+      ...(await checkPages(browser, found.pages.filter((p) => !p.signedOut).map((p) => p.url), widths, signedIn, { folder })),
+      ...(await checkPages(browser, found.pages.filter((p) => p.signedOut).map((p) => p.url), widths, undefined, { folder })),
     ];
+    // How the app answers an address that does not exist: once per site, when its home is checked; never a folder's.
+    const home = (path: string) => path.replace(/\/?$/, "/");
+    if (!folder && (!paths || paths.some((p) => home(new URL(p, url).pathname) === home(new URL(url).pathname)))) findings.push(...(await checkNotFound(browser, url, Math.max(...widths), signedIn)));
     // A check the config leaves out of a page finds nothing there: a route, or any route of its shape, whatever its
     // query or its last slash.
     const bare = (r: string) => r.replace(/[?#].*$/, "").replace(/(.)\/+$/, "$1");
     const left = (f: Finding) => (except[f.check] ?? []).some((r) => bare(r) === bare(route(f.url)) || pageShape(bare(r)) === pageShape(bare(route(f.url))));
-    return { url, checkedAt: new Date().toISOString(), widths, checks: CHECKS, pages, errors: found.errors, findings: findings.filter((f) => !left(f)) };
+    return { url, checkedAt: new Date().toISOString(), widths, checks: folder ? CHECKS.filter((c) => c !== "finish") : CHECKS, pages, errors: found.errors, findings: findings.filter((f) => !left(f)) };
   } finally {
     await browser.close();
   }

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
 import { readFileSync } from "node:fs";
 import { signIn, startApp, type RunningApp } from "../capture/index.js";
-import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce, checkPlaceholder, checkAiText, checkHollowWords } from "./index.js";
+import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce, checkPlaceholder, checkAiText, checkHollowWords, checkNestedRadius, checkOrphan, checkMotion, checkFinish } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 
@@ -704,5 +704,143 @@ describe("copy a good front writes, never flagged", () => {
     assert.deepEqual(await checkPlaceholder(page), []);
     assert.deepEqual(await checkAiText(page), []);
     assert.deepEqual(await checkHollowWords(page), []);
+  });
+});
+
+describe("nested-radius", () => {
+  const card = (radius: number, padding: number, inner: string) => `<div style="border-radius:${radius}px;padding:${padding}px;background:#eee;width:400px">${inner}</div>`;
+  test("names a corner as round as the corner a few pixels around it, with the radius it should have", async () => {
+    const issues = await checkNestedRadius(await pageWith(card(16, 8, `<div class="inner" style="border-radius:16px;background:#fff;height:120px">Inside</div>`)));
+    assert.equal(issues.length, 1);
+    assert.equal(issues[0]!.element, 'div.inner "Inside"');
+    assert.match(issues[0]!.message, /its corner of 16 px sits 8 px inside a corner of 16 px: make it 8 px/);
+  });
+
+  test("leaves a radius that follows its corner, a shape far from the edge, a pill, a corner too tight to follow, and a shape that draws nothing", async () => {
+    const page = await pageWith(`
+      ${card(16, 8, `<div style="border-radius:8px;background:#fff;height:120px">Follows</div>`)}
+      ${card(16, 40, `<div style="border-radius:16px;background:#fff;height:120px">Far</div>`)}
+      ${card(16, 12, `<span style="display:inline-block;border-radius:999px;background:#fff;padding:4px 12px">Pill</span>`)}
+      ${card(8, 12, `<div style="border-radius:8px;background:#fff;height:120px">Tight</div>`)}
+      ${card(24, 8, `<img alt="" style="display:block;border-radius:50%;width:120px;height:120px;background:#ccc">`)}
+      ${card(16, 8, `<span style="display:inline-block;border-radius:12px;background:#fff;height:28px;width:80px">Badge</span>`)}
+      <div style="border-radius:16px;overflow:hidden;background:#eee;width:400px"><img alt="" style="display:block;border-radius:6px;width:400px;height:120px;background:#ccc"></div>
+      <div style="border-radius:16px;padding:8px;width:400px">${`<div style="border-radius:16px;background:#fff;height:120px">No outer shape</div>`}</div>`);
+    assert.deepEqual(await checkNestedRadius(page), []);
+  });
+});
+
+describe("orphan", () => {
+  const heading = (text: string, style = "") => `<h1 style="font:20px/1.2 monospace;width:12ch;margin:0;${style}">${text}</h1>`;
+  test("names a heading whose last line holds one word", async () => {
+    const issues = await checkOrphan(await pageWith(heading("Une grande idée")));
+    assert.equal(issues.length, 1);
+    assert.match(issues[0]!.message, /its last line holds one word, "idée": text-wrap: balance or pretty, or a non-breaking space before it/);
+  });
+
+  test("leaves a heading of one line, one whose last line holds two words, one wrapped with care, words of another size on its line, a line broken on purpose, a line the clamp hides", async () => {
+    const page = await pageWith(`${heading("Une idée")}${heading("Une très grande idée")}${heading("Une grande&nbsp;idée")}
+      <h1 style="font:48px/1.2 sans-serif;width:900px">Build with <small style="font-size:.5em">love</small></h1>
+      <h2 style="width:900px">Prix<sup>1</sup> et conditions <span style="font-size:11px;padding:2px 6px;background:#eee">Nouveau</span></h2>
+      <h1 style="font:20px/1.2 monospace;width:30ch">Bienvenue chez<br>Acme</h1>
+      ${heading("Une très grande idée neuve", "display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden")}`);
+    assert.deepEqual(await checkOrphan(page), []);
+  });
+});
+
+describe("motion", () => {
+  test("names the browser's default curve on what one touches, and motion that moves the layout", async () => {
+    const page = await pageWith(`<style>@keyframes slide { from { left: 0 } to { left: 100px } }</style>
+      <button style="transition:background-color .2s">Default</button>
+      <a href="/x" style="transition:color .2s linear">Linear</a>
+      <div class="bar" style="transition:width .3s ease-out">Bar</div>
+      <div class="slider" style="position:relative;animation:slide 2s infinite">Slides</div>`);
+    const issues = await checkMotion(page);
+    assert.deepEqual(issues.map((i) => i.element?.split(" ")[0]), ["button", "a", "div.bar", "div.slider"]);
+    assert.match(issues[0]!.message, /keeps the browser's default curve \(ease\)/);
+    assert.match(issues[2]!.message, /moves the layout \(width\): animate transform or opacity instead/);
+  });
+
+  test("leaves a curve of its own, a fade, a slide by transform, an accordion that opens, a skip link, motion on what one does not touch", async () => {
+    const page = await pageWith(`<style>@keyframes in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }</style>
+      <a class="skip" href="#main" style="position:absolute;top:-40px;transition:top .2s ease-out">Aller au contenu</a>
+      <button style="transition:background-color .2s cubic-bezier(.16,1,.3,1)">Own curve</button>
+      <div style="animation:in .3s ease-out">Fades in</div>
+      <div class="accordion" style="transition:height .3s ease-out">Opens</div>
+      <div style="transition:all .2s">Not touched</div>
+      <div id="opening" style="height:10px;transition:height 5s ease-out">Opening</div>
+      <main id="main"></main>
+      <script>getComputedStyle(opening).height; opening.style.height = "100px";</script>`);
+    assert.deepEqual(await checkMotion(page), [], "an accordion opening, even while it moves");
+  });
+});
+
+describe("finish", () => {
+  const nav = `<header><nav><a href="/a">Produits</a><a href="/b">Commandes</a><a href="/c">Contact</a></nav></header><main id="contenu"><h1>Produits</h1></main>`;
+  test("names what a page forgot: its title, its icon, a skip link past its navigation, and on a public page its description and share image", async () => {
+    const said = (issues: { message: string }[]) => issues.map((i) => i.message.split(":")[0]);
+    assert.deepEqual(said(await checkFinish(await pageWith(nav), { public: true })), ["no title", "no icon", "no description", "no share image", "no skip link"]);
+    assert.deepEqual(said(await checkFinish(await pageWith(`<title>Vite App</title>${nav}`), { public: false })), ['a title left as the framework wrote it, "Vite App"', "no icon", "no skip link"]);
+  });
+
+  test("asks no skip link of a page whose only links are in its footer or its articles, and reads a link to a hash it cannot decode", async () => {
+    const page = await pageWith(`<title>Connexion · Boutique</title><link rel="icon" href="data:,"><main><h1>Connexion</h1><a href="#100%">Aide</a>
+      <article><header><a href="/a">Un</a></header></article><article><header><a href="/b">Deux</a></header></article><article><header><a href="/c">Trois</a></header></article></main>
+      <footer><nav><a href="/cgv">CGV</a><a href="/aide">Aide</a><a href="/contact">Contact</a></nav></footer>`);
+    assert.deepEqual(await checkFinish(page, { public: false }), []);
+  });
+
+  test("leaves a page with all of them, a skip link hidden until it has the focus", async () => {
+    const page = await pageWith(`<title>Produits · Boutique</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
+      <meta name="description" content="Lampes, chaises et tapis, livrés en 48 h."><meta property="og:image" content="https://boutique.test/og.png">
+      <a class="skip" href="#contenu" style="position:absolute;left:-9999px">Aller au contenu</a>${nav}`);
+    assert.deepEqual(await checkFinish(page, { public: true }), []);
+  });
+
+  test("an address that does not exist is answered by a page that says so and leads back; never asked of a folder of mockups", async () => {
+    const serve = async (handle: (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void) => {
+      const server = createHttpServer(handle);
+      await new Promise<void>((resolve) => server.listen(0, resolve));
+      return { server, url: `http://localhost:${(server.address() as { port: number }).port}` };
+    };
+    const home = `<!doctype html><title>Boutique</title><h1>Boutique</h1><a href="/">Accueil</a>`;
+    const page = (status: number, body: string) => (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => {
+      res.writeHead(req.url === "/" ? 200 : status, { "content-type": "text/html; charset=utf-8" });
+      res.end(req.url === "/" ? home : body);
+    };
+    const notFound = async (handle: Parameters<typeof serve>[0], folder = false) => {
+      const { server, url } = await serve(handle);
+      try {
+        const report = await checkSite({ url, paths: ["/"], widths: [1280], ...(folder ? { folder } : {}) });
+        return report.findings.filter((f) => f.check === "finish" && /does not exist/.test(f.message)).map((f) => f.message);
+      } finally {
+        server.close();
+      }
+    };
+    assert.deepEqual(await notFound(page(404, `<!doctype html><title>Page introuvable</title><h1>Cette page n'existe pas</h1><a href="/">Revenir à l'accueil</a>`)), []);
+    assert.deepEqual(await notFound(page(200, `<!doctype html><title>Boutique</title><div id="app"></div><script>setTimeout(() => { app.innerHTML = '<h1>Page introuvable</h1><a href="/">Accueil</a>'; }, 600)</script>`)), [], "a 404 the browser draws a moment after");
+    const spa = await notFound(page(200, home));
+    assert.equal(spa.length, 1);
+    assert.match(spa[0]!, /an address that does not exist, \/aeom-check-404, shows a page that does not say so/);
+    assert.match((await notFound(page(404, "Cannot GET /aeom-check-404")))[0]!, /leads nowhere/);
+    const { server, url } = await serve(page(200, home));
+    try {
+      const report = await checkSite({ url, paths: ["/"], widths: [1280], folder: true });
+      assert.deepEqual(report.findings.filter((f) => f.check === "finish"), [], "a mockup is not a site: neither its 404 nor its finish is asked");
+    } finally {
+      server.close();
+    }
+    // An app under a path: its 404 is asked under that path.
+    const under = await serve((req, res) => {
+      const ok = req.url === "/app/";
+      res.writeHead(ok ? 200 : 404, { "content-type": "text/html; charset=utf-8" });
+      res.end(ok ? home : req.url === "/app/aeom-check-404" ? `<h1>Page introuvable</h1><a href="/app/">Accueil</a>` : "Cannot GET");
+    });
+    try {
+      const report = await checkSite({ url: `${under.url}/app/`, paths: ["/app/"], widths: [1280] });
+      assert.deepEqual(report.findings.filter((f) => /does not exist/.test(f.message)), []);
+    } finally {
+      under.server.close();
+    }
   });
 });
