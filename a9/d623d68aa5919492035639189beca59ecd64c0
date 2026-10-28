@@ -1,0 +1,62 @@
+packages/cli/src/commands/taste.ts
+  s_4ce34ec42d9105::t_5ac97e89d81c64 1-92
+  s_4ce34ec42d9105::t_2cde861b50cdea 93-107
+site/pages/commands.html
+  s_4ce34ec42d9105::t_5ac97e89d81c64 119,126
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_d8056b16fe0de9 54,104
+  s_4ce34ec42d9105::t_c475c5bfed6e05 52
+README.md
+  s_4ce34ec42d9105::t_5ac97e89d81c64 118
+  s_4ce34ec42d9105::t_9974e6bb0ce8ef 26-27
+  s_4ce34ec42d9105::t_5efb447771693e 128,143-144
+packages/cli/src/commands/taste.test.ts
+  s_4ce34ec42d9105::t_fc1ce97339fbe3 1-51
+  s_4ce34ec42d9105::t_f2d2ff7cad1811 52-69
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_d8056b16fe0de9 18
+packages/cli/src/index.ts
+  s_4ce34ec42d9105::t_5ac97e89d81c64 26,61,92
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_d8056b16fe0de9 149-160
+packages/cli/src/commands/pr.ts
+  s_4ce34ec42d9105::t_22632fed9e4a5e 1
+  s_4ce34ec42d9105::t_2dc7568f7722bb 7,33-39,161-166,186-210
+packages/core/src/run/taste.test.ts
+  s_4ce34ec42d9105::t_b82d419bf9c298 44-110
+  s_4ce34ec42d9105::t_7243970d970f85 6
+  s_4ce34ec42d9105::t_4b12ca32fabc09 2
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_d8056b16fe0de9 28
+packages/core/src/run/lessons.ts
+  s_4ce34ec42d9105::t_7243970d970f85 1-127
+  s_4ce34ec42d9105::t_1915fcb1dd310b 128-171
+packages/core/src/run/index.ts
+  s_4ce34ec42d9105::t_7243970d970f85 12
+.veebee/milestones/05-construire/tickets/16-apprendre-et-tenir-l-ordre.md
+  s_4ce34ec42d9105::t_9974e6bb0ce8ef 1-30
+CONTEXT.md
+  s_4ce34ec42d9105::t_387082df99ad06 44-45,49-50
+packages/cli/src/commands/pr.test.ts
+  s_4ce34ec42d9105::t_c931f0494a9d0d 300-337
+site/site.test.mjs
+  s_4ce34ec42d9105::t_9772b8d691d9c9 35,39
+skills/aeom/phase-mockups.md
+  s_4ce34ec42d9105::t_2cfadbe45ddd52 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a9d623d68aa5919492035639189beca59ecd64c0",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
