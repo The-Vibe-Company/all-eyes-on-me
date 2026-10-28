@@ -9,3 +9,4 @@ export { addFeedback, aeomHome, agreementRates, FEEDBACK_CATEGORIES, readFeedbac
 export { prBody } from "./pr.js";
 export { estimateRun, estimateText, type Estimate, type Phase, type RunMode } from "./estimate.js";
 export { costText, dollarsText, priceOf, projectKey, roleOf, ROLES, runCost, type Role, type RoleCost, type RunCost, type Usage } from "./cost.js";
+export { addLesson, addRule, BRIEF_LINES, LESSONS_PER_RUN, readLessons, readRules, runEvidence, tasteBrief, type Lesson, type Rule } from "./lessons.js";

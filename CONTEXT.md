@@ -41,11 +41,12 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 ## Taste
 
 - **Feedback** (retour): what the person running AEOM says about a screen during a session.
-- **Rule** (règle): feedback promoted to the whole project, stored in `.aeom/`. A rule a machine can verify becomes a check.
+- **Rule** (règle): a preference the person said, kept at once: for the project in `.aeom/taste.md`, read first, or for the person in `~/.aeom/taste/rules.md`. A rule a machine can verify becomes a check.
+- **Lesson** (leçon): a rule of taste a run showed, resting on a verdict the person disagreed with or a direction chosen over the advice. Five a run at most, counted again when a later run shows it, and kept to its project until a second project shows it too.
 - **Before / after pair** (paire avant / après): the two captures around a piece of feedback. Stored in `~/.aeom/taste/`, never in the repository, never published.
 - **Principle** (principe): a short statement of taste, such as "more air around titles", with the feedback that backs it and its **strength** (how often it came up).
 - **Base principles** (principes de base): the principles every install starts from. Plain text, no images, shipped in this repository.
-- **Personal layer** (couche perso): the principles distilled from one person's feedback, in `~/.aeom/taste/`, on top of the base principles. It always wins over them.
-- **Distillation**: turning feedback into principles.
+- **Personal layer** (couche perso): the rules one person said and the lessons their runs showed, in `~/.aeom/taste/`. The workers and the screening read it (`aeom taste --brief`), after the product sheet and the standard; the judges of the principles never do, so their verdicts stay comparable from run to run.
+- **Distillation**: turning feedback into lessons (`aeom taste learn`).
 - **Calibration** (rodage): the period when AEOM still asks for feedback. It ends category by category, once AEOM predicts the feedback well enough.
 - **Pilot** (pilote): a real project used to calibrate AEOM. Carnet first, Road-To-Mastock second.

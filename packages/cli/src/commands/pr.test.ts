@@ -297,3 +297,41 @@ test("the repository of a remote's URL, https or ssh, for gh", () => {
   assert.equal(repoOf("file:///srv/git/app.git"), null);
   assert.equal(repoOf("https://gitlab.example/group/sub/app.git"), null);
 });
+
+test("the order of a run is held in code: a run whose state says it rebuilt pages and journeys gets no PR until it measured them, replayed them and reached its standard, and is told which step it skipped", async () => {
+  const { dir, R } = await project();
+  const state = (phases: string[], options: string[] = []) => put(join(R, "state.json"), { run: "run-1", started: "", options, phase: phases.at(-1), step: null, vars: {}, branchAt: null, agents: [], history: phases.map((phase) => ({ phase, step: null, at: "" })) });
+  const replay = { url: "http://x", replayedAt: "", widths: [1280], warnings: [], journeys: [] };
+  assert.equal((await run(dir, ["pr", R, "--dry-run"])).code, 0, "a run with no state.json is not held");
+
+  await state(["understand", "verdict", "choice", "kit", "pages", "measure", "journeys"]);
+  const compare = await readFile(join(R, "after", "compare.json"), "utf8");
+  await rm(join(R, "after", "compare.json"));
+  const skipped = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(skipped.code, 1, "never « nothing kept » on a run that did not measure");
+  assert.match(skipped.out, /aeom\/run-1 skipped what its PR rests on:\n  - the pages were not measured after their wave \(no after\/compare\.json\)/);
+  assert.match(skipped.out, /- the key journeys were not replayed at the end \(no journeys-end nor journeys-after\)/);
+  assert.match(skipped.out, /- the standard of the front was not reached/);
+  assert.match(skipped.out, /A step done but not marked: aeom run mark .+ --phase <it>\./);
+
+  await writeFile(join(R, "after", "compare.json"), compare);
+  await put(join(R, "journeys-end", "report.json"), replay);
+  const remeasure = await run(dir, ["pr", R, "--dry-run"]);
+  assert.match(remeasure.out, /- the screens were not measured again after the journey wave \(no end\/compare\.json\)/);
+  await put(join(R, "end", "compare.json"), []);
+  await state(["understand", "verdict", "choice", "kit", "pages", "measure", "journeys", "remeasure", "report", "standard"]);
+  const held = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(held.code, 0, held.out);
+  assert.doesNotMatch(held.out, /skipped/);
+
+  // A run of the journeys alone measures no page after a wave it never ran.
+  await rm(join(R, "journeys-end"), { recursive: true });
+  await rm(join(R, "end", "compare.json"));
+  await rm(join(R, "after", "compare.json"));
+  await put(join(R, "journeys-after", "report.json"), replay);
+  await state(["understand", "journeys", "report", "standard", "pr"], ["ux"]);
+  assert.doesNotMatch((await run(dir, ["pr", R, "--dry-run"])).out, /skipped/);
+  // The standard is held by its step, not by a diff: a run that never reached it is refused, even of the journeys alone.
+  await state(["understand", "journeys", "report"], ["ux"]);
+  assert.match((await run(dir, ["pr", R, "--dry-run"])).out, /the standard of the front was not reached/);
+});
