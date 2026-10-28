@@ -1,0 +1,35 @@
+packages/cli/src/commands/cost.ts
+  s_4ce34ec42d9105::t_e902c281e2e5d0 15-16
+packages/core/src/run/cost.ts
+  s_4ce34ec42d9105::t_bf2d87ba243a29 56,188,192,195,201-202,206-207,214-238,244,247,249-250,255-256,264,266,269-271,274,276-278,280-282,284,286-287,291,293-295,302-305,307-309,311-321,327-331,338-339,344-347,350-356,358-359,361,364,368-374,419-420,422-423,426,463-465
+README.md
+  s_4ce34ec42d9105::t_1db2734c520498 75,78-79
+  s_4ce34ec42d9105::t_dffebb34928e81 82
+  s_4ce34ec42d9105::t_26e98735c8a317 83
+packages/core/src/run/cost.test.ts
+  s_4ce34ec42d9105::t_0eb1b698b8652f 188,194-247
+  s_4ce34ec42d9105::t_4b07c5971cb447 248-251
+skills/aeom/hosts.md
+  s_4ce34ec42d9105::t_1db2734c520498 7,10,22-23,26
+  s_4ce34ec42d9105::t_99faa8aa277bab 24
+  s_4ce34ec42d9105::t_dffebb34928e81 25,27
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_758909f82bf40f 185-186
+  s_4ce34ec42d9105::t_99faa8aa277bab 190-193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1c6f35d0ed90c638d0f6aa213bcf90278c960ee",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
