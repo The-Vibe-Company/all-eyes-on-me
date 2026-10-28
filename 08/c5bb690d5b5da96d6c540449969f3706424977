@@ -1,0 +1,51 @@
+skills/aeom/phase-directions.md
+  s_4ce34ec42d9105::t_ed8cb97a47d20f 11
+README.md
+  s_4ce34ec42d9105::t_d875eda0cb5d55 5,13,45,67-81,101,146,154-155
+packages/cli/src/commands/cost.ts
+  s_4ce34ec42d9105::t_05b28f7ee86809 11-17,51
+skills/aeom/SKILL.md
+  s_4ce34ec42d9105::t_ed8cb97a47d20f 17,30
+skills/aeom/phase-wave.md
+  s_4ce34ec42d9105::t_ed8cb97a47d20f 11
+skills/aeom-judge/SKILL.md
+  s_4ce34ec42d9105::t_ed8cb97a47d20f 8
+agents/codex/aeom-worker.toml
+  s_4ce34ec42d9105::t_ec451f4a3ba375 4-6,14,26-29
+  s_4ce34ec42d9105::t_ec9c8ded1a644e 1-3,7-13,15-25
+packages/core/src/run/cost.ts
+  s_4ce34ec42d9105::t_f66f0a6a59300c 8-13,50-57,129,187-325,327,352-362,380,396-398
+packages/cli/src/commands/cost.test.ts
+  s_4ce34ec42d9105::t_05b28f7ee86809 19
+agents/codex/aeom-judge.toml
+  s_4ce34ec42d9105::t_35201f65569981 4-6,18-21
+  s_4ce34ec42d9105::t_ec9c8ded1a644e 1-3,7-17
+skills/skills.test.mjs
+  s_4ce34ec42d9105::t_1598e201c47d17 161-194
+packages/core/src/run/cost.test.ts
+  s_4ce34ec42d9105::t_242b5895f30c38 54,115
+  s_4ce34ec42d9105::t_321b922f1b086a 178
+  s_4ce34ec42d9105::t_bb023a76d51d0d 132-177,179-193
+skills/aeom/hosts.md
+  s_4ce34ec42d9105::t_ec9c8ded1a644e 2,4-6,8,11-13,15-17,19,24-25
+  s_4ce34ec42d9105::t_1598e201c47d17 22
+  s_4ce34ec42d9105::t_dde535151c4938 1,3,7,9-10,14,18,20-21,23,26
+.veebee/milestones/06-moins-cher-et-sur-codex/tickets/02-aeom-depuis-codex.md
+  s_4ce34ec42d9105::t_f6fe1c7d4222bb 14,18-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08c5bb690d5b5da96d6c540449969f3706424977",
+  "prompts": {},
+  "sessions": {
+    "s_4ce34ec42d9105": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "986afa6c-8f0b-494f-9694-d93f52c5ef9e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
