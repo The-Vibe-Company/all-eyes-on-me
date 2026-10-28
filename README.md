@@ -23,6 +23,8 @@ Its site: [aeom.thevibecompany.co](https://aeom.thevibecompany.co).
 
 Everything the run keeps is on a branch, `aeom/<run>`: your branch does not move.
 
+**What you teach it stays.** A preference you state during a run is kept at once: for this project in `.aeom/taste.md`, which comes first, or for you in `~/.aeom/taste/rules.md` (`aeom taste rule`). Before the next run, what you disagreed with on the result page and the directions you chose over the advice give at most five lessons, each resting on what the run showed, counted again when a later run shows it again. The workers and the screening read them as a short index (`aeom taste --brief`); the judges of the principles never do, so their verdicts stay comparable from run to run. And the order of a run is held in code: `aeom pr` refuses a run that rebuilt pages or journeys without measuring them after, replaying its journeys at the end or reaching its standard, and names the step.
+
 **On the demo app** in `examples/` (a deliberately ugly shop):
 - the failures on its four pages went from 10, 8, 8 and 8 to 1, 1, 0 and 0;
 - the measurable checks went from 10 to 0, and the journeys' failures from 14 to 7;
@@ -113,6 +115,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 | `aeom bench` | Run AEOM on apps whose defects were noted by hand, and count what it found and fixed |
 | `aeom run` | Keep where a run is, and say how to take it up after a stop |
 | `aeom review` | Hold a branch's changes to the standard of the front, with no model |
+| `aeom taste` | Keep what the person taught AEOM: the rules they said, the lessons runs showed |
 | `aeom update` | Bring AEOM up to date, or say how far behind it is |
 
 ## What comes next
@@ -122,7 +125,7 @@ None of this is done yet:
 - **Level 2, keep, the rest.** The judges saying in a comment whether a PR is still the same product, and a PR that changes the standard on purpose.
 - **Level 3, build, the rest.** The mockup from a spec or a prompt is here (`/aeom build --from-scratch`, `--api`); next, with a front already there, what is asked in one sentence, inside the standard, and building in a framework the project already holds.
 - **Later.**
-  - The judges learn your taste from your feedback, which today is only counted.
+  - Taking out the rules of the skill that only made up for older models, each once the bench shows it changes nothing.
   - A spend cap.
   - The npm package.
   - Codex, and mobile.
@@ -137,8 +140,8 @@ None of this is done yet:
 | `agents/` | The workers and the judges the skills launch, `aeom-worker` and `aeom-judge`: on Sonnet, with only the tools each uses. |
 
 State lives in files:
-- `.aeom/` in the project's repository: the product sheet, the standard of the front, the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
-- `~/.aeom/taste/` on your machine: your feedback on each verdict.
+- `.aeom/` in the project's repository: the product sheet, the standard of the front, the rules you said for this project (`taste.md`), the key journeys, the config, and the runs (keep `.aeom/runs/` out of git).
+- `~/.aeom/taste/` on your machine: your feedback on each verdict, the rules you said for every project, and the lessons runs showed.
 - `~/.aeom/install-id` on your machine: the random id AEOM's usage count knows it by (see [What it sends](#what-it-sends)).
 - `.aeom-worktrees/<project>/`, next to the project: the workers' copies during a run, kept out of the project so its own tools never walk into them.
 

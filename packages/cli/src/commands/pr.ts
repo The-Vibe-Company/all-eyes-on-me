@@ -1,9 +1,10 @@
+import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { prBody, readRun, RunReportError, type ResultPage } from "@aeom/core";
+import { prBody, readRun, readRunState, RunReportError, type ResultPage } from "@aeom/core";
 import { latestRun } from "./report.js";
 
 const exec = promisify(execFile);
@@ -28,6 +29,13 @@ assets.txt lists it, its content and its path, as aeom image --run does for an
 image the front uses. An
 SVG may go, being code, unless it holds an image (data:image/ or <image>).
 Taking an image out is fine.
+
+The order of a run is held here. A run whose state.json says it rebuilt pages,
+journeys or a kit gets no PR until it measured the pages after their wave
+(after/compare.json), replayed the journeys at the end (journeys-end, or
+journeys-after), measured the screens again after a journey wave
+(end/compare.json), and reached the standard of the front; the refusal names
+the step. A run with no state.json is not held.
 
 AEOM merges nothing: the PR follows the repository's rules. Without a remote,
 a gh signed in to its host, or the base on the remote, the branch stays here.
@@ -150,6 +158,12 @@ export async function runPr(argv: string[]): Promise<number> {
     console.log(`Nothing to redo: no PR.`);
     return 0;
   }
+  // The order of a run is held here, its judgment in the skill: a step skipped is said before anything is decided on it.
+  const left = await stepsLeft(runDir, page);
+  if (left.length) {
+    console.error(`aeom/${basename(runDir)} skipped what its PR rests on:\n${left.map((l) => `  - ${l}`).join("\n")}\nDo ${left.length === 1 ? "it" : "them"} as the skill says, then aeom pr again. A step done but not marked: aeom run mark ${runDir} --phase <it>.`);
+    return 1;
+  }
   if (!page.built && !page.direction && !page.screens.some((s) => s.status === "kept") && !page.journeys.some((j) => j.status === "kept")) {
     console.log(`Nothing kept: no PR.`);
     return 0;
@@ -167,6 +181,31 @@ export async function runPr(argv: string[]): Promise<number> {
     console.error(`git failed: ${why(error)}`);
     return 1;
   }
+}
+
+/**
+ * What a run must have done before its PR, by the steps its state.json says it went
+ * through: pages rebuilt are measured after their wave, journeys rebuilt replayed at the
+ * end, screens measured again after a journey wave that followed a page wave, and any wave
+ * leads to the standard of the front. A run with no state.json is not held.
+ */
+async function stepsLeft(runDir: string, page: ResultPage): Promise<string[]> {
+  const raw = await readFile(join(runDir, "state.json"), "utf8").catch(() => null);
+  let state = null;
+  try {
+    state = raw === null ? null : readRunState(JSON.parse(raw), basename(runDir));
+  } catch {
+    // A state broken by hand holds nothing.
+  }
+  if (!state) return [];
+  const went = new Set([...state.history.map((h) => h.phase), ...(state.phase ? [state.phase] : [])]);
+  const has = (path: string) => existsSync(join(runDir, path));
+  const left: string[] = [];
+  if (went.has("pages") && !has(join("after", "compare.json"))) left.push("the pages were not measured after their wave (no after/compare.json): aeom compare, section 5, phase measure");
+  if (went.has("journeys") && !has(join("journeys-end", "report.json")) && !has(join("journeys-after", "report.json"))) left.push("the key journeys were not replayed at the end (no journeys-end nor journeys-after): phase journeys");
+  if (went.has("pages") && has(join("journeys-end", "report.json")) && !has(join("end", "compare.json"))) left.push("the screens were not measured again after the journey wave (no end/compare.json): step 7, phase remeasure");
+  if ((["kit", "pages", "journeys"].some((p) => went.has(p)) || page.built) && !went.has("standard")) left.push("the standard of the front was not reached: « The standard of the front », phase standard");
+  return left;
 }
 
 async function propose(runDir: string, page: ResultPage, base: string, dry: boolean): Promise<number> {

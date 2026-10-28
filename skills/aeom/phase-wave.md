@@ -15,6 +15,7 @@ Every brief opens with « You are an AEOM <direction, kit, page, promotion or jo
 - **Run the CLI from inside the worktree.** The worker runs `aeom ...` from inside its worktree, so the app it starts is the worktree's copy. Inside the AEOM repository itself, where a fresh worktree has no build, it is `node "$MAIN/packages/cli/dist/index.js" ...`.
 - **Its own port.** Give each worker a different port for its checks (`--start "PORT=<port> ..." --url http://localhost:<port>`), so two workers never test each other's app.
 - **The run's widths.** Every `aeom capture`, `aeom check` or `aeom journey` the worker runs takes `--widths <the run's WIDTHS, written out>`.
+- **What the person taught AEOM**, `aeom taste --brief` as it prints it: this project's rules, theirs, the lessons of earlier runs. The product sheet, the standard and the charter come first, and a lesson never overrides a rule.
 - **What the sheet accepts.** Every `aeom check` the worker runs also takes `--product "$MAIN/.aeom/product.md"`: what the product sheet accepts is said apart, and never the worker's to fix.
 - **Its own report folder.** The worker passes `--out <a temporary folder>` to `aeom check`, so it never touches `.aeom/reports`.
 - **Only its own processes.** The worker stops the server it started and nothing else: never `pkill` or `killall` by name, which takes down the servers of the other workers in the middle of their checks.

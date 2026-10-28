@@ -23,6 +23,7 @@ import { runRunState } from "./commands/run-state.js";
 import { runVerdict } from "./commands/verdict.js";
 import { commandName, ping } from "./telemetry.js";
 import { runUpdate } from "./commands/update.js";
+import { runTaste } from "./commands/taste.js";
 import { updateNotice } from "./update.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -57,6 +58,7 @@ Commands:
   bench       Run AEOM on apps whose defects were noted by hand, and count what it found and fixed
   run         Keep where a run is, and say how to take it up after a stop
   review      Hold a branch's changes to the standard of the front, with no model
+  taste       Keep what the person taught AEOM: the rules they said, the lessons runs showed
   update      Bring AEOM up to date, or say how far behind it is
 
 Run aeom <command> --help for its options.
@@ -87,6 +89,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   run: runRunState,
   standard: runStandard,
   review: runReview,
+  taste: runTaste,
   update: runUpdate,
 };
 

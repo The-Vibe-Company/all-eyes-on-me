@@ -146,3 +146,15 @@ test("a voter names what it sees in its own words, and a vote too thin to count 
   assert.match(judge, /one sentence of your own that names what you see on the screenshot: a word of the page, a part of it, a colour, a number; never « Looks good » or the same sentence twice/);
   assert.match(judge, /votes too thin to count \(reasons that name nothing on the page, one reason given again and again, a vote that says it did not look or copies another\), relaunch only those voters/);
 });
+
+test("AEOM learns from the person: rules kept at once, lessons drawn from runs, read by the workers and the screening, never by a principle judge", () => {
+  const skill = read("SKILL.md");
+  assert.match(skill, /`aeom taste learn` names the runs with something to learn/);
+  assert.match(skill, /A preference the person states is kept at once: `aeom taste rule`/);
+  assert.match(skill, /Every worker brief and the screening carry `aeom taste --brief`, never a principle judge/);
+  assert.match(read("phase-wave.md"), /\*\*What the person taught AEOM\*\*, `aeom taste --brief`/);
+  assert.match(read("phase-directions.md"), /what the person taught AEOM \(`aeom taste --brief`\)/);
+  assert.match(read("phase-mockups.md"), /what the person taught AEOM \(`aeom taste --brief`, as it prints it, after the charter/);
+  assert.match(skill, /`\.aeom\/taste\.md`, `\.aeom\/direction\/`/, "the rules said for the project never make the tree unclean");
+  assert.match(skill, /refuses a run that skipped a measure or the standard/);
+});
