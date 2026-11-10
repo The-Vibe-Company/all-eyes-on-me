@@ -257,6 +257,7 @@ test("a run that only judged says what fails, screen by screen, with nothing bef
   assert.match(html, /<h3>With problems<\/h3>[\s\S]*data-page="\/contact"[\s\S]*<h3>Nothing failing<\/h3>[\s\S]*data-page="\/"/);
   assert.doesNotMatch(html, /figcaption>After</, "nothing was redone");
   assert.match(resultHtml({ ...page, judged: undefined }), /Not measured after the run/, "a run that stopped before its end is not a judgement");
+  assert.deepEqual(ids(html), pageVerdicts(page).map((v) => v.id), "every verdict the server accepts has its box, in the same order");
 });
 
 test("in a browser, a run of a dozen long screens fits in a few screens, drags from before to after, and opens a whole page only on demand", async () => {
@@ -327,6 +328,20 @@ test("a run is read as a judgement when its state kept the option, with or witho
     }
     await writeFile(join(dir, "state.json"), JSON.stringify({ run: "run-1", options: "juger" }));
     assert.equal((await readRun(dir, "run-1")).judged, undefined, "a state of the wrong shape says no option");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a replay of an odd shape leaves out the steps of a journey, never the page", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-odd-"));
+  try {
+    await mkdir(join(dir, "journeys-before"), { recursive: true });
+    const run = (steps: unknown) => ({ width: 1280, steps, calls: [], screens: [], counts: { steps: 2, screens: 1, back: 0 }, broken: null, sheet: "orders@1280.png" });
+    await writeFile(join(dir, "journeys-before", "report.json"), JSON.stringify({ url: "http://x", replayedAt: "", widths: [1280], warnings: [], journeys: [{ slug: "orders", name: "See my orders", runs: [run({})] }, { slug: "cart", name: "Fill the cart", runs: [run([null, { index: 1, action: "open /", capture: "cart@1280-01.png" }])] }] }));
+    const page = await readRun(dir, "run-1");
+    assert.equal(page.journeys[0]!.strip, undefined);
+    assert.deepEqual(page.journeys[1]!.strip, [{ index: 1, action: "open /", capture: "journeys-before/cart@1280-01.png" }]);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

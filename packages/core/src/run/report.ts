@@ -267,7 +267,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     const widths = [...new Set([...j.runs, ...(a?.runs ?? [])].map((r) => r.width))].sort((x, y) => x - y);
     // The steps as the last replay saw them, else as the first one did.
     const shot = a ? { run: widest(a), dir: lastReplay } : { run: widest(j), dir: "journeys-before" };
-    const strip = (shot.run?.steps ?? []).filter((s) => typeof s.capture === "string" && s.capture).map((s) => ({ index: s.index, action: s.action, capture: `${shot.dir}/${s.capture}` }));
+    const strip = (Array.isArray(shot.run?.steps) ? shot.run.steps : []).filter((s) => typeof s?.capture === "string" && s.capture).map((s) => ({ index: Number(s.index), action: String(s.action ?? ""), capture: `${shot.dir}/${s.capture}` }));
     return {
       slug: j.slug,
       name: j.name,
@@ -478,7 +478,15 @@ const ofFailure = (f: Failure): PageVerdict | null => {
 
 /** The screens in the order the page shows them: what the run redid or built first, then what it put back, then the rest. */
 const SCREEN_ORDER: ResultPage["screens"][number]["status"][] = ["kept", "new", "sent back", "unchanged", "does not load", "missing"];
-const orderedScreens = (r: ResultPage) => SCREEN_ORDER.flatMap((status) => r.screens.filter((s) => s.status === status));
+const orderedScreens = (r: ResultPage) => {
+  const ordered = SCREEN_ORDER.flatMap((status) => r.screens.filter((s) => s.status === status));
+  if (!isJudgement(r)) return ordered;
+  // A judgement shows first the screens with something failing, or that do not load, then the others.
+  const failing = (s: ResultPage["screens"][number]) => s.status === "does not load" || r.stillFailing.some((f) => f.where === s.page);
+  return [...ordered.filter(failing), ...ordered.filter((s) => !failing(s))];
+};
+/** A run that only judged: it redid nothing, and its page says what fails. */
+const isJudgement = (r: ResultPage) => r.judged === true && r.verdict?.nothingToRedo !== true && !r.built && (r.screens.length > 0 || r.journeys.length > 0 || !r.rounds?.length);
 /** What still fails, grouped by where it fails, in the order each place first comes. */
 const groupedFailures = (failures: Failure[]) => {
   const places = [...new Set(failures.map((f) => f.where))];
@@ -633,7 +641,7 @@ export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Reco
   // A run of directions alone, /aeom directions: no screen redone, its directions are what it gave.
   const onlyDirections = !r.screens.length && !r.journeys.length && !!r.rounds?.length;
   // A run that judged and redid nothing, /aeom judge: what fails is what it gave.
-  const judged = r.judged === true && !nothing && !onlyDirections && !r.built;
+  const judged = isJudgement(r) && !onlyDirections;
   const widthLabel = (width: number) => `${isPhone(width) ? w.phone : w.computer} · ${width} px`;
 
   // Every whole page the page can open, kept in a template: its full captures load only when it is opened.
@@ -699,12 +707,12 @@ export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Reco
   const large = (s: ResultPage["screens"][number]) => {
     const shots = two(s.widths).map((at) => compare(at, s.page)).join("");
     const count = s.count ? `<p class="score"><strong>${s.count.before} → ${s.count.after}</strong> ${w.problems(s.count.before)}</p>` : "";
-    return `<article class="screen redo" data-page="${escape(s.page)}" data-status="${s.status}"><div class="redo__shots">${shots}</div><div class="redo__text"><h4 class="route">${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${shown(s.status)}</span></h4>${count}${s.byKit ? `<p class="muted">${w.byKit}</p>` : ""}${s.cleared.length ? `<p class="small">${w.cleared}</p>${chips(s.cleared, "ok", w)}` : ""}${s.still.length || s.newly.length ? `<p class="small">${w.stillList}</p>${chips([...s.still, ...s.newly], "bad", w)}` : ""}<div class="redo__foot">${whole(s.page, w.whole, s.widths.map((at) => pair(at, s.page)).join(""))}${say(ofScreen(s))}</div></div></article>`;
+    return `<article class="screen redo" data-page="${escape(s.page)}" data-status="${s.status}"><div class="redo__shots">${shots}</div><div class="redo__text"><h4 class="route">${escape(s.page)} <span class="status ${s.status.replace(/ /g, "-")}">${shown(s.status)}</span></h4>${count}${s.byKit ? `<p class="muted">${w.byKit}</p>` : ""}${s.cleared.length ? `<p class="small">${w.cleared}</p>${chips(s.cleared, "ok", w)}` : ""}${s.still.length ? `<p class="small">${w.stillList}</p>${chips(s.still, "bad", w)}` : ""}${s.newly.length ? `<p class="small">${w.newly}</p>${chips(s.newly, "bad", w)}` : ""}<div class="redo__foot">${whole(s.page, w.whole, s.widths.map((at) => pair(at, s.page)).join(""))}${say(ofScreen(s))}</div></div></article>`;
   };
   const row = (s: ResultPage["screens"][number]) => {
     const widest = two(s.widths)[0];
     const why = s.back
-      ? `${(s.back.verdict === "worse" ? w.worse : w.same)(String(s.back.before ?? "?"), String(s.back.after ?? "?"))}${s.back.lost?.length ? ` · ${w.lost} ${s.back.lost.map(escape).join(", ")}` : ""}`
+      ? `${(s.back.verdict === "worse" ? w.worse : w.same)(escape(String(s.back.before ?? "?")), escape(String(s.back.after ?? "?")))}${s.back.lost?.length ? ` · ${w.lost} ${s.back.lost.map(escape).join(", ")}` : ""}`
       : "";
     const fails = failingOn(s.page);
     const end = s.status === "does not load" ? "" : judged ? `<b class="${fails.length ? "bad" : "ok"}">${fails.length}</b> ${w.problems(fails.length)}` : s.count ? `<b class="${s.count.after ? "bad" : "ok"}">${s.count.after}</b> ${escape(w.atEndCount(s.count.after).replace(/^\d+ /, ""))}` : "";
@@ -714,7 +722,7 @@ export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Reco
   const group = (label: string, note: string, items: string) => (items ? `<div class="group"><h3>${label}</h3>${note ? `<p class="small">${note}</p>` : ""}${items}</div>` : "");
   const ordered = orderedScreens(r);
   const rows = (list: ResultPage["screens"]) => (list.length ? `<ul class="rows">${list.map(row).join("")}</ul>` : "");
-  const tiles = (list: ResultPage["screens"]) => (list.length ? `<ul class="tiles">${list.map((s) => { const at = two(s.widths)[0]; return `<li class="screen" data-page="${escape(s.page)}" data-status="${s.status}">${at ? whole(s.page, img(at.before ?? at.after, `${s.page}, ${at.width} px`, w), s.widths.map((x) => pair(x, s.page)).join("")) : ""}<span class="route">${escape(s.page)}</span></li>`; }).join("")}</ul>` : "");
+  const tiles = (list: ResultPage["screens"]) => (list.length ? `<ul class="tiles">${list.map((s) => { const at = two(s.widths)[0]; return `<li class="screen" data-page="${escape(s.page)}" data-status="${s.status}">${at ? whole(s.page, img(at.before ?? at.after, `${s.page}, ${at.width} px`, w), s.widths.map((x) => pair(x, s.page)).join("")) : ""}<span class="route">${escape(s.page)}</span>${nothing ? "" : say(ofScreen(s))}</li>`; }).join("")}</ul>` : "");
   const screens = nothing
     ? tiles(ordered)
     : judged
@@ -724,9 +732,10 @@ export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Reco
   const journeyStatus = (status: string) => w.journeyStatus[status] ?? status;
   const journeys = r.journeys
     .map((j) => {
-      const steps = nothing ? "" : r.built ? `<span class="small">${j.steps.after ?? "?"} ${w.steps}</span>` : `<span class="small">${j.steps.before ?? "?"} → ${j.steps.after ?? "?"} ${w.steps}</span>`;
+      const n = (x: number | null) => escape(String(x ?? "?"));
+      const steps = nothing ? "" : r.built ? `<span class="small">${n(j.steps.after)} ${w.steps}</span>` : judged ? `<span class="small">${n(j.steps.before)} ${w.steps}</span>` : `<span class="small">${n(j.steps.before)} → ${n(j.steps.after)} ${w.steps}</span>`;
       const strong = j.status === "kept" || j.status === "new";
-      const strip = strong && j.strip?.length ? `<details open><summary>${w.stepsOf(j.strip.length)}</summary><ol class="strip">${j.strip.map((s) => `<li>${img(s.capture, `${j.name}, ${w.step} ${s.index}: ${s.action}`, w)}<span class="strip__n">${s.index}</span></li>`).join("")}</ol></details>` : "";
+      const strip = strong && j.strip?.length ? `<details open><summary>${w.stepsOf(j.strip.length)}</summary><ol class="strip">${j.strip.map((s) => `<li>${img(s.capture, `${j.name}, ${w.step} ${s.index}: ${s.action}`, w)}<span class="strip__n">${escape(String(s.index))}</span></li>`).join("")}</ol></details>` : "";
       // Unchanged, its status says it: the ratchet's reason is said only for a journey kept or put back.
       const why = j.why && j.status !== "unchanged" ? `<p class="muted">${escape(j.why)}</p>` : "";
       return `<li class="journey${strong ? " journey--strong" : ""}" data-journey="${escape(j.slug)}" data-status="${j.status}"><div class="journey__head"><h3>${escape(j.name)}</h3><span class="status ${j.status.replace(" ", "-")}">${journeyStatus(j.status)}</span>${steps}${chips(j.cleared, "ok", w)}${chips(j.remaining, "bad", w)}<span class="journey__acts">${j.widths.length ? whole(j.name, w.wholeJourney, j.widths.map((at) => pair(at, j.name)).join("")) : ""}${nothing ? "" : say(ofJourney(j))}</span></div>${j.broke.before ? `<p>${w.beforeTheRun}${escape(told(j.broke.before))}</p>` : ""}${j.broke.after && !nothing ? `<p>${w.atTheEnd}${escape(told(j.broke.after))}</p>` : ""}${why}${strip}</li>`;
@@ -761,7 +770,7 @@ export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Reco
       .join("")}</div>${round.start ? `<p>${escape(w.startFrom(round.start.slug, round.start.why))} <span class="muted">${w.advice}</span></p>` : ""}${round.decision ? `<p class="chosen"><strong>${escape(w.chosen(round.decision.applied, round.decision.why))}</strong></p>` : ""}</section>`;
   const [latest, ...earlier] = r.rounds ?? [];
   // On a page of directions alone, the page's own title says it already.
-  const directions = latest && !r.direction ? `<section id="directions"><div class="wrap">${onlyDirections ? "" : `<h2>${w.directions}</h2>`}${roundHtml(latest)}${earlier.length ? `<details><summary>${w.earlier}</summary>${earlier.map(roundHtml).join("")}</details>` : ""}</div></section>` : "";
+  const directions = latest && (!r.direction || onlyDirections) ? `<section id="directions"><div class="wrap">${onlyDirections ? "" : `<h2>${w.directions}</h2>`}${roundHtml(latest)}${earlier.length ? `<details><summary>${w.earlier}</summary>${earlier.map(roundHtml).join("")}</details>` : ""}</div></section>` : "";
 
   const direction = r.direction
     ? `<section id="direction"><div class="wrap"><div class="card direction"><h2>${w.directionOf(escape(r.direction.champion))}</h2>${r.direction.sentence ? `<p>${escape(r.direction.sentence)}</p>` : ""}<p class="muted">${chosenBy(r.direction, w)}</p>${[...r.direction.reasons, ...(r.direction.decision?.why ? [r.direction.decision.why] : [])].map((x) => `<blockquote>${escape(x)}</blockquote>`).join("")}${r.rounds?.length ? `<details class="rounds"><summary>${w.roundsOf(r.rounds.length)}</summary>${r.rounds.map(roundHtml).join("")}</details>` : ""}${r.direction.sheet ? `<div class="sheet">${whole(w.sheetAlt, img(r.direction.sheet, w.sheetAlt, w), `<div class="pair" data-label="${escape(w.sheetAlt)}"><div class="sides"><figure>${img(r.direction.sheet, w.sheetAlt, w)}</figure></div></div>`)}</div>` : ""}${say(ofDirection(r.direction))}</div></div></section>`
@@ -774,11 +783,11 @@ export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Reco
   const screensSection = `<section id="screens"><div class="wrap"><h2>${w.screens}</h2>${screens}</div></section>`;
   const journeysSection = r.journeys.length ? `<section id="journeys"><div class="wrap"><h2>${w.journeys}</h2><ol class="journeys">${journeys}</ol></div></section>` : "";
   const body = onlyDirections
-    ? directions
+    ? `${direction}${directions}`
     : nothing
     ? `${screensSection}${journeysSection}${accepted}`
     : `${directions}${direction}${screensSection}${journeysSection}${features}<section id="still"><div class="wrap"><h2>${judged ? w.judged : w.still}</h2>${stillHtml}</div></section>${accepted}`;
-  const foot = `<footer><div class="wrap">${r.verdict && !nothing ? `<p>${w.beforeRun}${escape(r.verdict.line)}</p>` : ""}${r.judges ? `<p>${w.judgedBy(escape(r.judges.models.join(", ") || w.unnamed), escape(r.judges.principles))}</p>` : ""}</div></footer>`;
+  const foot = `<footer><div class="wrap">${r.verdict && !nothing ? `<p>${judged ? "" : w.beforeRun}${escape(r.verdict.line)}</p>` : ""}${r.judges ? `<p>${w.judgedBy(escape(r.judges.models.join(", ") || w.unnamed), escape(r.judges.principles))}</p>` : ""}</div></footer>`;
   const dialog = wholes.length ? `<dialog id="whole" aria-labelledby="whole-title"><div class="whole"><div class="whole__bar"><span class="whole__title route" id="whole-title"></span><span class="whole__widths" role="group"></span><button type="button" class="whole__close">${w.close}</button></div><div class="whole__body"></div></div></dialog>${wholes.join("")}` : "";
 
   return `<!doctype html>
