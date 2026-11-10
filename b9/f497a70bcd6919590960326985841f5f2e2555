@@ -1,0 +1,52 @@
+.veebee/milestones/05-construire/tickets/18-les-juges-dans-la-langue-de-la-personne.md
+  s_8e0a8e5fb3c494::t_05d41860ea8ac7 1-6,8-32
+  s_8e0a8e5fb3c494::t_e2933fb887ec83 7
+packages/cli/src/commands/report.test.ts
+  s_8e0a8e5fb3c494::t_c614cc4a26d954 133,196,423
+packages/core/assets/fonts/OFL-jetbrains-mono.txt
+  s_8e0a8e5fb3c494::t_a67c6675b94215 1-93
+.veebee/milestones/05-construire/tickets/17-une-page-de-resultat-courte.md
+  s_8e0a8e5fb3c494::t_3ba20f44a12ea0 1-6,8-47
+  s_8e0a8e5fb3c494::t_e2933fb887ec83 7
+packages/core/src/run/fonts.ts
+  s_8e0a8e5fb3c494::t_36dc8899c9c943 1-26
+packages/core/src/run/report.ts
+  s_8e0a8e5fb3c494::t_40d366c62312b0 790,852
+  s_8e0a8e5fb3c494::t_a9ff581b8d33dc 363,411,740,773,780,855
+  s_8e0a8e5fb3c494::t_8fa5fbe887d218 857,873
+  s_8e0a8e5fb3c494::t_f2a1b6c9a9c8ab 371,419,728-732,764,828,911-913
+  s_8e0a8e5fb3c494::t_418bf142f2d0e9 875
+  s_8e0a8e5fb3c494::t_29805bd7545216 284
+  s_8e0a8e5fb3c494::t_06aaa22268eb6f 64-65
+  s_8e0a8e5fb3c494::t_585ffe6e013dcc 92-93,321-324,636
+  s_8e0a8e5fb3c494::t_3ddb622a67acc0 367,415
+  s_8e0a8e5fb3c494::t_0362a462873075 268-270
+  s_8e0a8e5fb3c494::t_51dff7405fced2 691,693
+  s_8e0a8e5fb3c494::t_89172802254c12 765-770
+  s_8e0a8e5fb3c494::t_fddf496a9fb0c9 12,331-332,335,342,361-362,364-366,368-369,372-381,384,388,391-393,395-398,400,402,406-410,412-414,416-417,420-429,438-459,479-487,491,568-606,622-625,635,637-675,677-680,682-690,692,694-707,709-722,724,726-727,733,735-739,741,745,748-750,752-754,756,759,761,771-772,774-775,779,781-782,792-801,804-827,829-851,853-854,856,858-872,874,876-910,914-969,971-982,988,990-992,994
+  s_8e0a8e5fb3c494::t_073a34de710fae 370,418
+packages/core/assets/fonts/OFL-bricolage-grotesque.txt
+  s_8e0a8e5fb3c494::t_a67c6675b94215 1-93
+packages/core/src/run/report.test.ts
+  s_8e0a8e5fb3c494::t_585ffe6e013dcc 248,259
+  s_8e0a8e5fb3c494::t_de0d25ee6e477f 317-333
+  s_8e0a8e5fb3c494::t_e0e70d3ade0479 94,165,208
+  s_8e0a8e5fb3c494::t_53f3c397f5f2ce 212-238,240-247,249-258,260-316
+  s_8e0a8e5fb3c494::t_7acda3a6d34b9c 239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b9f497a70bcd6919590960326985841f5f2e2555",
+  "prompts": {},
+  "sessions": {
+    "s_8e0a8e5fb3c494": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6b050ee-07cd-4562-a645-7e8743d2c317",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
