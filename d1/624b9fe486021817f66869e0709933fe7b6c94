@@ -1,0 +1,23 @@
+packages/core/src/run/report.test.ts
+  s_8e0a8e5fb3c494::t_7ea68e259ece68 260,335-344
+  s_8e0a8e5fb3c494::t_f4e7c755134300 345-348
+packages/core/src/run/report.ts
+  s_8e0a8e5fb3c494::t_74861082bc4bb2 270,710,715,725,735-736,738,773,786,790
+  s_8e0a8e5fb3c494::t_9812ac5a9651f6 481-489,644
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d1624b9fe486021817f66869e0709933fe7b6c94",
+  "prompts": {},
+  "sessions": {
+    "s_8e0a8e5fb3c494": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6b050ee-07cd-4562-a645-7e8743d2c317",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
