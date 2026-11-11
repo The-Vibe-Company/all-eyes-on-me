@@ -130,7 +130,7 @@ test("aeom report writes, in the run's folder, a page of what the run gave: the 
     assert.match(html, /data-page="\/" data-status="kept"/);
     assert.match(html, /data-page="\/contact" data-status="sent back"/);
     assert.match(html, /data-page="\/aide" data-status="does not load"/);
-    assert.match(html, /See my orders[^]*Before the run, it broke at step 2: the page answered 500[^]*2 → 3 steps[^]*Mes commandes is in the menu\./);
+    assert.match(html, /See my orders[^]*2 → 3 steps[^]*Before the run, it broke at step 2: the page answered 500[^]*Mes commandes is in the menu\./);
     assert.match(html, /Still failing[^]*\/contact[^]*states on \/contact: the list is blank/);
     assert.match(html, /Still failing[^]*\/aide[^]*not measured after the run/);
     assert.doesNotMatch(html, /Missing features/, "no section when the run named none");
@@ -193,7 +193,7 @@ test("a run that stopped before measuring the end lists what failed before it, n
     await put(join(R, "verdict.json"), { nothingToRedo: false, line: "Measured: 1 screen.", failures: [{ kind: "principle", where: "/", what: "states: the list is blank" }] });
     assert.equal((await run(dir, ["report"])).code, 0);
     const html = await readFile(join(R, "report.html"), "utf8");
-    assert.match(html, /Not measured after the run[^]*\/[^]*states: the list is blank/);
+    assert.match(html, /Not measured after the run[^]*\/[^]*<b>designed empty and error states<\/b>[^<]*the list is blank/);
     assert.doesNotMatch(html, /<p>Nothing\.<\/p>/);
     assert.match(html, /data-page="\/" data-status="unchanged"/);
   } finally {
@@ -420,7 +420,7 @@ test("a journey the critiques find nothing better in reads « unchanged » on th
 test("a page the kit fixed alone, with no worker, says so on the result page; never one that passed already or was put back", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
   const R = join(dir, ".aeom", "runs", "run-8");
-  const page = async () => (await readFile(join(R, "report.html"), "utf8")).match(/<section class="screen" data-page="\/"[^>]*>.*?<\/section>/s)![0];
+  const page = async () => (await readFile(join(R, "report.html"), "utf8")).match(/<(article|li) class="screen[^"]*" data-page="\/"[^>]*>.*?<\/\1>/s)![0];
   try {
     await changedRun(R);
     await snapshot(join(R, "end"), { "/": [] });
