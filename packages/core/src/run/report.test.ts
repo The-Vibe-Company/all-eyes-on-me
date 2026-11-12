@@ -346,3 +346,9 @@ test("a replay of an odd shape leaves out the steps of a journey, never the page
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("what the person says of a verdict counts the same whatever language the judges wrote it in: its id and its words name the principle, never the reason", () => {
+  const said = (what: string) => pageVerdicts({ ...PAGE, stillFailing: [{ kind: "principle", where: "/contact", what }] }).filter((v) => v.category === "principles");
+  assert.deepEqual(said("states: La liste des commandes est vide, sans un mot qui le dise."), said("states: the order list is blank, with no word saying so."));
+  assert.deepEqual(said("states: La liste est vide.").map((v) => [v.id, v.verdict]), [["fail:/contact:states", "/contact fails states"]]);
+});

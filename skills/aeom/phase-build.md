@@ -1,6 +1,6 @@
 # /aeom: a front from scratch
 
-Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (`/aeom build --from-scratch`). From SKILL.md it needs section 0 (the run, its branch), **The result page, served**, **The standard of the front** and **A run that stops, and is taken up again**; from the other files, the product sheet ([product.md](product.md)), the journey files ([journeys.md](journeys.md)), the directions in mockups (section 2d, [phase-mockups.md](phase-mockups.md)) and **Where workers work** and **Briefing any worker** ([phase-wave.md](phase-wave.md)).
+Part of the `/aeom` skill: [SKILL.md](SKILL.md) says when to read this file (`/aeom build --from-scratch`). From SKILL.md it needs section 0 (the run, its branch, **The person's language**), **The result page, served**, **The standard of the front** and **A run that stops, and is taken up again**; from the other files, the product sheet ([product.md](product.md)), the journey files ([journeys.md](journeys.md)), the directions in mockups (section 2d, [phase-mockups.md](phase-mockups.md)) and **Where workers work** and **Briefing any worker** ([phase-wave.md](phase-wave.md)).
 
 ## 2e. A front from scratch (`/aeom build --from-scratch <spec file | "a sentence"> [--api <url>]`, or `/aeom build --api <url>`)
 

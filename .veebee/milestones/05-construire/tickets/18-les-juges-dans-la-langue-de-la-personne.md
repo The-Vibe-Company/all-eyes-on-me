@@ -4,6 +4,7 @@ title: Les juges écrivent leurs constats dans la langue de la personne
 milestone: 05-construire
 depends_on: []
 design: null
+status: done
 tracker: { tool: github, id: 170, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/170 }
 ---
 

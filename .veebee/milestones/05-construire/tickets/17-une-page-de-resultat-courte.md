@@ -4,6 +4,7 @@ title: "La page de résultat tient en quelques écrans : le verdict d'abord, l'a
 milestone: 05-construire
 depends_on: [14]
 design: null
+status: done
 tracker: { tool: github, id: 171, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/171 }
 ---
 

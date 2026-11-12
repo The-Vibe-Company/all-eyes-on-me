@@ -7,6 +7,8 @@ description: Judge every captured page of a web app against the AEOM base princi
 
 You run the judge on the latest captures. One subagent votes on everything first; two more vote, independently, only on what it failed; then `aeom judge` counts. What the first one passed stands on its vote: most of a front passes, and three votes on all of it cost three times as much for little. Launch every judge of this skill, voter or not, as an `aeom-judge` agent, the agent AEOM installs (the Agent tool's `subagent_type: "aeom-judge"`, not this skill): it runs on Sonnet with only what a judge uses, and without the project's CLAUDE.md, since judging against written principles needs neither the model that coordinates the run nor the project's rules. When the Agent tool lists no `aeom-judge`, launch `general-purpose` with `model: "sonnet"`. Nothing calls an API.
 
+**In the person's language.** When the run kept a language other than English (`AEOM_LANG` in its mark), every brief below runs `aeom principles --lang $AEOM_LANG`, with `--journeys` or `--style-kept` as it says, instead of `aeom principles`: the voter reads there that it writes its reasons in that language and keeps each principle's id and each key of the JSON as they are. Votes still count by their ids, so a run in French compares with one in English.
+
 ## Steps
 
 1. **Fresh captures.** Run `aeom capture` right before judging, every time, with `--widths "$WIDTHS"` when the run noted its widths, so the judges never see an older state of the app. It reads `url` and `start` from `.aeom/config.json`; without that file, pass `--url` and `--start`.

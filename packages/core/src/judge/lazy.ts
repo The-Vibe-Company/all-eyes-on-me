@@ -24,6 +24,7 @@ const THINGS = new RegExp(
     "black", "white", "grey", "gray", "red", "green", "blue", "yellow", "orange", "purple", "violet", "pink", "brown", "beige", "cream", "terracotta", "navy", "teal", "gold", "amber",
     "boutons?", "liens?", "en-têtes?", "entêtes?", "pied", "barres?", "titres?", "listes?", "tableaux?", "tableau", "cartes?", "formulaires?", "champs?", "étiquettes?", "icônes?", "affiches?",
     "couleurs?", "palettes?", "fonds?", "dégradés?", "polices?", "grilles?", "colonnes?", "lignes?", "marges?", "bordures?", "ombres?", "blocs?", "panneaux?", "bandeaux?", "onglets?", "prix", "recherche", "filtres?", "vides?", "erreurs?", "étapes?", "chargement", "contraste",
+    "textes?", "typographie", "espacements?", "alignements?", "alignée?s?", "hiérarchie", "modales?", "bannières?", "logos?", "photos?", "menus?",
     "noir", "blanc", "gris", "rouge", "vert", "bleu", "jaune", "violet", "rose", "brun", "crème", "doré",
   ].join("|")})(?!\\p{L})`,
   "iu",
