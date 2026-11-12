@@ -284,3 +284,9 @@ test("what still gives a lazy vote away: two sentences of nothing, straight quot
   assert.match(lazyVotes([pasted])[0]?.why ?? "", /gives the same reason to 8 of 12 verdicts/);
   for (const admit of ["Je n’ai pas regardé les captures.", "I only skimmed the screenshots.", "Based on the previous verdict, it passes.", "I didn’t open the captures."]) assert.match(lazyVotes([said("1", { "/": { hierarchy: admit, states: "The list says nothing when empty." } })])[0]?.why ?? "", /says it did not look/, admit);
 });
+
+test("a careful vote in French counts when it names the type, the spacing or the hierarchy it sees, and one that names nothing is still refused", () => {
+  const vote = (reasons: string[]) => ({ voter: "1", pages: Object.fromEntries(reasons.map((reason, i) => [`/p${i}`, { states: { pass: false, reason } }])) }) as Vote;
+  assert.deepEqual(lazyVotes([vote(["La typographie hésite entre deux familles sans raison visible.", "L'espacement entre les sections varie d'une section à l'autre.", "La hiérarchie se perd sous le bandeau du haut.", "Le texte d'introduction est tassé contre la bannière."])]), []);
+  assert.equal(lazyVotes([vote(["La page est bien.", "Rien à signaler.", "Propre.", "Ça passe."])]).length, 1);
+});

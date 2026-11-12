@@ -179,7 +179,13 @@ const IN_LANGUAGE: Record<string, string> = {
 };
 
 export async function runPrinciples(argv: string[]): Promise<number> {
-  const { values } = parseArgs({ args: argv, options: { principles: { type: "string" }, journeys: { type: "boolean" }, "style-kept": { type: "boolean" }, lang: { type: "string", default: "en" }, help: { type: "boolean", short: "h" } } });
+  let values;
+  try {
+    ({ values } = parseArgs({ args: argv, options: { principles: { type: "string" }, journeys: { type: "boolean" }, "style-kept": { type: "boolean" }, lang: { type: "string", default: "en" }, help: { type: "boolean", short: "h" } } }));
+  } catch (error) {
+    console.error(`${(error as Error).message}\nUsage: aeom principles [--journeys | --style-kept] [--principles <file>] [--lang <en|fr>]`);
+    return 2;
+  }
   if (values.help) {
     console.log(`Usage: aeom principles [--journeys | --style-kept] [--principles <file>] [--lang <en|fr>]\n\nPrints the principles the judge uses, one per line: id, then what it asks for.\nWith --journeys, the principles it asks of each key journey. With --style-kept,\nwhat it asks of each page when a run keeps the app's style. With --lang fr, it\nends with the rule that a voter writes its reasons in French and keeps each id\nas it is: en (default) or fr, the person's language.`);
     return 0;

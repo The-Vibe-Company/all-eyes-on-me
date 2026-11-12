@@ -156,6 +156,7 @@ test("aeom principles --lang fr ends with the rule that reasons are in French an
   assert.equal(en.out, (await run(["principles", "--lang", "en"])).out);
   assert.doesNotMatch(en.out, /français/);
   assert.equal((await run(["principles", "--lang", "de"])).code, 2);
+  assert.equal((await run(["principles", "--lang"])).code, 2, "a --lang with nothing after it, as an empty variable gives, is refused, not a crash");
 });
 
 test("a journey vote that fails without naming its step is refused", async () => {
