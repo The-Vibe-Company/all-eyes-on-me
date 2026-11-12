@@ -173,13 +173,23 @@ export async function runJudge(argv: string[]): Promise<number> {
   return 1;
 }
 
+/** What a voter reads under the principles when the person speaks another language than English: its reasons in theirs, the ids and the keys as they are. */
+const IN_LANGUAGE: Record<string, string> = {
+  fr: "Écris chaque raison (« reason ») en français, avec les mots de la page tels qu'elle les montre. Garde l'id de chaque principe tel qu'il est écrit ci-dessus, et les clés du JSON telles que le brief les donne.",
+};
+
 export async function runPrinciples(argv: string[]): Promise<number> {
-  const { values } = parseArgs({ args: argv, options: { principles: { type: "string" }, journeys: { type: "boolean" }, "style-kept": { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  const { values } = parseArgs({ args: argv, options: { principles: { type: "string" }, journeys: { type: "boolean" }, "style-kept": { type: "boolean" }, lang: { type: "string", default: "en" }, help: { type: "boolean", short: "h" } } });
   if (values.help) {
-    console.log(`Usage: aeom principles [--journeys | --style-kept] [--principles <file>]\n\nPrints the principles the judge uses, one per line: id, then what it asks for.\nWith --journeys, the principles it asks of each key journey. With --style-kept,\nwhat it asks of each page when a run keeps the app's style.`);
+    console.log(`Usage: aeom principles [--journeys | --style-kept] [--principles <file>] [--lang <en|fr>]\n\nPrints the principles the judge uses, one per line: id, then what it asks for.\nWith --journeys, the principles it asks of each key journey. With --style-kept,\nwhat it asks of each page when a run keeps the app's style. With --lang fr, it\nends with the rule that a voter writes its reasons in French and keeps each id\nas it is: en (default) or fr, the person's language.`);
     return 0;
   }
+  if (values.lang !== "en" && !IN_LANGUAGE[values.lang]) {
+    console.error(`--lang is en or fr.`);
+    return 2;
+  }
   for (const p of await loadPrinciples(values.principles ?? (values.journeys ? JOURNEY_PRINCIPLES_FILE : values["style-kept"] ? STYLE_KEPT_PRINCIPLES_FILE : DEFAULT_PRINCIPLES_FILE))) console.log(`${p.id}  ${p.text}`);
+  if (IN_LANGUAGE[values.lang]) console.log(`\n${IN_LANGUAGE[values.lang]}`);
   return 0;
 }
 

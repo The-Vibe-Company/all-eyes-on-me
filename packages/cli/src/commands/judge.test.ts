@@ -147,6 +147,17 @@ test("aeom principles --journeys prints the journey principles", async () => {
   for (const id of JOURNEY_PRINCIPLES) assert.match(out, new RegExp(`^${id}  `, "m"));
 });
 
+test("aeom principles --lang fr ends with the rule that reasons are in French and ids as they are; in English it says nothing more", async () => {
+  const fr = await run(["principles", "--journeys", "--lang", "fr"]);
+  assert.equal(fr.code, 0);
+  for (const id of JOURNEY_PRINCIPLES) assert.match(fr.out, new RegExp(`^${id}  `, "m"), "the ids stay as they are");
+  assert.match(fr.out, /\n\nÉcris chaque raison \(« reason »\) en français[^\n]*Garde l'id de chaque principe tel qu'il est écrit ci-dessus/);
+  const en = await run(["principles"]);
+  assert.equal(en.out, (await run(["principles", "--lang", "en"])).out);
+  assert.doesNotMatch(en.out, /français/);
+  assert.equal((await run(["principles", "--lang", "de"])).code, 2);
+});
+
 test("a journey vote that fails without naming its step is refused", async () => {
   const dir = await journeys();
   try {
