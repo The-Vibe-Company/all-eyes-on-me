@@ -168,3 +168,21 @@ test("AEOM learns from the person: rules kept at once, lessons drawn from runs, 
   assert.match(skill, /`\.aeom\/taste\.md`, `\.aeom\/direction\/`/, "the rules said for the project never make the tree unclean");
   assert.match(skill, /refuses a run that skipped a measure or the standard/);
 });
+
+test("/aeom directions draws three, six or nine, and one of every round is the classic, never named for being sober", () => {
+  const mockups = read("phase-mockups.md");
+  assert.match(mockups, /\*\*How many: three, six or nine\.\*\* Three by default; `\/aeom directions --directions 6` or `--directions 9`/);
+  assert.match(mockups, /Any other number: say this mode draws three, six or nine, and ask which, once/);
+  assert.match(mockups, /exactly one of them is the classic, as directions\.md's \*\*The classic one\*\* says, its slug `classique`/);
+  assert.match(mockups, /--set "COUNT=<3, 6 or 9>"/, "a run taken up keeps its number");
+  assert.doesNotMatch(mockups, /three workers start|draw three new angles/, "the number of workers follows the count");
+  const classic = read("directions.md").split("## The classic one")[1]?.split("\n## ")[0] ?? "";
+  assert.match(classic, /shadcn\/ui/);
+  assert.match(classic, /A dated look stays banned, and so does every other banned look/);
+  assert.match(classic, /no other direction of the round takes that convention/);
+  assert.match(read("directions.md"), /- Inter or Space Grotesk on white with rounded cards, but for the classic of `\/aeom directions`\./);
+  const step7 = mockups.split("7. **Show them all, then ask.**")[1]?.split("**Variants.**")[0] ?? "";
+  assert.match(step7, /it is sober on purpose, so it is never named for looking conventional/);
+  assert.match(step7, /With six or nine, more than a question tool's options hold: say every direction in the message/);
+  assert.match(mockups.split("**Mockup brief.**")[1] ?? "", /The classic's worker is given directions\.md's \*\*The classic one\*\*/);
+});

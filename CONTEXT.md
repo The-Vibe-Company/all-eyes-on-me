@@ -29,6 +29,7 @@ The words AEOM uses, in code, tickets and sessions. The French term in parenthes
 - **Direction**: one art direction, built in real code on the home page. AEOM builds three per run by default (`/aeom --directions <n>` for another number), and keeps one; `/aeom --forcer-directions` builds them without waiting for the verdict.
 - **Source** (source): where a direction starts: something from the product's own world that its customers know (an object, a document, a place, a trade). Never a design movement.
 - **Banned looks** (liste noire): the looks an AI proposes by default when asked to be bold, listed in `skills/aeom/directions.md`. A direction one of them describes is named beside it when the person chooses, and removed before the tournament when nobody does (`--autonome`).
+- **Classic direction** (la classique): the one direction of every `/aeom directions` round that takes no risk, a sober, conventional interface such as a good team ships with shadcn/ui; the only one the banned look « Inter on white with rounded cards » does not bind. `/aeom directions` draws three, six or nine, the classic always among them.
 - **Direction kept** (direction gardée): the direction the person chose with `/aeom directions`, as mockups, kept in `.aeom/direction/` until a run builds on it.
 - **Kit** (couche design): the tokens and shared components (header, buttons, layout) every screen uses.
 - **Token**: a named design value (color, size, radius, shadow, spacing). Any value outside the tokens fails a check.
