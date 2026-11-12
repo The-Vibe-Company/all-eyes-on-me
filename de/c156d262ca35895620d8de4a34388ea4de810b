@@ -1,0 +1,34 @@
+agents/claude/aeom-judge.md
+  s_8e0a8e5fb3c494::t_62370af2d38966 11
+skills/aeom-judge/SKILL.md
+  s_8e0a8e5fb3c494::t_62370af2d38966 10-11
+packages/core/src/run/report.test.ts
+  s_8e0a8e5fb3c494::t_241a4cca45593c 349-354
+skills/aeom/SKILL.md
+  s_8e0a8e5fb3c494::t_62370af2d38966 48,107
+packages/cli/src/commands/judge.test.ts
+  s_8e0a8e5fb3c494::t_54900e2fa68286 150-160
+packages/cli/src/commands/judge.ts
+  s_8e0a8e5fb3c494::t_54900e2fa68286 176-180,182,184,187-190,192
+skills/skills.test.mjs
+  s_8e0a8e5fb3c494::t_4d28a6696f18cd 140,144-148
+  s_8e0a8e5fb3c494::t_363dd1b8c4e602 149-150
+.veebee/milestones/05-construire/tickets/17-une-page-de-resultat-courte.md
+  s_8e0a8e5fb3c494::t_ff959433518653 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dec156d262ca35895620d8de4a34388ea4de810b",
+  "prompts": {},
+  "sessions": {
+    "s_8e0a8e5fb3c494": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6b050ee-07cd-4562-a645-7e8743d2c317",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
