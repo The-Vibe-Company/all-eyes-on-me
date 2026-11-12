@@ -1,0 +1,39 @@
+skills/aeom/SKILL.md
+  s_41dd3f435bbe9c::t_251999adf5b2e0 4,20,36
+skills/aeom/directions.md
+  s_41dd3f435bbe9c::t_497de5bd2999c1 17
+  s_41dd3f435bbe9c::t_71fa4560b9b296 59-64,66-67
+  s_41dd3f435bbe9c::t_5b1b9241a9d75e 3
+  s_41dd3f435bbe9c::t_a0a47e3d69dfe3 65
+skills/aeom/phase-mockups.md
+  s_41dd3f435bbe9c::t_1d469240d5376e 7
+  s_41dd3f435bbe9c::t_c69c725c91bc90 36
+  s_41dd3f435bbe9c::t_8b2ebcd4e39109 24
+  s_41dd3f435bbe9c::t_1544385b70c8d6 28
+  s_41dd3f435bbe9c::t_a2aea7a9901bf1 16-17
+  s_41dd3f435bbe9c::t_6beb0ad0d9ce05 23
+  s_41dd3f435bbe9c::t_c2bdd5240142bb 31
+  s_41dd3f435bbe9c::t_be50fedf3979aa 3
+CONTEXT.md
+  s_41dd3f435bbe9c::t_b0efc93fc155cb 32
+README.md
+  s_41dd3f435bbe9c::t_b0efc93fc155cb 67
+skills/skills.test.mjs
+  s_41dd3f435bbe9c::t_af796cd05433fe 171-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ec3553c854bc519347b95ee6f5f974c112d1484",
+  "prompts": {},
+  "sessions": {
+    "s_41dd3f435bbe9c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97b3dd4e-1a93-4767-bd4d-26780ae0bdb1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
