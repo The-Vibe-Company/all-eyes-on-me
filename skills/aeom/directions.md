@@ -1,6 +1,6 @@
 # Directions
 
-Three directions for one product by default, or as many as the user asks: not one of them may look like an AI default, and no two may stand on one skeleton.
+Three directions for one product by default, or as many as the user asks: not one of them may look like an AI default, and no two may stand on one skeleton. `/aeom directions` adds one exception, the classic (**The classic one** below).
 
 ## The banned looks
 
@@ -14,7 +14,7 @@ A model asked to "be bold" reaches for these. A direction that one of them descr
 - Didot or another high-contrast serif with small caps and a gold or brass accent.
 - Kraft paper, rubber stamps, scalloped edges, hand-drawn labels.
 - A purple-to-blue gradient, glassy cards, glow.
-- Inter or Space Grotesk on white with rounded cards.
+- Inter or Space Grotesk on white with rounded cards, but for the classic of `/aeom directions`.
 - A dated look, the web of the 2000s and early 2010s: glossy or bevelled buttons, a gradient on every block, heavy borders and drop shadows on everything, clip-art pictograms, rounded bubbly type. A direction must look like what a good team would ship this year.
 - On a game or a creative product, a document interface laid over it: a survey map with contour lines and a graduated frame, an administrative form, a dashboard of cards and charts, a spreadsheet. Players open a game to enter its world, not to read a document about it.
 
@@ -55,6 +55,15 @@ A source alone gives three skins on one skeleton: the same header, the same sear
 2. **None the same.** Two theses that would draw the same skeleton, such as two grids of cards under a header, are one: change one. On the product as it is, none is its current structure: a direction that keeps its header, its menu and its blocks where they are is the front repainted.
 3. **What a screen holds stays**: every piece of data and every action, laid out anew. A thesis never drops an action to make room, nor adds one.
 4. **A charter that fixes the look** keeps it whole in every direction: the theses are then what sets them apart. Without one, the product's own colour, its logo's, comes back as a touch at most, never as the palette.
+
+## The classic one
+
+Every round of `/aeom directions` holds exactly one direction that takes no risk, its slug `classique`: the interface a careful team ships this year with a well-known kit such as shadcn/ui, for the person who wants a front that is clean, readable and current rather than original. Neutral greys on white, or a dark mode as sober; one accent, the product's own colour when it has one; one plain sans, such as Geist, Inter or the system's; thin borders, small radii, light shadows if any, generous spacing; the conventional skeleton of its kind, a side rail and a content area for a tool, a top bar and a grid for a shop, a top bar and one column for a page that is read. For a game or a creative product, the clean, flat interface of the best-known games of its genre, its illustrations and logo kept as they are, framed plainly.
+
+- **No source from the product's world**: no material, no texture, no illustration style of its own, no wink at the product's name. Its sentence says what it puts forward of the product's main loop, and how.
+- **Still a direction**: polished, current, every state drawn, the data and the actions of each screen laid out with care. A dated look stays banned, and so does every other banned look; « Inter or Space Grotesk on white with rounded cards » alone is its own.
+- **The convention is its structure**: it is the one exception to **A structure of its own** above. It may stand on the skeleton the front as it is already follows; no other direction of the round takes that convention.
+- **A charter that fixes the look** is kept whole: the classic is then the sober reading of what it leaves open.
 
 ## Saying a direction in plain words
 
