@@ -1,0 +1,28 @@
+packages/core/src/run/report.ts
+  s_19f4aebf02b617::t_5ca303b47fb228 329-330
+packages/core/src/run/judgement.ts
+  s_19f4aebf02b617::t_5ca303b47fb228 5,108-109,153-155,157-161,195,211-213,256,258,266,271,273,276,282,285-287,291-293,298,350,360,392-394,396-397
+packages/core/src/run/report.test.ts
+  s_19f4aebf02b617::t_59f9c6f336ba54 361,367-368,370,372,379,382,441,446,478,481,502-507
+  s_19f4aebf02b617::t_234428f72f47cd 589-602
+packages/core/src/judge/tally.ts
+  s_19f4aebf02b617::t_5ca303b47fb228 122
+packages/core/src/judge/judge.test.ts
+  s_19f4aebf02b617::t_59f9c6f336ba54 309
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a17b5b889d63f6c747e7e6368ee0b953b98e52b4",
+  "prompts": {},
+  "sessions": {
+    "s_19f4aebf02b617": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "30f98074-20f1-4e3f-8264-10b2aac5bf0b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
