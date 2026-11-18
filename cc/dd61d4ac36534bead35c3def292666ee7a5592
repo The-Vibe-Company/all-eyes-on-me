@@ -1,0 +1,35 @@
+site/shared/kit.css
+  s_b993fd876a624a::t_de2362ac44540c 115-118
+  s_b993fd876a624a::t_b9edc6f5c26651 3
+  s_b993fd876a624a::t_acebcf3e1d6bde 226-227
+  s_b993fd876a624a::t_61f2b9004eec8d 249-255,257-262
+  s_b993fd876a624a::t_746ae732976d3d 256
+site/pages/index.html
+  s_b993fd876a624a::t_b9edc6f5c26651 48,71,91,104
+site/site.test.mjs
+  s_b993fd876a624a::t_d94354e471b9ce 273,275-276
+  s_b993fd876a624a::t_02e742aebdae97 225
+  s_b993fd876a624a::t_594096b075e3ea 250-272,274,277-281
+site/pages/commands.html
+  s_b993fd876a624a::t_b9edc6f5c26651 19-23,30,48,93,111,129
+  s_b993fd876a624a::t_c9f3ed3f9c2bb3 52-53,55
+  s_b993fd876a624a::t_b50ae45fd5f893 62-83,85-87
+  s_b993fd876a624a::t_a1c904f820501c 25
+  s_b993fd876a624a::t_68b065a9d14b2e 84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ccdd61d4ac36534bead35c3def292666ee7a5592",
+  "prompts": {},
+  "sessions": {
+    "s_b993fd876a624a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "da39c247-1c8a-40ac-a4cf-a149cba3d0cc",
+        "model": "unknown"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
