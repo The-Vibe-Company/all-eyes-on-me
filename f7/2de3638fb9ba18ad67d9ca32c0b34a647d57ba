@@ -1,0 +1,21 @@
+site/shared/kit.css
+  s_b993fd876a624a::t_753f2bc9c96525 26-27
+site/site.test.mjs
+  s_b993fd876a624a::t_f2c1999217d3c1 282-288
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f72de3638fb9ba18ad67d9ca32c0b34a647d57ba",
+  "prompts": {},
+  "sessions": {
+    "s_b993fd876a624a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "da39c247-1c8a-40ac-a4cf-a149cba3d0cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
