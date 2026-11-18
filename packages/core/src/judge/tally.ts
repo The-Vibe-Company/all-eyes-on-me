@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { acceptedOnJourney, acceptedOnPage, type AcceptedException } from "../product/exceptions.js";
+import { concreteness } from "./lazy.js";
 import type { Principle } from "./principles.js";
 
 export interface Verdict {
@@ -8,6 +9,8 @@ export interface Verdict {
   reason: string;
   /** For a journey: the step where the verdict shows, 1 for the first. */
   step?: number;
+  /** For a failure, when the voter says one: a concrete change, in one sentence, that would make it pass. */
+  fix?: string;
 }
 
 /** What one voter decided: for each page, for each principle, pass or fail. */
@@ -33,6 +36,8 @@ export interface PrincipleVerdict {
   at?: { step: number; reason: string }[];
   /** The product sheet accepts it failing here, by the person's choice or the spec's: it passes, said apart. */
   accepted?: { why: string; source: string };
+  /** For a failure, the most concrete fix the voters who failed it gave, when any did. */
+  fix?: string;
 }
 
 export interface JudgeReport {
@@ -114,6 +119,7 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
         else if (typeof verdict.reason !== "string" || !verdict.reason.trim()) problems.push(`voter ${vote.voter}, ${page}: no reason for ${id}`);
         else if (verdict.step !== undefined && (!Number.isInteger(verdict.step) || verdict.step < 1)) problems.push(`voter ${vote.voter}, ${page}: the step for ${id} must be a step number, 1 or more`);
         else if (steps && !verdict.pass && verdict.step === undefined) problems.push(`voter ${vote.voter}, ${page}: no step for ${id}, where the failure shows`);
+        if (verdict && verdict.fix !== undefined && typeof verdict.fix !== "string") problems.push(`voter ${vote.voter}, ${page}: the fix for ${id} must be a sentence`);
       }
       for (const id of Object.keys(verdicts)) if (!ids.has(id)) problems.push(`voter ${vote.voter}, ${page}: unknown principle ${id}`);
     }
@@ -136,6 +142,12 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
         ...(() => {
           const at = cast.filter((v) => v.pass === pass && v.step !== undefined).map((v) => ({ step: v.step!, reason: v.reason }));
           return at.length ? { at } : {};
+        })(),
+        // One fix for a failure, the most concrete of those its voters gave; none for a pass.
+        ...(() => {
+          const fixes = pass ? [] : cast.filter((v) => !v.pass && typeof v.fix === "string" && v.fix.trim()).map((v) => v.fix!.trim());
+          const fix = fixes.reduce<string | null>((best, f) => (best === null || concreteness(f) > concreteness(best) ? f : best), null);
+          return fix ? { fix } : {};
         })(),
       };
     }),
@@ -199,7 +211,10 @@ export function acceptVerdicts<T extends JudgeReport>(report: T, exceptions: Acc
       if (before) v.pass = false;
       if (v.pass) return v;
       const exception = journeys ? acceptedOnJourney(exceptions, v.principle, journeys.find((j) => j.slug === page.page) ?? { slug: page.page }) : acceptedOnPage(exceptions, v.principle, page.page);
-      return exception ? { ...v, pass: true, accepted: { why: exception.why, source: exception.source } } : v;
+      if (!exception) return v;
+      // Accepted, it passes: no fix to give.
+      const { fix: _fix, ...kept } = v;
+      return { ...kept, pass: true, accepted: { why: exception.why, source: exception.source } };
     }),
   }));
   return { ...report, pages, failures: pages.reduce((n, p) => n + p.verdicts.filter((v) => !v.pass).length, 0) };

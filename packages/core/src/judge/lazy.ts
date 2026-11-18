@@ -42,6 +42,19 @@ function precise(reason: string): boolean {
   return words.length >= 14;
 }
 
+/**
+ * How much a sentence names of what it is about: words of the page in quotation marks, numbers, parts of a page,
+ * names, then its length. Of two fixes or two reasons, the one that scores more is the more concrete.
+ */
+export function concreteness(text: string): number {
+  const quoted = (text.match(/["“”«»]\s*[^"“”«»]+?\s*["“”«»]/gu) ?? []).length;
+  const numbers = (text.match(/\d+/g) ?? []).length;
+  const things = (text.match(new RegExp(THINGS.source, "giu")) ?? []).length;
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const names = words.filter((w, i) => i > 0 && /^\p{Lu}\p{Ll}{2,}/u.test(w)).length;
+  return quoted * 3 + numbers * 2 + things + names + Math.min(words.length, 40) / 20;
+}
+
 /** A reason that names nothing: every sentence of it a word such as « Fine », a single word, or nothing of the page in it. */
 const thinReason = (reason: string) => sentences(reason).every((s) => GENERIC.test(s)) || reason.trim().split(/\s+/).length < 2 || !precise(reason);
 

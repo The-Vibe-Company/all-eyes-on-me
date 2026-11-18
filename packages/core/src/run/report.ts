@@ -11,6 +11,7 @@ import { DEFAULT_WIDTHS, route, usableWidths } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { fontFaces } from "./fonts.js";
 import { blockedJourneys } from "./features.js";
+import { judgementHtml, judgementVerdicts, readJudgement, type Judgement } from "./judgement.js";
 import type { FeedbackCategory } from "./taste.js";
 import { STYLE_CHECKS, STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
 
@@ -91,6 +92,8 @@ export interface ResultPage {
   replug?: boolean;
   /** True for a run that only judged (`/aeom judge`, kept as `--juger` or `--diagnostic` in its `state.json`): it redid nothing. */
   judged?: true;
+  /** What a run that only judged found, good and bad, merged and ranked: its page is a judgement, not a comparison. */
+  judgement?: Judgement;
   /** What blocked journeys would need, named by `aeom features`, never built. */
   features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
 }
@@ -319,9 +322,12 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const measured = usableWidths(before?.widths ?? replayBefore?.widths ?? (built ? after?.widths : undefined));
   const widths = measured ? { measured, leftOut: DEFAULT_WIDTHS.filter((w) => !measured.includes(w)) } : undefined;
   // The options the run kept, with or without their dashes: a state of the wrong shape says none.
-  const options = await json<{ options?: unknown }>(join(runDir, "state.json")).then((s) => (Array.isArray(s?.options) ? s.options.filter((o): o is string => typeof o === "string") : []), () => [] as string[]);
-  const judged = options.some((o) => /^(--)?(juger|diagnostic)$/.test(o));
-  return { run, verdict, direction, screens, journeys, stillFailing, ...(rounds.length ? { rounds } : {}), ...(accepted.length ? { accepted } : {}), ...(judges ? { judges } : {}), measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}), ...(judged ? { judged: true as const } : {}) };
+  const state = await json<{ options?: unknown; phase?: unknown }>(join(runDir, "state.json")).catch(() => null);
+  const options = Array.isArray(state?.options) ? state.options.filter((o): o is string => typeof o === "string") : [];
+  // Kept with its option; or a run that ended once it judged: no after, no branch opened, no direction drawn, something failing.
+  const judged = options.some((o) => /^(--)?(juger|diagnostic)$/.test(o)) || (state?.phase === "done" && !last && !built && !rounds.length && verdict !== null && verdict.nothingToRedo !== true && !(await exists(join(runDir, "base"))));
+  const judgement = judged ? await readJudgement(runDir) : null;
+  return { run, verdict, direction, screens, journeys, stillFailing, ...(rounds.length ? { rounds } : {}), ...(accepted.length ? { accepted } : {}), ...(judges ? { judges } : {}), measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}), ...(judged ? { judged: true as const } : {}), ...(judgement ? { judgement } : {}) };
 }
 
 
@@ -495,6 +501,7 @@ const groupedFailures = (failures: Failure[]) => {
 
 /** Every verdict the page asks about, in its order: what `aeom report --serve` accepts a gesture on. */
 export function pageVerdicts(r: ResultPage): PageVerdict[] {
+  if (r.judgement) return r.judgement.nothingToRedo ? [NOTHING_TO_REDO] : judgementVerdicts(r.judgement);
   if (r.verdict?.nothingToRedo === true) return [NOTHING_TO_REDO];
   return [...(r.direction ? [ofDirection(r.direction)] : []), ...orderedScreens(r).map(ofScreen), ...r.journeys.map(ofJourney), ...groupedFailures(r.stillFailing).flatMap((g) => g.failures.flatMap((f) => ofFailure(f) ?? []))];
 }
@@ -631,9 +638,12 @@ function widthsHtml(widths: ResultPage["widths"], w: Words): string {
 const isPhone = (width: number) => width < 600;
 
 /** The page, standalone: its styles and fonts inline, its images beside it in the run's folder, nothing from the network. */
-export function resultHtml(r: ResultPage, { rates, lang = "en" }: { rates?: Record<string, { agreed: number; total: number }>; lang?: PageLang } = {}): string {
+export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Record<string, { agreed: number; total: number }>; lang?: PageLang } = {}): string {
+  // A judgement speaks its product sheet's language unless the person's is given; any other page, English by default.
+  const lang: PageLang = asked ?? r.judgement?.lang ?? "en";
   const w = WORDS[lang] ?? WORDS.en;
   const say = sayIn(w);
+  if (r.judgement) return judgementHtml(r.judgement, { run: r.run, lang, say, rates: ratesHtml(rates, w), feedbackScript: feedbackScript(w) });
   const shown = (status: string) => w.status[status] ?? status;
   // What reading the run wrote in its own words: said in the page's language.
   const told = (text: string) => text.replace(/^it broke at step (\d+): ([\s\S]*)$/, (_, n: string, why: string) => w.brokeAt(n, why)).replace(/^did not load before the run, and was not measured after the run$/, w.notLoaded);

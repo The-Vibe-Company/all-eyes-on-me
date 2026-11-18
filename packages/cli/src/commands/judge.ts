@@ -175,7 +175,7 @@ export async function runJudge(argv: string[]): Promise<number> {
 
 /** What a voter reads under the principles when the person speaks another language than English: its reasons in theirs, the ids and the keys as they are. */
 const IN_LANGUAGE: Record<string, string> = {
-  fr: "Écris chaque raison (« reason ») en français, avec les mots de la page tels qu'elle les montre. Garde l'id de chaque principe tel qu'il est écrit ci-dessus, et les clés du JSON telles que le brief les donne.",
+  fr: "Écris chaque raison (« reason ») et chaque piste (« fix ») en français, avec les mots de la page tels qu'elle les montre. Garde l'id de chaque principe tel qu'il est écrit ci-dessus, et les clés du JSON telles que le brief les donne.",
 };
 
 export async function runPrinciples(argv: string[]): Promise<number> {

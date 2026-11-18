@@ -4,6 +4,7 @@ export { ConfigError, loadConfig, type LoginConfig, type ProjectConfig } from ".
 export { isInside, snapshot, SnapshotPathError } from "./snapshot.js";
 export { IDENTITY_PRINCIPLES, STYLE_CHECKS, STYLE_PRINCIPLES, verdictOf, type Failure, type RunVerdict } from "./verdict.js";
 export { pageVerdicts, readRun, resultHtml, RunReportError, type PageLang, type PageVerdict, type ResultPage, type SavedVerdict } from "./report.js";
+export { judgementOf, productHead, sheetLang, type Judgement, type Strength, type WeakPoint } from "./judgement.js";
 export { BLOCKING_PRINCIPLES, blockedJourneys, type BlockedJourney } from "./features.js";
 export { addFeedback, aeomHome, agreementRates, FEEDBACK_CATEGORIES, readFeedback, runKey, type Feedback, type FeedbackCategory } from "./taste.js";
 export { prBody } from "./pr.js";

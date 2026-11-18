@@ -352,3 +352,231 @@ test("what the person says of a verdict counts the same whatever language the ju
   assert.deepEqual(said("states: La liste des commandes est vide, sans un mot qui le dise."), said("states: the order list is blank, with no word saying so."));
   assert.deepEqual(said("states: La liste est vide.").map((v) => [v.id, v.verdict]), [["fail:/contact:states", "/contact fails states"]]);
 });
+
+// A run of /aeom judge as it is left on disk: the before snapshot, the replay of the journeys and their critique, the
+// verdict, and the product sheet beside the runs. The catch-all reason is pasted over three principles: it says nothing.
+const CATCH_ALL = "Consistent with the warm look.";
+const URL_OF = (path: string) => `http://localhost:3000${path}`;
+const verdictOn = (principle: string, pass: boolean, votes: string, reasons: string[], more: Record<string, unknown> = {}) => ({ principle, pass, votes, reasons, dissent: [], steps: [], ...more });
+async function judgedRun(root: string, { state = true, product = true, after = false, base = false }: { state?: boolean; product?: boolean; after?: boolean; base?: boolean } = {}): Promise<string> {
+  const dir = join(root, ".aeom", "runs", "run-1");
+  await mkdir(join(dir, "before", "captures", "journeys"), { recursive: true });
+  await mkdir(join(dir, "before", "reports"), { recursive: true });
+  const routes = ["/", "/equipe", "/commandes"];
+  const file = (p: string) => `${p === "/" ? "index" : p.slice(1)}@1280.png`;
+  await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: URL_OF("/"), capturedAt: "", widths: [1280], pages: routes.map((p) => ({ url: URL_OF(p), path: p, files: [{ width: 1280, file: file(p) }] })), errors: [] }));
+  await writeFile(join(dir, "before", "reports", "check.json"), JSON.stringify({
+    url: URL_OF("/"), checkedAt: "", widths: [1280], checks: ["focus", "console", "contrast", "cursor"], pages: routes.map(URL_OF), errors: [],
+    findings: [
+      ...routes.map((p) => ({ check: "focus", url: URL_OF(p), width: 1280, element: 'a.brand_x1 "RADAR"', message: "nothing shows it has the keyboard focus: give it a visible outline or ring (:focus-visible)" })),
+      ...["/", "/commandes"].map((p) => ({ check: "console", url: URL_OF(p), width: 1280, message: "console error: Failed to load resource: the server responded with a status of 503 (Service Unavailable)" })),
+      { check: "contrast", url: URL_OF("/commandes"), width: 1280, element: 'span.total "12 €"', message: "text contrast is 3.1:1, needs 4.5:1" },
+    ],
+  }));
+  const principles = ["one-direction", "hierarchy", "density", "states"].map((id) => ({ id, text: id }));
+  await writeFile(join(dir, "before", "reports", "judge.json"), JSON.stringify({
+    judgedAt: "", voters: ["1", "2", "3"], principles, widths: [1280], failures: 4,
+    pages: [
+      { page: "/", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["Same look as the rest."]), verdictOn("hierarchy", true, "1/1 pass", [CATCH_ALL]), verdictOn("density", false, "3/3 fail", ["The calendar is packed and the third column is empty.", "Cards are crammed.", "The third column is empty."], { fix: "Move the three « À faire » cards under the calendar and drop the empty third column." }), verdictOn("states", true, "1/1 pass", [CATCH_ALL])] },
+      { page: "/equipe", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["The team list keeps the orange « Inviter » button and the « Équipe » title in condensed type, as on the home."]), verdictOn("hierarchy", false, "2/3 fail", ["Only an error pill sits under the title.", "No focal point under the title."]), verdictOn("density", true, "1/1 pass", [CATCH_ALL]), verdictOn("states", false, "3/3 fail", ["The page says « Supabase n'est pas configuré » and the rest is blank.", "A config error and nothing else.", "Blank under the error."])] },
+      { page: "/commandes", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["Same orange buttons and cream ground as the home."]), verdictOn("hierarchy", true, "1/1 pass", ["The « Commandes » title leads, then the table of 12 orders."]), verdictOn("density", false, "2/3 fail", ["Rows of 13 px are crammed together.", "The table rows touch."], { fix: "Give each row of the table 12 px more height." }), verdictOn("states", true, "1/1 pass", [CATCH_ALL])] },
+    ],
+  }));
+  const step = (slug: string, index: number, action: string, path: string) => ({ index, action, path, capture: `${slug}@1280-0${index}.png` });
+  const run = (slug: string, steps: ReturnType<typeof step>[], broken: { step: number; reason: string } | null) => ({ width: 1280, steps, calls: [], screens: [], counts: { steps: steps.length, screens: 1, back: 0 }, broken, sheet: `${slug}@1280.png` });
+  await writeFile(join(dir, "before", "captures", "journeys", "report.json"), JSON.stringify({
+    url: URL_OF("/"), replayedAt: "", widths: [1280], warnings: [],
+    journeys: [
+      { slug: "see-orders", name: "Voir mes commandes", runs: [run("see-orders", [step("see-orders", 1, "open /", "/"), step("see-orders", 2, 'click "Commandes"', "/")], { step: 2, reason: '"Commandes" is not on the screen' })] },
+      { slug: "find-member", name: "Trouver un membre", runs: [run("find-member", [step("find-member", 1, "open /", "/"), step("find-member", 2, 'click "Équipe"', "/equipe"), step("find-member", 3, 'see "Membres"', "/equipe")], null)] },
+    ],
+  }));
+  await writeFile(join(dir, "before", "reports", "judge-journeys.json"), JSON.stringify({
+    judgedAt: "", voters: ["1", "2", "3"], principles: ["same-words", "result-shown"].map((id) => ({ id, text: id })), failures: 3, broken: [],
+    pages: [
+      { page: "see-orders", verdicts: [verdictOn("same-words", false, "3/3 fail", ["The menu says « Achats » but the page is « Commandes »."], { steps: [2], fix: "Name the menu entry « Commandes », as the page is named." }), verdictOn("result-shown", true, "1/1 pass", ["The table lists 12 orders with their totals in euros."], { steps: [2] })] },
+      { page: "find-member", verdicts: [verdictOn("same-words", false, "2/3 fail", ["The link says « Équipe », the title « Membres »."], { steps: [2] }), verdictOn("result-shown", false, "3/3 fail", ["The list says « Supabase n'est pas configuré » instead of the members."], { steps: [3] })] },
+    ],
+  }));
+  await writeFile(join(dir, "verdict.json"), JSON.stringify({ nothingToRedo: false, line: "Measured: 3 screens at 1280 px.", failures: [], keepStyle: false, identity: true, recommend: "keep" }));
+  if (state) await writeFile(join(dir, "state.json"), JSON.stringify({ run: "run-1", options: ["--juger"] }));
+  if (product) await writeFile(join(root, ".aeom", "product.md"), "# Radar\n\n## What kind of product\n`tool`: une interface interne de veille, pour suivre les appels d’offres et les dossiers de candidature. (seen: README.md)\n\n## What it is for\nRadar aide l’équipe à repérer les appels d’offres pertinents et à préparer les dossiers. (seen: README.md)\n\n## Who uses it\nL’équipe, chaque matin. (to confirm)\n\n## Where it is used\n`desktop`: Antoine said so. (seen: Antoine)\n\n## The main loop\nOuvrir la vue d’ensemble, parcourir les opportunités, suivre les dossiers. (seen: /)\n\n## Key journeys\n\n### Voir mes commandes\nWhy: retrouver ses commandes. (seen: /)\n1. Open `/`.\n2. Click « Commandes ».\n");
+  if (after) {
+    await mkdir(join(dir, "after", "captures"), { recursive: true });
+    await writeFile(join(dir, "after", "captures", "manifest.json"), JSON.stringify({ url: URL_OF("/"), capturedAt: "", widths: [1280], pages: [], errors: [] }));
+  }
+  if (base) await writeFile(join(dir, "base"), "main\n");
+  return dir;
+}
+
+test("a run that only judged is read as a judgement, from its option or, without one, from a run that ended with no after and no branch", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const dir = await judgedRun(root, { state: false });
+    assert.equal((await readRun(dir, "run-1")).judged, undefined, "no state: a run that stopped before its end, not a judgement");
+    await writeFile(join(dir, "state.json"), JSON.stringify({ run: "run-1", options: [], phase: "done" }));
+    const page = await readRun(dir, "run-1");
+    assert.equal(page.judged, true, "ended with no after and no branch: it only judged");
+    assert.ok(page.judgement, "its judgement is read");
+    await writeFile(join(dir, "state.json"), JSON.stringify({ run: "run-1", options: [], phase: "pages" }));
+    assert.equal((await readRun(dir, "run-1")).judged, undefined, "a run still under way is not a judgement");
+    await writeFile(join(dir, "state.json"), JSON.stringify({ run: "run-1", options: [], phase: "done" }));
+    await writeFile(join(dir, "base"), "main\n");
+    assert.equal((await readRun(dir, "run-1")).judged, undefined, "a run branch was opened: a redo that stopped, not a judgement");
+    await writeFile(join(dir, "state.json"), JSON.stringify({ run: "run-1", options: ["diagnostic"] }));
+    assert.equal((await readRun(dir, "run-1")).judged, true, "the option says it, whatever else the folder holds");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("the judgement says the product, what was measured, the verdict and the recommendation, in the product sheet's language", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const page = await readRun(await judgedRun(root), "run-1");
+    const j = page.judgement!;
+    assert.deepEqual(j.product, { name: "Radar", sentence: "Une interface interne de veille, pour suivre les appels d’offres et les dossiers de candidature." });
+    assert.equal(j.lang, "fr", "the sheet is written in French");
+    assert.deepEqual(j.measured, { screens: 3, widths: [1280], checks: 4, principles: 4, journeys: 2, journeyPrinciples: 2, judges: 6 });
+    const html = resultHtml(page);
+    assert.match(html, /<html lang="fr">/, "no --lang: the sheet's language");
+    assert.match(html, /<h1[^>]*>Radar<\/h1>/);
+    assert.match(html, /Une interface interne de veille, pour suivre les appels d’offres/);
+    for (const said of ["3 écrans", "1280 px", "2 parcours", "6 juges"]) assert.match(html, new RegExp(said), said);
+    assert.match(html, /class="verdict"[^>]*>[^<]*\d+ points? à reprendre/, "the verdict in one sentence");
+    assert.match(html, /gardant son style/, "the recommendation, said for a person: keep the front's own direction");
+    assert.match(resultHtml(page, { lang: "en" }), /<html lang="en">[\s\S]*Strengths[\s\S]*Weak points/, "--lang still decides");
+    assert.doesNotMatch(html, />(Avant|Après|Before|After)<|No capture|Pas de capture|inchangé|unchanged/, "a judgement compares nothing");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("the strengths come from what the judges passed, one per principle, a reason pasted over several principles left out, each with its capture", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const j = (await readRun(await judgedRun(root), "run-1")).judgement!;
+    assert.deepEqual(j.strengths.map((s) => s.principle).sort(), ["hierarchy", "one-direction", "result-shown"]);
+    const direction = j.strengths.find((s) => s.principle === "one-direction")!;
+    assert.deepEqual([direction.count, direction.of], [3, 3]);
+    assert.equal(direction.reason, "The team list keeps the orange « Inviter » button and the « Équipe » title in condensed type, as on the home.", "the most concrete reason");
+    assert.equal(direction.shot, "before/captures/equipe@1280.png", "the capture of the screen that reason is about");
+    assert.equal(j.strengths.find((s) => s.principle === "hierarchy")!.reason, "The « Commandes » title leads, then the table of 12 orders.");
+    assert.equal(j.strengths.find((s) => s.principle === "result-shown")!.shot, "before/captures/journeys/see-orders@1280-02.png", "a journey's strength shows its step");
+    assert.ok(j.strengths.every((s) => s.reason !== CATCH_ALL), "a reason given to several principles says nothing of any");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("the weak points: a journey that breaks first, then the principles with their votes, then the checks; what repeats across screens is one point that names them", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const page = await readRun(await judgedRun(root), "run-1");
+    const j = page.judgement!;
+    assert.deepEqual(j.weak.map((w) => w.id), ["weak:breaks:see-orders", "weak:journey-principle:same-words", "weak:principle:density", "weak:check:focus", "weak:check:contrast"]);
+    const focus = j.weak.find((w) => w.id === "weak:check:focus")!;
+    assert.deepEqual(focus.places.map((p) => p.where), ["/", "/equipe", "/commandes"], "one point, every screen it is on");
+    const density = j.weak.find((w) => w.id === "weak:principle:density")!;
+    assert.deepEqual(density.places.map((p) => [p.where, p.votes]), [["/", "3/3"], ["/commandes", "2/3"]]);
+    assert.equal(density.places[0]!.shot, "before/captures/index@1280.png");
+    assert.equal(j.weak[0]!.places[0]!.shot, "before/captures/journeys/see-orders@1280-02.png", "a journey that breaks shows the step where it does");
+    const html = resultHtml(page);
+    assert.equal(html.match(/data-weak="weak:check:focus"/g)?.length, 1, "focus on three screens is one point");
+    const item = html.split('data-weak="weak:check:focus"')[1]!.split("</article>")[0]!;
+    for (const route of ["/", "/equipe", "/commandes"]) assert.match(item, new RegExp(`>${route}<`), route);
+    assert.match(html.split('data-weak="weak:principle:density"')[1]!.split("</article>")[0]!, /3\/3[\s\S]*2\/3/, "each screen with its count of votes");
+    assert.ok(html.indexOf('data-weak="weak:breaks:see-orders"') < html.indexOf('data-weak="weak:principle:density"') && html.indexOf('data-weak="weak:principle:density"') < html.indexOf('data-weak="weak:check:focus"'), "worst first");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("what comes from the test environment is set apart, to check outside the demo: a server error in the console, a page blank because a service is not configured", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const page = await readRun(await judgedRun(root), "run-1");
+    const j = page.judgement!;
+    assert.deepEqual(j.env.map((w) => w.id).sort(), ["env:check:console", "env:journey-principle:result-shown", "env:principle:hierarchy", "env:principle:states"]);
+    assert.ok(!j.weak.some((w) => w.key === "console" || w.key === "states" || w.key === "result-shown" || w.key === "hierarchy"), "never mixed with the design's weak points");
+    const box = resultHtml(page).split('id="env"')[1]!.split("</section>")[0]!;
+    assert.match(box, /À vérifier hors démo/);
+    assert.match(box, /503/);
+    assert.match(box, />\/equipe</);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("each weak point has its lead, the judges' most concrete fix or the page's own, ranked by effect then effort, never a new feature", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const page = await readRun(await judgedRun(root), "run-1");
+    const j = page.judgement!;
+    assert.equal(j.weak.find((w) => w.key === "density")!.fix, "Move the three « À faire » cards under the calendar and drop the empty third column.", "the judges' fix, the most concrete of the screens'");
+    assert.equal(j.weak.find((w) => w.key === "same-words")!.fix, "Name the menu entry « Commandes », as the page is named.");
+    assert.equal(j.weak.find((w) => w.key === "contrast")!.fix, null, "no judge for a check: the page says its own");
+    const leads = resultHtml(page).split('id="leads"')[1]!.split("</section>")[0]!;
+    assert.match(leads, /Move the three « À faire » cards/);
+    assert.match(leads, /Foncer les textes trop pâles/, "a check's lead, in the page's language");
+    const rank = { high: 0, medium: 1, low: 2 } as const;
+    const effects = [...leads.matchAll(/data-effect="(high|medium|low)"/g)].map((m) => rank[m[1] as keyof typeof rank]);
+    assert.equal(effects.length, j.weak.length, "one lead per weak point");
+    assert.deepEqual(effects, [...effects].sort((a, b) => a - b), "the most effect first");
+    for (const effort of [...leads.matchAll(/data-effort="([a-z]+)"/g)].map((m) => m[1])) assert.ok(["quick", "medium", "big"].includes(effort!), effort);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("the person agrees or disagrees with each weak point, the ones set apart included, and the server accepts exactly those", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const page = await readRun(await judgedRun(root), "run-1");
+    const verdicts = pageVerdicts(page);
+    assert.deepEqual(verdicts.map((v) => v.id), [...page.judgement!.weak, ...page.judgement!.env].map((w) => w.id));
+    assert.deepEqual(verdicts.find((v) => v.id === "weak:check:focus"), { id: "weak:check:focus", category: "screens", verdict: "focus fails on /, /equipe, /commandes" });
+    assert.deepEqual(verdicts.find((v) => v.id === "weak:breaks:see-orders"), { id: "weak:breaks:see-orders", category: "journeys", verdict: "Voir mes commandes breaks at step 2" });
+    assert.equal(verdicts.find((v) => v.id === "weak:principle:density")!.category, "principles");
+    assert.deepEqual(ids(resultHtml(page)), verdicts.map((v) => v.id), "a box for each, in the same order");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("the page of a full run is not a judgement: same page as before, no strength, no lead", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const page = await readRun(await judgedRun(root, { state: false, after: true, base: true }), "run-1");
+    assert.equal(page.judged, undefined);
+    assert.equal(page.judgement, undefined);
+    const html = resultHtml(page);
+    assert.doesNotMatch(html, /id="(strengths|weak|leads|env)"/);
+    assert.match(html, /What the run gave/);
+    assert.doesNotMatch(resultHtml(PAGE), /id="(strengths|weak|leads|env)"|prefers-color-scheme/, "a full run's page keeps its one light theme");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("in a browser, a judgement's captures are thumbnails that open large, and the page has a light and a dark theme", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  const browser = await chromium.launch();
+  try {
+    const dir = await judgedRun(root);
+    await writeFile(join(dir, "report.html"), resultHtml(await readRun(dir, "run-1")));
+    const page = await browser.newPage({ colorScheme: "dark" });
+    await page.goto(pathToFileURL(join(dir, "report.html")).href);
+    const ground = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const dark = await ground();
+    await page.locator("#strengths .shot").first().click();
+    assert.equal(await page.locator("dialog#large[open]").count(), 1, "the capture opens large");
+    assert.match((await page.locator("dialog#large img").getAttribute("src")) ?? "", /before\/captures\/equipe@1280\.png$/);
+    await page.keyboard.press("Escape");
+    await page.locator("[data-theme-toggle]").click();
+    assert.notEqual(await ground(), dark, "the toggle switches to the light theme");
+  } finally {
+    await browser.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
