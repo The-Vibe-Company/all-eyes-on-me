@@ -279,6 +279,13 @@ test("the directions start from what the person has, each way with its command, 
   }
 });
 
+test("a command reads as it is typed: the mono font only sets code, and no ligature turns -- into a dash", () => {
+  const kit = readFileSync(new URL("site/shared/kit.css", root), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const [, selectors] of kit.matchAll(/([^{}]+)\{[^}]*var\(--mono\)[^}]*\}/g))
+    for (const selector of selectors.split(",").map((s) => s.trim())) assert.match(selector, /\b(code|pre)$/, `${selector} sets the mono font on something that is not code`);
+  assert.match(kit, /^code, pre \{ font-variant-ligatures: none !important; \}$/m, "code and pre turn ligatures off, over each rule's font shorthand");
+});
+
 test("the commands page lists the CLI underneath: every command, with its words, under a title that counts them", () => {
   const listed = new Map([...commands.matchAll(/<code title="([^"]+)">([a-z]+)<\/code>/g)].map(([, what, name]) => [name, what.replace(/&#39;|&apos;/g, "'")]));
   assert.deepEqual(new Map([...listed].sort()), new Map([...cliCommands()].sort()));

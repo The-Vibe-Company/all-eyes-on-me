@@ -23,6 +23,8 @@ a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; 
 a:hover { color: var(--hot); }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
 h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
+/* A command reads as it is typed: no ligature turns -- into a long dash. Important, because each rule's font shorthand resets ligatures. */
+code, pre { font-variant-ligatures: none !important; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .skip { position: absolute; left: -9999px; top: 12px; background: var(--ink); color: var(--sun); padding: 8px 14px; border-radius: 10px; z-index: 10; }
 .skip:focus { left: 12px; }
