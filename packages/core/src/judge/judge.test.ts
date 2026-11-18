@@ -306,5 +306,6 @@ test("a judge may say how to fix what it fails: the most concrete fix of the win
   const lost = tally([withFix("1"), withFix("2"), { ...vote("3"), pages: { ...vote("3").pages, "/commandes": { ...vote("3").pages["/commandes"]!, states: { pass: true, reason: "3 on states", fix: "Nothing." } as never } } }], pages, principles);
   assert.equal("fix" in lost.pages[1]!.verdicts[1]!, false);
   assert.equal(tally([withFix("1", "  "), withFix("2"), withFix("3")], pages, principles).pages[1]!.verdicts[1]!.fix, undefined, "an empty fix is no fix");
+  assert.equal(tally([withFix("1", null), withFix("2"), withFix("3")], pages, principles).pages[1]!.verdicts[1]!.fix, undefined, "a null fix is no fix, and the vote counts");
   refuses(() => tally([withFix("1", 42), withFix("2"), withFix("3")], pages, principles), /voter 1, \/commandes: the fix for states must be a sentence/);
 });

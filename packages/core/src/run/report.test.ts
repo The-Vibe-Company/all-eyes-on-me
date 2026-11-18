@@ -358,27 +358,28 @@ test("what the person says of a verdict counts the same whatever language the ju
 const CATCH_ALL = "Consistent with the warm look.";
 const URL_OF = (path: string) => `http://localhost:3000${path}`;
 const verdictOn = (principle: string, pass: boolean, votes: string, reasons: string[], more: Record<string, unknown> = {}) => ({ principle, pass, votes, reasons, dissent: [], steps: [], ...more });
-async function judgedRun(root: string, { state = true, product = true, after = false, base = false }: { state?: boolean; product?: boolean; after?: boolean; base?: boolean } = {}): Promise<string> {
+async function judgedRun(root: string, { state = true, product = true, after = false, base = false, pageText = true }: { state?: boolean; product?: boolean; after?: boolean; base?: boolean; pageText?: boolean } = {}): Promise<string> {
   const dir = join(root, ".aeom", "runs", "run-1");
   await mkdir(join(dir, "before", "captures", "journeys"), { recursive: true });
   await mkdir(join(dir, "before", "reports"), { recursive: true });
   const routes = ["/", "/equipe", "/commandes"];
   const file = (p: string) => `${p === "/" ? "index" : p.slice(1)}@1280.png`;
-  await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: URL_OF("/"), capturedAt: "", widths: [1280], pages: routes.map((p) => ({ url: URL_OF(p), path: p, files: [{ width: 1280, file: file(p) }] })), errors: [] }));
+  await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: URL_OF("/"), capturedAt: "", widths: [390, 1280], pages: routes.map((p) => ({ url: URL_OF(p), path: p, files: [{ width: 390, file: file(p).replace("1280", "390") }, { width: 1280, file: file(p) }], ...(p === "/equipe" ? { content: "equipe.content.yml" } : {}) })), errors: [] }));
+  if (pageText) await writeFile(join(dir, "before", "captures", "equipe.content.yml"), "# /equipe at 1280 px\n- heading \"Équipe\"\n- text: Dossier indisponible. Supabase n’est pas configuré.\n");
   await writeFile(join(dir, "before", "reports", "check.json"), JSON.stringify({
-    url: URL_OF("/"), checkedAt: "", widths: [1280], checks: ["focus", "console", "contrast", "cursor"], pages: routes.map(URL_OF), errors: [],
+    url: URL_OF("/"), checkedAt: "", widths: [390, 1280], checks: ["focus", "console", "contrast", "cursor"], pages: routes.map(URL_OF), errors: [],
     findings: [
-      ...routes.map((p) => ({ check: "focus", url: URL_OF(p), width: 1280, element: 'a.brand_x1 "RADAR"', message: "nothing shows it has the keyboard focus: give it a visible outline or ring (:focus-visible)" })),
+      ...routes.flatMap((p) => [390, 1280].map((width) => ({ check: "focus", url: URL_OF(p), width, element: 'a.brand_x1 "RADAR"', message: "nothing shows it has the keyboard focus: give it a visible outline or ring (:focus-visible)" }))),
       ...["/", "/commandes"].map((p) => ({ check: "console", url: URL_OF(p), width: 1280, message: "console error: Failed to load resource: the server responded with a status of 503 (Service Unavailable)" })),
       { check: "contrast", url: URL_OF("/commandes"), width: 1280, element: 'span.total "12 €"', message: "text contrast is 3.1:1, needs 4.5:1" },
     ],
   }));
   const principles = ["one-direction", "hierarchy", "density", "states"].map((id) => ({ id, text: id }));
   await writeFile(join(dir, "before", "reports", "judge.json"), JSON.stringify({
-    judgedAt: "", voters: ["1", "2", "3"], principles, widths: [1280], failures: 4,
+    judgedAt: "", voters: ["1", "2", "3"], principles, widths: [390, 1280], failures: 4,
     pages: [
       { page: "/", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["Same look as the rest."]), verdictOn("hierarchy", true, "1/1 pass", [CATCH_ALL]), verdictOn("density", false, "3/3 fail", ["The calendar is packed and the third column is empty.", "Cards are crammed.", "The third column is empty."], { fix: "Move the three « À faire » cards under the calendar and drop the empty third column." }), verdictOn("states", true, "1/1 pass", [CATCH_ALL])] },
-      { page: "/equipe", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["The team list keeps the orange « Inviter » button and the « Équipe » title in condensed type, as on the home."]), verdictOn("hierarchy", false, "2/3 fail", ["Only an error pill sits under the title.", "No focal point under the title."]), verdictOn("density", true, "1/1 pass", [CATCH_ALL]), verdictOn("states", false, "3/3 fail", ["The page says « Supabase n'est pas configuré » and the rest is blank.", "A config error and nothing else.", "Blank under the error."])] },
+      { page: "/equipe", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["The team list keeps the orange « Inviter » button and the « Équipe » title in condensed type, as on the home."]), verdictOn("hierarchy", false, "2/3 fail", ["Only an error pill sits under the title.", "No focal point under the title."], { dissent: ["The page says « Supabase n'est pas configuré »."] }), verdictOn("states", false, "3/3 fail", ["The red « Erreur » pill says what failed but offers no next step, and the rest is blank.", "Blank under the error.", "Nothing but an error."], { dissent: [] }), verdictOn("density", true, "1/1 pass", [CATCH_ALL], { dissent: ["Slots greyed out as unavailable."] })] },
       { page: "/commandes", verdicts: [verdictOn("one-direction", true, "1/1 pass", ["Same orange buttons and cream ground as the home."]), verdictOn("hierarchy", true, "1/1 pass", ["The « Commandes » title leads, then the table of 12 orders."]), verdictOn("density", false, "2/3 fail", ["Rows of 13 px are crammed together.", "The table rows touch."], { fix: "Give each row of the table 12 px more height." }), verdictOn("states", true, "1/1 pass", [CATCH_ALL])] },
     ],
   }));
@@ -437,12 +438,12 @@ test("the judgement says the product, what was measured, the verdict and the rec
     const j = page.judgement!;
     assert.deepEqual(j.product, { name: "Radar", sentence: "Une interface interne de veille, pour suivre les appels d’offres et les dossiers de candidature." });
     assert.equal(j.lang, "fr", "the sheet is written in French");
-    assert.deepEqual(j.measured, { screens: 3, widths: [1280], checks: 4, principles: 4, journeys: 2, journeyPrinciples: 2, judges: 6 });
+    assert.deepEqual(j.measured, { screens: 3, widths: [390, 1280], checks: 4, principles: 4, journeys: 2, journeyPrinciples: 2, judges: 6 });
     const html = resultHtml(page);
     assert.match(html, /<html lang="fr">/, "no --lang: the sheet's language");
     assert.match(html, /<h1[^>]*>Radar<\/h1>/);
     assert.match(html, /Une interface interne de veille, pour suivre les appels d’offres/);
-    for (const said of ["3 écrans", "1280 px", "2 parcours", "6 juges"]) assert.match(html, new RegExp(said), said);
+    for (const said of ["3 écrans", "390 et 1280 px", "2 parcours", "6 juges"]) assert.match(html, new RegExp(said), said);
     assert.match(html, /class="verdict"[^>]*>[^<]*\d+ points? à reprendre/, "the verdict in one sentence");
     assert.match(html, /gardant son style/, "the recommendation, said for a person: keep the front's own direction");
     assert.match(resultHtml(page, { lang: "en" }), /<html lang="en">[\s\S]*Strengths[\s\S]*Weak points/, "--lang still decides");
@@ -474,9 +475,10 @@ test("the weak points: a journey that breaks first, then the principles with the
   try {
     const page = await readRun(await judgedRun(root), "run-1");
     const j = page.judgement!;
-    assert.deepEqual(j.weak.map((w) => w.id), ["weak:breaks:see-orders", "weak:journey-principle:same-words", "weak:principle:density", "weak:check:focus", "weak:check:contrast"]);
+    assert.deepEqual(j.weak.map((w) => w.id), ["weak:breaks:see-orders", "weak:journey-principle:same-words", "weak:principle:density", "weak:principle:states", "weak:check:focus", "weak:check:contrast"]);
     const focus = j.weak.find((w) => w.id === "weak:check:focus")!;
     assert.deepEqual(focus.places.map((p) => p.where), ["/", "/equipe", "/commandes"], "one point, every screen it is on");
+    assert.equal(focus.places[0]!.reason, '"RADAR": nothing shows it has the keyboard focus', "one element at two widths is one element");
     const density = j.weak.find((w) => w.id === "weak:principle:density")!;
     assert.deepEqual(density.places.map((p) => [p.where, p.votes]), [["/", "3/3"], ["/commandes", "2/3"]]);
     assert.equal(density.places[0]!.shot, "before/captures/index@1280.png");
@@ -497,8 +499,12 @@ test("what comes from the test environment is set apart, to check outside the de
   try {
     const page = await readRun(await judgedRun(root), "run-1");
     const j = page.judgement!;
-    assert.deepEqual(j.env.map((w) => w.id).sort(), ["env:check:console", "env:journey-principle:result-shown", "env:principle:hierarchy", "env:principle:states"]);
-    assert.ok(!j.weak.some((w) => w.key === "console" || w.key === "states" || w.key === "result-shown" || w.key === "hierarchy"), "never mixed with the design's weak points");
+    assert.deepEqual(j.env.map((w) => w.id).sort(), ["env:check:console", "env:journey-principle:result-shown", "env:principle:hierarchy"]);
+    assert.ok(!j.weak.some((w) => w.key === "console" || w.key === "result-shown" || w.key === "hierarchy"), "never mixed with the design's weak points");
+    assert.ok(j.weak.some((w) => w.key === "states" && w.places.some((p) => p.where === "/equipe")), "an error state with no way on is the design's, demo or not");
+    // The page's own text said the service is missing; without it, a dissent or a word such as « unavailable » says nothing.
+    const without = (await readRun(await judgedRun(await mkdtemp(join(tmpdir(), "aeom-judgement-")), { pageText: false }), "run-1")).judgement!;
+    assert.ok(without.weak.some((w) => w.key === "hierarchy"), "the losing side's words do not set a failure apart");
     const box = resultHtml(page).split('id="env"')[1]!.split("</section>")[0]!;
     assert.match(box, /À vérifier hors démo/);
     assert.match(box, /503/);
@@ -577,6 +583,20 @@ test("in a browser, a judgement's captures are thumbnails that open large, and t
     assert.notEqual(await ground(), dark, "the toggle switches to the light theme");
   } finally {
     await browser.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a judged run whose folder the judgement cannot read keeps the page of what fails, never a crash", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const dir = await judgedRun(root);
+    await writeFile(join(dir, "before", "captures", "journeys", "report.json"), JSON.stringify({ url: URL_OF("/"), replayedAt: "", widths: [1280], warnings: [], journeys: [{ slug: "see-orders", name: "Voir mes commandes" }] }));
+    const page = await readRun(dir, "run-1");
+    assert.equal(page.judged, true);
+    assert.equal(page.judgement, undefined, "a journey without its runs: no judgement");
+    assert.match(resultHtml(page), /What fails/, "the page of what fails instead");
+  } finally {
     await rm(root, { recursive: true, force: true });
   }
 });

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CaptureManifest } from "../capture/capture.js";
 import { route } from "../capture/capture.js";
+import { pairRoutes } from "../capture/shape.js";
 import type { CheckReport } from "../checks/run.js";
 import type { JourneyReport } from "../journey/replay.js";
 import { concreteness } from "../judge/lazy.js";
@@ -104,6 +105,8 @@ export interface JudgementInput {
   product: string | null;
   /** The language the run kept, `AEOM_LANG` in its state, when the sheet does not say. */
   runLang?: string | null;
+  /** What each screen says, as a screen reader reads it, by route: where the screen itself says a service is missing. */
+  texts?: Record<string, string>;
   /** Where the screens' captures and the journeys' replay are, from the run's folder. */
   dirs: { captures: string; replay: string };
 }
@@ -147,12 +150,15 @@ export function sheetLang(text: string | null): JudgementLang | null {
 // ——— What comes from the test environment ———
 
 /**
- * What says a service is not there rather than a screen badly made: not configured, unavailable, a demo mode, a
- * server answering 5xx. Read in the judges' reasons, the checks' messages and where a journey broke.
+ * What says a service is not there rather than a screen badly made: not configured, unavailable in the demo, a demo
+ * mode, a server answering 5xx. Read in the winning side's reasons, the checks' messages, where a journey broke and
+ * the screen's own words; never a bare « unavailable », which a screen may say on purpose.
  */
-const ENV = /n['’]est pas configur|not configured|non configur|unconfigured|config(uration)? error|erreur de config|(?<!\p{L})(indisponible|unavailable)(?!\p{L})|mode d[ée]mo|demo mode|service unavailable|status (code )?(of )?5\d\d(?!\d)|(?<!\p{L})(error|erreur|http) 5\d\d(?!\d)|variable d['’]environnement|environment variable|missing (api )?key/iu;
-/** What a page left blank by a missing service fails besides its own state: nothing to look at, nothing to place. */
-const BLANK = ["states", "density", "hierarchy"];
+const ENV = /n['’]est pas configur|not configured|non configur|unconfigured|config(uration)? error|erreur de config|(indisponible|unavailable) (en|in)( the)? d[ée]mo|mode d[ée]mo|demo mode|service (unavailable|indisponible)|status (code )?(of )?5\d\d(?!\d)|(?<!\p{L})(error|erreur|http) 5\d\d(?!\d)|variable d['’]environnement|environment variable|missing api key|cl[ée] (d['’])?api manquante/iu;
+/** What a screen left blank by a missing service fails for that alone: nothing to look at, nothing to place. */
+const BLANK = ["density", "hierarchy"];
+/** What the design owes whatever the environment: an error state that says what to do, a way on or back. */
+const NEVER_ENV = ["states", "no-dead-end"];
 const isEnv = (...texts: (string | undefined)[]) => texts.some((t) => !!t && ENV.test(t));
 
 // ——— What each weak point costs to fix ———
@@ -186,7 +192,7 @@ const findingSaid = (element: string | undefined, message: string) => {
 
 /** Reads what a judged run left and makes it the judgement. Pure: every path in it is relative to the run's folder. */
 export function judgementOf(input: JudgementInput): Judgement {
-  const { manifest, check, judge, replay, journeyJudge, verdict, product, dirs } = input;
+  const { manifest, check, judge, replay, journeyJudge, verdict, product, dirs, texts = {} } = input;
   const keepStyle = verdict?.keepStyle === true;
   const styleOnly = new Set(keepStyle ? [...STYLE_PRINCIPLES, ...STYLE_CHECKS] : []);
   const widest = <T extends { width: number }>(list: T[]) => list.reduce<T | undefined>((w, x) => (!w || x.width > w.width ? x : w), undefined);
@@ -202,6 +208,9 @@ export function judgementOf(input: JudgementInput): Judgement {
     return capture ? `${dirs.replay}/${capture}` : null;
   };
   const nameOf = (slug: string) => replay?.journeys.find((j) => j.slug === slug)?.name ?? slug;
+  // A screen checked and judged under two routes of one shape, such as a record made at each visit, named as judged.
+  const pairs = pairRoutes(judge.pages.map((p) => p.page), [...(check.pages ?? []).map(route), ...(check.errors ?? []).map((e) => route(e.url))]);
+  const named = (url: string) => pairs.get(route(url)) ?? route(url);
 
   // ——— Strengths: what passes on most screens or journeys, said by the most concrete reason no other principle shares.
   const principlesOf = new Map<string, Set<string>>();
@@ -244,9 +253,9 @@ export function judgementOf(input: JudgementInput): Judgement {
 
   // Screens that do not load: broken for whoever opens them.
   for (const e of [...(check.errors ?? []), ...(manifest?.errors ?? [])]) {
-    const where = route(e.url);
+    const where = named(e.url);
     if ([...drafts.values()].some((d) => d.kind === "does-not-load" && d.places.some((p) => p.where === where))) continue;
-    add("does-not-load", "does-not-load", isEnv(e.reason) || /(?<!\d)5\d\d(?!\d)/.test(e.reason), { where, reason: e.reason, shot: null, weight: 1 });
+    add("does-not-load", "does-not-load", isEnv(e.reason), { where, reason: e.reason, shot: null, weight: 1 });
   }
   // Journeys that break, each once, where it breaks at its widest width.
   for (const j of replay?.journeys ?? []) {
@@ -254,38 +263,39 @@ export function judgementOf(input: JudgementInput): Judgement {
     if (!run?.broken) continue;
     const { step, reason } = run.broken;
     const dialog = run.steps.find((s) => s.index === step)?.dialog;
-    const critique = journeyJudge?.pages.find((p) => p.page === j.slug)?.verdicts.filter((v) => !v.pass && v.steps.includes(step)) ?? [];
+    const critique = journeyJudge?.pages.find((p) => p.page === j.slug)?.verdicts.filter((v) => !v.pass && (v.steps ?? []).includes(step)) ?? [];
     const env = isEnv(reason, dialog) || critique.some((v) => isEnv(...v.reasons));
     // Its lead is the page's own: a fix the judges gave on that step answers its principle, not the break.
     add("breaks", j.slug, env, { where: j.name, reason, shot: stepShot(j.slug, step), weight: 1 }, undefined, { name: j.name, step });
   }
-  // Principles: a screen a missing service left blank fails its state, its density and its hierarchy for that.
-  const pageEnv = new Set(judge.pages.filter((p) => p.verdicts.some((v) => isEnv(...v.reasons, ...v.dissent))).map((p) => p.page));
+  // Principles: a screen that says a service is missing, in its own words or in what failed it, is blank for that.
   const failing = (v: PrincipleVerdict) => !v.pass && !v.accepted && !styleOnly.has(v.principle);
+  const pageEnv = new Set(judge.pages.filter((p) => isEnv(texts[p.page]) || p.verdicts.some((v) => failing(v) && isEnv(...v.reasons))).map((p) => p.page));
   for (const p of judge.pages) {
     for (const v of p.verdicts.filter(failing)) {
-      const env = isEnv(...v.reasons, ...v.dissent) || (pageEnv.has(p.page) && BLANK.includes(v.principle));
+      const env = !NEVER_ENV.includes(v.principle) && (isEnv(...v.reasons) || (pageEnv.has(p.page) && BLANK.includes(v.principle)));
       add("principle", v.principle, env, { where: p.page, votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: shotOf(p.page), weight: agreement(v.votes) }, v.fix);
     }
   }
   for (const p of journeyJudge?.pages ?? []) {
     for (const v of p.verdicts.filter(failing)) {
-      add("journey-principle", v.principle, isEnv(...v.reasons, ...v.dissent), { where: nameOf(p.page), votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: stepShot(p.page, v.steps[0]), weight: agreement(v.votes) }, v.fix);
+      add("journey-principle", v.principle, !NEVER_ENV.includes(v.principle) && isEnv(...v.reasons), { where: nameOf(p.page), votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: stepShot(p.page, v.steps[0]), weight: agreement(v.votes) }, v.fix);
     }
   }
-  // Checks: one point per check, each screen once with how many elements fail it there.
-  const byCheck = new Map<string, Map<string, { count: number; example: string; env: boolean }>>();
+  // Checks: one point per check, each screen once with how many elements fail it there, each element once whatever
+  // the widths it fails at.
+  const byCheck = new Map<string, Map<string, { elements: Set<string>; example: string; env: boolean }>>();
   for (const f of check.findings) {
     if (styleOnly.has(f.check)) continue;
     const pages = byCheck.get(f.check) ?? new Map();
-    const where = route(f.url);
-    const entry = pages.get(where) ?? { count: 0, example: findingSaid(f.element, f.message), env: true };
-    entry.count++;
+    const where = named(f.url);
+    const entry = pages.get(where) ?? { elements: new Set<string>(), example: findingSaid(f.element, f.message), env: true };
+    entry.elements.add(`${f.element ?? ""}\n${f.message}`);
     entry.env &&= f.check === "console" && isEnv(f.message);
     pages.set(where, entry);
     byCheck.set(f.check, pages);
   }
-  for (const [name, pages] of byCheck) for (const [where, e] of pages) add("check", name, e.env, { where, reason: e.count > 1 ? `${e.example} (+${e.count - 1})` : e.example, shot: shotOf(where), weight: e.count });
+  for (const [name, pages] of byCheck) for (const [where, e] of pages) add("check", name, e.env, { where, reason: e.elements.size > 1 ? `${e.example} (+${e.elements.size - 1})` : e.example, shot: shotOf(where), weight: e.elements.size });
 
   const screens = manifest?.pages.length ?? check.pages.length;
   const point = (d: Draft): WeakPoint & { score: number; rank: number } => {
@@ -337,7 +347,7 @@ export function judgementOf(input: JudgementInput): Judgement {
       page,
       shot: shotOf(page),
       verdicts: (judge.pages.find((p) => p.page === page)?.verdicts ?? []).map((v) => ({ principle: v.principle, pass: v.pass, votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", ...(v.accepted ? { accepted: true as const } : {}) })),
-      checks: [...byCheck].flatMap(([name, pages]) => (pages.has(page) ? [{ check: name, count: pages.get(page)!.count, example: pages.get(page)!.example }] : [])),
+      checks: [...byCheck].flatMap(([name, pages]) => (pages.has(page) ? [{ check: name, count: pages.get(page)!.elements.size, example: pages.get(page)!.example }] : [])),
     })),
     journeys: (replay?.journeys ?? []).map((j) => {
       const run = widest(j.runs);
@@ -347,7 +357,7 @@ export function judgementOf(input: JudgementInput): Judgement {
         name: j.name,
         broke,
         steps: (Array.isArray(run?.steps) ? run.steps : []).filter((s) => s && typeof s.index === "number").map((s) => ({ index: s.index, action: String(s.action ?? ""), shot: s.capture ? `${dirs.replay}/${s.capture}` : null })),
-        verdicts: (journeyJudge?.pages.find((p) => p.page === j.slug)?.verdicts ?? []).map((v) => ({ principle: v.principle, pass: v.pass, votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", steps: v.steps })),
+        verdicts: (journeyJudge?.pages.find((p) => p.page === j.slug)?.verdicts ?? []).map((v) => ({ principle: v.principle, pass: v.pass, votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", steps: v.steps ?? [] })),
       };
     }),
     ...((verdict?.judges ?? judge.judges) ? { judges: verdict?.judges ?? judge.judges } : {}),
@@ -379,8 +389,12 @@ export async function readJudgement(runDir: string): Promise<Judgement | null> {
   // The sheet the person may have corrected first, beside the runs; else the draft the run kept.
   const product = (await readFile(join(runDir, "..", "..", "product.md"), "utf8").catch(() => null)) ?? (await readFile(join(runDir, "product.md"), "utf8").catch(() => null));
   const state = await json<{ vars?: Record<string, unknown> }>(join(runDir, "state.json"));
+  const manifest = await json<CaptureManifest>(join(runDir, "before", "captures", "manifest.json"));
+  const texts: Record<string, string> = {};
+  for (const p of manifest?.pages ?? []) if (typeof p.content === "string") texts[p.path] = (await readFile(join(runDir, "before", "captures", p.content), "utf8").catch(() => "")).slice(0, 20_000);
   return judgementOf({
-    manifest: await json<CaptureManifest>(join(runDir, "before", "captures", "manifest.json")),
+    manifest,
+    texts,
     check,
     judge,
     replay: Array.isArray(replay?.journeys) ? replay : null,

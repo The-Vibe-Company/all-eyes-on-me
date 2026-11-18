@@ -326,7 +326,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const options = Array.isArray(state?.options) ? state.options.filter((o): o is string => typeof o === "string") : [];
   // Kept with its option; or a run that ended once it judged: no after, no branch opened, no direction drawn, something failing.
   const judged = options.some((o) => /^(--)?(juger|diagnostic)$/.test(o)) || (state?.phase === "done" && !last && !built && !rounds.length && verdict !== null && verdict.nothingToRedo !== true && !(await exists(join(runDir, "base"))));
-  const judgement = judged ? await readJudgement(runDir) : null;
+  // A folder the judgement cannot read, a replay of an odd shape, keeps the page of what fails.
+  const judgement = judged ? await readJudgement(runDir).catch(() => null) : null;
   return { run, verdict, direction, screens, journeys, stillFailing, ...(rounds.length ? { rounds } : {}), ...(accepted.length ? { accepted } : {}), ...(judges ? { judges } : {}), measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}), ...(judged ? { judged: true as const } : {}), ...(judgement ? { judgement } : {}) };
 }
 

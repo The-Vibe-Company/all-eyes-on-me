@@ -119,7 +119,7 @@ export function tally(votes: Vote[], pages: string[], principles: Principle[], {
         else if (typeof verdict.reason !== "string" || !verdict.reason.trim()) problems.push(`voter ${vote.voter}, ${page}: no reason for ${id}`);
         else if (verdict.step !== undefined && (!Number.isInteger(verdict.step) || verdict.step < 1)) problems.push(`voter ${vote.voter}, ${page}: the step for ${id} must be a step number, 1 or more`);
         else if (steps && !verdict.pass && verdict.step === undefined) problems.push(`voter ${vote.voter}, ${page}: no step for ${id}, where the failure shows`);
-        if (verdict && verdict.fix !== undefined && typeof verdict.fix !== "string") problems.push(`voter ${vote.voter}, ${page}: the fix for ${id} must be a sentence`);
+        if (verdict && verdict.fix != null && typeof verdict.fix !== "string") problems.push(`voter ${vote.voter}, ${page}: the fix for ${id} must be a sentence`);
       }
       for (const id of Object.keys(verdicts)) if (!ids.has(id)) problems.push(`voter ${vote.voter}, ${page}: unknown principle ${id}`);
     }
