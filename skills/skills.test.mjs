@@ -186,3 +186,42 @@ test("/aeom directions draws three, six or nine, and one of every round is the c
   assert.match(step7, /With six or nine, more than a question tool's options hold: say every direction in the message/);
   assert.match(mockups.split("**Mockup brief.**")[1] ?? "", /The classic's worker is given directions\.md's \*\*The classic one\*\*/);
 });
+
+test("every direction but the classic dares, and the screening names a timid one", () => {
+  const dares = read("directions.md").split("## A direction that dares")[1]?.split("\n## ")[0] ?? "";
+  for (const part of ["**A signature**", "**A colour that owns space**", "**A type with a voice**", "**Contrast of scale**"]) assert.ok(dares.includes(part), part);
+  assert.match(dares, /Every direction but the classic takes a real risk/);
+  assert.match(dares, /never in what is hidden/, "daring never hides what the brief keeps");
+  assert.match(read("directions.md"), /Sources of one family, such as the coast of one region/);
+  const directionBrief = read("phase-directions.md").split("**Direction brief.**")[1]?.split("**Screening brief.**")[0] ?? "";
+  const mockupBrief = read("phase-mockups.md").split("**Mockup brief.**")[1] ?? "";
+  for (const brief of [directionBrief, mockupBrief]) {
+    assert.match(brief, /the banned looks, the paragraph on the product's name and \*\*A direction that dares\*\* from directions\.md/);
+    assert.match(brief, /a direction with none of them is timid, start again|with none of them it is timid, start again/);
+  }
+  assert.match(mockupBrief, /in place of the paragraph on the product's name and of \*\*A direction that dares\*\*/, "the classic is sober on purpose");
+  const screening = read("phase-directions.md").split("**Screening brief.**")[1]?.split("**Duel brief.**")[0] ?? "";
+  assert.match(screening, /it is timid, as directions\.md's \*\*A direction that dares\*\* says/);
+  assert.match(read("phase-directions.md").split("**Duel brief.**")[1] ?? "", /would still remember the next day/);
+  assert.match(read("phase-mockups.md"), /never named for looking conventional, nor for being timid/);
+});
+
+test("/aeom directions --tender sells: its kind at a glance, every requirement in sight, and no ornament anywhere", () => {
+  const tender = read("directions.md").split("## For a tender")[1]?.split("\n## ")[0] ?? "";
+  for (const part of ["**Its kind at a glance.**", "**Every requirement in sight.**", "**Real and finished**"]) assert.ok(tender.includes(part), part);
+  assert.match(tender, /A weather site looks like a weather site/);
+  assert.match(tender, /never a radial page, a hidden main menu or a layout that must be learnt/);
+  const dares = read("directions.md").split("## A direction that dares")[1]?.split("\n## ")[0] ?? "";
+  assert.match(dares, /Daring is never ornament\. No geometry drawn for the source's sake: a polygon, a cone or a beam of light/);
+  const mockups = read("phase-mockups.md");
+  assert.match(mockups, /\*\*For a tender\*\*, `\/aeom directions --tender`/);
+  assert.match(mockups, /Every brief, the classic's too, gets that section, the notes and those captures, an icon set/);
+  assert.match(mockups, /\(`--option tender`\)/, "a run taken up keeps it");
+  assert.match(read("phase-directions.md").split("**Screening brief.**")[1] ?? "", /it carries ornament drawn from its source/);
+  assert.match(read("SKILL.md"), /`--tender`: for a tender/);
+  for (const part of ["**The level of the best of its kind.**", "**Its kind's icons and charts.**", "**Readable first.**"]) assert.ok(tender.includes(part), part);
+  assert.match(tender, /the ban on ornament is about decoration, never about the pictograms and charts of the kind/);
+  assert.match(mockups, /keeps a capture of each in `\.aeom\/runs\/\$RUN\/references\/`, never in the project/);
+  assert.match(mockups, /With `--tender`, six by default/);
+  assert.match(mockups, /\*\*A spec beside the front\*\*/, "a tender on a skeleton reads both its screens and its spec");
+});

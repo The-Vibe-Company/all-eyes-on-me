@@ -33,7 +33,7 @@ Every step of a run re-reads all the session has read so far: read little. Send 
 The user types a verb after `/aeom`, or the option it stands for:
 
 - **`/aeom judge`** is `/aeom --juger`: judge the front, and stop at the verdict.
-- **`/aeom directions`**, with a sentence or a file, or nothing for the product as it is, proposes three, six or nine directions in mockups, one of them sober and classic, and keeps the one chosen in `.aeom/direction/`, for `/aeom redo` or `/aeom build --from-scratch` to build on (section 2d).
+- **`/aeom directions`**, with a sentence or a file, or nothing for the product as it is, proposes three, six or nine directions in mockups, one sober and classic (`--tender`: for a tender), and keeps the one chosen in `.aeom/direction/`, for `/aeom redo` or `/aeom build --from-scratch` to build on (section 2d).
 - **`/aeom redo`** is `/aeom` with no option: judge, then redo what fails (« Without an option » below). Options follow the verb: `/aeom redo --garder-le-style`.
 - **`/aeom review`** runs `aeom review` on the branch and says what it prints, file by file, screen by screen and journey by journey; `aeom review --install-check` makes it a GitHub check. The judges' comment comes later.
 - **`/aeom build`** with `--from-scratch` mocks up a front from a spec or a prompt, and with `--api` plugs it into its API (section 2e); a change asked in a sentence comes later: say so in one line and stop.
