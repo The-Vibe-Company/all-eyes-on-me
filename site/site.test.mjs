@@ -222,7 +222,7 @@ test("the commands page shows five commands, each with when and what it does, th
   const blocks = [...commands.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)];
   assert.deepEqual(blocks.map(([, id]) => id), ["judge", "directions", "redo", "check", "build"]);
   for (const [block, id] of blocks) {
-    const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?<\/p>/);
+    const command = block.match(/<p class="cmd"><code>([^<]+)<\/code>( <span class="soon">Soon<\/span>)?(?: <span class="stage stage--\w+">\w+<\/span>)?<\/p>/);
     assert.ok(command, `${id} names its command`);
     const [, typed, soon] = command;
     // A verb the skill knows, marked as coming exactly while the skill says it is not built yet.
@@ -245,6 +245,38 @@ test("the commands page shows five commands, each with when and what it does, th
   const measured = (help) => help.match(/(\d+) checks? and (\d+) principles?/);
   const checks = readdirSync(new URL("packages/core/src/checks/", root)).filter((f) => !/^(index|run|types|screen|text)\.ts$|\.test\.ts$/.test(f) && f.endsWith(".ts")).length;
   assert.equal(Number(measured(commands)?.[1]), checks, "the page counts the checks AEOM runs");
+});
+
+test("each command says how far along it is, Beta or Alpha, the same wherever the site names it, and the page says what each means", () => {
+  const stages = (html) => [...html.matchAll(/<span class="stage stage--(\w+)">(\w+)<\/span>/g)].map(([, kind, word]) => {
+    assert.ok(["beta", "alpha"].includes(kind), `${kind} is not a stage: Beta or Alpha`);
+    assert.equal(word.toLowerCase(), kind, `a ${kind} badge says ${word}`);
+    return kind;
+  });
+  for (const [block, id] of commands.matchAll(/<section class="feature [^"]*" id="(\w+)"[\s\S]*?<\/section>/g)) {
+    const said = stages(block.match(/<p class="cmd">[\s\S]*?<\/p>/)[0]);
+    assert.equal(said.length, 1, `${id} says its stage once, beside its command`);
+    const card = commands.match(new RegExp(`<a class="cmds__card[^"]*" href="#${id}">[\\s\\S]*?</a>`))[0];
+    assert.deepEqual(stages(card), said, `the card of ${id} says the same stage`);
+    const home = page.match(new RegExp(`<section class="feature[^"]*"[^>]*>(?:(?!</section>)[\\s\\S])*?href="/commands#${id}"`))?.[0];
+    if (home) assert.deepEqual(stages(home.match(/<p class="feature__num">[\s\S]*?<\/p>/)[0]), said, `the home page says the same stage for ${id}`);
+  }
+  const legend = commands.match(/<p class="stages">[\s\S]*?<\/p>/)?.[0] ?? "";
+  assert.deepEqual(stages(legend).sort(), ["alpha", "beta"], "under the cards, the page says what Beta and Alpha mean");
+});
+
+test("the directions start from what the person has, each way with its command, and an option is one the skill knows", () => {
+  const skill = readdirSync(new URL("skills/aeom/", root)).filter((f) => f.endsWith(".md")).map((f) => readFileSync(new URL(`skills/aeom/${f}`, root), "utf8")).join("\n");
+  const directions = commands.match(/<section class="feature [^"]*" id="directions"[\s\S]*?<\/section>/)[0];
+  assert.match(directions, /three, six or nine/, "it says how many directions it draws");
+  assert.match(directions, /classic/, "it says one of them is the classic");
+  const ways = [...directions.matchAll(/<li class="way[^"]*">\s*<h4>([^<]+)<\/h4>\s*<code>(.+?)<\/code>\s*<p>[^<]+<\/p>/g)];
+  assert.deepEqual(ways.map(([, from]) => from), ["Your product, as it is", "A prompt", "A brief or a spec", "A call for tenders"]);
+  for (const [, from, code] of ways) {
+    const typed = code.replace(/<[^>]+>/g, "");
+    assert.match(typed, /^\/aeom directions\b/, `${from} starts with /aeom directions`);
+    for (const [option] of typed.matchAll(/--[a-z-]+/g)) assert.match(skill, new RegExp(`/aeom directions[^\`\\n]*${option}\\b`), `${option} is not an option of /aeom directions in the skill`);
+  }
 });
 
 test("the commands page lists the CLI underneath: every command, with its words, under a title that counts them", () => {

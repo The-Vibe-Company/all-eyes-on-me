@@ -1,6 +1,6 @@
 /* AEOM's landing: sun yellow, ink, and eyes that look around and blink.
    Pages link this file and include head, header and footer.
-   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --directions, --redesign, --keep, --build) with .gaze, .tidy, .line, .draw, .soon, .more, .try; on the commands page, .page-top, .cmds, .cmd, .when, .does, .term (a terminal), .cli, .chips, .film (copy block). */
+   Classes: .btn (.btn--hot), .eye (.eye--small, --sky, --hot, --pink), .kicker, .walk (the hero's), .feature (--judge, --directions, --redesign, --keep, --build) with .gaze, .tidy, .line, .draw, .soon, .stage (--beta, --alpha), .more, .try; on the commands page, .page-top, .cmds, .stages, .cmd, .when, .does, .ways (.way), .term (a terminal), .cli, .chips, .film (copy block). */
 
 :root {
   --sun: #ffd84d;
@@ -112,6 +112,10 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .feature__text p:not(.feature__num, .more, .cmd, .when) { font-size: clamp(20px, 1.9vw, 24px); max-width: 30ch; margin: 20px 0 0; }
 .feature__num { margin: 0 0 12px; font: 800 18px/1 var(--display); display: flex; align-items: center; gap: 10px; }
 .soon { padding: 5px 10px; border-radius: 999px; background: var(--hot); color: var(--ink); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+/* How far along a command is: Beta runs on real projects, Alpha is the least tried. */
+.stage { display: inline-block; padding: 4px 10px; border: 2px solid var(--ink); border-radius: 999px; color: var(--ink); font: 800 12px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.stage--beta { background: #fff; }
+.stage--alpha { background: var(--hot); }
 .feature--judge { background: var(--sun); }
 .feature--redesign { background: var(--ink); color: var(--paper); }
 .feature--redesign h2, .feature--redesign .feature__num { color: var(--sun); }
@@ -219,6 +223,8 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 @media (min-width: 760px) { .cmds { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1180px) { .cmds { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1500px) { .cmds { grid-template-columns: repeat(5, 1fr); } }
+.stages { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 32px 0 0; font-size: 17px; }
+.stages > span { display: inline-flex; align-items: center; gap: 10px; }
 
 .commands .feature--judge { background: var(--paper); }
 .commands .feature--directions { background: var(--sun); }
@@ -239,6 +245,20 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; margin: 0; }
 .does li::before { content: ""; position: absolute; left: 0; top: 0.42em; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); }
 .feature--redesign .does li::before { background: var(--sun); }
 .does code { font: 500 0.88em var(--mono); }
+
+/* Where the directions start from: one card per way in, under the command, across the page. */
+.ways { grid-column: 1 / -1; order: 3; }
+.ways h3 { margin: 0; font-size: clamp(32px, 3.6vw, 52px); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
+.ways ol { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 16px; }
+.way { display: grid; align-content: start; gap: 12px; padding: 22px 24px 26px; background: var(--paper); border: 3px solid var(--ink); border-radius: var(--radius); box-shadow: 6px 6px 0 var(--ink); }
+.way h4 { margin: 0; font: 800 22px/1.1 var(--display); letter-spacing: -0.01em; }
+.way code { justify-self: start; max-width: 100%; font: 600 14px/1.35 var(--mono); background: var(--ink); color: var(--sun); padding: 7px 10px; border-radius: 10px; overflow-wrap: anywhere; }
+.way code span { white-space: nowrap; }
+.way p { margin: 0; font-size: 17px; }
+.way--tender { background: var(--ink); color: var(--paper); }
+.way--tender code { background: var(--sun); color: var(--ink); }
+@media (min-width: 760px) { .ways ol { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1180px) { .ways ol { grid-template-columns: repeat(4, 1fr); } }
 
 /* A terminal: what a command prints, on an example project. */
 .term { min-width: 0; width: 100%; background: var(--ink); color: var(--paper); border: 3px solid var(--ink); border-radius: var(--radius); box-shadow: 8px 8px 0 var(--ink); overflow: hidden; }
