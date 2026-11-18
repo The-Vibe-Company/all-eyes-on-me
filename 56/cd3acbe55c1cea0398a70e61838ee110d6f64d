@@ -1,0 +1,42 @@
+skills/aeom/phase-directions.md
+  s_0a1620eb6e5480::t_39e0cd5d00c343 24,26,34
+  s_0a1620eb6e5480::t_143b8dc5563404 30
+skills/aeom/directions.md
+  s_0a1620eb6e5480::t_143b8dc5563404 63,68-75,80-82
+  s_0a1620eb6e5480::t_ff577a7702a12c 59-62,64-67,83
+  s_0a1620eb6e5480::t_26e7db39cdb114 76-78
+  s_0a1620eb6e5480::t_185678f6d46ed0 30
+  s_0a1620eb6e5480::t_b580899b088b7d 79
+skills/aeom/SKILL.md
+  s_0a1620eb6e5480::t_143b8dc5563404 36
+skills/skills.test.mjs
+  s_0a1620eb6e5480::t_49146df32310fa 208-217,219-220,227
+  s_0a1620eb6e5480::t_5106a0151cf251 226
+  s_0a1620eb6e5480::t_a0d42f0b4ce935 221
+  s_0a1620eb6e5480::t_5048a5c1070d8e 189-207
+  s_0a1620eb6e5480::t_c0d49cb3efb39f 218
+  s_0a1620eb6e5480::t_26e7db39cdb114 222-224
+  s_0a1620eb6e5480::t_acb79f0cdc174f 225
+skills/aeom/phase-mockups.md
+  s_0a1620eb6e5480::t_ae700826a6be6e 14-15
+  s_0a1620eb6e5480::t_39e0cd5d00c343 35,40,42
+  s_0a1620eb6e5480::t_143b8dc5563404 19
+  s_0a1620eb6e5480::t_26e7db39cdb114 18
+  s_0a1620eb6e5480::t_e89da2403aea1f 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "56cd3acbe55c1cea0398a70e61838ee110d6f64d",
+  "prompts": {},
+  "sessions": {
+    "s_0a1620eb6e5480": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "07e5266b-b0d7-49ff-88f2-65d0d37dd885",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
