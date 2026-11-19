@@ -14,8 +14,10 @@ export const REVIEW_HELP = `Usage: aeom review [--base <branch>] [--url <url> | 
 Holds the commits of this branch to the standard of the front, in
 .aeom/standard.md as the base holds it, with no model. In the front's code
 they change: a colour, a font, a size, a space or a radius written in hard
-outside the tokens, and a button, a field, a header or a navigation made by
-hand while the kit has that very part, each with its file and its line. On
+outside the tokens, in CSS, in a style or in a Tailwind class (a colour of
+its default palette, a value in brackets), and a button, a field, a header or
+a navigation made by hand while the kit has that very part, each with its
+file and its line. On
 the screens they touch, measured in a browser: the checks of aeom check, and a
 header that differs from the rest of the app. A file every screen reads
 touches them all: those of "pages" in .aeom/config.json, else those AEOM last
