@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
-import { pageVerdicts, readRun, resultHtml, type ResultPage } from "./index.js";
+import { judgementOf, pageVerdicts, readRun, resultHtml, type ResultPage } from "./index.js";
 
 const screen = (page: string, status: ResultPage["screens"][number]["status"]) => ({ page, status, count: null, widths: [], cleared: [], still: [], newly: [] });
 const PAGE: ResultPage = {
@@ -560,7 +560,8 @@ test("the weak points, worst first: journeys, then principles with their votes, 
     assert.match(row("weak:check:focus"), /Contrôle<\/span>\s*· 3 écrans[\s\S]*mesuré/);
     const detail = html.split('<article class="point" data-weak="weak:check:focus"')[1]!.split("</article>")[0]!;
     for (const route of ["/", "/equipe", "/commandes"]) assert.match(detail, new RegExp(`class="place[^"]*"[^>]*><img[^>]*>${route.replace(/\//g, "\\/")}<`), route);
-    assert.match(detail, /Ce que vit l’utilisateur[\s\S]*&quot;RADAR&quot;: nothing shows/);
+    assert.match(detail, /Ce que vit l’utilisateur[\s\S]*Éléments en cause : &quot;RADAR&quot;\./, "in the page's language, the element at fault");
+    assert.match(html.split('<article class="point" data-weak="weak:breaks:see-orders"')[1]!.split("</article>")[0]!, /Le parcours s’arrête à l’étape 2 : « Commandes » n’est pas à l’écran\./);
     assert.match(html.split('<article class="point" data-weak="weak:journey-principle:same-words"')[1]!, /Voir mes commandes · étape 2/, "the address bar of a journey says its step");
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -654,6 +655,10 @@ test("in a browser, the triage list shows the point chosen, J and K walk it, a p
   const browser = await chromium.launch();
   try {
     const dir = await judgedRun(root);
+    // Captures that load, so each has its size on the page.
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+    for (const file of ["index", "equipe", "commandes"].flatMap((p) => [`${p}@1280.png`, `${p}@390.png`])) await writeFile(join(dir, "before", "captures", file), png);
+    for (const file of ["see-orders@1280-01", "see-orders@1280-02", "find-member@1280-01", "find-member@1280-02", "find-member@1280-03"]) await writeFile(join(dir, "before", "captures", "journeys", `${file}.png`), png);
     await writeFile(join(dir, "report.html"), resultHtml(await readRun(dir, "run-1")));
     const page = await browser.newPage({ colorScheme: "dark", viewport: { width: 1440, height: 900 } });
     await page.goto(pathToFileURL(join(dir, "report.html")).href);
@@ -666,11 +671,17 @@ test("in a browser, the triage list shows the point chosen, J and K walk it, a p
     assert.match((await page.locator('article.point[data-weak="weak:check:focus"] .url').textContent()) ?? "", /\/equipe$/, "and its address");
     await page.keyboard.press("j");
     assert.equal(await shown(), "weak:check:contrast", "J goes to the next point");
+    await page.locator('.row[data-n="3"]').click();
+    await page.locator('article.point[data-weak="weak:principle:density"] .place').nth(1).click();
+    assert.match((await page.locator('article.point[data-weak="weak:principle:density"] .dk').textContent()) ?? "", /2\/3 juges d’accord/, "the votes of the place shown");
+    await page.locator('.row[data-n="5"]').click();
     await page.keyboard.press("k");
     await page.keyboard.press("k");
     assert.equal(await shown(), "weak:principle:density", "K to the one before");
     await page.locator('[data-f="type:check"]').click();
     assert.deepEqual(await page.locator(".row:visible").evaluateAll((rows) => rows.map((r) => r.getAttribute("data-weak"))), ["weak:check:focus", "weak:check:contrast"], "a filter keeps its points");
+    await page.locator('[data-f="effort:big"]').click();
+    assert.ok(await page.locator(".rows .empty:visible").count(), "an empty filter says so");
     await page.locator('[data-f="forts"]').click();
     assert.ok(await page.locator("#view-forts").isVisible(), "the strengths' view");
     await page.locator('[data-f="all"]').click();
@@ -700,3 +711,25 @@ test("a judged run whose folder the judgement cannot read keeps the page of what
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("a judgement with nothing to rework but what the demo explains offers no command and asks nothing; the band counts every screen that leaves the direction; a screen that names the demo stays the design's unless it is blank", () => {
+  const manifest = { url: "http://x/", capturedAt: "", widths: [1280], errors: [], pages: ["/", "/promo"].map((p) => ({ url: `http://x${p}`, path: p, files: [{ width: 1280, file: `${p.slice(1) || "index"}@1280.png` }] })) };
+  const check = { url: "http://x/", checkedAt: "", widths: [1280], checks: ["console"], pages: ["http://x/", "http://x/promo"], errors: [], findings: [{ check: "console", url: "http://x/", width: 1280, message: "console error: Failed to load resource: the server responded with a status of 503 (Service Unavailable)" }] };
+  const verdict = (principle: string, pass: boolean, reasons: string[]) => ({ principle, pass, votes: pass ? "1/1 pass" : "3/3 fail", reasons, dissent: [], steps: [] });
+  const judge = (promo: ReturnType<typeof verdict>[]) => ({ judgedAt: "", voters: ["1", "2", "3"], principles: ["one-direction", "not-generic"].map((id) => ({ id, text: id })), failures: 0, pages: [{ page: "/", verdicts: [verdict("one-direction", true, ["The orange « Radar » mark holds."]), verdict("not-generic", true, ["The « Radar » table is its own."])] }, { page: "/promo", verdicts: promo }] });
+  const of = (promo: ReturnType<typeof verdict>[]) => judgementOf({ manifest, check: check as never, judge: judge(promo) as never, replay: null, journeyJudge: null, verdict: null, product: null, texts: { "/promo": "- text: Mode démo" }, dirs: { captures: "before/captures", replay: "before/captures/journeys" } });
+  const quiet = of([verdict("one-direction", true, ["Same orange."]), verdict("not-generic", true, ["The « Promo » list is its own."])]);
+  assert.deepEqual([quiet.weak.length, quiet.env.length, quiet.nothingToRedo], [0, 1, false], "only the console's 503, set apart");
+  const html = judgementHtmlOf(quiet);
+  assert.doesNotMatch(html, /data-verdict-id=|data-copy=/, "nothing to agree with, no command to run");
+  assert.match(html, /Rien à reprendre dans le design : ce qui reste est à vérifier hors démo\./);
+  // A screen that says « Mode démo » and fails a principle that is not about a blank screen: the design's.
+  const generic = of([verdict("one-direction", true, ["Same orange."]), verdict("not-generic", false, ["A centred card on flat cream, a generic template."])]);
+  assert.deepEqual(generic.weak.map((w) => w.id), ["weak:principle:not-generic"]);
+  const band = judgementHtmlOf(generic).split('<div class="verdict"')[1]!.split("</div>\n")[0]!;
+  assert.equal(band.match(/<i class="cell on"/g)?.length, 1, "not-generic leaves the direction as well as one-direction does");
+  assert.match(band, /1 écran sur 2 tiennent le style\.|1 écran sur 2 tient le style\./);
+});
+
+/** The page of a judgement alone, in French, as `resultHtml` writes it. */
+const judgementHtmlOf = (judgement: NonNullable<ResultPage["judgement"]>) => resultHtml({ ...PAGE, direction: null, judged: true, judgement: { ...judgement, lang: "fr" } });
