@@ -4,7 +4,7 @@ import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { prBody, readRun, readRunState, RunReportError, sheetLang, type PageLang, type ResultPage } from "@aeom/core";
+import { blockedJourneys, prBody, readRun, readRunState, RunReportError, sheetLang, type JourneyReport, type JudgeReport, type PageLang, type ResultPage } from "@aeom/core";
 import { latestRun } from "./report.js";
 
 const exec = promisify(execFile);
@@ -215,7 +215,18 @@ async function stepsLeft(runDir: string, page: ResultPage): Promise<string[]> {
   if (!page.asked && went.has("pages") && has(join("journeys-end", "report.json")) && !has(join("end", "compare.json"))) left.push("the screens were not measured again after the journey wave (no end/compare.json): step 7, phase remeasure");
   // What was asked is built inside the standard, not written into it: its PR rests on the review that holds it there,
   // a review that went through, whatever phase its steps were marked with.
-  if (page.asked) return page.asked.review ? [] : ["what was asked was not reviewed against the standard (no review in review.md that went through): aeom review --summary, phase review"];
+  if (page.asked) {
+    const asked = page.asked.review ? [] : ["what was asked was not reviewed against the standard (no review in review.md that went through): aeom review --summary, phase review"];
+    // A missing feature built on demand (--journey): the journey it blocked, replayed and judged on its own, must not block.
+    const slug = (await readFile(join(runDir, "journey"), "utf8").catch(() => "")).trim();
+    if (!slug) return asked;
+    const read = <T>(file: string) => readFile(join(runDir, "journey-asked", file), "utf8").then((t) => JSON.parse(t) as T, () => null);
+    const replay = await read<JourneyReport>("report.json");
+    const critique = await read<JudgeReport>("judge-journeys.json");
+    if (!replay?.journeys?.some((j) => j.slug === slug) || !critique?.pages?.some((p) => p.page === slug)) return [...asked, `the journey asked for, ${slug}, was not replayed and judged on its own (no journey-asked/report.json and judge-journeys.json): section 2f, step 7`];
+    const still = blockedJourneys({ replay, critique, limit: Infinity }).entries.find((b) => b.slug === slug);
+    return still ? [...asked, `the journey asked for, ${still.name}, still blocks at step ${still.step}: ${still.why}`] : asked;
+  }
   if ((["kit", "pages", "journeys"].some((p) => went.has(p)) || page.built) && !went.has("standard")) left.push("the standard of the front was not reached: « The standard of the front », phase standard");
   return left;
 }

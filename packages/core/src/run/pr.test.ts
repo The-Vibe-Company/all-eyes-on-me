@@ -171,6 +171,26 @@ test("the PR speaks the person's language: in French, its title, its headings, i
   assert.match(prBody(page, ".aeom/runs/run-1/report.html", "fr").body, /\*\*Avant le run\.\*\* Measured: 2 screens at 390, 1280 px\./, "a line AEOM does not know stays as written");
 });
 
+test("each missing feature says in the PR whether the front alone builds it, with its command, or what the back would have to provide", () => {
+  const feature = { step: 2, capture: null, why: "Ajouter adds nothing." };
+  const named: ResultPage = {
+    ...page,
+    features: {
+      entries: [
+        { ...feature, slug: "add", name: "Add a product", missing: "A way to put a product in the order.", needs: "front" },
+        { ...feature, slug: "pay", name: "Pay", step: 3, missing: "A way to pay.", needs: "back", back: "A payment route." },
+      ],
+      more: 0,
+    },
+  };
+  const { body } = prBody(named, "r.html");
+  assert.match(body, /- \*\*Add a product\*\*, blocks at step 2: A way to put a product in the order\. Front only: `\/aeom build "A way to put a product in the order\." --journey add`/);
+  assert.match(body, /- \*\*Pay\*\*, blocks at step 3: A way to pay\. Needs the back too: A payment route\./);
+  const fr = prBody(named, "r.html", "fr").body;
+  assert.match(fr, /A way to put a product in the order\. Seulement du front : `\/aeom build "A way to put a product in the order\." --journey add`/);
+  assert.match(fr, /A way to pay\. Demande aussi du back : A payment route\./);
+});
+
 test("in French, every kind of run has its own title and its own words", () => {
   const fr = (p: ResultPage) => prBody(p, ".aeom/runs/run-1/report.html", "fr");
   const kept = fr({ ...page, direction: null, verdict: { ...page.verdict!, keepStyle: true } });

@@ -1,21 +1,26 @@
 import { access, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { blockedJourneys, type JourneyReport, type JudgeReport } from "@aeom/core";
+import { blockedJourneys, buildCommand, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { latestRun } from "./report.js";
 
-const FEATURES_HELP = `Usage: aeom features [run-dir] [--missing <journey>=<sentence>]...
+const FEATURES_HELP = `Usage: aeom features [run-dir] [--missing <journey>=<sentence>]... [--front <journey>]... [--back <journey>=<sentence>]...
 
 Names what a key journey would need to reach its end, when it does not at the
 end of the run (it breaks, its result is not shown, or it ends nowhere): at most
 three, the journeys of the product sheet's main loop first. Nothing is built.
 Each one gets a sentence saying what is missing, in the user's words, without a
-technical solution; with one for each, they are kept in features.json, which
-the result page (aeom report) shows apart. Exits with 2 when the journeys were
-not all replayed and critiqued.
+technical solution, and whether the front alone builds it or the back too; with
+both for each, they are kept in features.json, which the result page (aeom
+report) shows apart, a feature of the front with the command that builds it on
+demand. Exits with 2 when the journeys were not all replayed and critiqued.
 
 Options:
-  --missing <journey>=<sentence>  What the blocked journey misses, by its slug or its name`;
+  --missing <journey>=<sentence>  What the blocked journey misses, by its slug or its name
+  --front <journey>               The front alone builds it: a state, a result screen,
+                                  a message, on data the front already has
+  --back <journey>=<sentence>     It needs the back too (new data, a call to a server,
+                                  business logic): what the back would have to provide`;
 
 /** The journeys of the product sheet, in its order: the main loop comes first. */
 async function sheetOrder(): Promise<string[] | null> {
@@ -31,7 +36,7 @@ async function sheetOrder(): Promise<string[] | null> {
 }
 
 export async function runFeatures(argv: string[]): Promise<number> {
-  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { missing: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } } });
+  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { missing: { type: "string", multiple: true }, front: { type: "string", multiple: true }, back: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } } });
   if (values.help || positionals.length > 1) {
     console.log(FEATURES_HELP);
     return values.help ? 0 : 1;
@@ -84,6 +89,14 @@ export async function runFeatures(argv: string[]): Promise<number> {
     return 0;
   }
 
+  // A journey named by its slug or its name, blocked and among the three named: the same checks for every option.
+  const blockedOne = (key: string): { slug: string } | string => {
+    const journey = replay.journeys.find((j) => j.slug === key || j.name === key);
+    if (!journey) return `No journey ${key}: the blocked ones are ${entries.map((e) => e.slug).join(", ")}.`;
+    if (!everyBlocked.some((e) => e.slug === journey.slug)) return `${journey.name} reaches its end: name a feature only for a journey that cannot.`;
+    if (!entries.some((e) => e.slug === journey.slug)) return `${journey.name} is blocked, but not among the three named: the product sheet's main loop comes first.`;
+    return journey;
+  };
   const missing = new Map<string, string>();
   for (const given of values.missing ?? []) {
     const at = given.indexOf("=");
@@ -92,17 +105,9 @@ export async function runFeatures(argv: string[]): Promise<number> {
       console.error(`--missing takes <journey>=<sentence>, such as --missing "${entries[0]!.slug}=A way to ...".`);
       return 1;
     }
-    const journey = replay.journeys.find((j) => j.slug === key || j.name === key);
-    if (!journey) {
-      console.error(`No journey ${key}: the blocked ones are ${entries.map((e) => e.slug).join(", ")}.`);
-      return 1;
-    }
-    if (!everyBlocked.some((e) => e.slug === journey.slug)) {
-      console.error(`${journey.name} reaches its end: name a feature only for a journey that cannot.`);
-      return 1;
-    }
-    if (!entries.some((e) => e.slug === journey.slug)) {
-      console.error(`${journey.name} is blocked, but not among the three named: the product sheet's main loop comes first.`);
+    const journey = blockedOne(key);
+    if (typeof journey === "string") {
+      console.error(journey);
       return 1;
     }
     if (missing.has(journey.slug)) {
@@ -111,16 +116,56 @@ export async function runFeatures(argv: string[]): Promise<number> {
     }
     missing.set(journey.slug, sentence);
   }
+  // Front alone, or the back too: each named one says which, and only one.
+  const needs = new Map<string, { needs: "front" } | { needs: "back"; back: string }>();
+  const nameOf = (slug: string) => entries.find((e) => e.slug === slug)!.name;
+  const said = (slug: string, need: { needs: "front" } | { needs: "back"; back: string }) => {
+    if (needs.has(slug)) return `${nameOf(slug)} needs the front alone or the back too, not both: say it once.`;
+    needs.set(slug, need);
+    return null;
+  };
+  for (const key of values.front ?? []) {
+    const journey = blockedOne(key.trim());
+    const wrong = typeof journey === "string" ? journey : said(journey.slug, { needs: "front" });
+    if (wrong) {
+      console.error(wrong);
+      return 1;
+    }
+  }
+  for (const given of values.back ?? []) {
+    const at = given.indexOf("=");
+    const key = given.slice(0, at).trim(), back = given.slice(at + 1).trim();
+    if (at < 1 || !back) {
+      console.error(`--back takes <journey>=<what the back would have to provide>, such as --back "${entries[0]!.slug}=A route that keeps the order".`);
+      return 1;
+    }
+    const journey = blockedOne(key);
+    const wrong = typeof journey === "string" ? journey : said(journey.slug, { needs: "back", back });
+    if (wrong) {
+      console.error(wrong);
+      return 1;
+    }
+  }
   const slugs = Math.max(...entries.map((e) => e.slug.length)) + 2;
   const names = Math.max(...entries.map((e) => e.name.length)) + 2;
-  for (const e of entries) console.log(`${e.slug.padEnd(slugs)}${e.name.padEnd(names)}blocks at step ${e.step}: ${e.why}${missing.has(e.slug) ? `\n${"".padEnd(slugs + names)}missing: ${missing.get(e.slug)}` : ""}`);
+  const needLine = (slug: string) => {
+    const need = needs.get(slug);
+    if (!need || !missing.has(slug)) return "";
+    return `\n${"".padEnd(slugs + names)}${need.needs === "front" ? `front alone: ${buildCommand({ slug, missing: missing.get(slug)! })}` : `the back too: ${need.back}`}`;
+  };
+  for (const e of entries) console.log(`${e.slug.padEnd(slugs)}${e.name.padEnd(names)}blocks at step ${e.step}: ${e.why}${missing.has(e.slug) ? `\n${"".padEnd(slugs + names)}missing: ${missing.get(e.slug)}` : ""}${needLine(e.slug)}`);
   if (more) console.log(`${more} more blocked journey${more === 1 ? "" : "s"}, not named: three at most per run.`);
   const unsaid = entries.filter((e) => !missing.has(e.slug));
   if (unsaid.length) {
     console.error(`\nSay what each one misses, in one sentence and without a technical solution: ${unsaid.map((e) => `--missing "${e.slug}=<sentence>"`).join(" ")}`);
     return 1;
   }
-  await save({ entries: entries.map((e) => ({ ...e, capture: e.capture ? `${folder}/${e.capture}` : null, missing: missing.get(e.slug)! })), more });
+  const unsorted = entries.filter((e) => !needs.has(e.slug));
+  if (unsorted.length) {
+    console.error(`\nSay for each whether the front alone builds it (a state, a result screen, a message, on data the front already has): ${unsorted.map((e) => `--front ${e.slug}`).join(" ")}; or whether it needs the back too (new data, a call to a server, business logic): ${unsorted.map((e) => `--back "${e.slug}=<what the back would have to provide>"`).join(" ")}, in the same call as the --missing sentences.`);
+    return 1;
+  }
+  await save({ entries: entries.map((e) => ({ ...e, capture: e.capture ? `${folder}/${e.capture}` : null, missing: missing.get(e.slug)!, ...needs.get(e.slug)! })), more });
   console.log(`\nKept for the result page: ${file}`);
   return 0;
 }

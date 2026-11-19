@@ -117,7 +117,7 @@ test("/aeom build builds what a sentence asks, inside the standard: it says firs
   assert.match(asked, /Do not wait for an answer: the run goes on\./);
   assert.match(asked, /`\.aeom\/runs\/\$RUN\/request`/);
   assert.match(asked, /`\.aeom\/runs\/\$RUN\/plan`/);
-  assert.match(asked, /for each route of the plan, `open-<route's slug>\.json`, a journey that only opens it/, "the guard sees the calls of every screen of the plan, crossed by a key journey or not");
+  assert.match(asked, /for each route of the plan, and with `--journey` each route its file opens or lands on, `aeom-open-<route's slug>\.json`, a journey that only opens it/, "the guard sees the calls of every screen of the plan, crossed by a key journey or not");
   assert.match(asked, /aeom journey --journeys \.aeom\/runs\/\$RUN\/journeys --out \.aeom\/runs\/\$RUN\/journeys-before/);
   assert.match(asked, /aeom journey --journeys \.aeom\/runs\/\$RUN\/journeys --out \.aeom\/runs\/\$RUN\/journeys-end/);
   assert.match(asked, /`aeom capture`, `check`, `journey` and `review` take `--widths "\$WIDTHS"`/, "only the commands that have --widths");
@@ -131,6 +131,21 @@ test("/aeom build builds what a sentence asks, inside the standard: it says firs
   assert.match(brief, /its tokens, and the kit's components wherever the kit has the part/);
   assert.match(brief, /Change neither the kit's files nor `\.aeom\/standard\.md`\./);
   assert.match(brief, /no new call to a server, no data written in the page, no business logic/);
+});
+
+test("a missing feature a run named is built on demand, with the journey it blocked: that journey must reach its end, or no PR", () => {
+  const asked = read("phase-build.md").split("## 2f.")[1] ?? "";
+  assert.match(asked, /^ What is asked in a sentence \(`\/aeom build "<what is asked>" \[--journey <slug>\] \[--api <url>\]`\)/);
+  assert.match(asked, /With `--journey <slug>`, the request is a missing feature a run named, the command its result page gives/);
+  assert.match(asked, /its slug in `\.aeom\/runs\/\$RUN\/journey`/);
+  assert.match(asked, /and with `--journey` each route its file opens or lands on/, "the calls of the screens the unblocked journey now reaches are known before");
+  assert.match(asked, /aeom journey --journeys <that folder> --out \.aeom\/runs\/\$RUN\/journey-asked/);
+  assert.match(asked, /aeom judge --journeys --captures \.aeom\/runs\/\$RUN\/journey-asked --votes \.aeom\/runs\/\$RUN\/journey-asked\/votes --out \.aeom\/runs\/\$RUN\/journey-asked/);
+  assert.match(asked, /`aeom pr` refuses the run while it still blocks/);
+  assert.match(asked, /stops the run before its PR, and so does a journey of `--journey` that still blocks/);
+  assert.match(asked.split("**Asked brief.**")[1] ?? "", /With `--journey`, give it that journey's file, and the step where it blocks and why/);
+  assert.match(read("SKILL.md"), /Build none of it/, "a run names what is missing and builds none of it: only the person asks");
+  assert.match(read("SKILL.md"), /--missing "<journey-slug>=<sentence>" --front <journey-slug>` \(or `--back`, as `aeom features --help` says\)/, "each feature named says front alone or the back too, as the CLI asks");
 });
 
 test("every list of what the style kept leaves to the charter names the same checks as the CLI", () => {
