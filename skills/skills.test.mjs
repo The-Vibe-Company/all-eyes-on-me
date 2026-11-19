@@ -309,3 +309,20 @@ test("/aeom directions serves its page before it asks: the person chooses on the
   assert.match(step7, /when this run's page is served already, write it again, `aeom report \.aeom\/runs\/\$RUN --lang \$AEOM_LANG`, which the server reads at each request, and tell the person to reload it/);
   assert.doesNotMatch(step7, /its strong point, its weak point and its fit as the comparison says them, what its checks found/, "the detail is on the page, not in the message");
 });
+
+test("each direction of /aeom directions is written in its folder, so nothing is retyped in the shell and a run taken up finds it", () => {
+  const mockups = read("phase-mockups.md");
+  const step4 = mockups.split("4. **`$COUNT` angles")[1]?.split("5. **One worker per direction")[0] ?? "";
+  assert.match(step4, /write it in its folder, `\$MAIN\/\.aeom\/runs\/\$RUN\/directions\/<slug>\/direction\.json`, with the session's file tool, never in the shell: `from`, `sentence`, `structure` and `dense`/);
+  const step5 = mockups.split("5. **One worker per direction")[1]?.split("6. **Capture")[0] ?? "";
+  assert.match(step5, /taken up, a worker launched again is given its direction\.json, never a new angle/);
+  const step6 = mockups.split("6. **Capture, lay out and check them all")[1]?.split("7. **Show them all")[0] ?? "";
+  assert.doesNotMatch(step6, /--note/, "the sentences are read in each direction.json");
+  assert.match(step6, /each direction's sentence, structure and dense page read in its direction\.json/);
+  const step7 = mockups.split("7. **Show them all, then ask.**")[1]?.split("**Variants.**")[0] ?? "";
+  assert.match(step7, /aeom direction keep "\$MAIN\/\.aeom\/runs\/\$RUN\/directions\/<slug>" --source "<the front as it is, the prompt, or the spec's file>"/);
+  assert.doesNotMatch(step7, /--sentence "<its sentence>"/);
+  assert.match(mockups.split("**Variants.**")[1]?.split("**A mix**")[0] ?? "", /its direction\.json, as step 4 says, its sentence saying what it changes/);
+  const brief = mockups.split("**Mockup brief.**")[1] ?? "";
+  assert.match(brief, /add to your folder's `direction\.json` `seen`, those two sentences, and `closest`, the banned look yours is closest to and what keeps it apart, and change nothing else in it/);
+});
