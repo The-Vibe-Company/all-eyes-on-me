@@ -17,6 +17,8 @@ export interface AgentState {
   branch?: string;
   /** The commit its worktree started from. */
   from?: string;
+  /** For a page worker: the page it rebuilds, by its route, so `aeom ratchet` finds its files. */
+  page?: string;
   at: string;
 }
 
