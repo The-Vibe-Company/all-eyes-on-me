@@ -1,0 +1,33 @@
+packages/cli/src/commands/review.test.ts
+  s_36049fd871fcc3::t_911ef426a6f439 287-288
+  s_36049fd871fcc3::t_06224b8c6f0d1a 299-313,315,317-321
+  s_36049fd871fcc3::t_ebdfdcb16d61bd 314,316
+  s_36049fd871fcc3::t_279200452c42a8 137-138
+packages/cli/src/commands/review.ts
+  s_36049fd871fcc3::t_58af542fbcc509 152-155,162,164
+  s_36049fd871fcc3::t_4ebfcc006e0f38 31-35
+  s_36049fd871fcc3::t_9ae6fc361b888c 325
+  s_36049fd871fcc3::t_a592ae539bfdfa 163
+  s_36049fd871fcc3::t_7d0e68049831a4 304-306
+  s_36049fd871fcc3::t_ecdf362b20276c 20-23
+  s_36049fd871fcc3::t_017381ca2ffdbe 199-201,203
+  s_36049fd871fcc3::t_3472f645673e57 58-83
+  s_36049fd871fcc3::t_c7cba6a32dbddb 265
+  s_36049fd871fcc3::t_4bffd6a6b7b83b 186-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "228ab2805edf95d03fc9ffd852b55c0ad94d4c26",
+  "prompts": {},
+  "sessions": {
+    "s_36049fd871fcc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "babc76fd-e4c2-482f-b054-1b5f6550c8c2",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
