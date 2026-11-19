@@ -173,6 +173,25 @@ test("the sheets of a round of six or nine are never taken for directions, to co
   }
 });
 
+test("what the screening names goes beside its direction, kept in the comparison and said with it, never in its place", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-named-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  try {
+    await mkdir(D, { recursive: true });
+    for (const name of ["lutrin", "verriere"]) await writeFile(join(D, `${name}.png`), "");
+    const said = (slug: string) => ({ strong: `${slug}: reads at a glance.`, weak: `${slug}: a heavy header.`, fit: `${slug}: a town hall's desk.` });
+    await writeFile(join(D, "screening-1.json"), JSON.stringify({ out: { verriere: "Cream paper and a serif headline: a banned look." }, compare: { lutrin: said("lutrin"), verriere: said("verriere") }, start: { source: "lutrin", why: "the list reads first." } }));
+    const compared = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);
+    assert.equal(compared.code, 0, compared.out);
+    assert.match(compared.out, /^verriere\n  Named: Cream paper and a serif headline: a banned look\.\n  Strong: /m);
+    const kept = JSON.parse(await readFile(join(D, "compare.json"), "utf8")) as { directions: { slug: string; named?: string }[] };
+    assert.deepEqual(kept.directions.map((d) => [d.slug, d.named]), [["lutrin", undefined], ["verriere", "Cream paper and a serif headline: a banned look."]]);
+    assert.equal(JSON.parse(await readFile(join(D, "rounds.json"), "utf8"))[0].compare.directions[1].named, "Cream paper and a serif headline: a banned look.", "the page reads it from the round");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("aeom tournament compare checks the screening's comparison, keeps it and says it in words; the decision notes whether the person followed its advice", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-compare-dirs-"));
   const home = await mkdtemp(join(tmpdir(), "aeom-home-"));

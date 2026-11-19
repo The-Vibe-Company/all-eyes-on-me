@@ -38,12 +38,12 @@ const serving = async (cwd: string, runDir: string, home: string) => {
 };
 /** A request sent as written, path and headers untouched by any client; each part of the body a moment after the other, as a slow network would. */
 const raw = (url: string, path: string, { method = "GET", headers = {}, body = [] }: { method?: string; headers?: Record<string, string>; body?: (string | Buffer)[] } = {}) =>
-  new Promise<{ status: number; text: string }>((resolve, reject) => {
+  new Promise<{ status: number; text: string; headers: Record<string, string | string[] | undefined> }>((resolve, reject) => {
     const { hostname, port } = new URL(url);
     const req = request({ hostname, port, path, method, headers }, (res) => {
       const chunks: Buffer[] = [];
       res.on("data", (c: Buffer) => chunks.push(c));
-      res.on("end", () => resolve({ status: res.statusCode!, text: Buffer.concat(chunks).toString("utf8") }));
+      res.on("end", () => resolve({ status: res.statusCode!, text: Buffer.concat(chunks).toString("utf8"), headers: res.headers }));
     });
     req.on("error", reject);
     void (async () => {
@@ -282,6 +282,47 @@ test("served, the page answers this machine alone: another name, another origin,
       assert.equal((await raw(url, "/leak.png")).status, 404, "a link in the run folder to a file outside it");
       assert.equal((await raw(url, "/out/.aeom/secret.png")).status, 404, "a link in the run folder to a folder outside it");
       assert.equal((await raw(url, "/verdict.png")).status, 404, "a link named like a capture, to a file that is not one");
+    } finally {
+      stop();
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("served, a mockup of the round opens for real with what its pages load from its folder, sandboxed: no script runs in it, so none speaks for the page", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
+  const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
+  const R = join(dir, ".aeom", "runs", "run-8");
+  const D = join(R, "directions");
+  try {
+    await put(join(D, "lutrin", "index.html"), `<!doctype html><link rel="stylesheet" href="style.css"><img src="img/hero.png"><a href="registre.html">Registre</a>`);
+    await put(join(D, "lutrin", "registre.html"), "<!doctype html><h1>Registre</h1>");
+    await put(join(D, "lutrin", "style.css"), "body { color: #123; }");
+    await put(join(D, "lutrin", "img", "hero.png"), "png");
+    await put(join(D, "lutrin", "icons", "pluie.svg"), "<svg xmlns='http://www.w3.org/2000/svg'/>");
+    await put(join(D, "lutrin", "fonts", "titres.woff2"), "woff2");
+    await put(join(D, "lutrin", "notes.md"), "a worker's notes");
+    await put(join(D, "lutrin.png"), "png");
+    await put(join(D, "rounds.json"), [{ round: 1, entrants: ["lutrin"] }]);
+    await put(join(R, "stray.html"), "<!doctype html>");
+    const { url, stop } = await serving(dir, ".aeom/runs/run-8", home);
+    try {
+      const page = await raw(url, "/");
+      assert.equal(page.status, 200);
+      assert.match(page.text, /href="directions\/lutrin\/index\.html"/);
+      assert.equal(page.headers["content-security-policy"], undefined, "the page itself keeps its script");
+      for (const [path, type] of [["/directions/lutrin/index.html", "text/html"], ["/directions/lutrin/registre.html", "text/html"], ["/directions/lutrin/style.css", "text/css"], ["/directions/lutrin/img/hero.png", "image/png"], ["/directions/lutrin/icons/pluie.svg", "image/svg+xml"], ["/directions/lutrin/fonts/titres.woff2", "font/woff2"]]) {
+        const got = await raw(url, path!);
+        assert.equal(got.status, 200, path);
+        assert.ok(String(got.headers["content-type"]).startsWith(type!), path);
+        // No allow-scripts: nothing runs in it. Its own origin kept, so its fonts, masks and sprites still load from its folder.
+        assert.equal(got.headers["content-security-policy"], "sandbox allow-same-origin", `${path}: no script of a mockup runs as the page`);
+      }
+      assert.equal((await raw(url, "/directions/lutrin/notes.md")).status, 404, "only what a page shows");
+      assert.equal((await raw(url, "/stray.html")).status, 404, "a page outside the directions is not one of them");
+      assert.equal((await raw(url, "/directions/rounds.json")).status, 404);
     } finally {
       stop();
     }

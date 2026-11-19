@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CaptureManifest } from "../capture/capture.js";
 import type { CheckReport } from "../checks/run.js";
@@ -73,7 +73,17 @@ export interface ResultPage {
   rounds?: {
     round: number;
     now: string | null;
-    entrants: { slug: string; note?: string; image: string | null; compare?: { strong: string; weak: string; fit: string }; checks?: string[] | null }[];
+    entrants: {
+      slug: string;
+      note?: string;
+      image: string | null;
+      compare?: { strong: string; weak: string; fit: string; named?: string };
+      checks?: string[] | null;
+      /** A mockup's own pages in the run, its first screen first, to open for real; none for a direction built in a worktree. */
+      pages?: string[];
+      /** The phone width to show its pages at, or null when the run aims at computers alone. */
+      phone?: number | null;
+    }[];
     start?: { slug: string; why: string };
     decision?: { applied: string; why?: string };
   }[];
@@ -157,7 +167,7 @@ async function first(runDir: string, names: string[], file: string): Promise<str
  */
 async function readRounds(runDir: string): Promise<NonNullable<ResultPage["rounds"]>> {
   const D = join(runDir, "directions");
-  type Round = { round: number; entrants: string[]; notes?: Record<string, string>; compare?: { directions?: { slug: string; strong: string; weak: string; fit: string }[]; start?: { slug: string; why: string } }; decision?: { applied: string; why?: string } };
+  type Round = { round: number; entrants: string[]; notes?: Record<string, string>; compare?: { directions?: { slug: string; strong: string; weak: string; fit: string; named?: string }[]; start?: { slug: string; why: string } }; decision?: { applied: string; why?: string } };
   let kept = await json<Round[]>(join(D, "rounds.json")).catch(() => null);
   kept = Array.isArray(kept) ? kept.filter((r) => r && typeof r.round === "number" && Array.isArray(r.entrants)) : null;
   if (!kept?.length) {
@@ -176,6 +186,17 @@ async function readRounds(runDir: string): Promise<NonNullable<ResultPage["round
     for (const f of report.findings ?? []) counts.set(f.check, (counts.get(f.check) ?? 0) + 1);
     return [...counts].map(([c, n]) => (n > 1 ? `${c} ×${n}` : c));
   };
+  // A mockup of /aeom directions lives in the run, its pages to open; a direction of a run lives in its worktree.
+  const pagesOf = async (slug: string) => {
+    const files = await readdir(join(D, slug)).catch(() => [] as string[]);
+    if (!files.includes("index.html")) return undefined;
+    return ["index.html", ...files.filter((f) => f.endsWith(".html") && f !== "index.html").sort()].map((f) => `directions/${slug}/${f}`);
+  };
+  // The narrowest phone its checks measured; none when they say no width: a phone is never guessed.
+  const phoneOf = async (slug: string) => {
+    const widths = usableWidths((await json<{ widths?: unknown }>(join(D, `${slug}-checks`, "check.json")).catch(() => null))?.widths) ?? [];
+    return widths.filter(isPhone).sort((a, b) => a - b)[0] ?? null;
+  };
   // A direction's sentence is the one its round gave, else the last an earlier round gave.
   const noteOf = (slug: string, upTo: number) => [...kept!].filter((r) => r.round <= upTo).reverse().find((r) => r.notes?.[slug])?.notes?.[slug];
   const rounds: NonNullable<ResultPage["rounds"]> = [];
@@ -185,7 +206,8 @@ async function readRounds(runDir: string): Promise<NonNullable<ResultPage["round
       const said = r.compare?.directions?.find((d) => d.slug === slug);
       const note = noteOf(slug, r.round);
       const checks = await checksOf(slug);
-      entrants.push({ slug, ...(note ? { note } : {}), image: (await exists(join(D, `${slug}.png`))) ? `directions/${slug}.png` : null, ...(said ? { compare: { strong: said.strong, weak: said.weak, fit: said.fit } } : {}), ...(checks !== undefined ? { checks } : {}) });
+      const pages = await pagesOf(slug);
+      entrants.push({ slug, ...(note ? { note } : {}), image: (await exists(join(D, `${slug}.png`))) ? `directions/${slug}.png` : null, ...(said ? { compare: { strong: said.strong, weak: said.weak, fit: said.fit, ...(typeof said.named === "string" && said.named.trim() ? { named: said.named.trim() } : {}) } } : {}), ...(checks !== undefined ? { checks } : {}), ...(pages ? { pages, phone: await phoneOf(slug) } : {}) });
     }
     rounds.push({ round: r.round, now: i === 0 ? now : null, entrants, ...(r.compare?.start ? { start: r.compare.start } : {}), ...(r.decision ? { decision: r.decision } : {}) });
   }
@@ -407,6 +429,7 @@ const WORDS = {
     measuredAt: (m: string, left: string) => `Measured at ${m} px, the widths this run declared${left ? `; ${left} px left out` : ""}.`,
     round: (n: number) => `Round ${n}`, now: "The front as it is", strong: "Strong point: ", weak: "Weak point: ", fit: "Fit: ",
     checksFound: "Its checks found: ", passesChecks: "It passes every check.", notChecked: "Its checks could not measure it.",
+    named: "The screening names it: ", live: "Its pages, for real: ", onPhone: (px: number) => `On a phone · ${px} px`, phoneTitle: (slug: string) => `${slug}, on a phone`,
     brokeAt: (n: string, why: string) => `it broke at step ${n}: ${why}`, notLoaded: "did not load before the run, and was not measured after the run", startFrom: (s: string, why: string) => `The screening would start from ${s}: ${why}`,
     advice: "Advice only: you choose, one direction or a mix.", chosen: (s: string, why?: string) => `Chosen: ${s}${why ? ` — ${why}` : "."}`, earlier: "Earlier rounds",
     // The head and the groups of the page.
@@ -462,6 +485,7 @@ const WORDS = {
     measuredAt: (m: string, left: string) => `Mesuré à ${m} px, les largeurs que ce run a déclarées${left ? ` ; ${left} px laissés de côté` : ""}.`,
     round: (n: number) => `Tour ${n}`, now: "Le front tel qu'il est", strong: "Point fort : ", weak: "Point faible : ", fit: "Adéquation : ",
     checksFound: "Ses contrôles ont trouvé : ", passesChecks: "Elle passe tous les contrôles.", notChecked: "Ses contrôles n'ont pas pu la mesurer.",
+    named: "Le tri la signale : ", live: "Ses pages, en vrai : ", onPhone: (px: number) => `Sur un téléphone · ${px} px`, phoneTitle: (slug: string) => `${slug}, sur un téléphone`,
     brokeAt: (n: string, why: string) => `il s'est arrêté à l'étape ${n} : ${why}`, notLoaded: "ne chargeait pas avant le run, et n'a pas été mesurée après", startFrom: (s: string, why: string) => `Le tri commencerait par ${s} : ${why}`,
     advice: "Un conseil seulement : c'est vous qui choisissez, une direction ou un mélange.", chosen: (s: string, why?: string) => `Choisie : ${s}${why ? ` — ${why}` : "."}`, earlier: "Les tours d'avant",
     redoneOf: (k: number, n: number) => `${plural(k, "écran refait", "écrans refaits")} sur ${n}`, improvedOf: (k: number, n: number) => `${k} parcours amélioré${k > 1 ? "s" : ""} sur ${n}`,
@@ -823,11 +847,16 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
   // Every round of directions, the last first: the front as it is, then each direction with what the comparison
   // says of it, what its checks found, and the choice. The top of each in large, the whole on demand.
   const shotOf = (src: string | null, alt: string) => (src ? `<div class="thumb thumb--direction">${whole(alt, img(src, alt, w), `<div class="pair" data-label="${escape(alt)}"><div class="sides"><figure>${img(src, alt, w)}</figure></div></div>`)}</div>` : img(src, alt, w));
+  // A mockup opens for real: each page in a tab of its own, and its first page on a phone, where its own links lead to the others.
+  const liveHtml = (e: NonNullable<ResultPage["rounds"]>[number]["entrants"][number]) =>
+    e.pages?.length
+      ? `<p class="live">${w.live}${e.pages.map((p) => `<a href="${escape(href(p))}" target="_blank" rel="noopener">${escape(p === `directions/${e.slug}/index.html` ? "/" : `/${p.split("/").at(-1)}`)}</a>`).join(" · ")}</p>${e.phone ? `<details class="phone"><summary>${escape(w.onPhone(e.phone))}</summary><div class="phone__frame"><iframe src="${escape(href(e.pages[0]!))}" title="${escape(w.phoneTitle(e.slug))}" width="${e.phone}" loading="lazy"></iframe></div></details>` : ""}`
+      : "";
   const roundHtml = (round: NonNullable<ResultPage["rounds"]>[number]) =>
     `<section class="round" data-round="${round.round}"><h3>${w.round(round.round)}</h3><div class="entrants">${round.now ? `<article class="direction direction-now"><h4>${w.now}</h4>${shotOf(round.now, w.now)}</article>` : ""}${round.entrants
       .map(
         (e) =>
-          `<article class="direction" data-slug="${escape(e.slug)}"><h4>${escape(e.slug)}${round.decision?.applied === e.slug ? ` <span class="status kept">${w.chosenTag}</span>` : ""}</h4>${shotOf(e.image, e.slug)}${e.note ? `<p>${escape(e.note)}</p>` : ""}${e.compare ? `<p><span class="label">${w.strong}</span>${escape(e.compare.strong)}</p><p><span class="label">${w.weak}</span>${escape(e.compare.weak)}</p><p><span class="label">${w.fit}</span>${escape(e.compare.fit)}</p>` : ""}${e.checks === null ? `<p class="muted">${w.notChecked}</p>` : e.checks ? `<p class="muted">${e.checks.length ? `${w.checksFound}${escape(e.checks.join(", "))}` : w.passesChecks}</p>` : ""}</article>`,
+          `<article class="direction" data-slug="${escape(e.slug)}"><h4>${escape(e.slug)}${round.decision?.applied === e.slug ? ` <span class="status kept">${w.chosenTag}</span>` : ""}</h4>${shotOf(e.image, e.slug)}${e.note ? `<p>${escape(e.note)}</p>` : ""}${e.compare?.named ? `<p><span class="label">${w.named}</span>${escape(e.compare.named)}</p>` : ""}${e.compare ? `<p><span class="label">${w.strong}</span>${escape(e.compare.strong)}</p><p><span class="label">${w.weak}</span>${escape(e.compare.weak)}</p><p><span class="label">${w.fit}</span>${escape(e.compare.fit)}</p>` : ""}${e.checks === null ? `<p class="muted">${w.notChecked}</p>` : e.checks ? `<p class="muted">${e.checks.length ? `${w.checksFound}${escape(e.checks.join(", "))}` : w.passesChecks}</p>` : ""}${liveHtml(e)}</article>`,
       )
       .join("")}</div>${round.start ? `<p>${escape(w.startFrom(round.start.slug, round.start.why))} <span class="muted">${w.advice}</span></p>` : ""}${round.decision ? `<p class="chosen"><strong>${escape(w.chosen(round.decision.applied, round.decision.why))}</strong></p>` : ""}</section>`;
   const [latest, ...earlier] = r.rounds ?? [];
@@ -1009,9 +1038,12 @@ ${fontFaces()}
   .entrants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 12px; }
   .round + .round, details .round { margin-top: 24px; }
   .round > h3 { font-size: 17px; }
-  .direction { display: grid; gap: 8px; align-content: start; }
+  .direction { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 8px; align-content: start; }
   .direction h4 { font-size: 16px; }
   .thumb--direction { aspect-ratio: 4 / 3; }
+  .live a { font-weight: 700; }
+  .phone__frame { overflow-x: auto; }
+  .phone iframe { box-sizing: content-box; display: block; max-width: none; height: 760px; margin-top: 10px; border: 1.5px solid var(--ink); border-radius: 22px; background: var(--white); }
   .chosen { margin-top: 14px; }
   details > summary { margin-top: 18px; }
 

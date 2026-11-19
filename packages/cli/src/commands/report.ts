@@ -94,7 +94,21 @@ export async function runReport(argv: string[]): Promise<number> {
   return 0;
 }
 
-const TYPES: Record<string, string> = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".json": "application/json" };
+const TYPES: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".png": "image/png",
+  ".json": "application/json",
+  ".css": "text/css; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
+/** What a page shows, served wherever it is in the run folder: its captures, and a mockup's styles, images and fonts. */
+const SHOWN = new Set([".png", ".css", ".svg", ".jpg", ".jpeg", ".webp", ".gif", ".woff", ".woff2"]);
 const IDLE_HOURS = 2;
 
 /**
@@ -155,12 +169,16 @@ async function serve(runDir: string, home: string, port: number, open: boolean, 
         return send(200, JSON.stringify({ rates: agreementRates(await readFeedback(home)) }), TYPES[".json"]);
       }
       if (req.method !== "GET") return send(405, "No.");
-      // The page and its captures, nothing else, judged on the real file: no link leads out of the run folder.
+      // The page, its captures and the mockups of its rounds, nothing else, judged on the real file: no link leads out of the run folder.
       const file = await realpath(resolve(root, "." + decodeURIComponent(url.pathname === "/" ? "/report.html" : url.pathname))).catch(() => null);
-      if (!file || !isInside(file, root) || (file !== join(root, "report.html") && extname(file) !== ".png")) return send(404, "Not here.");
+      const page = file === join(root, "report.html");
+      const mockup = !!file && extname(file) === ".html" && isInside(file, join(root, "directions"));
+      if (!file || !isInside(file, root) || !(page || mockup || SHOWN.has(extname(file)))) return send(404, "Not here.");
       const data = await readFile(file).catch(() => null);
       if (!data) return send(404, "Not here.");
-      res.writeHead(200, { "content-type": TYPES[extname(file)]! }).end(data);
+      // Only the page runs its script: in a mockup, or an image opened on its own, no script runs, so nothing in it speaks for the page.
+      // Its own origin is kept, so its fonts, masks and sprites still load from its folder.
+      res.writeHead(200, { "content-type": TYPES[extname(file)]!, ...(page ? {} : { "content-security-policy": "sandbox allow-same-origin" }) }).end(data);
     } catch {
       send(400, "Bad request.");
     }

@@ -181,7 +181,7 @@ export async function runTournament(argv: string[]): Promise<number> {
       if (!comparison) return (console.error(`The comparison cannot be shown, so nothing was kept:\n${problems.map((p) => `  ${p}`).join("\n")}\nAsk the screening judge again, with the screening brief.`), 1);
       await writeFile(join(values.dir, "compare.json"), JSON.stringify(comparison, null, 2) + "\n");
       await openRound(comparison.directions.map((d) => d.slug), (r) => ({ ...r, compare: comparison }));
-      console.log(`${comparison.directions.map((d) => `${d.slug}\n  Strong: ${d.strong}\n  Weak: ${d.weak}\n  Fit: ${d.fit}`).join("\n\n")}\n\nThe screening would start from ${comparison.start.slug}: ${/[.!?…]$/.test(comparison.start.why) ? comparison.start.why : `${comparison.start.why}.`} Advice only: the person chooses, one direction or a mix.`);
+      console.log(`${comparison.directions.map((d) => `${d.slug}${d.named ? `\n  Named: ${d.named}` : ""}\n  Strong: ${d.strong}\n  Weak: ${d.weak}\n  Fit: ${d.fit}`).join("\n\n")}\n\nThe screening would start from ${comparison.start.slug}: ${/[.!?…]$/.test(comparison.start.why) ? comparison.start.why : `${comparison.start.why}.`} Advice only: the person chooses, one direction or a mix.`);
       return 0;
     }
     if (action === "start") {

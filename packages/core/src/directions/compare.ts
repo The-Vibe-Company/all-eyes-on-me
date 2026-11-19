@@ -1,6 +1,7 @@
 /** What the screening says of each direction, for the person to choose with: never in their place. */
 export interface DirectionComparison {
-  directions: { slug: string; strong: string; weak: string; fit: string }[];
+  /** `named`: what the screening names in it, a banned look or a timid one, shown beside it, never in its place. */
+  directions: { slug: string; strong: string; weak: string; fit: string; named?: string }[];
   /** The one it would start from, and why: advice, the person chooses. */
   start: { slug: string; why: string };
 }
@@ -39,7 +40,7 @@ export function compareDirections(answer: unknown, directions: string[]): { comp
   if (problems.length) return { comparison: null, problems };
   return {
     comparison: {
-      directions: directions.map((d) => ({ slug: d, strong: text(compare[d]!.strong), weak: text(compare[d]!.weak), fit: text(compare[d]!.fit) })),
+      directions: directions.map((d) => ({ slug: d, ...(text(out[d]) ? { named: text(out[d]) } : {}), strong: text(compare[d]!.strong), weak: text(compare[d]!.weak), fit: text(compare[d]!.fit) })),
       start: { slug, why: text(start!.why) },
     },
     problems,
