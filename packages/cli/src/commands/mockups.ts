@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { contactSheet } from "@aeom/core";
@@ -12,9 +12,11 @@ Every direction of a round of /aeom directions, in one command: the slugs
 given, or else each folder in <directions folder> that holds an index.html.
 For each direction, its index.html
 and its other page are captured at the widest width and laid out in
-<slug>.png, and it is checked at every width. Then sheet.png lays them all
-out, one under the other, the front as it is first when --now gives its
-captures, each with its sentence. It says, for each, what its checks found.
+<slug>.png, and it is checked at every width. Then they are laid out three
+to a sheet, one under the other, in sheet.png, then sheet-2.png and
+sheet-3.png, the front as it is first on each when --now gives its captures,
+each with its sentence. It says, for each, what its checks found, and names
+the images the screening judge reads: one per direction, never a sheet.
 
   --widths <list>          The run's widths (default 390,1280)
   --now <route>=<capture>  A screen of the front as it is, captured: laid out
@@ -32,6 +34,9 @@ const aeom = (args: string[]) =>
     (e: { code?: number; stderr?: string }) => ({ code: e.code ?? 1, said: (e.stderr ?? "").trim().split("\n").filter(Boolean).at(-1) ?? "" }),
   );
 const json = async <T>(file: string): Promise<T | null> => readFile(file, "utf8").then((t) => JSON.parse(t) as T, () => null);
+/** Directions to a sheet: a sheet of six or nine is too tall to read, for a person as for a model. */
+const PER_SHEET = 3;
+const listed = (items: string[]) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);
 
 interface Shot {
   path: string;
@@ -55,6 +60,9 @@ export async function runMockups(argv: string[]): Promise<number> {
     console.error(absent.length ? `No index.html in ${absent.map((a) => join(dir, a)).join(", ")}: a direction is a folder holding one.` : `No direction in ${dir}: each is a folder holding an index.html.`);
     return 1;
   }
+  // The front as it is and the sheets have these names in the folder: a direction named so would be lost among them.
+  const reserved = slugs.filter((slug) => /^(now|sheet(-\d+)?)$/.test(slug));
+  if (reserved.length) return (console.error(`${reserved.join(", ")}: a direction cannot be named now, sheet or sheet-<n>, which name the front as it is and the sheets. Rename its folder.`), 1);
   const notes = new Map<string, string>();
   for (const note of values.note ?? []) {
     const at = note.indexOf("=");
@@ -79,6 +87,8 @@ export async function runMockups(argv: string[]): Promise<number> {
       const dense = (await readdir(folder)).filter((f) => f.endsWith(".html") && f !== "index.html").sort()[0];
       const pages = ["/", ...(dense ? [`/${dense}`] : [])];
       const shots = join(dir, `${slug}-shots`);
+      // What an earlier round left of it never stands for this one: a direction that no longer opens has no image.
+      await Promise.all([`${slug}.png`, `${slug}-shots`, `${slug}-checks`].map((f) => rm(join(dir, f), { recursive: true, force: true })));
       const captured = await aeom(["capture", "--dir", folder, "--pages", pages.join(","), "--widths", String(widest), "--out", shots]);
       const manifest = await json<{ pages: Shot[] }>(join(shots, "manifest.json"));
       const files = pages.map((page) => ({ page, file: manifest?.pages.find((p) => p.path === page)?.files.find((f) => f.width === widest)?.file }));
@@ -94,15 +104,19 @@ export async function runMockups(argv: string[]): Promise<number> {
     }),
   );
 
-  // The front as it is first, then every direction, each with its sentence; one that did not open shows as a gap.
-  const items: { label: string; file: string; note?: string }[] = [];
-  if (now.length) {
-    await contactSheet({ out: join(dir, "now.png"), items: now, columns: now.length, cellWidth: 640 });
-    items.push({ label: "now", file: join(dir, "now.png"), note: "The front as it is today." });
+  // Three directions to a sheet, the front as it is first on each, every direction with its sentence; one that did not open shows as a gap.
+  const first = now.length ? [{ label: "now", file: join(dir, "now.png"), note: "The front as it is today." }] : [];
+  if (now.length) await contactSheet({ out: join(dir, "now.png"), items: now, columns: now.length, cellWidth: 640 });
+  const items: { label: string; file: string; note?: string }[] = results.map((r) => ({ label: r.slug, file: join(dir, `${r.slug}.png`), ...(notes.has(r.slug) ? { note: notes.get(r.slug)! } : {}) }));
+  const sheets: string[] = [];
+  for (let at = 0; at < items.length; at += PER_SHEET) {
+    const out = join(dir, sheets.length ? `sheet-${sheets.length + 1}.png` : "sheet.png");
+    await contactSheet({ out, items: [...first, ...items.slice(at, at + PER_SHEET)], columns: 1, cellWidth: 1600 });
+    sheets.push(out);
   }
-  for (const r of results) items.push({ label: r.slug, file: join(dir, `${r.slug}.png`), ...(notes.has(r.slug) ? { note: notes.get(r.slug)! } : {}) });
-  await contactSheet({ out: join(dir, "sheet.png"), items, columns: 1, cellWidth: 1600 });
-  await writeFile(join(dir, "sheet.json"), `${JSON.stringify(items.map(({ label, note }) => ({ label, note })), null, 2)}\n`);
+  // An earlier round's sheets beyond these would be shown with this one by mistake.
+  for (const file of await readdir(dir)) if (Number(/^sheet-(\d+)\.png$/.exec(file)?.[1]) > sheets.length) await rm(join(dir, file), { force: true });
+  await writeFile(join(dir, "sheet.json"), `${JSON.stringify([...first, ...items].map(({ label, note }) => ({ label, note })), null, 2)}\n`);
 
   const column = Math.max(...slugs.map((s) => s.length)) + 2;
   const lines = results.map((r) => {
@@ -111,6 +125,10 @@ export async function runMockups(argv: string[]): Promise<number> {
     const found = r.failing.length ? r.failing.join(", ") : "passes every check";
     return `  ${r.slug.padEnd(column)}${found}${r.unchecked ? `; ${r.unchecked} page${r.unchecked === 1 ? "" : "s"} not checked` : ""}`;
   });
-  console.log(`${slugs.length} direction${slugs.length === 1 ? "" : "s"}, laid out in ${join(dir, "sheet.png")}${now.length ? ", the front as it is first" : ""}:\n${lines.join("\n")}`);
+  const laid = sheets.length > 1 ? `three to a sheet, laid out in ${listed(sheets)}${now.length ? ", the front as it is first on each" : ""}` : `laid out in ${sheets[0]}${now.length ? ", the front as it is first" : ""}`;
+  console.log(`${slugs.length} direction${slugs.length === 1 ? "" : "s"}, ${laid}:\n${lines.join("\n")}`);
+  // A model shrinks a tall sheet until it reads nothing on it: the screening judge reads each direction whole.
+  const opened = results.filter((r) => r.opened).map((r) => join(dir, `${r.slug}.png`));
+  if (opened.length) console.log(`For the screening judge, one image each: ${[...first.map((f) => f.file), ...opened].join(", ")}`);
   return results.some((r) => r.opened) ? 0 : 1;
 }

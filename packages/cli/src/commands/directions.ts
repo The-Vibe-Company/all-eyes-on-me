@@ -164,7 +164,7 @@ export async function runTournament(argv: string[]): Promise<number> {
     if (action === "compare") {
       // The directions on the sheet that opened, the front as it is aside: each is compared, and only those.
       const sheet = await readJson<{ label?: unknown }[]>(join(values.dir, "sheet.json"));
-      const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png" && f !== "now.png").map((f) => f.slice(0, -4));
+      const captured = await directionsIn(values.dir);
       const shown = Array.isArray(sheet) ? sheet.map((i) => String(i?.label ?? "")).filter((l) => l && l !== "now" && captured.includes(l)) : captured;
       if (!values.from) return (console.error(`aeom tournament compare --dir <dir> --from <the screening judge's answer>.`), 1);
       // The judge's object, even said in words or in a code block around it.
@@ -237,8 +237,8 @@ export async function runTournament(argv: string[]): Promise<number> {
       return 0;
     }
     if (action === "decide") {
-      // Any direction built and captured can be chosen, the ones the screening took out included; the sheet and the front as it is are not directions.
-      const captured = (await readdir(values.dir)).filter((f) => f.endsWith(".png") && f !== "sheet.png" && f !== "now.png").map((f) => f.slice(0, -4));
+      // Any direction built and captured can be chosen, the ones the screening took out included.
+      const captured = await directionsIn(values.dir);
       const drop = values.drop ?? [];
       const { tournament, rerun } = decideDirection(t, { choose: values.choose, drop, why: values.why, at: new Date().toISOString(), directions: captured });
       // The comparison's advice, when the screening gave one on this round's directions: whether the person followed it,
@@ -324,6 +324,9 @@ export async function runTournament(argv: string[]): Promise<number> {
   console.log(TOURNAMENT_HELP);
   return 1;
 }
+
+/** The directions captured in a folder: each <slug>.png but the sheets of the round and the front as it is. */
+const directionsIn = async (dir: string) => (await readdir(dir)).filter((f) => f.endsWith(".png") && !/^(sheet(-\d+)?|now)\.png$/.test(f)).map((f) => f.slice(0, -4));
 
 /** A JSON file, or null when it is missing or broken: an optional file never stops a decision. */
 async function readJson<T>(file: string): Promise<T | null> {
