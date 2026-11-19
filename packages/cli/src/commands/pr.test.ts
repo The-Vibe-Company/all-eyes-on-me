@@ -136,6 +136,25 @@ test("aeom pr pushes the run branch to its base's remote and opens a PR toward t
   assert.ok(!body.includes(dir), "never the path of the user's machine");
 });
 
+test("the PR speaks the run's language: the one its state keeps, else the product sheet's, and --lang says it", async () => {
+  const { dir, R } = await project();
+  await put(join(R, "state.json"), { run: "run-1", started: "", options: [], phase: "pr", step: "run.8", vars: { AEOM_LANG: "fr" }, branchAt: null, agents: [], history: [] });
+  const fr = await run(dir, ["pr", "--dry-run"]);
+  assert.equal(fr.code, 0, fr.out);
+  assert.match(fr.out, /AEOM : le front corrigé \(run-1\)/);
+  assert.match(fr.out, /`\/` gardé : 1 → 0 en échec/);
+  assert.match((await run(dir, ["pr", "--dry-run", "--lang", "en"])).out, /AEOM: the front fixed \(run-1\)/, "--lang first");
+  const wrong = await run(dir, ["pr", "--dry-run", "--lang", "de"]);
+  assert.equal(wrong.code, 1);
+  assert.match(wrong.out, /--lang is en or fr/);
+  // A run that kept no language: the product sheet's.
+  await rm(join(R, "state.json"));
+  await put(join(dir, ".aeom", "product.md"), "# Boutique\n\nUne boutique de tissus pour les tapissiers : ils choisissent une pièce, l'ajoutent à la commande et la suivent jusqu'à l'atelier.\n");
+  assert.match((await run(dir, ["pr", "--dry-run"])).out, /AEOM : le front corrigé \(run-1\)/);
+  await rm(join(dir, ".aeom", "product.md"));
+  assert.match((await run(dir, ["pr", "--dry-run"])).out, /AEOM: the front fixed \(run-1\)/, "nothing says it: English");
+});
+
 test("an open PR of the run branch gets its description updated, not a second PR", async () => {
   const { dir } = await project();
   await remote(dir, "origin", "https://git.example.test/acme/app.git");

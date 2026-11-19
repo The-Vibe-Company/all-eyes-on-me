@@ -144,3 +144,55 @@ test("a front built on its API says so, and a front plugged into its API later s
   assert.equal(replug.title, "AEOM: the front plugged into its API (run-1)");
   assert.match(replug.body, /## Plugged into its API\n\nThe screens did not change: the data module now reads `http:\/\/localhost:8000\/v1`; what it does not provide yet stays fake, listed in `front\/data\.md`\./);
 });
+
+test("the PR speaks the person's language: in French, its title, its headings, its sentences and what was measured", () => {
+  const measured = { ...page, verdict: { ...page.verdict!, line: "Measured: 4 screens at 390, 1280 px, 27 checks and 8 principles each; 1 journey on 6 principles." }, features: { ...page.features!, more: 2 } };
+  const { title, body } = prBody(measured, ".aeom/runs/run-1/report.html", "fr");
+  assert.equal(title, "AEOM : une nouvelle direction, tissus (run-1)");
+  for (const words of [
+    /^Ce qu'All Eyes On Me a fait sur ce run, en mots\. Les captures restent sur la machine qui l'a lancé, comme la page de résultat : `\.aeom\/runs\/run-1\/report\.html`, depuis la racine du dépôt\./,
+    /\*\*Avant le run\.\*\* Mesuré : 4 écrans à 390, 1280 px, 27 contrôles et 8 principes chacun ; 1 parcours sur 6 principes\./,
+    /\*\*tissus\*\*, choisie par élimination entre tissus, plaid\. Sert la boucle principale\./,
+    /## Écrans/,
+    /`\/` gardé : 10 → 1 en échec\. Corrigé : grid\. Échoue encore : not-generic\./,
+    /`\/contact` renvoyé, pareil qu'avant : 8 → 8 en échec\./,
+    /`\/produits` renvoyé, moins bien qu'avant : 6 → 9 en échec\./,
+    /`\/aide` ne charge pas\./,
+    /## Parcours\n\n- \*\*See my orders\*\* amélioré, 4 → 3 étapes\./,
+    /## Features manquantes\n\nCe qu'il faudrait à un parcours clé pour aller au bout\. AEOM n'en a rien construit\./,
+    /\*\*Add a product\*\*, bloque à l'étape 2 : A way to put a product in the order\./,
+    /- 2 autres parcours bloqués, non nommés\./,
+    /## Échoue encore\n\n- `\/contact` states: the list is blank/,
+    /Ouverte par All Eyes On Me\. Elle suit les règles de ce dépôt : AEOM ne merge rien\.$/,
+  ])
+    assert.match(body, words);
+  assert.doesNotMatch(body, /\b(kept|sent back|failing|Screens|Journeys|Still failing|Before the run|chosen by|Missing features)\b/, "no word of the English frame");
+  assert.deepEqual(prBody(page, ".aeom/runs/run-1/report.html", "en"), prBody(page, ".aeom/runs/run-1/report.html"), "English stays the default");
+  assert.match(prBody(page, ".aeom/runs/run-1/report.html", "fr").body, /\*\*Avant le run\.\*\* Measured: 2 screens at 390, 1280 px\./, "a line AEOM does not know stays as written");
+});
+
+test("in French, every kind of run has its own title and its own words", () => {
+  const fr = (p: ResultPage) => prBody(p, ".aeom/runs/run-1/report.html", "fr");
+  const kept = fr({ ...page, direction: null, verdict: { ...page.verdict!, keepStyle: true } });
+  assert.equal(kept.title, "AEOM : le front corrigé, son style gardé (run-1)");
+  assert.match(kept.body, /## Style gardé\n\nPas de nouvelle direction : le run a corrigé ce qui échouait, dans le style de l'app\./);
+  assert.equal(fr({ ...page, direction: null }).title, "AEOM : le front corrigé (run-1)");
+  const built = fr({ ...page, built: true, direction: null, verdict: null });
+  assert.equal(built.title, "AEOM : un premier front (run-1)");
+  assert.match(built.body, /## Construit de zéro\n\nChaque écran tourne sur des données fictives/);
+  const replug = fr({ ...page, built: true, replug: true, api: "http://localhost:4000", direction: null, verdict: null });
+  assert.equal(replug.title, "AEOM : le front branché sur son API (run-1)");
+  assert.match(replug.body, /## Branché sur son API\n\nLes écrans n'ont pas changé : le module de données lit maintenant `http:\/\/localhost:4000`/);
+  const lost = fr({ ...page, screens: [{ ...page.screens[1]!, back: { verdict: "worse", before: 8, after: 8, lost: ['link "Contact"'] } }] });
+  assert.match(lost.body, /`\/contact` renvoyé : il a perdu ce qu'il permettait de faire\. Perdu : link "Contact"\./);
+  const person = fr({ ...page, direction: { ...page.direction!, decision: { judges: "plaid", dropped: [] } } });
+  assert.match(person.body, /choisie par la personne ; l'élimination des juges entre tissus, plaid avait retenu plaid\./);
+  const unmeasured = fr({ ...page, measuredAfter: false, stillFailing: [] });
+  assert.match(unmeasured.body, /Pas mesuré après le run : ce qui échouait avant lui\./);
+  assert.match(fr({ ...page, stillFailing: [] }).body, /## Échoue encore\n\nRien\./);
+  const asked = fr({ ...page, direction: null, asked: { request: "Un filtre par niveau sur la liste des voies", plan: null, review: null }, journeys: [{ ...page.journeys[0]!, broke: { before: null, after: "it breaks at step 2" } }] });
+  assert.equal(asked.title, "AEOM : Un filtre par niveau sur la liste des voies (run-1)");
+  assert.match(asked.body, /## Demandé\n\nUn filtre par niveau sur la liste des voies/);
+  assert.match(asked.body, /À la fin, it breaks at step 2\./);
+  assert.match(asked.body, /## Revue du standard\n\nPas encore relu au regard du standard\./);
+});

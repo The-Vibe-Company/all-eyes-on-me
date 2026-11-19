@@ -4,14 +4,14 @@ import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { prBody, readRun, readRunState, RunReportError, type ResultPage } from "@aeom/core";
+import { prBody, readRun, readRunState, RunReportError, sheetLang, type PageLang, type ResultPage } from "@aeom/core";
 import { latestRun } from "./report.js";
 
 const exec = promisify(execFile);
 // A run can touch thousands of files: git's answer must not stop at Node's default megabyte.
 const BIG = { maxBuffer: 256 * 1024 * 1024 };
 
-const PR_HELP = `Usage: aeom pr [run-dir] [--base <branch>] [--dry-run]
+const PR_HELP = `Usage: aeom pr [run-dir] [--base <branch>] [--lang <en|fr>] [--dry-run]
 
 Pushes the run's branch, aeom/<run>, and opens a pull request toward the branch
 the run started from (default: the one noted in the run's folder, base), on the
@@ -42,8 +42,12 @@ AEOM merges nothing: the PR follows the repository's rules. Without a remote,
 a gh signed in to its host, or the base on the remote, the branch stays here.
 After « nothing to redo », or a run that kept nothing, no PR.
 
+The PR speaks the person's language, as its run kept it (AEOM_LANG in its
+state.json), else as the product sheet is written, else English.
+
 Options:
   --base <branch>   The branch the run started from
+  --lang <l>        The PR's language, en or fr, whatever the run kept
   --dry-run         Say where it would push, print the PR and stop: nothing is pushed`;
 
 /** What a PR must never carry: a capture, an image, or a file of a run's folder. */
@@ -137,10 +141,14 @@ async function reportPath(runDir: string, run: string): Promise<string> {
 }
 
 export async function runPr(argv: string[]): Promise<number> {
-  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { base: { type: "string" }, "dry-run": { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { base: { type: "string" }, lang: { type: "string" }, "dry-run": { type: "boolean" }, help: { type: "boolean", short: "h" } } });
   if (values.help || positionals.length > 1) {
     console.log(PR_HELP);
     return values.help ? 0 : 1;
+  }
+  if (values.lang !== undefined && values.lang !== "en" && values.lang !== "fr") {
+    console.error(`--lang is en or fr.`);
+    return 1;
   }
   const runDir = positionals[0] ?? (await latestRun());
   if (!runDir) {
@@ -176,7 +184,7 @@ export async function runPr(argv: string[]): Promise<number> {
     return 1;
   }
   try {
-    return await propose(runDir, page, noted, values["dry-run"] === true);
+    return await propose(runDir, page, noted, values["dry-run"] === true, (values.lang as PageLang | undefined) ?? (await langOf(runDir)));
   } catch (error) {
     if (!String((error as { cmd?: string }).cmd ?? "").startsWith("git")) throw error;
     console.error(`git failed: ${why(error)}`);
@@ -212,7 +220,25 @@ async function stepsLeft(runDir: string, page: ResultPage): Promise<string[]> {
   return left;
 }
 
-async function propose(runDir: string, page: ResultPage, base: string, dry: boolean): Promise<number> {
+/**
+ * The language the run spoke to the person: the one its state keeps, set at its first mark, else the one the product
+ * sheet is written in, else English.
+ */
+async function langOf(runDir: string): Promise<PageLang> {
+  const raw = await readFile(join(runDir, "state.json"), "utf8").catch(() => null);
+  let kept: string | undefined;
+  try {
+    kept = raw === null ? undefined : readRunState(JSON.parse(raw), basename(runDir))?.vars.AEOM_LANG;
+  } catch {
+    // A state broken by hand says no language.
+  }
+  if (kept === "en" || kept === "fr") return kept;
+  // The project a run folder belongs to: <project>/.aeom/runs/<run>.
+  const sheet = await readFile(resolve(runDir, "..", "..", "product.md"), "utf8").catch(() => null);
+  return sheetLang(sheet) ?? "en";
+}
+
+async function propose(runDir: string, page: ResultPage, base: string, dry: boolean, lang: PageLang): Promise<number> {
   const remote = await remoteOf(base);
   // The base as the remote has it, when git knows it: the user's commits not pushed yet would go into the PR too.
   const from = (remote ? await commitOf(`refs/remotes/${remote}/${base}`) : null) ?? (await commitOf(base));
@@ -237,7 +263,7 @@ async function propose(runDir: string, page: ResultPage, base: string, dry: bool
     return 1;
   }
 
-  const { title, body } = prBody(page, await reportPath(runDir, page.run));
+  const { title, body } = prBody(page, await reportPath(runDir, page.run), lang);
   if (dry) {
     console.log(`${remote ? `Would push ${branch} to ${remote} and open a PR toward ${base}:` : `No remote: ${branch} would stay here. The PR it would open toward ${base}:`}\n\n${title}\n\n${body}`);
     return 0;
