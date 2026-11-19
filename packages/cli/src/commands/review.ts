@@ -39,7 +39,9 @@ measured and holds.
 With --install-check, writes .github/workflows/aeom.yml: on every pull
 request, GitHub installs the project and AEOM, starts the app with the
 config's start and url, runs aeom review against the PR's base, and shows
-the result as a check named aeom, its summary in words. No model is called.
+the result as a check named aeom, its summary in words, and each deviation of
+the code as an annotation at its line in the pull request (ten at most). No
+model is called.
 
 Options:
   --base <branch>      What the branch is compared with (default: the remote's
@@ -105,13 +107,16 @@ export async function runReview(argv: string[]): Promise<number> {
     return 1;
   };
   // The branch against what it will be merged into, from where they parted: the first of these that git knows.
+  // On a pull request, GitHub checks out the PR merged into its base: the PR's own commit numbers the lines as
+  // "Files changed" shows them, so the code is read there.
+  const head = await pullRequestHead();
   const candidates = parsed.base ? [parsed.base] : [(await git(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).catch(() => "")).trim(), "origin/main", "origin/master", "main", "master"].filter(Boolean);
   let base = "";
   let from = "";
   let why = "";
   for (const candidate of candidates) {
     try {
-      from = (await git(["merge-base", "HEAD", candidate])).trim();
+      from = (await git(["merge-base", head, candidate])).trim();
       base = candidate;
       break;
     } catch (error) {
@@ -128,21 +133,22 @@ export async function runReview(argv: string[]): Promise<number> {
   if (standardText === null) return stop(`No standard in .aeom/standard.md: run /aeom first, which writes it from the front as it is.`, "No standard in `.aeom/standard.md`: run /aeom first, which writes it from the front as it is.");
   const branch = (await git(["branch", "--show-current"]).catch(() => "")).trim() || "HEAD";
   const baseName = base;
-  const ahead = Number((await git(["rev-list", "--count", `${from}..HEAD`])).trim());
-  const changed = (await git(["diff", "--name-only", "--diff-filter=d", ...DIFF, from, "HEAD"])).split("\n").filter(Boolean);
-  const diff = await git(["diff", "-U0", ...DIFF, from, "HEAD"]);
+  const ahead = Number((await git(["rev-list", "--count", `${from}..${head}`])).trim());
+  const changed = (await git(["diff", "--name-only", "--diff-filter=d", ...DIFF, from, head])).split("\n").filter(Boolean);
+  const diff = await git(["diff", "-U0", ...DIFF, from, head]);
   // The review's own captures are not the branch's work.
   const status = (await git(["status", "--porcelain"]).catch(() => "")).split("\n").filter(Boolean);
   const uncommitted = status.filter((l) => !/\.aeom\/review(\/|$)/.test(l)).length;
   const reviewShots = status.some((l) => /\.aeom\/review(\/|$)/.test(l));
 
-  const rows: [string, string][] = reviewCode({ standard: readStandard(standardText), diff, read: (file) => {
+  const inCode = reviewCode({ standard: readStandard(standardText), diff, read: (file) => {
     try {
       return readFileSync(file, "utf8");
     } catch {
       return null;
     }
-  } }).map((d) => [`${d.file}:${d.line}`, d.what]);
+  } });
+  const rows: [string, string][] = inCode.map((d) => [`${d.file}:${d.line}`, d.what]);
   const notes: string[] = [];
 
   // The screens they touch, among the routes the project names or AEOM last captured.
@@ -352,8 +358,36 @@ export async function runReview(argv: string[]): Promise<number> {
     md.push(`**${text(lines.at(-1)!)}**`, "");
     await appendFile(parsed.summary, md.join("\n"));
   }
+  // On GitHub, each deviation of the code at its line in the pull request, its path from the repository's root.
+  if (process.env.GITHUB_ACTIONS === "true" && inCode.length) {
+    const prefix = (await git(["rev-parse", "--show-prefix"]).catch(() => "")).trim();
+    const shownHere = inCode.slice(0, ANNOTATIONS);
+    shownHere.forEach((d, i) => {
+      const more = i === shownHere.length - 1 && inCode.length > ANNOTATIONS ? `; ${inCode.length - ANNOTATIONS} more in ${parsed.summary ? "the check's summary" : "the review's output"}` : "";
+      console.log(`::error file=${property(prefix + d.file)},line=${d.line},title=aeom::${data(d.what + more)}`);
+    });
+  }
   return code;
 }
+
+/**
+ * The commit a review reads the code of: on a pull request in GitHub Actions, the PR's own head when HEAD is the
+ * merge GitHub made of it; HEAD everywhere else.
+ */
+async function pullRequestHead(): Promise<string> {
+  const event = process.env.GITHUB_ACTIONS === "true" ? process.env.GITHUB_EVENT_PATH : undefined;
+  if (!event) return "HEAD";
+  const sha = await readFile(event, "utf8").then((t) => (JSON.parse(t) as { pull_request?: { head?: { sha?: string } } }).pull_request?.head?.sha, () => undefined);
+  if (!sha) return "HEAD";
+  const second = (await git(["rev-parse", "--verify", "-q", "HEAD^2"]).catch(() => "")).trim();
+  return second === sha ? sha : "HEAD";
+}
+
+/** GitHub shows ten error annotations a step: past them, the last says how many more there are. */
+const ANNOTATIONS = 10;
+/** A workflow command's message, and its properties, as GitHub reads them. */
+const data = (said: string) => said.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+const property = (said: string) => data(said).replace(/:/g, "%3A").replace(/,/g, "%2C");
 
 /**
  * The journeys replayed on the base, from a worktree of it: its folder of pages served, or its app started with the

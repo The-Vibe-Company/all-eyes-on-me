@@ -13,7 +13,8 @@ const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
 let dir: string;
 const run = async (args: string[]) => {
   try {
-    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd: dir, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(dir, ".home") } });
+    // Outside GitHub, even when these tests run in its CI: a review there writes its annotations, tested on their own.
+    const { stdout, stderr } = await promisify(execFile)("node", [AEOM, ...args], { cwd: dir, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(dir, ".home"), GITHUB_ACTIONS: "" } });
     return { code: 0, out: stdout + stderr };
   } catch (error) {
     const e = error as { code: number; stdout: string; stderr: string };
@@ -220,6 +221,58 @@ test("the check's summary lists what is outside the standard in words; an app th
   } finally {
     git("checkout", "-q", "main");
     await rm(summary, { force: true });
+  }
+});
+
+test("on GitHub, each deviation of the code is an annotation at its line, its path from the repository's root, ten at most", async () => {
+  const repo = await mkdtemp(join(tmpdir(), "aeom-review-annotations-"));
+  const app = join(repo, "apps", "web");
+  const inRepo = (args: string[], env: Record<string, string>) => promisify(execFile)("node", [AEOM, ...args], { cwd: app, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(repo, ".home"), ...env } }).then((r) => ({ code: 0, out: r.stdout + r.stderr }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
+  try {
+    const sh = (...args: string[]) => execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", ...args], { cwd: repo, stdio: "pipe" });
+    sh("init", "-q", "-b", "main");
+    await mkdir(join(app, ".aeom"), { recursive: true });
+    await mkdir(join(app, "front"), { recursive: true });
+    await writeFile(join(app, ".aeom", "standard.md"), `# The standard of Web\nWhat the front holds to.\n\n## Direction\nnuancier.\n\n## Tokens\n- \`--petrole: #1f4b57\` in \`front/kit.css\`\n\n## Components\n\n## Rules\n- None.\n`);
+    await writeFile(join(app, "front", "kit.css"), ":root { --petrole: #1f4b57; }\n");
+    sh("add", "-A");
+    sh("commit", "-q", "-m", "base");
+    sh("checkout", "-q", "-b", "feat/couleurs");
+    await writeFile(join(app, "front", "page.css"), Array.from({ length: 12 }, (_, i) => `.c${i} { color: #7c3a${(10 + i).toString(16).padStart(2, "0")}; }`).join("\n") + "\n");
+    sh("add", "-A");
+    sh("commit", "-q", "-m", "couleurs");
+    const github = await inRepo(["review", "--base", "main"], { GITHUB_ACTIONS: "true" });
+    // Said in a failure without the double colon, or GitHub would read it as annotations of AEOM's own PR.
+    const quiet = (out: string) => out.replace(/::/g, "∷");
+    assert.equal(github.code, 1, quiet(github.out));
+    const annotations = github.out.split("\n").filter((l) => l.startsWith("::error "));
+    assert.equal(annotations.length, 10, quiet(github.out));
+    assert.equal(annotations[0], "::error file=apps/web/front/page.css,line=1,title=aeom::#7c3a0a is not a colour of the standard: the nearest is --petrole (#1f4b57)");
+    assert.match(annotations[9]!, /^::error file=apps\/web\/front\/page\.css,line=10,title=aeom::#7c3a13 [^\n]*; 2 more in the review's output$/);
+    const local = await inRepo(["review", "--base", "main"], { GITHUB_ACTIONS: "" });
+    assert.doesNotMatch(local.out, /::error/, "outside GitHub, the terminal is as it was");
+    // On a pull request, GitHub checks out the PR merged into its base, whose lines moved: the annotation is at the
+    // PR's own line, a percent sign escaped.
+    sh("checkout", "-q", "main");
+    await writeFile(join(app, "front", "teinte.css"), ".teinte { font-weight: 400; }\n");
+    sh("add", "-A");
+    sh("commit", "-q", "-m", "teinte");
+    sh("checkout", "-q", "-b", "feat/teinte");
+    await writeFile(join(app, "front", "teinte.css"), ".teinte { font-weight: 400; }\n.vive { color: hsl(280 80% 50%); }\n");
+    sh("commit", "-q", "-am", "une teinte vive");
+    const pr = sh("rev-parse", "HEAD").toString().trim();
+    sh("checkout", "-q", "main");
+    await writeFile(join(app, "front", "teinte.css"), "/* les teintes */\n/* du kit */\n/* et des pages */\n.teinte { font-weight: 400; }\n");
+    sh("commit", "-q", "-am", "main avance");
+    sh("checkout", "-q", "--detach", "main");
+    sh("merge", "-q", "--no-ff", "-m", "Merge the PR", pr);
+    const event = join(tmpdir(), `aeom-review-event-${process.pid}.json`);
+    await writeFile(event, JSON.stringify({ pull_request: { head: { sha: pr } } }));
+    const merged = await inRepo(["review", "--base", "main"], { GITHUB_ACTIONS: "true", GITHUB_EVENT_PATH: event });
+    assert.match(merged.out, /^::error file=apps\/web\/front\/teinte\.css,line=2,title=aeom::hsl\(280 80%25 50%25\) is not a colour of the standard/m, quiet(merged.out));
+    await rm(event, { force: true });
+  } finally {
+    await rm(repo, { recursive: true, force: true });
   }
 });
 
