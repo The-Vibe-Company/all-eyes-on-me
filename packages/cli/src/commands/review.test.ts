@@ -134,6 +134,8 @@ test("with no app to start, the code is still read; a branch whose code holds bu
 test("a deleted page is not measured; the base is found without being given; the standard is the base's", async () => {
   git("checkout", "-q", "-b", "chore/menage");
   await rm(join(dir, "front", "produits.html"));
+  // Its link goes with it: a page no link reaches is not found by following the links either.
+  await writeFile(join(dir, "front", "index.html"), page(["Accueil"], `<h1>Accueil</h1>`));
   // The branch also loosens the standard: the review still holds it to the base's.
   await writeFile(join(dir, ".aeom", "standard.md"), "# The standard of Boutique\nWhat the front holds to.\n\n## Direction\nnuancier.\n\n## Tokens\n\n## Components\n\n## Rules\n- None.\n");
   await writeFile(join(dir, "front", "promo.css"), ".promo { color: #7c3aed; }\n");
@@ -282,6 +284,8 @@ test("on an app, the base is started from its own worktree, with the start comma
     const { code, out } = await run(["review", "--base", "app", "--widths", "1280", "--timeout", "10"]);
     assert.equal(code, 1, out);
     assert.match(out, /✗ Voir les produits\s+went to its end on app and breaks at step 2 at 1280 px/);
+    // The routes the config names are the screens: none found by following the links.
+    assert.match(out, /\nMeasured the 2 screens it touches, at 1280 px\.\nReplayed 1 key journey that crosses them, on the branch and on app\.\n/, out);
     await writeFile(join(dir, ".aeom", "journeys", "casse.json"), JSON.stringify({ name: "Cassé", steps: [{ do: "voler" }] }));
     git("add", "-A");
     git("commit", "-q", "-m", "un parcours illisible");
@@ -290,5 +294,28 @@ test("on an app, the base is started from its own worktree, with the start comma
     assert.match(broken.out, /✗ \.aeom\/journeys\s+cannot be replayed: [^\n]*casse\.json/);
   } finally {
     git("checkout", "-q", "main");
+  }
+});
+
+test("a file every screen reads, with no list of the screens, has every screen the links reach measured, and the review ends with what it measured", async () => {
+  // The base: a price on the products page, and nowhere else.
+  git("checkout", "-q", "-b", "base/prix");
+  await writeFile(join(dir, "front", "produits.html"), page(["Accueil", "Produits"], `<h1>Produits</h1><p class="prix">12 €</p>`));
+  git("commit", "-q", "-am", "un prix");
+  // The kit greys it out: no line of code outside the standard, a screen that is not the home page broken.
+  git("checkout", "-q", "-b", "feat/kit-gris");
+  await writeFile(join(dir, "front", "kit.css"), `${(await import("node:fs")).readFileSync(join(dir, "front", "kit.css"), "utf8")}.prix { color: #eee; }\n`);
+  git("commit", "-q", "-am", "le prix en gris");
+  const summary = join(dir, "summary.md");
+  try {
+    const { code, out } = await run(["review", "--base", "base/prix", "--dir", "front", "--widths", "1280", "--summary", summary]);
+    assert.equal(code, 1, out);
+    assert.match(out, /✗ \/produits\.html\s+contrast: [^\n]*12 €/, "a screen only the links lead to, measured");
+    assert.match(out, /\nMeasured the 2 screens it touches, at 1280 px, found by following the links from \/\.\nReplayed 1 key journey that crosses them, on the branch and on base\/prix\.\n\n1 thing outside the standard\.\n?$/);
+    const said = (await import("node:fs")).readFileSync(summary, "utf8");
+    assert.match(said, /Measured the 2 screens it touches, at 1280 px, found by following the links from \/\./, "in the check's summary too");
+  } finally {
+    git("checkout", "-q", "main");
+    await rm(summary, { force: true });
   }
 });
