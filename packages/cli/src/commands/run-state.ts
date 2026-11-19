@@ -191,6 +191,10 @@ export async function runRunState(argv: string[]): Promise<number> {
           console.error(`aeom run agent needs --name and --status.`);
           return 1;
         }
+        if (values.page !== undefined && !values.page.startsWith("/")) {
+          console.error(`--page takes the route the page worker rebuilt, as the measure names it, such as --page /cart.`);
+          return 1;
+        }
         const worktree = values.worktree ? resolve(values.worktree) : undefined;
         await update(runDir, (s) => {
           if (values.branch && !values.from && !s.agents.some((a) => a.name === name && a.from)) throw new Error(`--branch goes with --from, the commit its worktree started from, so a new session can tell what it committed.`);

@@ -125,6 +125,38 @@ test("the run sends a page back itself when an action is gone; a page no worker 
   assert.match(r.toLook.join("\n"), /the journey "Journey wander", sent back, breaks on \/lost at step 3, which no page worker rebuilt/);
 });
 
+test("the records of one shape one worker rebuilt are decided together: one that got better keeps them all, and the rest is said", () => {
+  const r = decidePages({
+    comparison: [page("/products/7", "better", 4, 1), page("/products/12", "same", 3, 3), page("/orders/1", "worse", 1, 2), page("/orders/2", "same", 1, 1)],
+    workers: [{ name: "product", page: "/products/:id" }, { name: "orders", page: "/orders/:id" }],
+  });
+  assert.deepEqual(r.pages.map((p) => [p.page, p.back]), [["/products/7", false], ["/products/12", false], ["/orders/1", true], ["/orders/2", true]]);
+  assert.match(decided(r, "/products/12")!.why, /^the same as before: 3 → 3 failing, but \/products\/7, which product rebuilt with it, stays$/);
+  assert.match(r.toLook.join("\n"), /\/products\/12 did not get better, but \/products\/7 did, and product rebuilt them together: nothing of theirs goes back/);
+});
+
+test("a link lost from several pages at once is the kit's: no page goes back for it, and it is said", () => {
+  const r = decidePages({
+    comparison: [page("/", "worse", 3, 2, ['link "Contact"']), page("/cart", "worse", 3, 3, ['link "Contact"']), page("/team", "worse", 2, 1, ['link "Contact"', 'link "Jobs"'])],
+    workers: [{ name: "home", page: "/" }, { name: "cart", page: "/cart" }, { name: "team", page: "/team" }],
+  });
+  assert.deepEqual(r.pages.map((p) => [p.page, p.verdict, p.back]), [["/", "better", false], ["/cart", "same", true], ["/team", "worse", true]]);
+  assert.match(decided(r, "/team")!.why, /it lost link "Jobs"$/, "a link one page lost alone stays its own");
+  assert.match(r.toLook.join("\n"), /link "Contact" is lost from \/, \/cart, \/team at once: the kit's, which putting a page back cannot undo; put it back in the kit's header/);
+});
+
+test("a page a journey sent back breaks on goes back even when a kept journey crosses it, and the conflict is said", () => {
+  const before = replay({ buy: [run(["/", "/cart", "/pay"])], track: [run(["/", "/cart"], { broken: { step: 3, reason: "no link" } })] });
+  const after = replay({ buy: [run(["/", "/cart"], { broken: { step: 3, reason: "no button" } })], track: [run(["/", "/cart", "/orders"])] });
+  const r = decidePages({
+    comparison: [page("/cart", "better", 3, 1)],
+    workers: [{ name: "cart", page: "/cart" }],
+    journeys: { ratchet: [verdict("buy", false), verdict("track", true)], replay: after, replayBefore: before },
+  });
+  assert.equal(decided(r, "/cart")!.back, true);
+  assert.match(r.toLook.join("\n"), /\/cart goes back, though the journey "Journey track" crosses it and its ratchet kept it: putting the page back may undo what that journey gained/);
+});
+
 test("a journey file rewritten in the wave goes back when every step it changed acts on a page put back, and is said when it mixes pages", () => {
   const click = (name: string) => ({ do: "click" as const, target: { role: "button", name } });
   const open = (path: string) => ({ do: "open" as const, path });

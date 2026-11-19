@@ -58,9 +58,12 @@ async function json<T>(file: string): Promise<T | null> {
   }
 }
 
-/** What a commit range changed, file by file, with no rename, so each path is put back where it was. */
+/**
+ * What a commit range changed, file by file, with no rename, so each path is put back where it was; relative to the
+ * project, which may be a folder of its repository, so every later git command reads the same paths.
+ */
 async function changes(root: string, from: string, to: string, paths: string[] = []): Promise<Change[]> {
-  const out = (await exec("git", ["-C", root, "diff", "--name-status", "--no-renames", "-z", from, to, "--", ...paths], BIG)).stdout.split("\0").filter(Boolean);
+  const out = (await exec("git", ["-C", root, "diff", "--name-status", "--no-renames", "--relative", "-z", from, to, "--", ...paths], BIG)).stdout.split("\0").filter(Boolean);
   const found: Change[] = [];
   for (let i = 0; i + 1 < out.length; i += 2) found.push({ file: out[i + 1]!, from, added: out[i] === "A" });
   return found;
@@ -108,9 +111,13 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
   const state: RunState | null = raw === null ? null : readRunState(raw, run);
   if (!state) throw new Refusal(`${join(runDir, "state.json")} ${raw === null ? "is missing" : "is not a run's state"}: the ratchet finds each page's files by the page workers the run marked, with aeom run agent ${runDir} --name <it> --kind "page worker" --page <its route>.`);
   const active = state.agents.filter((a) => a.status !== "refused");
-  const unmarked = active.filter((a) => !a.page && /\bpage\b/i.test(a.kind ?? ""));
+  // A page worker, not a page judge: the judges of a run are marked too, with no page and no branch.
+  const unmarked = active.filter((a) => !a.page && /\bpage worker\b/i.test(a.kind ?? ""));
   if (unmarked.length) throw new Refusal(unmarked.map((a) => `${a.name} ran as a page worker with no page: mark it with aeom run agent ${runDir} --name ${a.name} --status ${a.status} --page <the route it rebuilt>`).join("\n"));
   const workers = active.filter((a) => a.page).map((a) => ({ name: a.name, page: a.page! }));
+  // A page the measure does not name would leave its own row « rebuilt by no worker », without a word.
+  const astray = workers.filter((w) => !comparison.some((c) => pageShape(c.page) === pageShape(w.page)));
+  if (astray.length) throw new Refusal(astray.map((w) => `${w.name} was marked with --page ${w.page}, which no page of ${join(after, "compare.json")} is: mark it again with the route the measure names (${comparison.map((c) => c.page).join(", ")}).`).join("\n"));
 
   // The journeys, when the run judged them: their ratchet decides with both replays and both critiques.
   const journeysAfter = join(runDir, "journeys-after");
@@ -133,12 +140,15 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
 
   const back: Record<string, string> = {};
   for (const b of backs) {
-    const eq = b.indexOf("=");
-    const route = (eq < 0 ? b : b.slice(0, eq)).trim();
-    if (!route.startsWith("/")) throw new Refusal(`--back takes a route, such as --back "/cart=the button Pay is gone", not ${b}.`);
-    back[route] = eq < 0 ? "" : b.slice(eq + 1).trim();
+    // The route is the longest start of the value that names a page measured, a query and its = included; the rest is why.
+    const cuts = [b.length, ...[...b.matchAll(/=/g)].map((m) => m.index!)].sort((x, y) => y - x);
+    const cut = cuts.find((i) => {
+      const route = b.slice(0, i).trim();
+      return route.startsWith("/") && comparison.some((c) => pageShape(c.page) === pageShape(route));
+    });
+    if (cut === undefined) throw new Refusal(`--back ${b}: no page of ${join(after, "compare.json")} starts it. Give a route the measure names, such as --back "/cart=the button Pay is gone".`);
+    back[b.slice(0, cut).trim()] = b.slice(cut + 1).trim();
   }
-  for (const route of Object.keys(back)) if (!comparison.some((c) => pageShape(c.page) === pageShape(route))) throw new Refusal(`--back ${route}: no page of ${join(after, "compare.json")} is ${route}.`);
   const { pages, toLook } = decidePages({ comparison, noWorker: noWorker as string[], workers, journeys, back });
   if (!(await exists(root, `refs/heads/${runBranch}`))) throw new Refusal(`No branch ${runBranch} here: run aeom ratchet from the checkout the run changed.`);
 
@@ -154,6 +164,20 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
     }
     files.set(p.page, found);
   }
+  // A file a kept page's worker changed too stays as it is: putting it back would undo that page as well.
+  const keptFiles = new Map<string, string>();
+  for (const p of pages.filter((d) => !d.back && d.workers.length)) {
+    for (const name of p.workers) {
+      const agent = state.agents.find((a) => a.name === name)!;
+      if (!agent.branch || !agent.from || !(await exists(root, `refs/heads/${agent.branch}`))) continue;
+      for (const c of await changes(root, agent.from, `refs/heads/${agent.branch}`)) keptFiles.set(c.file, p.page);
+    }
+  }
+  for (const [page, found] of files) {
+    const shared = found.filter((c) => keptFiles.has(c.file));
+    for (const c of shared) toLook.push(`${c.file} was changed for ${page}, put back, and for ${keptFiles.get(c.file)}, kept: it stays as it is; put back by hand what was for ${page}`);
+    if (shared.length) files.set(page, found.filter((c) => !keptFiles.has(c.file)));
+  }
 
   // The journey files the run rewrote during the wave, for the labels and paths the workers changed.
   const going = pages.filter((p) => p.back);
@@ -163,7 +187,7 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
     const changed = (await changes(root, waveBase, `refs/heads/${runBranch}`, [".aeom/journeys"])).filter((c) => /^\.aeom\/journeys\/[^/]+\.json$/.test(c.file));
     // Each file's steps as the wave found them and as the run branch holds them, to tell which steps changed.
     const steps = async (ref: string, file: string) => {
-      const text = await git(root, ["show", `${ref}:${file}`]).catch(() => null);
+      const text = await git(root, ["show", `${ref}:./${file}`]).catch(() => null);
       try {
         const parsed = text === null ? null : (JSON.parse(text) as { steps?: unknown });
         return Array.isArray(parsed?.steps) ? (parsed.steps as Step[]) : null;
@@ -191,7 +215,10 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
     applied,
   });
   const out = join(after, "ratchet.json");
-  await writeFile(out, JSON.stringify(decision(null), null, 2) + "\n");
+  // The commit of an earlier --apply stays named until another one replaces it.
+  const earlier = await json<{ applied?: unknown }>(out).catch(() => null);
+  const applied = typeof earlier?.applied === "string" ? earlier.applied : null;
+  await writeFile(out, JSON.stringify(decision(applied), null, 2) + "\n");
   if (!going.length) return 0;
   if (!apply) {
     console.log(`Run again with --apply, on ${runBranch}, to put ${going.length === 1 ? "it" : "them"} back and commit. Decision: ${out}`);
@@ -202,8 +229,9 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
   if (current !== runBranch) throw new Refusal(`--apply puts pages back on the run branch, ${runBranch}, and this checkout is on ${current || "a detached HEAD"}: check out ${runBranch} first.`);
   if (!(await exec("git", ["-C", root, "diff", "--cached", "--quiet"]).then(() => true, () => false))) throw new Refusal(`The index holds staged changes: commit or unstage them first, so the commit of the pages put back holds them alone.`);
   const all = [...[...files.values()].flat(), ...journeyChanges];
-  // Each entry is « XY path »: the path starts at its fourth character, so the output is read as git prints it, never trimmed.
-  const status = (await exec("git", ["-C", root, "status", "--porcelain", "-z", "--untracked-files=all", "--", ...new Set(all.map((c) => c.file))], BIG)).stdout;
+  // Each entry is « XY path »: the path starts at its fourth character, so the output is read as git prints it, never
+  // trimmed. With no file to put back, nothing is asked: a status of no path would read the whole tree.
+  const status = all.length ? (await exec("git", ["-C", root, "status", "--porcelain", "-z", "--untracked-files=all", "--", ...new Set(all.map((c) => c.file))], BIG)).stdout : "";
   const dirty = status.split("\0").filter((e) => e.length > 3).map((e) => e.slice(3));
   if (dirty.length) throw new Refusal(`${dirty.join(", ")} ${dirty.length === 1 ? "has" : "have"} changes not committed: commit them or put them back first, never lose them.`);
   for (const c of all) {

@@ -70,6 +70,9 @@ test("aeom ratchet keeps the pages that got better, puts the others back with th
       const marked = await run(dir, ["run", "agent", R, "--name", name, "--kind", "page worker", "--status", "launched", "--branch", `aeom/run-1-${name}`, "--from", wave, "--page", page]);
       assert.equal(marked.code, 0, marked.out);
     }
+    // The run's judges are marked too, with no page: they are not page workers.
+    assert.equal((await run(dir, ["run", "agent", R, "--name", "judge-1", "--kind", "page judge", "--status", "launched"])).code, 0);
+    assert.match((await run(dir, ["run", "agent", R, "--name", "cart", "--status", "launched", "--page", "cart"])).out, /--page takes the route the page worker rebuilt/);
     const missing = await run(dir, ["ratchet", R]);
     assert.equal(missing.code, 1);
     assert.match(missing.out, /after\/compare\.json is missing: aeom compare \.aeom\/runs\/run-1\/before \.aeom\/runs\/run-1\/after first/);
@@ -127,6 +130,15 @@ test("aeom ratchet keeps the pages that got better, puts the others back with th
     assert.equal(again.code, 0, again.out);
     assert.match(again.out, /already as they were before the wave: nothing to commit/);
     assert.equal(await git(dir, "rev-parse", "HEAD"), head);
+    assert.equal(JSON.parse(await readFile(join(dir, R, "after", "ratchet.json"), "utf8")).applied, head, "the commit of the first --apply stays named");
+    assert.match((await run(dir, ["ratchet", R, "--back", "/nowhere=gone"])).out, /--back \/nowhere=gone: no page of .* starts it/);
+
+    // A page worker marked with a page the measure does not name is refused, never left « rebuilt by no worker ».
+    assert.equal((await run(dir, ["run", "agent", R, "--name", "promo", "--kind", "page worker", "--status", "launched", "--branch", "aeom/run-1-cart", "--from", wave, "--page", "/promo"])).code, 0);
+    const astray = await run(dir, ["ratchet", R]);
+    assert.equal(astray.code, 1);
+    assert.match(astray.out, /promo was marked with --page \/promo, which no page of .*compare\.json is: mark it again with the route the measure names \(\/, \/cart, \/about\)/);
+    assert.equal((await run(dir, ["run", "agent", R, "--name", "promo", "--status", "refused"])).code, 0);
 
     // A page worker the run marked without its page: its files cannot be found, so nothing is decided.
     assert.equal((await run(dir, ["run", "agent", R, "--name", "orders", "--kind", "page worker", "--status", "launched", "--branch", "aeom/run-1-orders", "--from", wave])).code, 0);
@@ -135,5 +147,41 @@ test("aeom ratchet keeps the pages that got better, puts the others back with th
     assert.match(unmarked.out, /orders ran as a page worker with no page: mark it with aeom run agent \.aeom\/runs\/run-1 --name orders --status launched --page <the route it rebuilt>/);
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("in a project that is a folder of its repository, aeom ratchet reads and puts back the project's own paths", async () => {
+  const repo = await mkdtemp(join(tmpdir(), "aeom-ratchet-sub-"));
+  const dir = join(repo, "web");
+  try {
+    await git(repo, "init", "-q", "-b", "main");
+    await git(repo, "config", "user.email", "t@example.test");
+    await git(repo, "config", "user.name", "T");
+    await write(repo, ".gitignore", "web/.aeom/runs/\n");
+    await write(dir, "pages/cart.html", "cart v1");
+    await commit(repo, "app");
+    await git(repo, "checkout", "-q", "-b", "aeom/run-1");
+    const wave = await git(repo, "rev-parse", "HEAD");
+    await git(repo, "checkout", "-q", "-b", "aeom/run-1-cart");
+    await write(dir, "pages/cart.html", "cart v2");
+    await commit(repo, "cart");
+    await git(repo, "checkout", "-q", "aeom/run-1");
+    await git(repo, "merge", "-q", "--no-ff", "-m", "merge cart", "aeom/run-1-cart");
+    // Something of the person's own, outside what goes back, never stops it.
+    await write(repo, "notes.txt", "mine");
+
+    const R = ".aeom/runs/run-1";
+    await mkdir(join(dir, R), { recursive: true });
+    assert.equal((await run(dir, ["run", "agent", R, "--name", "cart", "--kind", "page worker", "--status", "launched", "--branch", "aeom/run-1-cart", "--from", wave, "--page", "/cart"])).code, 0);
+    const total = (n: number) => ({ page: "", checks: n, principles: 0, total: n, failing: [] });
+    await write(dir, `${R}/after/compare.json`, JSON.stringify([{ page: "/cart", before: total(2), after: total(2), verdict: "same", newly: [] }]));
+    const applied = await run(dir, ["ratchet", R, "--apply"]);
+    assert.equal(applied.code, 0, applied.out);
+    assert.match(applied.out, /1 page goes back: \/cart \(1 file\)/);
+    assert.equal(await readFile(join(dir, "pages/cart.html"), "utf8"), "cart v1");
+    assert.match(await git(repo, "log", "-1", "--format=%s"), /pages put back as they were before the screen wave: \/cart$/);
+    assert.equal(await readFile(join(repo, "notes.txt"), "utf8"), "mine");
+  } finally {
+    await rm(repo, { recursive: true, force: true });
   }
 });

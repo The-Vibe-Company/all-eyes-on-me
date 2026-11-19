@@ -85,29 +85,55 @@ function blame(journeys: JourneyEvidence): { pages: Map<string, string[]>; unexp
 }
 
 /**
+ * A link lost from several pages at once went with what they share, the kit:
+ * no page answers for it. Each row keeps only the links it lost alone, and its
+ * verdict is counted again without the others.
+ */
+function withoutKitLosses(comparison: PageComparison[], toLook: string[]): PageComparison[] {
+  const lostOn = new Map<string, string[]>();
+  for (const c of comparison) for (const what of c.lost ?? []) lostOn.set(what, [...(lostOn.get(what) ?? []), c.page]);
+  for (const [what, on] of lostOn) if (on.length > 1) toLook.push(`${what} is lost from ${on.join(", ")} at once: the kit's, which putting a page back cannot undo; put it back in the kit's header`);
+  return comparison.map((c) => {
+    if (!c.lost?.length) return c;
+    const own = c.lost.filter((what) => lostOn.get(what)!.length === 1);
+    if (own.length === c.lost.length) return c;
+    const { lost: _, ...rest } = c;
+    if (own.length || !c.before || !c.after) return { ...rest, ...(own.length ? { lost: own } : {}) };
+    return { ...rest, verdict: c.after.total < c.before.total ? "better" : c.after.total > c.before.total ? "worse" : "same" };
+  });
+}
+
+/**
  * Section 5's ratchet of the pages, page by page. A page that got better
  * stays. Any other goes back as it was before the screen wave, unless no
  * worker touched it (`no-worker.json`), no page worker rebuilt it (nothing to
  * put back), or a journey the ratchet kept crosses it. A page where a journey
  * the ratchet sent back now breaks, or fails what passed before, goes back
  * even when it got better, and so does a page the run sends back itself
- * (`back`, its reason by its route). What no page can answer is said in
- * `toLook`.
+ * (`back`, its reason by its route). Rows one worker rebuilt together, such as
+ * two records of one shape, are decided together. What no page can answer is
+ * said in `toLook`.
  */
-export function decidePages({ comparison, noWorker = [], workers, journeys, back = {} }: { comparison: PageComparison[]; noWorker?: string[]; workers: PageWorker[]; journeys?: JourneyEvidence | null; back?: Record<string, string> }): { pages: PageDecision[]; toLook: string[] } {
+export function decidePages({ comparison: measured, noWorker = [], workers, journeys, back = {} }: { comparison: PageComparison[]; noWorker?: string[]; workers: PageWorker[]; journeys?: JourneyEvidence | null; back?: Record<string, string> }): { pages: PageDecision[]; toLook: string[] } {
   const toLook: string[] = [];
+  const comparison = withoutKitLosses(measured, toLook);
   const blamed = journeys ? blame(journeys) : { pages: new Map<string, string[]>(), unexplained: [] };
   for (const v of blamed.unexplained) toLook.push(`the journey "${v.name}" comes back for a reason no page holds: ${v.why}`);
   const workersOf = (page: string) => workers.filter((w) => same(w.page, page)).map((w) => w.name);
   const blamedOn = (page: string) => [...blamed.pages].filter(([p]) => same(p, page)).flatMap(([, said]) => said);
   const forced = (page: string) => Object.entries(back).find(([p]) => same(p, page))?.[1];
   const kept = journeys ? journeys.ratchet.filter((v) => v.kept) : [];
+  const keptCrossing = (page: string) => kept.find((v) => journeys && crosses(journeys.replay, v.slug, page));
 
   const pages = comparison.map((c): PageDecision => {
     const names = workersOf(c.page);
     const decision = (isBack: boolean, why: string): PageDecision => ({ page: c.page, verdict: c.verdict, back: isBack, why, workers: names });
     const sendBack = (why: string) => {
-      if (names.length) return decision(true, why);
+      if (names.length) {
+        const crossing = keptCrossing(c.page);
+        if (crossing) toLook.push(`${c.page} goes back, though the journey "${crossing.name}" crosses it and its ratchet kept it: putting the page back may undo what that journey gained`);
+        return decision(true, why);
+      }
       toLook.push(`${why.replace(/ here /, ` on ${c.page} `)}, which no page worker rebuilt: the kit's or the direction's, which putting a page back cannot undo`);
       return decision(false, `${why}, but no page worker rebuilt it: nothing to put back`);
     };
@@ -119,7 +145,7 @@ export function decidePages({ comparison, noWorker = [], workers, journeys, back
     if (c.verdict === "new") return decision(false, "a new page: nothing to compare it with");
     if (noWorker.some((p) => same(p, c.page))) return decision(false, `${notBetter(c)}, but no worker touched it (no-worker.json)`);
     if (!names.length) return decision(false, `no page worker rebuilt it: nothing to put back${c.verdict === "worse" || c.verdict === "missing" ? "; the kit made it worse, and putting the page back cannot undo the kit" : ""}`);
-    const crossing = kept.find((v) => journeys && crosses(journeys.replay, v.slug, c.page));
+    const crossing = keptCrossing(c.page);
     if (crossing) return decision(false, `${notBetter(c)}, but the journey "${crossing.name}" crosses it, and its ratchet kept it`);
     return decision(true, notBetter(c));
   });
@@ -130,6 +156,17 @@ export function decidePages({ comparison, noWorker = [], workers, journeys, back
     const names = workersOf(page);
     if (names.length) pages.push({ page, verdict: "not measured", back: true, why: said.join("; "), workers: names });
     else for (const s of said) toLook.push(`${s.replace(/ here /, ` on ${page} `)}, which no page worker rebuilt: the kit's or the direction's, which putting a page back cannot undo`);
+  }
+
+  // One worker's files go back whole, or not at all: the rows it rebuilt together, such as two records of one shape,
+  // stay when one of them stays. A journey or the run sends a shape back whole, so only the counts can disagree.
+  for (const name of new Set(workers.map((w) => w.name))) {
+    const rows = pages.filter((p) => p.workers.includes(name));
+    if (rows.length < 2 || rows.every((p) => p.back === rows[0]!.back)) continue;
+    const staying = rows.filter((p) => !p.back).map((p) => p.page);
+    const going = rows.filter((p) => p.back);
+    for (const p of going) Object.assign(p, { back: false, why: `${p.why}, but ${staying.join(", ")}, which ${name} rebuilt with it, stays` });
+    toLook.push(`${going.map((p) => p.page).join(", ")} did not get better, but ${staying.join(", ")} did, and ${name} rebuilt them together: nothing of theirs goes back; look at them`);
   }
   return { pages, toLook };
 }
