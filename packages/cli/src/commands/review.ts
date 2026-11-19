@@ -42,7 +42,9 @@ request, GitHub installs the project and AEOM, starts the app with the
 config's start and url, runs aeom review against the PR's base, and shows
 the result as a check named aeom, its summary in words, and each deviation of
 the code as an annotation at its line in the pull request (ten at most). No
-model is called.
+model is called. With AEOM pinned to a commit, the check also runs on each
+push to the default branch, only to keep AEOM, built, and its browser in
+GitHub's cache, which every pull request reads.
 
 Options:
   --base <branch>      What the branch is compared with (default: the remote's
@@ -476,23 +478,34 @@ async function ownCommit(): Promise<string | null> {
   return promisify(execFile)("git", ["-C", here, "rev-parse", "HEAD"]).then((r) => r.stdout.trim() || null, () => null);
 }
 
+/** What the check keeps in GitHub's cache: AEOM built, and the browser Playwright downloads. */
+const CACHED = ["          path: |", "            ${{ runner.temp }}/aeom", "            ~/.cache/ms-playwright"];
+
 /** Writes the GitHub workflow that runs aeom review on every pull request, as a check named aeom. */
 async function installCheck(given: string | undefined, force: boolean): Promise<number> {
   // AEOM pinned: a moving branch would change every project's CI the day it moves.
   const ref = given ?? (await ownCommit()) ?? "main";
+  // A commit never moves: AEOM built at it, and its browser, can come from GitHub's cache. A branch or a tag can move,
+  // and a cache would keep an AEOM it no longer names.
+  const cached = /^[0-9a-f]{40}$/.test(ref);
+  // GitHub lets every pull request read only the caches of the default branch: a push there keeps AEOM in it.
+  const main = cached ? (await git(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).catch(() => "")).trim().replace(/^origin\//, "") || "main" : "";
+  const onPullRequest = "        if: github.event_name == 'pull_request'";
   // At the repository's root, where GitHub reads workflows; the project installed where its lockfile is, the app reviewed where it lives.
   const root = (await git(["rev-parse", "--show-toplevel"]).catch(() => "")).trim() || process.cwd();
   const app = relative(root, process.cwd());
   let lockDir = process.cwd();
   while (lockDir.startsWith(root) && !(await installOf(lockDir)).length && lockDir !== root) lockDir = dirname(lockDir);
   const lockAt = relative(root, lockDir);
-  const install = (await installOf(lockDir)).flatMap((line) => (lockAt && line.startsWith("        run:") ? [`        working-directory: ${lockAt}`, line] : [line]));
+  // The project is installed for a review only: a push to the default branch only keeps AEOM in the cache.
+  const install = (await installOf(lockDir)).flatMap((line) => [...(lockAt && line.startsWith("        run:") ? [`        working-directory: ${lockAt}`] : []), line, ...(cached && line === "      - name: Install the project" ? [onPullRequest] : [])]);
   const file = join(root, ".github", "workflows", "aeom.yml");
   const workflow = [
     "# Written by aeom review --install-check: every pull request held to .aeom/standard.md, with no model.",
     "name: aeom",
     "on:",
     "  pull_request:",
+    ...(cached ? ["  push:", `    branches: [${JSON.stringify(main)}]`] : []),
     "permissions:",
     "  contents: read",
     "jobs:",
@@ -508,14 +521,21 @@ async function installCheck(given: string | undefined, force: boolean): Promise<
     "        with:",
     ...((await readFile(join(root, ".nvmrc")).then(() => true, () => false)) ? ["          node-version-file: .nvmrc"] : ["          node-version: 22"]),
     ...install,
+    ...(cached ? ["      - name: Restore AEOM from the cache", "        id: aeom", "        uses: actions/cache/restore@v4", "        with:", ...CACHED, `          key: aeom-\${{ runner.os }}-\${{ runner.arch }}-${ref}`] : []),
     "      - name: Install AEOM",
+    ...(cached ? ["        if: steps.aeom.outputs.cache-hit != 'true'"] : []),
     "        run: |",
     `          git init -q "$RUNNER_TEMP/aeom"`,
     `          git -C "$RUNNER_TEMP/aeom" fetch -q --depth 1 https://github.com/The-Vibe-Company/all-eyes-on-me ${ref}`,
     `          git -C "$RUNNER_TEMP/aeom" checkout -q FETCH_HEAD`,
     `          cd "$RUNNER_TEMP/aeom" && corepack pnpm install --frozen-lockfile && corepack pnpm build`,
     `          cd "$RUNNER_TEMP/aeom/packages/core" && npx playwright install --with-deps chromium`,
+    // Kept from the default branch, the one cache every pull request reads: one entry for each version of AEOM.
+    ...(cached ? ["      - name: Keep AEOM in the cache", "        if: github.event_name == 'push' && steps.aeom.outputs.cache-hit != 'true'", "        uses: actions/cache/save@v4", "        with:", ...CACHED, "          key: ${{ steps.aeom.outputs.cache-primary-key }}"] : []),
+    // From the cache, the browser is there; the system's packages it needs are not, they live outside the cache.
+    ...(cached ? ["      - name: Install the browser's system packages", "        if: github.event_name == 'pull_request' && steps.aeom.outputs.cache-hit == 'true'", `        run: cd "$RUNNER_TEMP/aeom/packages/core" && npx playwright install-deps chromium`] : []),
     "      - name: Hold the pull request to the standard",
+    ...(cached ? [onPullRequest] : []),
     ...(app ? [`        working-directory: ${app}`] : []),
     `        run: node "$RUNNER_TEMP/aeom/packages/cli/dist/index.js" review --base "origin/\${{ github.base_ref }}" --summary "$GITHUB_STEP_SUMMARY"`,
     "",
