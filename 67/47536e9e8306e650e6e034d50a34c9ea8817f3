@@ -1,0 +1,36 @@
+packages/cli/src/commands/review.test.ts
+  s_36049fd871fcc3::t_cc46e445d7a65a 301,303
+  s_36049fd871fcc3::t_4e82878ef4cd1e 314-315,317,323-336
+  s_f305bd914b194b::t_0ee44bcdebb469 337-338
+packages/cli/src/commands/review.ts
+  s_36049fd871fcc3::t_66e2df77acca9c 316-317
+  s_36049fd871fcc3::t_b7ec1182930291 194-207
+  s_36049fd871fcc3::t_1b89003f47131d 330,335,338
+  s_36049fd871fcc3::t_df1d9ac56d2e36 216-222
+  s_36049fd871fcc3::t_5b777f2aaff954 324-327,329
+  s_36049fd871fcc3::t_ef594d90e32483 61,63,65-66,68,70,74-76,79-84,86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6747536e9e8306e650e6e034d50a34c9ea8817f3",
+  "prompts": {},
+  "sessions": {
+    "s_36049fd871fcc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "babc76fd-e4c2-482f-b054-1b5f6550c8c2",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    },
+    "s_f305bd914b194b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02cbcbec-1eaa-4520-aaf3-526944b9b006",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
