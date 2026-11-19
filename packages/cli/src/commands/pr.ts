@@ -34,8 +34,9 @@ The order of a run is held here. A run whose state.json says it rebuilt pages,
 journeys or a kit gets no PR until it measured the pages after their wave
 (after/compare.json), replayed the journeys at the end (journeys-end, or
 journeys-after), measured the screens again after a journey wave
-(end/compare.json), and reached the standard of the front; the refusal names
-the step. A run with no state.json is not held.
+(end/compare.json), and reached the standard of the front; a run that built
+what a sentence asked, until aeom review held it to the standard (review.md).
+The refusal names the step. A run with no state.json is not held.
 
 AEOM merges nothing: the PR follows the repository's rules. Without a remote,
 a gh signed in to its host, or the base on the remote, the branch stays here.
@@ -164,7 +165,7 @@ export async function runPr(argv: string[]): Promise<number> {
     console.error(`aeom/${basename(runDir)} skipped what its PR rests on:\n${left.map((l) => `  - ${l}`).join("\n")}\nDo ${left.length === 1 ? "it" : "them"} as the skill says, then aeom pr again. A step done but not marked: aeom run mark ${runDir} --phase <it>.`);
     return 1;
   }
-  if (!page.built && !page.direction && !page.screens.some((s) => s.status === "kept") && !page.journeys.some((j) => j.status === "kept")) {
+  if (!page.built && !page.asked && !page.direction && !page.screens.some((s) => s.status === "kept") && !page.journeys.some((j) => j.status === "kept")) {
     console.log(`Nothing kept: no PR.`);
     return 0;
   }
@@ -201,9 +202,12 @@ async function stepsLeft(runDir: string, page: ResultPage): Promise<string[]> {
   const went = new Set([...state.history.map((h) => h.phase), ...(state.phase ? [state.phase] : [])]);
   const has = (path: string) => existsSync(join(runDir, path));
   const left: string[] = [];
-  if (went.has("pages") && !has(join("after", "compare.json"))) left.push("the pages were not measured after their wave (no after/compare.json): aeom compare, section 5, phase measure");
-  if (went.has("journeys") && !has(join("journeys-end", "report.json")) && !has(join("journeys-after", "report.json"))) left.push("the key journeys were not replayed at the end (no journeys-end nor journeys-after): phase journeys");
-  if (went.has("pages") && has(join("journeys-end", "report.json")) && !has(join("end", "compare.json"))) left.push("the screens were not measured again after the journey wave (no end/compare.json): step 7, phase remeasure");
+  if (!page.asked && went.has("pages") && !has(join("after", "compare.json"))) left.push("the pages were not measured after their wave (no after/compare.json): aeom compare, section 5, phase measure");
+  if (!page.asked && went.has("journeys") && !has(join("journeys-end", "report.json")) && !has(join("journeys-after", "report.json"))) left.push("the key journeys were not replayed at the end (no journeys-end nor journeys-after): phase journeys");
+  if (!page.asked && went.has("pages") && has(join("journeys-end", "report.json")) && !has(join("end", "compare.json"))) left.push("the screens were not measured again after the journey wave (no end/compare.json): step 7, phase remeasure");
+  // What was asked is built inside the standard, not written into it: its PR rests on the review that holds it there,
+  // a review that went through, whatever phase its steps were marked with.
+  if (page.asked) return page.asked.review ? [] : ["what was asked was not reviewed against the standard (no review in review.md that went through): aeom review --summary, phase review"];
   if ((["kit", "pages", "journeys"].some((p) => went.has(p)) || page.built) && !went.has("standard")) left.push("the standard of the front was not reached: « The standard of the front », phase standard");
   return left;
 }
@@ -220,6 +224,11 @@ async function propose(runDir: string, page: ResultPage, base: string, dry: bool
   if ((await commitOf(`refs/heads/${branch}`)) === null) {
     console.error(`No branch ${branch} here: run aeom pr in the repository the run changed.`);
     return 1;
+  }
+  // What was asked and never merged leaves the run branch with what AEOM keeps in .aeom at most: nothing to propose.
+  if (page.asked && !(await git(["diff", "--name-only", `${from}...${branch}`, "--", ".", ":(exclude).aeom"])).trim()) {
+    console.log(`Nothing built on ${branch}: no PR.`);
+    return 0;
   }
   const generated = new Set((await readFile(join(runDir, "assets.txt"), "utf8").catch(() => "")).split("\n").map((l) => l.trim()).filter(Boolean));
   const forbidden = await forbiddenIn(`${from}..${branch}`, generated);

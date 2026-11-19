@@ -111,6 +111,30 @@ test("a run that built a front from nothing says so: its title, its screens and 
   assert.doesNotMatch(body, /Not measured after the run/);
 });
 
+test("a run that built what was asked says the request, what AEOM said it would build, the screens it changed, and the review of the standard", () => {
+  const asked: ResultPage = {
+    ...page,
+    verdict: null,
+    direction: null,
+    asked: { request: "Un filtre par niveau sur la liste des voies", plan: "Sur /voies.html, un filtre par niveau avec les puces du kit.", review: { passed: true, verdict: "Nothing outside the standard.", lines: ["✓ Trouver une voie still reaches its end"] } },
+    screens: [{ page: "/voies.html", status: "changed", count: { before: 1, after: 0 }, widths: [], cleared: ["cursor@1280"], still: [], newly: [] }],
+    journeys: [],
+    stillFailing: [],
+    features: null,
+  };
+  const { title, body } = prBody(asked, ".aeom/runs/run-3/report.html");
+  assert.equal(title, "AEOM: Un filtre par niveau sur la liste des voies (run-1)");
+  assert.match(body, /## Asked\n\nUn filtre par niveau sur la liste des voies\n\nSur \/voies\.html, un filtre par niveau avec les puces du kit\./);
+  assert.match(body, /`\/voies\.html` changed: 1 → 0 failing\./);
+  assert.match(body, /## Review of the standard\n\n\*\*Nothing outside the standard\.\*\*\n\n- ✓ Trouver une voie still reaches its end/);
+  assert.doesNotMatch(body, /## Still failing|Not measured after the run/, "the review is what an asked run measures");
+  // A journey the build broke says so, even if its status is the one of a run with no duel.
+  const broken = prBody({ ...asked, journeys: [{ slug: "find", name: "Trouver une voie", status: "unchanged", why: null, broke: { before: null, after: "it broke at step 2: no button Filtrer" }, steps: { before: 3, after: 2 }, widths: [], cleared: [], remaining: [] }] }, "r.html").body;
+  assert.match(broken, /\*\*Trouver une voie\*\* unchanged, 3 → 2 steps\. At the end, it broke at step 2: no button Filtrer\./);
+  const unreviewed = prBody({ ...asked, asked: { ...asked.asked!, review: null } }, "r.html").body;
+  assert.match(unreviewed, /## Review of the standard\n\nNot reviewed against the standard yet\./);
+});
+
 test("a front built on its API says so, and a front plugged into its API later says the screens did not change", () => {
   const base: ResultPage = { ...page, built: true, verdict: null, direction: { champion: "voies", sentence: null, entrants: ["voies"], reasons: [], sheet: null, decision: { judges: null, dropped: [] } }, screens: [], journeys: [], stillFailing: [], measuredAfter: true };
   const onApi = prBody({ ...base, api: "http://localhost:8000/v1" }, "r.html");

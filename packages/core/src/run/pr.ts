@@ -43,9 +43,11 @@ function screenLine(s: ResultPage["screens"][number]): string {
   return `- ${code(s.page)} sent back, ${worse ? "worse than before" : "the same as before"}${counts ? `: ${counts.before} → ${counts.after} failing` : ""}.${list("Still failing", s.still)}${list("Newly failing", s.newly)}`;
 }
 
-function journeyLine(j: ResultPage["journeys"][number]): string {
+function journeyLine(j: ResultPage["journeys"][number], asked = false): string {
   const steps = j.steps.before !== null && j.steps.after !== null ? `, ${j.steps.before} → ${j.steps.after} steps` : "";
-  return `- **${words(j.name)}** ${j.status}${steps}.${j.why ? ` ${words(j.why)}` : ""}${j.broke.before ? ` Before the run, ${words(j.broke.before)}.` : ""}${list("Cleared", j.cleared)}${list("Still failing", j.remaining)}`;
+  // A run that built what was asked weighs no journey against another: where one breaks at its end is said.
+  const end = asked && j.broke.after ? ` At the end, ${words(j.broke.after)}.` : "";
+  return `- **${words(j.name)}** ${j.status}${steps}.${j.why ? ` ${words(j.why)}` : ""}${j.broke.before ? ` Before the run, ${words(j.broke.before)}.` : ""}${end}${list("Cleared", j.cleared)}${list("Still failing", j.remaining)}`;
 }
 
 /** Cut between two lines, under GitHub's limit, saying where the rest is. */
@@ -62,7 +64,11 @@ function fit(text: string, report: string): string {
  * machine that ran it.
  */
 export function prBody(page: ResultPage, reportPath: string): { title: string; body: string } {
-  const title = page.replug
+  // What was asked names the PR, cut to stay a title.
+  const asked = page.asked ? flat(page.asked.request) : "";
+  const title = page.asked
+    ? `AEOM: ${asked.length > 90 ? `${asked.slice(0, 89).trimEnd()}…` : asked} (${flat(page.run)})`
+    : page.replug
     ? `AEOM: the front plugged into its API (${flat(page.run)})`
     : page.built
     ? `AEOM: a first front${page.direction ? `, on ${flat(page.direction.champion)}` : ""} (${flat(page.run)})`
@@ -93,16 +99,23 @@ export function prBody(page: ResultPage, reportPath: string): { title: string; b
     lines.push("## Style kept", "", "No new direction: the run fixed what failed on the app's own style.", "");
   }
 
+  if (page.asked) lines.push("## Asked", "", words(page.asked.request), "", ...(page.asked.plan ? [words(page.asked.plan), ""] : []));
   if (page.replug) lines.push("## Plugged into its API", "", `The screens did not change: the data module now reads ${code(page.api ?? "the API given")}; what it does not provide yet stays fake, listed in ${code("front/data.md")}.`, "");
   else if (page.built && page.api) lines.push("## Built from scratch", "", `Every screen reads its data from the API given, ${code(page.api)}, running on the machine that ran it; what it does not provide yet stays fake, in one module, listed in ${code("front/data.md")}.`, "");
   else if (page.built) lines.push("## Built from scratch", "", "Every screen runs on fake data, kept in one module and named as such, until an API replaces it.", "");
   if (page.screens.length) lines.push("## Screens", "", ...capped(page.screens.map(screenLine)), "");
-  if (page.journeys.length) lines.push("## Journeys", "", ...capped(page.journeys.map(journeyLine)), "");
+  if (page.journeys.length) lines.push("## Journeys", "", ...capped(page.journeys.map((j) => journeyLine(j, Boolean(page.asked)))), "");
   if (page.features?.entries.length) {
     lines.push("## Missing features", "", "What a key journey would need to reach its end. AEOM built none of it.", "");
     for (const f of page.features.entries) lines.push(`- **${words(f.name)}**, blocks at step ${f.step}: ${words(f.missing)}`);
     if (page.features.more) lines.push(`- ${page.features.more} more blocked journey${page.features.more === 1 ? "" : "s"}, not named.`);
     lines.push("");
+  }
+  // What a run that built what was asked measures is the review of the standard, not a verdict of judges.
+  if (page.asked) {
+    const review = page.asked.review;
+    lines.push("## Review of the standard", "", ...(review ? [`**${words(review.verdict)}**`, "", ...(review.lines.length ? [...capped(review.lines.map((l) => `- ${words(l)}`)), ""] : [])] : ["Not reviewed against the standard yet.", ""]));
+    return { title, body: fit(lines.join("\n") + "\n", report) };
   }
   lines.push("## Still failing", "");
   if (!page.measuredAfter) lines.push("Not measured after the run: what failed before it.", "");
