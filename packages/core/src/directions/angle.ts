@@ -4,8 +4,8 @@ import { basename, join } from "node:path";
 /**
  * What a direction of /aeom directions is meant to be, kept in its folder as
  * `direction.json`: written by the session before its worker draws it, so
- * nothing is retyped in the shell and a run taken up finds it; its worker adds
- * what it saw.
+ * nothing is retyped in the shell and a run taken up finds it; once its worker
+ * replied, the session adds what the worker saw. A worker only reads it.
  */
 export interface Angle {
   /** What it is drawn from, in the product's world. */
@@ -44,12 +44,12 @@ export async function readAngle(folder: string): Promise<{ angle?: Angle | null;
   } catch {
     data = null;
   }
-  if (!data || typeof data !== "object" || Array.isArray(data)) return { problem: `${label} is not a JSON object: write it again, with "from", "sentence", "structure" and "dense".` };
+  if (!data || typeof data !== "object" || Array.isArray(data)) return { problem: `${label} is not a JSON object: write it again, with "from", "sentence", "structure" and "dense", and "seen" and "closest" once its worker replied.` };
   const angle: Angle = {};
   for (const field of FIELDS) {
     const value = (data as Record<string, unknown>)[field];
     if (typeof value === "string" && value.trim()) angle[field] = value.trim();
   }
-  if (angle.dense !== undefined && !/^[^/\\]+\.html$/.test(angle.dense)) return { problem: `${label}: its dense page is the file name of a page in its folder, such as affluence.html, not ${angle.dense}.` };
+  if (angle.dense !== undefined && (!/^[^/\\]+\.html$/.test(angle.dense) || angle.dense === "index.html")) return { problem: `${label}: its dense page is the file name of a page in its folder, such as affluence.html, not ${angle.dense}.` };
   return { angle };
 }

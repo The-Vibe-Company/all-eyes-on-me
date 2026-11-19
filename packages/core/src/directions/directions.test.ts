@@ -194,7 +194,7 @@ test("a direction's angle is read from its folder's direction.json: what it is d
     assert.deepEqual(await readAngle(join(dir, "billet")), { angle: { from: "Un billet en euros", sentence: "Chaque chiffre imprimé comme un billet.", structure: "Les chiffres en bandes, le tableau dessous.", dense: "affluence.html", seen: "Des fonds pastel. Les chiffres du mois.", closest: "Kraft paper, what keeps it apart: no stamp." } });
     await writeFile(join(dir, "billet", "direction.json"), `{ "sentence": "Une phrase coupée`);
     assert.match((await readAngle(join(dir, "billet"))).problem ?? "", /billet\/direction\.json is not a JSON object/);
-    for (const dense of ["../ailleurs.html", "pages/affluence.html", "affluence.css"]) {
+    for (const dense of ["../ailleurs.html", "pages/affluence.html", "affluence.css", "index.html"]) {
       await writeFile(join(dir, "billet", "direction.json"), JSON.stringify({ sentence: "x", dense }));
       assert.match((await readAngle(join(dir, "billet"))).problem ?? "", /its dense page is the file name of a page in its folder, such as affluence\.html/, dense);
     }

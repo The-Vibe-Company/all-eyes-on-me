@@ -322,7 +322,12 @@ test("each direction of /aeom directions is written in its folder, so nothing is
   const step7 = mockups.split("7. **Show them all, then ask.**")[1]?.split("**Variants.**")[0] ?? "";
   assert.match(step7, /aeom direction keep "\$MAIN\/\.aeom\/runs\/\$RUN\/directions\/<slug>" --source "<the front as it is, the prompt, or the spec's file>"/);
   assert.doesNotMatch(step7, /--sentence "<its sentence>"/);
-  assert.match(mockups.split("**Variants.**")[1]?.split("**A mix**")[0] ?? "", /its direction\.json, as step 4 says, its sentence saying what it changes/);
+  // A variant or a mix may be the one kept: its sentence stands alone.
+  assert.match(mockups.split("**Variants.**")[1]?.split("**A mix**")[0] ?? "", /its direction\.json, as step 4 says, its sentence standing alone: the direction it varies, and what it changes/);
+  assert.match(mockups.split("**A mix**")[1]?.split("8. **The end.**")[0] ?? "", /its sentence standing alone: the two it comes from, and what it borrows/);
+  assert.match(step4, /A direction\.json already in its folder is kept: a run taken up never draws that angle again/);
   const brief = mockups.split("**Mockup brief.**")[1] ?? "";
-  assert.match(brief, /add to your folder's `direction\.json` `seen`, those two sentences, and `closest`, the banned look yours is closest to and what keeps it apart, and change nothing else in it/);
+  // The session writes the file; a worker only reads it, and never copies another folder's.
+  assert.match(brief, /Read your angle in your folder's `direction\.json`; never write it, and never copy another folder's/);
+  assert.match(mockups, /add to each direction's `direction\.json` `seen`, its worker's two plain sentences, and `closest`, the banned look it named and what keeps it apart/);
 });

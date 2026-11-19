@@ -138,7 +138,7 @@ export async function runMockups(argv: string[]): Promise<number> {
 
   const column = Math.max(...slugs.map((s) => s.length)) + 2;
   // What it could not read of a direction's folder, said after what its checks found.
-  const unsaid = (r: (typeof results)[number]) => `${r.misnamed ? `; ${r.misnamed}` : ""}${notes.has(r.slug) ? "" : "; no sentence under it: its direction.json gives none"}`;
+  const unsaid = (r: (typeof results)[number]) => `${r.misnamed ? `; ${r.misnamed}` : ""}${notes.has(r.slug) ? "" : `; no sentence under it: ${angles.get(r.slug) ? "its direction.json gives none" : "no direction.json in its folder"}`}`;
   const lines = results.map((r) => {
     if (!r.opened) return `  ${r.slug.padEnd(column)}did not open, left out${r.why ? `: ${r.why}` : ""}${r.misnamed ? `; ${r.misnamed}` : ""}`;
     if (!r.checked) return `  ${r.slug.padEnd(column)}not checked${unsaid(r)}`;

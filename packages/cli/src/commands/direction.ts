@@ -17,10 +17,11 @@ The direction the person chose with /aeom directions, kept in the project's
                  .aeom/runs/<run>/directions/<slug>): its pages, their styles
                  and the images generated for it (its captures are beside
                  it, never in it), and what describes it in
-                 .aeom/direction/direction.json: all its own
-                 direction.json says (its sentence, unless --sentence gives
-                 another, what it is drawn from, its structure, what its
-                 worker saw), and the source of the round. It replaces the
+                 .aeom/direction/direction.json: what its own
+                 direction.json says of it (its sentence, unless --sentence
+                 gives another, what it is drawn from, its structure, its
+                 dense page, what its worker saw), and the source of the
+                 round. It replaces the
                  direction kept before, and says which.
   show           Say which direction is kept, its pages as absolute paths for a
                  worker in another folder; exit 1 when none is, 2 when a run
@@ -59,7 +60,7 @@ export async function runDirection(argv: string[]): Promise<number> {
       return 1;
     }
     const pages = (await readdir(KEPT)).filter((f) => f.endsWith(".html")).map((f) => resolve(KEPT, f));
-    console.log(`${kept.slug}: ${kept.sentence}${kept.structure ? `\nStructure: ${kept.structure}` : ""}\nFrom ${kept.source}${kept.run ? `, chosen in ${kept.run}` : ""}${kept.why ? `: ${kept.why}` : ""}.\nIts pages: ${pages.join(", ") || "none"}${kept.applied ? `\nAlready built on, in ${kept.applied}: a run draws new directions, or keeps the style.` : ""}`);
+    console.log(`${kept.slug}: ${kept.sentence}${kept.structure ? `\nStructure: ${kept.structure}` : ""}${kept.seen ? `\nWhat one sees: ${kept.seen}` : ""}\nFrom ${kept.source}${kept.run ? `, chosen in ${kept.run}` : ""}${kept.why ? `: ${kept.why}` : ""}.\nIts pages: ${pages.join(", ") || "none"}${kept.applied ? `\nAlready built on, in ${kept.applied}: a run draws new directions, or keeps the style.` : ""}`);
     return kept.applied ? 2 : 0;
   }
   if (action === "use") {

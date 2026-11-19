@@ -85,7 +85,7 @@ test("aeom direction keep reads the sentence in the direction's direction.json, 
     const saved = JSON.parse(readFileSync(join(dir, ".aeom", "direction", "direction.json"), "utf8"));
     assert.deepEqual({ ...saved, kept: typeof saved.kept }, { ...angle, slug: "billet", source: "the front as it is", run: "run-20261119-1000", kept: "string" }, "the sentence from the file, and all it says kept");
     const shown = await run(["direction", "show"]);
-    assert.match(shown.out, /^billet: Chaque chiffre imprimé comme un billet : l'« affluence » d'un mois\.\nStructure: Les chiffres en bandes, le tableau dessous\.\nFrom the front as it is, chosen in run-20261119-1000\./);
+    assert.match(shown.out, /^billet: Chaque chiffre imprimé comme un billet : l'« affluence » d'un mois\.\nStructure: Les chiffres en bandes, le tableau dessous\.\nWhat one sees: Des fonds pastel\. Les chiffres du mois en grand\.\nFrom the front as it is, chosen in run-20261119-1000\./);
     // --sentence still says it when the person's words change it.
     const said = await run(["direction", "keep", chosen, "--source", "the front as it is", "--sentence", "Le billet, en plus sobre."]);
     assert.equal(said.code, 0, said.out);
