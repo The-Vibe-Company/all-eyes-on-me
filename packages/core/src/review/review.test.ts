@@ -138,6 +138,68 @@ test("tokens are read as they are written: a quoted value, HSL channels; a lengt
   ]);
 });
 
+test("Tailwind classes are read: a colour of the default palette, or a value in brackets outside the standard, is named like the same value in CSS", () => {
+  const standard = readStandard(
+    `## Tokens\n- \`--color-encre: #1f4b57\` in \`app/globals.css\`\n- \`--color-purple-600: #6d28d9\` in \`app/globals.css\`\n- \`--font-titre: "Fraunces", serif\` in \`app/globals.css\`\n- \`--spacing-gouttiere: 24px\` in \`app/globals.css\`\n- \`--text-titre: 32px\` in \`app/globals.css\`\n- \`--radius-carte: 12px\` in \`app/globals.css\`\n\n## Components\n`,
+  );
+  const found = reviewCode({
+    standard,
+    diff: [
+      diff("app/page.tsx", 1, [
+        `<div className="bg-purple-600 text-gray-500/80 hover:border-red-200 p-4 text-lg rounded-xl bg-white text-black bg-encre">`,
+        `<section className={cn("p-[13px] mt-[24px] md:gap-[10px]", active && "!rounded-[12px]")}>`,
+        `<h1 className="text-[32px] font-['Fraunces'] font-['Open_Sans'] text-[#7c3aed] p-[var(--s)] font-[600] -mt-[8px] fill-purple-600 stroke-red-500">`,
+      ]),
+      diff("app/globals.css", 9, [`.carte { @apply bg-sky-300 p-[7px]; }`]),
+      diff("app/carte.css", 2, [`.carte { @apply bg-sky-300 rounded-[3px]; }`]),
+    ].join(""),
+  });
+  assert.deepEqual(found.map((f) => `${f.file}:${f.line} ${f.what}`), [
+    "app/page.tsx:1 text-gray-500/80 is not a colour of the standard",
+    "app/page.tsx:1 hover:border-red-200 is not a colour of the standard",
+    "app/page.tsx:2 the space 13px is not a space of the standard",
+    "app/page.tsx:2 the space 24px is --spacing-gouttiere written in hard: use the token",
+    "app/page.tsx:2 the space 10px is not a space of the standard",
+    "app/page.tsx:2 the radius 12px is --radius-carte written in hard: use the token",
+    "app/page.tsx:3 #7c3aed is not a colour of the standard",
+    "app/page.tsx:3 the font Fraunces is --font-titre written in hard: use the token",
+    "app/page.tsx:3 the font Open Sans is not a font of the standard",
+    "app/page.tsx:3 the size 32px is --text-titre written in hard: use the token",
+    "app/carte.css:2 bg-sky-300 is not a colour of the standard",
+    "app/carte.css:2 the radius 3px is not a radius of the standard",
+  ]);
+  // A standard in oklch, as shadcn and Tailwind v4 write it; a colour the config names; arrays, line heights, opacity in
+  // brackets, two values, a Svelte directive; a font through its variable; a comment over several lines.
+  const v4 = readStandard(
+    `## Tokens\n- \`--primary: oklch(0.205 0 0)\` in \`app/globals.css\`\n- \`colors.purple.600: '#6d28d9'\` in \`tailwind.config.js\`\n- \`--font-titre: "Fraunces", serif\` in \`app/globals.css\`\n- \`--text-titre: 32px\` in \`app/globals.css\`\n- \`--spacing-gouttiere: 24px\` in \`app/globals.css\`\n\n## Components\n`,
+  );
+  assert.deepEqual(
+    reviewCode({
+      standard: v4,
+      diff: diff("app/carte.tsx", 1, [
+        `<p className={cn(["bg-purple-500", "bg-purple-600", "p-[13px_24px]"])}>`,
+        `<p className="text-[13px]/[18px] bg-red-500/[.35] font-[--font-titre] font-[family-name:--font-titre]">`,
+        `<p class:bg-gray-100={on} style={{ color: "oklch(0.6 0.2 300)" }}>`,
+        `/**`,
+        ` * <Button className="bg-red-500 p-[13px]" />`,
+        ` */`,
+      ]),
+    }).map((f) => `${f.line} ${f.what}`),
+    [
+      "1 bg-purple-500 is not a colour of the standard",
+      "1 the space 13px is not a space of the standard",
+      "1 the space 24px is --spacing-gouttiere written in hard: use the token",
+      "2 bg-red-500/[.35] is not a colour of the standard",
+      "2 the size 13px is not a size of the standard",
+      "3 oklch(0.6 0.2 300) is not a colour of the standard",
+      "3 class:bg-gray-100 is not a colour of the standard",
+    ],
+  );
+  // A standard with no colour of its own, or no length of a kind, holds no class to that kind.
+  const bare = readStandard(`## Tokens\n- \`--font-titre: "Fraunces", serif\` in \`app/globals.css\`\n\n## Components\n`);
+  assert.deepEqual(reviewCode({ standard: bare, diff: diff("app/page.tsx", 1, [`<p className="text-purple-600 p-[13px] rounded-[3px]">`]) }), []);
+});
+
 test("a component is made by hand only when the kit has that very part, outside the kit's own folder, with no class of the kit across its opening tag", () => {
   const standard = readStandard(`## Tokens\n\n## Components\n- \`Button\` in \`src/ui/button.tsx\`\n- \`CardHeader\` in \`src/ui/card.tsx\`\n- \`DropdownMenu\` in \`src/ui/dropdown.tsx\`\n- \`.bouton\` in \`shared/kit.css\`\n`);
   const read = (file: string) => (file === "src/pages/Article.tsx" ? `<article>\n<header>Titre</header>\n</article>\n` : null);

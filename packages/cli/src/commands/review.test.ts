@@ -131,6 +131,22 @@ test("with no app to start, the code is still read; a branch whose code holds bu
   }
 });
 
+test("a Tailwind class outside the standard is named with its file and line, like the same value in CSS", async () => {
+  git("checkout", "-q", "-b", "feat/tailwind");
+  await writeFile(join(dir, "front", "Promo.tsx"), `export function Promo() {\n  return <p className="md:text-purple-600/90 p-4 text-[#1f4b57]">Promo</p>;\n}\n`);
+  git("add", "-A");
+  git("commit", "-q", "-m", "tailwind");
+  try {
+    const { code, out } = await run(["review", "--base", "main"]);
+    assert.equal(code, 1, out);
+    assert.match(out, /✗ front\/Promo\.tsx:2\s+#1f4b57 is --petrole written in hard: use the token/);
+    assert.match(out, /✗ front\/Promo\.tsx:2\s+md:text-purple-600\/90 is not a colour of the standard/);
+    assert.doesNotMatch(out, /p-4/, "Tailwind's own scale is left alone");
+  } finally {
+    git("checkout", "-q", "main");
+  }
+});
+
 test("a deleted page is not measured; the base is found without being given; the standard is the base's", async () => {
   git("checkout", "-q", "-b", "chore/menage");
   await rm(join(dir, "front", "produits.html"));

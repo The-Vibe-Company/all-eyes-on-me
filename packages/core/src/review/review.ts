@@ -81,7 +81,8 @@ const uncommented = (text: string) =>
     .replace(/<!--.*?-->/g, (c) => " ".repeat(c.length))
     .replace(/(^|[^:"'`\w])\/\/.*$/, (c, lead: string) => lead + " ".repeat(c.length - lead.length));
 
-const COLOUR = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])|\b(?:rgba?|hsla?)\([^()]{0,80}\)/gi;
+/** A colour as code writes it: hex, or a colour function, the ones Tailwind v4 and shadcn write (`oklch()`) included. */
+const COLOUR = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color)\([^()]{0,80}\)/gi;
 const CHANNELS = /^[\d.]+(?:deg)?\s+[\d.]+%\s+[\d.]+%(?:\s*\/\s*[\d.]+%?)?$/;
 /** A colour as one key: lowercase, `#abc` as `#aabbcc`, a function's channels without separators, HSL channels as HSL. */
 const colourKey = (value: string) => {
@@ -98,6 +99,57 @@ const GENERIC = /^(serif|sans-serif|monospace|cursive|fantasy|system-ui|ui-[a-z-
 const families = (value: string) => value.split(",").map((f) => f.trim().replace(/^["'`]|["'`]$/g, "")).filter(Boolean);
 const LENGTH = /^-?[\d.]+(px|rem|em)$/;
 const kebab = (name: string) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+
+/** Tailwind's default palette: a colour class of it is no colour of a standard that has its own. */
+const PALETTE = "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
+/** The utilities that colour the page; `fill-` and `stroke-` colour an icon's drawing. */
+const TW_COLOUR = new RegExp(`^(?:bg|text|border(?:-[xytrblse])?|ring(?:-offset)?|outline|divide|from|via|to|decoration|accent|caret|shadow|placeholder|inset-ring|inset-shadow)-(${PALETTE})-(50|[1-9]00|950)$`);
+/** What follows a class's slash: a colour's opacity (`/80`, `/[.35]`), a text size's line height (`/7`, `/[18px]`). */
+const SLASHED = /\/(?:\[[^\]]*\]|[\w.]+)$/;
+/** The utilities whose value in brackets is a length of a kind; a negative one (`-mt-[8px]`) is an offset. */
+const TW_LENGTH = {
+  size: /^text-\[([^\]]+)\]$/,
+  space: /^(?:p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy]|inset(?:-[xy])?)-\[([^\]]+)\]$/,
+  radius: /^rounded(?:-(?:[trblse]|tl|tr|br|bl|ss|se|es|ee))?-\[([^\]]+)\]$/,
+};
+
+/**
+ * The classes a line may hold, as Tailwind reads them: split on spaces and quotes outside brackets, the variants
+ * (`hover:`, `md:`) and the `!` that makes one important left out, so `md:!p-[13px]` reads `p-[13px]`.
+ */
+function classesOf(text: string): { written: string; utility: string }[] {
+  const pieces: string[] = [];
+  let piece = "";
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    // Tailwind's bracket continues a class (`p-[`, `md:[`, `/[`) or opens an arbitrary variant (`[&>svg]:`); an array's,
+    // before a quote or a brace, holds classes of its own.
+    if (c === "[" && (depth || /[-:/!]$/.test(piece) || (!piece && !/["'`{[\s\]]/.test(text[i + 1] ?? " ")))) depth++;
+    else if (c === "]" && depth) depth--;
+    if (!depth && /[\s"'`]/.test(c)) {
+      if (piece) pieces.push(piece);
+      piece = "";
+    } else piece += c;
+  }
+  if (piece) pieces.push(piece);
+  const found: { written: string; utility: string }[] = [];
+  for (const raw of pieces) {
+    // A Svelte directive, `class:bg-gray-100={on}`, names its class before its condition.
+    const written = raw.replace(/^[({,]+/, "").replace(/[;,){}>]+$/, "").replace(/=\{.*$/, "");
+    // The last colon outside brackets ends the variants.
+    let cut = -1;
+    let inside = 0;
+    for (let i = 0; i < written.length; i++) {
+      if (written[i] === "[") inside++;
+      else if (written[i] === "]" && inside) inside--;
+      else if (written[i] === ":" && !inside) cut = i;
+    }
+    const utility = written.slice(cut + 1).replace(/^!|!$/g, "");
+    if (/^-?[a-z]/.test(utility)) found.push({ written, utility });
+  }
+  return found;
+}
 
 /** The ranges of a line inside `var(...)`: a colour there is a token's fallback. */
 function varRanges(text: string): [number, number][] {
@@ -159,7 +211,11 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
   const sizes = lengths.filter((t) => /size|taille|titre|title|fs-|^--text-/i.test(t.name) && !/weight|line|leading|radius|space|gap/i.test(t.name));
   const spaces = lengths.filter((t) => /space|espace|gap|gutter|gout+i|spacing|marge|margin|pad|inset|^--s-?\d|^--sp-/i.test(t.name));
   const radii = lengths.filter((t) => /radius|rayon|arrondi|round/i.test(t.name));
+  // The colours the standard names, as a class would: `--color-purple-600`, `colors.purple.600` and `purple-600` alike.
+  const colourNames = new Set(standard.tokens.map((t) => t.name.toLowerCase().replace(/^(?:theme\.)?(?:extend\.)?colou?rs?\./, "").replace(/^--colou?r-/, "").replace(/\./g, "-")));
   const added = addedLines(diff).filter((a) => reviewable(a.file));
+  // Inside a comment over several lines, until it closes.
+  let comment = false;
   const found: CodeDeviation[] = [];
   const contents = new Map<string, string | null>();
   const contentOf = (file: string) => {
@@ -168,10 +224,26 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
   };
   for (let i = 0; i < added.length; i++) {
     const { file, line } = added[i]!;
-    const text = uncommented(added[i]!.text);
+    if (i && (added[i - 1]!.file !== file || added[i - 1]!.line !== line - 1)) comment = false;
+    let raw = added[i]!.text;
+    if (comment) {
+      const end = raw.indexOf("*/");
+      if (end === -1) continue;
+      raw = " ".repeat(end + 2) + raw.slice(end + 2);
+      comment = false;
+    } else if (/^\s*\*(?!\s*[{,+>~:.[*#])(?:\s|$)/.test(raw)) continue; // a comment's inner line, its opening above the diff
+    let text = uncommented(raw);
+    // A comment that opens and does not close on this line; a glob's `**/*` or a string's `"/*"` opens none.
+    const opens = text.search(/(?:^|[^*"'`\w])\/\*/);
+    if (opens !== -1) {
+      const at = text.indexOf("/*", opens);
+      text = text.slice(0, at) + " ".repeat(text.length - at);
+      comment = true;
+    }
     const say = (what: string) => found.push({ file, line, what });
     // The files of the tokens are the kit's own: what they declare is the standard, not a deviation from it.
     if (!tokenFiles.has(file)) {
+      const classes = classesOf(text);
       const fallbacks = varRanges(text);
       const inVar = (at: number) => fallbacks.some(([a, b]) => at > a && at < b);
       const valueAt = (tokens: typeof lengths, value: string, what: string) => {
@@ -188,9 +260,21 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
           const token = colours.find((t) => colourKey(t.value) === colourKey(m[0]));
           say(token ? `${m[0]} is ${token.name} written in hard: use the token` : `${m[0]} is not a colour of the standard`);
         }
+        // A colour of Tailwind's default palette, its opacity left aside, unless the standard names that very colour.
+        for (const { written, utility } of classes) {
+          const m = utility.replace(SLASHED, "").match(TW_COLOUR);
+          if (!m || colourNames.has(`${m[1]}-${m[2]}`) || colourNames.has(m[1]!)) continue;
+          say(`${written} is not a colour of the standard`);
+        }
       }
       if (fontNames.size) {
         const declared = [...text.matchAll(/font-family\s*:\s*([^;}\n]+)/g)].map((m) => m[1]!).concat([...text.matchAll(/fontFamily\s*:\s*(["'`])([^"'`]+)\1/g)].map((m) => m[2]!));
+        // Tailwind's `font-['Open_Sans']`: an underscore is a space there; a number is a weight.
+        for (const { utility } of classes) {
+          // `font-[--font-titre]` and `font-[family-name:--font-titre]` are the token through its variable.
+          const value = utility.match(/^font-\[([^\]]+)\]$/)?.[1]?.replace(/^family-name:/, "");
+          if (value && !/^[\d.]+$/.test(value) && !value.startsWith("--")) declared.push(value.replace(/_/g, " "));
+        }
         for (const value of declared) {
           if (/var\(/.test(value)) continue;
           const first = families(value.replace(/["'`]?\s*[,}]?\s*$/, ""))[0];
@@ -214,9 +298,16 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
         }
         return values;
       };
-      if (sizes.length) for (const value of lengthsOf(/font-size|fontSize/)) valueAt(sizes, value, "size");
-      if (spaces.length) for (const value of lengthsOf(/(?:margin|padding|gap|row-gap|column-gap|rowGap|columnGap|inset)(?:-?[a-zA-Z]+)*/)) valueAt(spaces, value, "space");
-      if (radii.length) for (const value of lengthsOf(/border-radius|borderRadius|border-(?:top|bottom)-(?:left|right)-radius/)) valueAt(radii, value, "radius");
+      // The same in a Tailwind class: `p-[13px]`, `text-[18px]`, `rounded-[10px]`; Tailwind's own scales are left alone.
+      const inBrackets = (kind: keyof typeof TW_LENGTH) =>
+        classes.flatMap(({ utility }) => {
+          // A line height (`text-[13px]/[18px]`) left aside; an underscore is a space, so `p-[13px_24px]` is two values.
+          const value = utility.replace(SLASHED, "").match(TW_LENGTH[kind])?.[1];
+          return (value?.split("_") ?? []).filter((v) => LENGTH.test(v) && !v.startsWith("-") && parseFloat(v) > 2);
+        });
+      if (sizes.length) for (const value of [...lengthsOf(/font-size|fontSize/), ...inBrackets("size")]) valueAt(sizes, value, "size");
+      if (spaces.length) for (const value of [...lengthsOf(/(?:margin|padding|gap|row-gap|column-gap|rowGap|columnGap|inset)(?:-?[a-zA-Z]+)*/), ...inBrackets("space")]) valueAt(spaces, value, "space");
+      if (radii.length) for (const value of [...lengthsOf(/border-radius|borderRadius|border-(?:top|bottom)-(?:left|right)-radius/), ...inBrackets("radius")]) valueAt(radii, value, "radius");
     }
     for (const { kind, tag, part } of KINDS) {
       const at = text.search(tag);
