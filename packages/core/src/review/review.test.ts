@@ -50,12 +50,12 @@ test("a colour, a font, a size or a space written in hard outside the tokens is 
     ].join(""),
   });
   assert.deepEqual(found.map((f) => `${f.file}:${f.line} ${f.what}`), [
-    "src/export/ExportButton.tsx:14 #7c3aed is not a colour of the standard",
+    "src/export/ExportButton.tsx:14 #7c3aed is not a colour of the standard: the nearest is --petrole (#1f4b57)",
     "src/export/ExportButton.tsx:14 #1F4B57 is --petrole written in hard: use the token",
     "pages/export.css:3 the font Inter is not a font of the standard",
-    "pages/export.css:3 the size 31px is not a size of the standard",
+    "pages/export.css:3 the size 31px is not a size of the standard: the nearest is --taille-titre (28px)",
     "pages/export.css:3 the space 16px is --espace written in hard: use the token",
-    "pages/export.css:3 the space 12px is not a space of the standard",
+    "pages/export.css:3 the space 12px is not a space of the standard: the nearest is --espace (16px)",
   ]);
 });
 
@@ -134,7 +134,7 @@ test("tokens are read as they are written: a quoted value, HSL channels; a lengt
     "1 hsl(222, 47%, 11%) is --primary written in hard: use the token",
     "2 the size 18px is --font-size-lg written in hard: use the token",
     "2 the space 32px is --goutiere written in hard: use the token",
-    "2 the radius 6px is not a radius of the standard",
+    "2 the radius 6px is not a radius of the standard: the nearest is --radius (8px)",
   ]);
 });
 
@@ -157,16 +157,16 @@ test("Tailwind classes are read: a colour of the default palette, or a value in 
   assert.deepEqual(found.map((f) => `${f.file}:${f.line} ${f.what}`), [
     "app/page.tsx:1 text-gray-500/80 is not a colour of the standard",
     "app/page.tsx:1 hover:border-red-200 is not a colour of the standard",
-    "app/page.tsx:2 the space 13px is not a space of the standard",
+    "app/page.tsx:2 the space 13px is not a space of the standard: the nearest is --spacing-gouttiere (24px)",
     "app/page.tsx:2 the space 24px is --spacing-gouttiere written in hard: use the token",
-    "app/page.tsx:2 the space 10px is not a space of the standard",
+    "app/page.tsx:2 the space 10px is not a space of the standard: the nearest is --spacing-gouttiere (24px)",
     "app/page.tsx:2 the radius 12px is --radius-carte written in hard: use the token",
-    "app/page.tsx:3 #7c3aed is not a colour of the standard",
+    "app/page.tsx:3 #7c3aed is not a colour of the standard: the nearest is --color-purple-600 (#6d28d9)",
     "app/page.tsx:3 the font Fraunces is --font-titre written in hard: use the token",
     "app/page.tsx:3 the font Open Sans is not a font of the standard",
     "app/page.tsx:3 the size 32px is --text-titre written in hard: use the token",
     "app/carte.css:2 bg-sky-300 is not a colour of the standard",
-    "app/carte.css:2 the radius 3px is not a radius of the standard",
+    "app/carte.css:2 the radius 3px is not a radius of the standard: the nearest is --radius-carte (12px)",
   ]);
   // A standard in oklch, as shadcn and Tailwind v4 write it; a colour the config names; arrays, line heights, opacity in
   // brackets, two values, a Svelte directive; a font through its variable; a comment over several lines.
@@ -187,17 +187,51 @@ test("Tailwind classes are read: a colour of the default palette, or a value in 
     }).map((f) => `${f.line} ${f.what}`),
     [
       "1 bg-purple-500 is not a colour of the standard",
-      "1 the space 13px is not a space of the standard",
+      "1 the space 13px is not a space of the standard: the nearest is --spacing-gouttiere (24px)",
       "1 the space 24px is --spacing-gouttiere written in hard: use the token",
       "2 bg-red-500/[.35] is not a colour of the standard",
-      "2 the size 13px is not a size of the standard",
-      "3 oklch(0.6 0.2 300) is not a colour of the standard",
+      "2 the size 13px is not a size of the standard: the nearest is --text-titre (32px)",
+      "3 oklch(0.6 0.2 300) is not a colour of the standard: the nearest is colors.purple.600 (#6d28d9)",
       "3 class:bg-gray-100 is not a colour of the standard",
     ],
   );
   // A standard with no colour of its own, or no length of a kind, holds no class to that kind.
   const bare = readStandard(`## Tokens\n- \`--font-titre: "Fraunces", serif\` in \`app/globals.css\`\n\n## Components\n`);
   assert.deepEqual(reviewCode({ standard: bare, diff: diff("app/page.tsx", 1, [`<p className="text-purple-600 p-[13px] rounded-[3px]">`]) }), []);
+});
+
+test("an unknown colour or length names the nearest token of its kind, whatever way the code and the standard write it", () => {
+  const standard = readStandard(
+    `## Tokens\n- \`--encre: 222 47% 11%\` in \`app/globals.css\`\n- \`--papier: oklch(0.97 0.01 90)\` in \`app/globals.css\`\n- \`--accent: rgb(220 38 38)\` in \`app/globals.css\`\n- \`--espace-s: 0.5rem\` in \`app/globals.css\`\n- \`--espace-l: 2rem\` in \`app/globals.css\`\n\n## Components\n`,
+  );
+  const said = reviewCode({ standard, diff: diff("app/page.css", 1, [`.a { color: #0b1220; background: hsl(40 30% 96%); border-color: #e11d48; padding: 10px 30px; }`]) }).map((f) => f.what);
+  assert.deepEqual(said, [
+    "#0b1220 is not a colour of the standard: the nearest is --encre (222 47% 11%)",
+    "hsl(40 30% 96%) is not a colour of the standard: the nearest is --papier (oklch(0.97 0.01 90))",
+    "#e11d48 is not a colour of the standard: the nearest is --accent (rgb(220 38 38))",
+    "the space 10px is not a space of the standard: the nearest is --espace-s (0.5rem)",
+    "the space 30px is not a space of the standard: the nearest is --espace-l (2rem)",
+  ]);
+  // A shadow's transparent colour is never offered an opaque one; a dark theme's token is no answer for the page;
+  // a radius moved from another by calc() is a step of its own; the same length or colour written another way is the
+  // token; a hue negative or in turns is read as the same hue.
+  const shadcn = readStandard(
+    `## Tokens\n- \`--background: oklch(1 0 0)\` in \`app/globals.css\`\n- \`--foreground: oklch(0.145 0 0)\` in \`app/globals.css\`\n- \`--secondary: oklch(0.97 0 0)\` in \`app/globals.css\`\n- \`--secondary: oklch(0.269 0 0)\` in \`app/globals.css\`, under \`.dark\`\n- \`--encre: hsl(222 47% 11%)\` in \`app/globals.css\`\n- \`--radius: 0.625rem\` in \`app/globals.css\`\n- \`--radius-sm: calc(var(--radius) - 4px)\` in \`app/globals.css\`\n- \`--space-2: 0.5rem\` in \`app/globals.css\`\n\n## Components\n`,
+  );
+  assert.deepEqual(
+    reviewCode({ standard: shadcn, diff: diff("app/page.css", 1, [`.a { box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #262626; border-radius: 6px; padding: 8px; background: #0f172a; outline-color: hsl(-138 47% 11%); caret-color: oklch(0.145 0 0.6turn); }`]) }).map((f) => f.what),
+    [
+      "rgba(0,0,0,0.1) is not a colour of the standard",
+      "#262626 is not a colour of the standard: the nearest is --encre (hsl(222 47% 11%))",
+      "#0f172a is --encre written in hard: use the token",
+      "hsl(-138 47% 11%) is --encre written in hard: use the token",
+      "oklch(0.145 0 0.6turn) is --foreground written in hard: use the token",
+      "the space 8px is --space-2 written in hard: use the token",
+      "the radius 6px is --radius-sm written in hard: use the token",
+    ],
+  );
+  // A colour no one can read, such as color(display-p3 …), is said as before.
+  assert.deepEqual(reviewCode({ standard, diff: diff("app/page.css", 1, [`.a { color: color(display-p3 1 0 0); }`]) }).map((f) => f.what), ["color(display-p3 1 0 0) is not a colour of the standard"]);
 });
 
 test("a component is made by hand only when the kit has that very part, outside the kit's own folder, with no class of the kit across its opening tag", () => {

@@ -1,8 +1,10 @@
 import { pageShape } from "../capture/shape.js";
+import { nearestColour, nearestLength, pixels, SAME_COLOUR, tokenPixels } from "./nearest.js";
 
 /** What `.aeom/standard.md` holds that a review can measure: its tokens and its components, each where it lives. */
 export interface ReviewStandard {
-  tokens: { name: string; value: string; file: string }[];
+  /** Each with the rule it is set under, when it is not the root, such as `.dark`. */
+  tokens: { name: string; value: string; file: string; under?: string }[];
   /** A component by its class or its name in a file, or a file that is a component of its own (`name` null). */
   components: { name: string | null; file: string }[];
 }
@@ -14,7 +16,7 @@ export interface CodeDeviation {
   what: string;
 }
 
-const ITEM = /^[-*] `([^`\n]+)`(?: in `([^`\n]+)`)?/;
+const ITEM = /^[-*] `([^`\n]+)`(?: in `([^`\n]+)`(?:, under `([^`\n]+)`)?)?/;
 const TOKEN = /^(["']?)([^"':\s]+)\1\s*:\s*(.+)$/;
 /** A value as the code writes it, without the quotes a config file puts around it. */
 const unquoted = (value: string) => value.trim().replace(/^(["'`])(.*)\1$/, "$2");
@@ -33,7 +35,7 @@ export function readStandard(text: string): ReviewStandard {
     if (!item) continue;
     if (part === "Tokens" && item[2]) {
       const token = item[1]!.match(TOKEN);
-      if (token) standard.tokens.push({ name: token[2]!, value: unquoted(token[3]!), file: item[2] });
+      if (token) standard.tokens.push({ name: token[2]!, value: unquoted(token[3]!), file: item[2], ...(item[3] ? { under: item[3] } : {}) });
     } else if (part === "Components") {
       standard.components.push(item[2] ? { name: item[1]!, file: item[2] } : { name: null, file: item[1]! });
     }
@@ -204,10 +206,17 @@ function nested(content: string, line: number): boolean {
 export function reviewCode({ standard, diff, read }: { standard: ReviewStandard; diff: string; read?: (file: string) => string | null }): CodeDeviation[] {
   const tokenFiles = new Set(standard.tokens.map((t) => t.file));
   const colours = standard.tokens.filter((t) => isColour(t.value));
+  // What to write instead is a colour of the light page: a dark theme's token is the same name, another value.
+  const light = colours.filter((t) => !/dark|prefers-color-scheme/i.test(t.under ?? ""));
+  const candidates = light.length ? light : colours;
   const fontTokens = standard.tokens.filter((t) => !LENGTH.test(t.value) && !/^[\d.]+$/.test(t.value) && (/["']/.test(t.value) || families(t.value).some((f) => GENERIC.test(f)) || /font-family|famil|police|typeface/i.test(t.name)));
   const fontNames = new Map<string, string>();
   for (const t of fontTokens) for (const f of families(t.value)) if (!GENERIC.test(f)) fontNames.set(f.toLowerCase(), t.name);
-  const lengths = standard.tokens.filter((t) => LENGTH.test(t.value));
+  // A length token in pixels, through the others when it is one of them moved (`calc(var(--radius) - 4px)`).
+  const lengths = standard.tokens.flatMap((t) => {
+    const px = tokenPixels(t.value, standard.tokens);
+    return px === null ? [] : [{ ...t, px }];
+  });
   const sizes = lengths.filter((t) => /size|taille|titre|title|fs-|^--text-/i.test(t.name) && !/weight|line|leading|radius|space|gap/i.test(t.name));
   const spaces = lengths.filter((t) => /space|espace|gap|gutter|gout+i|spacing|marge|margin|pad|inset|^--s-?\d|^--sp-/i.test(t.name));
   const radii = lengths.filter((t) => /radius|rayon|arrondi|round/i.test(t.name));
@@ -247,8 +256,11 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
       const fallbacks = varRanges(text);
       const inVar = (at: number) => fallbacks.some(([a, b]) => at > a && at < b);
       const valueAt = (tokens: typeof lengths, value: string, what: string) => {
-        const token = tokens.find((t) => t.value === value);
-        say(token ? `the ${what} ${value} is ${token.name} written in hard: use the token` : `the ${what} ${value} is not a ${what} of the standard`);
+        // Outside the standard, the step of its scale it is nearest: what to write instead; at no distance, the same
+        // length written another way (`8px` for `0.5rem`).
+        const near = nearestLength(pixels(value) ?? NaN, tokens);
+        const token = tokens.find((t) => t.value === value) ?? (near?.distance === 0 ? near.token : null);
+        say(token ? `the ${what} ${value} is ${token.name} written in hard: use the token` : `the ${what} ${value} is not a ${what} of the standard${near ? `: the nearest is ${near.token.name} (${near.token.value})` : ""}`);
       };
       if (colours.length) {
         for (const m of text.matchAll(COLOUR)) {
@@ -257,8 +269,9 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
           // A Tailwind value in brackets, or the value of a property that colours the page.
           const property = before.match(/-\[$/) ? "color" : before.match(/([a-zA-Z][\w-]*)\s*:\s*[^:;{}]*$/)?.[1];
           if (!property || !COLOUR_PROPERTY.test(property)) continue;
-          const token = colours.find((t) => colourKey(t.value) === colourKey(m[0]));
-          say(token ? `${m[0]} is ${token.name} written in hard: use the token` : `${m[0]} is not a colour of the standard`);
+          const near = nearestColour(m[0], candidates);
+          const token = colours.find((t) => colourKey(t.value) === colourKey(m[0])) ?? (near && near.distance < SAME_COLOUR ? near.token : null);
+          say(token ? `${m[0]} is ${token.name} written in hard: use the token` : `${m[0]} is not a colour of the standard${near ? `: the nearest is ${near.token.name} (${near.token.value})` : ""}`);
         }
         // A colour of Tailwind's default palette, its opacity left aside, unless the standard names that very colour.
         for (const { written, utility } of classes) {

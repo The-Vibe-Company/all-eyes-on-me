@@ -4,7 +4,7 @@ title: Chaque écart du code s'affiche à sa ligne dans la PR, avec le token le 
 milestone: 04-garder-a-chaque-pr
 depends_on: [02, 07]
 design: null
-status: todo
+status: done
 tracker: { tool: github, id: 196, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/196 }
 ---
 
