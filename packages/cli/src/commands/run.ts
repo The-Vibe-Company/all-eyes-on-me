@@ -1,8 +1,12 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { comparePages, ConfigError, lostActions, route, STYLE_CHECKS, STYLE_PRINCIPLES, DuelVoteError, guardJourneys, loadConfig, ratchetJourneys, readDuelVotes, scorePages, snapshot, SnapshotPathError, tallyDuels, type CheckReport, type JourneyReport, type JudgeReport } from "@aeom/core";
 import { changedSince, missingReplays, problemWith, protectedAt } from "./guard.js";
+import { noteDone } from "./run-state.js";
+
+/** The phase of a run a snapshot or a comparison of its folder belongs to, by the folder's name, as the skill names them. */
+const PHASE_OF: Record<string, string> = { before: "judge", "kit-look": "kit", after: "measure", "after-revert": "measure", end: "remeasure", "journeys-after": "measure", "journeys-end": "journeys" };
 
 export async function runSnapshot(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({ args: argv, allowPositionals: true, options: { help: { type: "boolean", short: "h" } } });
@@ -18,6 +22,8 @@ export async function runSnapshot(argv: string[]): Promise<number> {
     return 1;
   }
   console.log(`Captures and reports copied to ${positionals[0]}`);
+  const name = basename(resolve(positionals[0]!));
+  if (PHASE_OF[name]) await noteDone(positionals[0]!, PHASE_OF[name]!, `aeom snapshot ${name}`);
   return 0;
 }
 
@@ -143,6 +149,8 @@ export async function runCompare(argv: string[]): Promise<number> {
     return 1;
   }
   await writeFile(join(afterDir, "compare.json"), JSON.stringify(comparison, null, 2) + "\n");
+  const [fromName, toName] = [basename(resolve(beforeDir)), basename(resolve(afterDir))];
+  if (PHASE_OF[toName]) await noteDone(afterDir, PHASE_OF[toName]!, `aeom compare ${fromName} → ${toName}`);
 
   // Two measures judged by other models, or on other principles, may differ by their judges alone.
   const judgedBy = (j: JudgeReport) => (j.judges ? `${j.judges.models.join(", ") || "a model not named"} on ${j.judges.principles}` : null);
@@ -287,6 +295,8 @@ async function compareJourneys(beforeDir: string, afterDir: string, values: { du
   const guard = guardJourneys({ before: callsBefore, after, changed, protectedFiles });
   const verdicts = ratchetJourneys({ before, after, beforeVerdict, afterVerdict, duels, guard });
   await writeFile(join(afterDir, "ratchet.json"), JSON.stringify(verdicts, null, 2) + "\n");
+  const [fromName, toName] = [basename(resolve(beforeDir)), basename(resolve(afterDir))];
+  if (PHASE_OF[toName]) await noteDone(afterDir, PHASE_OF[toName]!, `aeom compare --journeys ${fromName} → ${toName}`);
 
   const column = Math.max(...verdicts.map((v) => v.name.length)) + 2;
   for (const v of verdicts) {

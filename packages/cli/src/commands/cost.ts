@@ -82,7 +82,8 @@ async function windowOf(dir: string, run: string): Promise<{ from: string; to: s
   const start = await startOf(dir, run);
   if (!start) return null;
   let to: number;
-  const last = start.state ? Date.parse(start.state.history.at(-1)?.at ?? "") : NaN;
+  // The coordinator's last mark: a command's note, such as a standard written the next day, does not stretch the run.
+  const last = start.state ? Date.parse(start.state.history.findLast((h) => h.done === undefined)?.at ?? "") : NaN;
   if (start.state) to = start.state.phase === "done" && Number.isFinite(last) ? last + AFTER : now;
   else {
     let changed = Date.parse(start.at);

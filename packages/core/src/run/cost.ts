@@ -101,7 +101,8 @@ export function roleOf(brief: string): Role {
   const kinds: [Role, RegExp][] = [
     ["directions", /direction worker|worker (?:of|for) the direction/],
     ["kit", /kit worker|promotion worker/],
-    ["journeys", /journey worker/],
+    // The journey wave's shared worker fixes what several journeys cross: it is the journey wave's.
+    ["journeys", /journey worker|shared worker/],
     ["pages", /page worker|screen worker|integration worker/],
     ["judges", /\bjudge\b|\bvoter\b/],
   ];

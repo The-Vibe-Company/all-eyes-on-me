@@ -4,6 +4,7 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 import { applied, champion, draftStandard, mergeStandard, productBrief, standardProblems, type Tournament } from "@aeom/core";
 import { readIfThere, sayMerge, sheetFile, updateSheet } from "../sheet-file.js";
+import { noteDone } from "./run-state.js";
 
 const STANDARD = sheetFile("standard");
 
@@ -100,15 +101,23 @@ export async function runStandard(argv: string[]): Promise<number> {
     return 1;
   }
 
-  return updateSheet(STANDARD, (holder) => `Another aeom standard (process ${holder}) is writing the standard. Run again once it is done.`, async ({ sheet: current, base }) => {
+  // The run whose draft this is reaches its standard whether it is written or the person's corrections stop it: the
+  // skill goes on without it then. A draft refused for its own problems reaches nothing: it is fixed and run again.
+  // Set inside the update, which the compiler cannot follow.
+  let outcome = null as string | null;
+  const code = await updateSheet(STANDARD, (holder) => `Another aeom standard (process ${holder}) is writing the standard. Run again once it is done.`, async ({ sheet: current, base }) => {
     const merged = mergeStandard({ base, current, proposed: draft });
     const left = standardProblems(merged.text, readProject);
     if (left.length) {
+      outcome = "aeom standard: nothing written, the person's corrections no longer hold";
       console.error(`With your corrections in .aeom/standard.md, the standard would not hold, so nothing was written:\n${left.map((p) => `  ${p}`).join("\n")}\nIn .aeom/standard.md, write each value as the code writes it, put back a heading you renamed, or take the line out, then run again.`);
       return 1;
     }
     const count = (part: string) => (draft.split(`\n## ${part}\n`)[1]?.split("\n## ")[0] ?? "").split("\n").filter((l) => /^[-*] `/.test(l)).length;
     const first = `Wrote .aeom/standard.md: ${count("Tokens")} tokens and ${count("Components")} components, each where it lives in the code`;
+    outcome = "aeom standard: .aeom/standard.md written";
     return { text: merged.text, base: draft, after: () => (current === undefined ? console.log(first) : sayMerge(".aeom/standard.md", merged, "no longer in the code")) };
   });
+  if (outcome && (code === 0 || outcome.includes("nothing written"))) await noteDone(draftFile, "standard", outcome);
+  return code;
 }

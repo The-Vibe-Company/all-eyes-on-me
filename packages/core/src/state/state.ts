@@ -1,3 +1,5 @@
+import { roleOf } from "../run/cost.js";
+
 /**
  * Where a run is, kept in `.aeom/runs/<run>/state.json` as it goes, so a run
  * whose session closed can be taken up by another: its phase and the step of
@@ -34,7 +36,8 @@ export interface RunState {
   /** The run branch's commit when the run last noted where it is, to tell later commits apart. */
   branchAt: string | null;
   agents: AgentState[];
-  history: { phase: string; step: string | null; at: string }[];
+  /** Every mark, the coordinator's and, with `done`, what a command of the run did on its own. */
+  history: { phase: string; step: string | null; at: string; done?: string }[];
 }
 
 export const newRunState = (run: string, at: string): RunState => ({ run, started: at, options: [], phase: null, step: null, vars: {}, branchAt: null, agents: [], history: [] });
@@ -74,6 +77,47 @@ export function markRun(
   };
 }
 
+/**
+ * What a command of the run did on its own, such as a snapshot or a comparison: noted in the history under the phase it
+ * belongs to, beside the coordinator's marks. The phase and the step the coordinator marked stay theirs.
+ */
+export function markDone(s: RunState, { phase, done, at, branchAt }: { phase: string; done: string; at: string; branchAt?: string | null }): RunState {
+  if (!phase.trim()) throw new Error("A phase is named, such as measure or standard.");
+  // A command that committed on the run branch moved it itself: a run taken up does not take its commit for a stranger's.
+  return { ...s, ...(branchAt !== undefined ? { branchAt } : {}), history: [...s.history, { phase, step: null, at, done }] };
+}
+
+/**
+ * The phases a run went through: the coordinator's marks, what its commands noted, and, unless `fromWorkers` is false,
+ * the phase each worker it launched belongs to, by the role `aeom cost` reads in its kind, so a wave the coordinator
+ * forgot to mark is still known. A worker marked with a page is a page worker, and a direction merged is the kit and
+ * the screens it was built on.
+ */
+export function phasesWent(s: RunState, { fromWorkers = true }: { fromWorkers?: boolean } = {}): Set<string> {
+  const went = new Set([...s.history.map((h) => h.phase), ...(s.phase ? [s.phase] : [])]);
+  if (!fromWorkers) return went;
+  for (const a of s.agents) {
+    if (a.page) went.add("pages");
+    const role = roleOf(a.kind ?? "");
+    if (role === "kit" || role === "pages" || role === "journeys" || role === "directions") went.add(role);
+    if (role === "directions" && a.status === "merged") for (const phase of ["kit", "pages"]) went.add(phase);
+  }
+  return went;
+}
+
+/** What the run's commands did since the coordinator's last mark, oldest first. */
+export function doneSince(s: RunState): string[] {
+  const last = s.history.findLastIndex((h) => h.done === undefined);
+  return s.history.slice(last + 1).flatMap((h) => (h.done === undefined ? [] : [h.done]));
+}
+
+/** What the run's commands did since the coordinator's last mark, in one sentence; null when they did nothing since. */
+export function doneSinceLine(s: RunState): string | null {
+  const done = doneSince(s);
+  if (!done.length) return null;
+  return `Since ${s.history.some((h) => h.done === undefined) ? "that mark" : "the run started"}, AEOM's commands did: ${done.join(", ")}.`;
+}
+
 /** An agent is launched, done, merged or refused; what it was launched with stays. */
 export function markAgent(s: RunState, agent: Partial<Omit<AgentState, "name" | "status" | "at">> & { name: string; status: AgentStatus; at: string }): RunState {
   if (!AGENT_STATUSES.includes(agent.status)) throw new Error(`An agent is launched, done, merged or refused, not ${agent.status}.`);
@@ -109,7 +153,11 @@ export function resumePlan(s: RunState, disk: OnDisk): string {
   else if (disk.runBranch) lines.push(`Check out aeom/${s.run}.`);
   lines.push("", "Set again:", `export RUN=${s.run}`, ...Object.entries(s.vars).map(([k, v]) => `export ${k}=${/^[\w./:@-]+$/.test(v) ? v : `'${v.replace(/'/g, `'\\''`)}'`}`));
   lines.push(...agentLines(s, disk));
-  lines.push("", s.step ? `Go on at step ${s.step}.` : `Go on with "${s.phase ?? "the run"}".`);
+  // A command that did its part after the last mark moved the run on, though the mark did not.
+  const since = doneSinceLine(s);
+  if (since) lines.push("", since);
+  const after = since ? ", after what they did" : "";
+  lines.push("", s.step ? `Go on at step ${s.step}${after}.` : `Go on with "${s.phase ?? "the run"}"${after}.`);
   return lines.join("\n");
 }
 

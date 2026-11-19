@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -183,6 +183,24 @@ test("two replays made at different widths are not compared: the ratchet says wh
     assert.equal(code, 1);
     assert.match(out, /^Nothing compared: before was replayed at 390, 1280 px and after at 1280 px: compare two replays made at the same widths\. Replay after again/m);
     assert.doesNotMatch(out, /Both folders need/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("aeom compare --journeys in a run's folder notes it in the run's state: the end of a journey wave is its phase", async () => {
+  const dir = await ratchetDir();
+  try {
+    const R = join(".aeom", "runs", "run-1");
+    await mkdir(join(dir, R), { recursive: true });
+    assert.equal((await run(dir, ["run", "mark", R, "--phase", "journeys", "--step", "run.6"])).code, 0);
+    await cp(join(dir, "before"), join(dir, R, "journeys-after"), { recursive: true });
+    await cp(join(dir, "after"), join(dir, R, "journeys-end"), { recursive: true });
+    const { code, out } = await run(dir, ["compare", "--journeys", join(R, "journeys-after"), join(R, "journeys-end")]);
+    assert.equal(code, 0, out);
+    const state = JSON.parse(await readFile(join(dir, R, "state.json"), "utf8")) as { phase: string; history: { phase: string; done?: string }[] };
+    assert.equal(state.phase, "journeys");
+    assert.deepEqual(state.history.at(-1), { ...state.history.at(-1), phase: "journeys", done: "aeom compare --journeys journeys-after → journeys-end" });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
