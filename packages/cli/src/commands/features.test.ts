@@ -42,10 +42,26 @@ test("aeom features names what a blocked journey misses, in the user's words, an
     await put(join(R, "features.json"), { entries: [{ slug: "old" }], more: 0 });
     assert.equal((await run(dir, ["features", ".aeom/runs/run-1"])).code, 1);
     await assert.rejects(readFile(join(R, "features.json"), "utf8"), "a list kept by an older pass is dropped as soon as the journeys are looked at again");
-    const { code, out } = await run(dir, ["features", ".aeom/runs/run-1", "--missing", "Add a product=A way to put a product in the order."]);
+    const missing = ["--missing", "Add a product=A way to put a product in the order."];
+    // Each feature says whether the front alone builds it, or the back too: none is kept until each one says.
+    const unsaid = await run(dir, ["features", ".aeom/runs/run-1", ...missing]);
+    assert.equal(unsaid.code, 1, unsaid.out);
+    assert.match(unsaid.out, /Say for each whether the front alone builds it \(a state, a result screen, a message, on data the front already has\): --front add; or whether it needs the back too \(new data, a call to a server, business logic\): --back "add=<what the back would have to provide>", in the same call as the --missing sentences\./);
+    await assert.rejects(readFile(join(R, "features.json"), "utf8"), "nothing kept until each one says");
+    assert.match((await run(dir, ["features", ".aeom/runs/run-1", ...missing, "--front", "add", "--back", "add=A route."])).out, /Add a product needs the front alone or the back too, not both/);
+    assert.match((await run(dir, ["features", ".aeom/runs/run-1", ...missing, "--front", "orders"])).out, /See my orders reaches its end: name a feature only for a journey that cannot/);
+    assert.match((await run(dir, ["features", ".aeom/runs/run-1", ...missing, "--back", "add"])).out, /--back takes <journey>=<what the back would have to provide>/);
+    const { code, out } = await run(dir, ["features", ".aeom/runs/run-1", ...missing, "--front", "Add a product"]);
     assert.equal(code, 0, out);
+    assert.match(out, /front alone: \/aeom build "A way to put a product in the order\." --journey add/);
     const saved = JSON.parse(await readFile(join(R, "features.json"), "utf8"));
-    assert.deepEqual(saved, { entries: [{ slug: "add", name: "Add a product", step: 2, capture: "journeys-end/add@1280-02.png", why: "Ajouter adds nothing.", missing: "A way to put a product in the order." }], more: 0 });
+    assert.deepEqual(saved, { entries: [{ slug: "add", name: "Add a product", step: 2, capture: "journeys-end/add@1280-02.png", why: "Ajouter adds nothing.", missing: "A way to put a product in the order.", needs: "front" }], more: 0 });
+    const back = await run(dir, ["features", ".aeom/runs/run-1", ...missing, "--back", "add=A route that puts a product in the order, and the order's total."]);
+    assert.equal(back.code, 0, back.out);
+    assert.match(back.out, /the back too: A route that puts a product in the order, and the order's total\./);
+    assert.doesNotMatch(back.out, /\/aeom build/, "a feature that needs the back has no command");
+    const onBack = JSON.parse(await readFile(join(R, "features.json"), "utf8"));
+    assert.deepEqual(onBack.entries[0], { slug: "add", name: "Add a product", step: 2, capture: "journeys-end/add@1280-02.png", why: "Ajouter adds nothing.", missing: "A way to put a product in the order.", needs: "back", back: "A route that puts a product in the order, and the order's total." });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

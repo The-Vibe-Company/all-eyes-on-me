@@ -47,3 +47,10 @@ export function blockedJourneys({ replay, critique, order = [], limit = 3 }: { r
   const sorted = blocked.map((b, i) => ({ b, i })).sort((x, y) => rank(x.b) - rank(y.b) || x.i - y.i).map(({ b }) => b);
   return { entries: sorted.slice(0, limit), more: Math.max(0, sorted.length - limit) };
 }
+
+/**
+ * The command that builds a missing feature the front alone can build: its sentence as the run wrote it, on one line
+ * and quoted, and the journey it blocked, which must reach its end once it is built. It is pasted into Claude Code, not
+ * a shell: a double quote of the sentence becomes a single one rather than an escape the request would keep.
+ */
+export const buildCommand = (feature: { missing: string; slug: string }) => `/aeom build "${feature.missing.replace(/\s+/g, " ").trim().replace(/"/g, "'")}" --journey ${feature.slug}`;

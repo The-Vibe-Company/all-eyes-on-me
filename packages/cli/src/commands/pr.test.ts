@@ -6,7 +6,9 @@ import { dirname, join } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { lastReview } from "@aeom/core";
 import { repoOf } from "./pr.js";
+import { reviewWords } from "./review-words.js";
 
 const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
 const sh = promisify(execFile);
@@ -243,6 +245,17 @@ test("a run that built what was asked gets its PR once reviewed against the stan
   const marked = await run(dir, ["pr", R, "--dry-run"]);
   assert.equal(marked.code, 0, marked.out);
   assert.doesNotMatch(marked.out, /skipped/);
+  // A missing feature built on demand: the journey it blocked, replayed and judged on its own, must no longer block.
+  await put(join(R, "journey"), "orders\n");
+  assert.match((await run(dir, ["pr", R, "--dry-run"])).out, /- the journey asked for, orders, was not replayed and judged on its own \(no journey-asked\/report\.json and judge-journeys\.json\): section 2f, step 7/);
+  const alone = { url: "http://x", replayedAt: "", widths: [1280], warnings: [], journeys: [{ slug: "orders", name: "See my orders", runs: [{ width: 1280, steps: [], calls: [], screens: ["/"], counts: { steps: 3, screens: 1, back: 0 }, broken: null, sheet: "" }] }] };
+  const judged = (pass: boolean) => ({ judgedAt: "", voters: ["1", "2", "3"], principles: [{ id: "result-shown", text: "" }], failures: pass ? 0 : 1, pages: [{ page: "orders", verdicts: [{ principle: "result-shown", pass, votes: "3/3", reasons: ["The order is never shown."], dissent: [], steps: [3] }] }] });
+  await put(join(R, "journey-asked", "report.json"), alone);
+  await put(join(R, "journey-asked", "judge-journeys.json"), judged(false));
+  assert.match((await run(dir, ["pr", R, "--dry-run"])).out, /- the journey asked for, See my orders, still blocks at step 3: The order is never shown\./);
+  await put(join(R, "journey-asked", "judge-journeys.json"), judged(true));
+  const unblocked = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(unblocked.code, 0, unblocked.out);
   // Nothing merged on the run branch but what AEOM keeps in .aeom: nothing was built, no PR.
   await git(dir, "branch", "-f", "aeom/run-1", "main");
   await git(dir, "checkout", "-q", "aeom/run-1");
@@ -253,6 +266,16 @@ test("a run that built what was asked gets its PR once reviewed against the stan
   const nothing = await run(dir, ["pr", R, "--dry-run"]);
   assert.equal(nothing.code, 0, nothing.out);
   assert.match(nothing.out, /Nothing built on aeom\/run-1: no PR\./);
+});
+
+test("what aeom review writes, in English or in French, the result page and the PR read: a review that holds holds in both", () => {
+  for (const lang of ["en", "fr"] as const) {
+    const w = reviewWords(lang);
+    const summary = (verdict: string) => `## aeom review\n\n${w.head("`aeom/run-1`", "`main`", "`.aeom/standard.md`", 2)}\n\n- ✓ See my orders\n\n**${verdict}**\n`;
+    for (const [verdict, passed] of [[w.nothing, true], [w.noScreen, true], [w.notMeasured, false], [w.outside(2), false]] as const) {
+      assert.deepEqual(lastReview(summary(verdict)), { passed, verdict, lines: ["✓ See my orders"] }, `${lang}: ${verdict}`);
+    }
+  }
 });
 
 test("an image or a capture anywhere in the run's commits is refused before anything is pushed, whatever its name", async () => {

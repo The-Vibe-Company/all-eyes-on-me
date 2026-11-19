@@ -1,3 +1,4 @@
+import { buildCommand } from "./features.js";
 import type { PageLang, ResultPage } from "./report.js";
 
 /** GitHub refuses a description over 65,536 characters: the PR stays well under. */
@@ -56,6 +57,8 @@ const WORDS = {
     features: "Missing features",
     featuresText: "What a key journey would need to reach its end. AEOM built none of it.",
     blocks: (name: string, step: number, missing: string) => `**${name}**, blocks at step ${step}: ${missing}`,
+    frontOnly: (command: string) => `Front only: ${command}`,
+    needsBack: (back: string) => `Needs the back too: ${back}`,
     more: (n: number) => `${n} more blocked ${plural(n, "journey", "journeys")}, not named.`,
     stillFailing: "Still failing",
     notMeasured: "Not measured after the run: what failed before it.",
@@ -113,6 +116,8 @@ const WORDS = {
     features: "Fonctions manquantes",
     featuresText: "Ce qu'il faudrait à un parcours clé pour aller au bout. AEOM n'en a rien construit.",
     blocks: (name: string, step: number, missing: string) => `**${name}**, bloque à l'étape ${step} : ${missing}`,
+    frontOnly: (command: string) => `Seulement du front : ${command}`,
+    needsBack: (back: string) => `Demande aussi du back : ${back}`,
     more: (n: number) => `${n} ${plural(n, "autre parcours bloqué, non nommé", "autres parcours bloqués, non nommés")}.`,
     stillFailing: "Encore en échec",
     notMeasured: "Pas mesuré après le run : ce qui échouait avant lui.",
@@ -257,7 +262,9 @@ export function prBody(page: ResultPage, reportPath: string, lang: PageLang = "e
   if (page.journeys.length) lines.push(`## ${w.journeys}`, "", ...capped(page.journeys.map((j) => journeyLine(j, w, Boolean(page.asked))), w), "");
   if (page.features?.entries.length) {
     lines.push(`## ${w.features}`, "", w.featuresText, "");
-    for (const f of page.features.entries) lines.push(`- ${w.blocks(words(f.name), f.step, words(f.missing))}`);
+    // Front alone, the command that builds it; the back too, what the back would have to provide.
+    const needs = (f: (typeof page.features.entries)[number]) => (f.needs === "front" ? ` ${w.frontOnly(code(buildCommand(f)))}` : f.needs === "back" && f.back ? ` ${w.needsBack(words(f.back))}` : "");
+    for (const f of page.features.entries) lines.push(`- ${w.blocks(words(f.name), f.step, words(f.missing))}${needs(f)}`);
     if (page.features.more) lines.push(`- ${w.more(page.features.more)}`);
     lines.push("");
   }

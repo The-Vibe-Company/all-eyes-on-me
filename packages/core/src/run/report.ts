@@ -10,7 +10,7 @@ import type { JudgeReport } from "../judge/tally.js";
 import { DEFAULT_WIDTHS, route, usableWidths } from "../capture/capture.js";
 import { comparePages, scorePages } from "./compare.js";
 import { fontFaces } from "./fonts.js";
-import { blockedJourneys } from "./features.js";
+import { blockedJourneys, buildCommand } from "./features.js";
 import { judgementHtml, judgementVerdicts, readJudgement, type Judgement } from "./judgement.js";
 import type { FeedbackCategory } from "./taste.js";
 import { STYLE_CHECKS, STYLE_PRINCIPLES, verdictOf, type Failure } from "./verdict.js";
@@ -110,8 +110,11 @@ export interface ResultPage {
   judged?: true;
   /** What a run that only judged found, good and bad, merged and ranked: its page is a judgement, not a comparison. */
   judgement?: Judgement;
-  /** What blocked journeys would need, named by `aeom features`, never built. */
-  features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
+  /**
+   * What blocked journeys would need, named by `aeom features`, never built: each says whether the front alone builds it
+   * (`needs: "front"`, then `/aeom build` does on demand) or the back too, with what the back would have to provide.
+   */
+  features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string; needs?: "front" | "back"; back?: string }[]; more: number } | null;
 }
 
 /** What `aeom review` said of a branch: its last line, whether it holds, and each thing it listed. */
@@ -122,12 +125,12 @@ export interface Review {
 }
 
 /**
- * The last review in what `aeom review --summary` wrote, which appends: its bold last line, then what it listed
+ * The last review in what `aeom review --summary` wrote, in English or in French, which appends: its bold last line, then what it listed
  * and noted, as plain words, its first line (the branch against its base) left out. Only « Nothing outside the
- * standard. », or no screen touched with nothing outside it, holds; screens it could not measure do not. Null
+ * standard. » (« Rien hors du standard. »), or no screen touched with nothing outside it, holds; screens it could not measure do not. Null
  * when no review is there, or one that stopped before it began.
  */
-function lastReview(summary: string): Review | null {
+export function lastReview(summary: string): Review | null {
   // A fence holds what an app that did not start printed: never cut into lines of the review.
   const block = summary.split(/^## aeom review[ \t]*$/m).slice(1).at(-1)?.replace(/^```[\s\S]*?^```[ \t]*$/gm, "");
   if (block === undefined) return null;
@@ -138,9 +141,10 @@ function lastReview(summary: string): Review | null {
   const verdict = plain(bold[1]!);
   const lines = paragraphs
     .slice(0, -1)
-    .filter((p) => !/held to `?\.aeom\/standard\.md`?: \d+ commits? ahead\.$/.test(p))
+    // aeom review speaks the product sheet's language: its first line in English or in French.
+    .filter((p) => !/(held to|tenue à) `?\.aeom\/standard\.md`? ?: \d+ commits? (ahead|d'avance)\.$/.test(p))
     .flatMap((p) => (p.startsWith("- ") ? p.split("\n").filter((l) => l.startsWith("- ")).map((l) => plain(l.slice(2))) : [plain(p)]));
-  return { passed: /^(Nothing outside the standard|No screen touched, and nothing outside the standard)\.$/.test(verdict), verdict, lines };
+  return { passed: /^(Nothing outside the standard|No screen touched, and nothing outside the standard|Rien hors du standard|Aucun écran touché, et rien hors du standard)\.$/.test(verdict), verdict, lines };
 }
 
 /** A run folder without what the page needs. */
@@ -330,7 +334,14 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const widest = (r: JourneyReport["journeys"][number] | undefined) => r?.runs.reduce<(typeof r.runs)[number] | undefined>((w, x) => (!w || x.width > w.width ? x : w), undefined);
   // Built from nothing, each journey is the one the run made: it stands on its own replay, with no before.
   const empty = (j: JourneyReport["journeys"][number]) => ({ ...j, runs: [] as JourneyReport["journeys"][number]["runs"] });
-  const journeys: ResultPage["journeys"] = (built ? (replayAfter?.journeys ?? []).map(empty) : replayBefore?.journeys ?? []).map((j) => {
+  // The journey a missing feature blocked (`/aeom build --journey`), replayed and judged on its own: nothing blocks it any more.
+  const askedJourney = asked ? await text("journey") : "";
+  const askedReplay = askedJourney ? await json<JourneyReport>(join(runDir, "journey-asked", "report.json")).catch(() => null) : null;
+  const askedCritique = askedReplay ? await json<JudgeReport>(join(runDir, "journey-asked", "judge-journeys.json")).catch(() => null) : null;
+  const unblocked = Boolean(askedReplay?.journeys?.some((j) => j.slug === askedJourney) && askedCritique?.pages?.some((p) => p.page === askedJourney) && !blockedJourneys({ replay: askedReplay!, critique: askedCritique!, limit: Infinity }).entries.some((b) => b.slug === askedJourney));
+  // An asked run replays, beside the key journeys, one that only opens each screen of the plan: the guard's, not the page's.
+  const own = (j: { slug: string }) => !(asked && j.slug.startsWith("aeom-open-"));
+  const journeys: ResultPage["journeys"] = (built ? (replayAfter?.journeys ?? []).map(empty) : replayBefore?.journeys ?? []).filter(own).map((j) => {
     const a = replayAfter?.journeys.find((x) => x.slug === j.slug);
     const verdictOfJourney = ratchet.find((r) => r.slug === j.slug);
     const widths = [...new Set([...j.runs, ...(a?.runs ?? [])].map((r) => r.width))].sort((x, y) => x - y);
@@ -341,7 +352,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
       slug: j.slug,
       name: j.name,
       // Without duels, nothing better sends nobody back: the journey is as it was.
-      status: built ? (replug ? "unchanged" : "new") : verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
+      // What was asked weighs no journey against another: one that broke before it and reaches its end after, it unblocked.
+      status: built ? (replug ? "unchanged" : "new") : asked && ((broke(j) && a && !broke(a)) || (j.slug === askedJourney && unblocked)) ? "kept" : verdictOfJourney && !verdictOfJourney.unchanged ? (verdictOfJourney.kept ? "kept" : "sent back") : "unchanged",
       why: verdictOfJourney?.why ?? null,
       broke: { before: broke(j), after: broke(a) },
       steps: { before: widest(j)?.counts.steps ?? null, after: a ? (widest(a)?.counts.steps ?? null) : null },
@@ -381,7 +393,12 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   if (saved && Array.isArray(saved.entries)) {
     const still = replayAfter ? blockedJourneys({ replay: replayAfter, critique: critiqueAfter ?? undefined, limit: Infinity }).entries.map((b) => b.slug) : [];
     const entries = [];
-    for (const f of saved.entries.filter((f) => typeof f?.slug === "string" && still.includes(f.slug))) entries.push({ ...f, capture: f.capture && (await exists(join(runDir, f.capture))) ? f.capture : null });
+    for (const f of saved.entries.filter((f) => typeof f?.slug === "string" && still.includes(f.slug))) {
+      // Front or back, as aeom features kept it; a back with nothing it would have to provide says nothing.
+      const { needs, back, ...rest } = f;
+      const said = needs === "front" ? { needs } : needs === "back" && typeof back === "string" && back.trim() ? { needs, back } : {};
+      entries.push({ ...rest, ...said, capture: f.capture && (await exists(join(runDir, f.capture))) ? f.capture : null });
+    }
     features = { entries, more: Number.isInteger(saved.more) ? saved.more : 0 };
   }
   // Each width once, narrowest first, whatever wrote the manifest: anything else is not a list of widths.
@@ -418,7 +435,7 @@ const WORDS = {
     beforeTheRun: "Before the run, ", atTheEnd: "At the end, ", steps: "steps",
     notMeasured: "Not measured after the run: what failed before it.", nothingLeft: "Nothing.",
     accepted: "Accepted", acceptedNote: "What the product sheet accepts, by your choice or your spec's: said, never redone.",
-    featuresNote: "What a key journey would need to reach its end. AEOM built none of it.", blocksAt: "blocks at step", blocksAtStep: (n: string) => `blocks at step ${n}:`, chosenTag: "chosen",
+    featuresNote: "What a key journey would need to reach its end. AEOM built none of it.", frontOnly: "Front only: AEOM builds it when you ask.", needsBack: "Needs the back too:", copy: "Copy", copied: "Copied", selected: "Selected: press Ctrl+C or ⌘C", blocksAt: "blocks at step", blocksAtStep: (n: string) => `blocks at step ${n}:`, chosenTag: "chosen",
     more: (n: number) => `${n} more blocked journey${n === 1 ? "" : "s"}, not named: three at most per run.`,
     agree: "Agree", disagree: "Disagree", whyPlaceholder: "Why, if you disagree (optional)", why: "Why",
     ratesLead: "How often you agreed with AEOM, over every run: ", of: "of", noFeedback: "No feedback yet", sayEach: ": say whether you agree with each verdict",
@@ -474,7 +491,7 @@ const WORDS = {
     beforeTheRun: "Avant le run, ", atTheEnd: "À la fin, ", steps: "étapes",
     notMeasured: "Pas mesuré après le run : ce qui échouait avant.", nothingLeft: "Rien.",
     accepted: "Accepté", acceptedNote: "Ce que la fiche produit accepte, par votre choix ou celui de votre cahier des charges : dit, jamais refait.",
-    featuresNote: "Ce qu'il faudrait à un parcours clé pour aller au bout. AEOM n'en a rien construit.", blocksAt: "bloque à l'étape", blocksAtStep: (n: string) => `bloque à l'étape ${n} :`, chosenTag: "choisie",
+    featuresNote: "Ce qu'il faudrait à un parcours clé pour aller au bout. AEOM n'en a rien construit.", frontOnly: "Seulement du front : AEOM la construit quand vous le demandez.", needsBack: "Demande aussi du back :", copy: "Copier", copied: "Copié", selected: "Sélectionnée : Ctrl+C ou ⌘C", blocksAt: "bloque à l'étape", blocksAtStep: (n: string) => `bloque à l'étape ${n} :`, chosenTag: "choisie",
     more: (n: number) => `${n} autre${n === 1 ? "" : "s"} parcours bloqué${n === 1 ? "" : "s"}, non nommé${n === 1 ? "" : "s"} : trois au plus par run.`,
     agree: "D'accord", disagree: "Pas d'accord", whyPlaceholder: "Pourquoi, si vous n'êtes pas d'accord (facultatif)", why: "Pourquoi",
     ratesLead: "Combien de fois vous avez été d'accord avec AEOM, sur tous les runs : ", of: "sur", noFeedback: "Pas encore d'avis", sayEach: " : dites si vous êtes d'accord avec chaque verdict",
@@ -662,6 +679,23 @@ const feedbackScript = (w: Words) => `
 const pageScript = `
 (() => {
   document.querySelectorAll(".cmp input").forEach((input) => input.addEventListener("input", () => input.parentElement.style.setProperty("--x", input.value + "%")));
+  // The command that builds a missing feature, on the clipboard; where the page may not write there, selected to copy by hand.
+  document.querySelectorAll("button.copy").forEach((button) => button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy);
+      button.textContent = button.dataset.copied;
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(button.previousElementSibling);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+      let copied = false;
+      try {
+        copied = document.execCommand("copy");
+      } catch {}
+      button.textContent = copied ? button.dataset.copied : button.dataset.selected;
+    }
+  }));
   const dialog = document.getElementById("whole");
   if (!dialog) return;
   const body = dialog.querySelector(".whole__body");
@@ -839,9 +873,16 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
   const accepted = r.accepted?.length
     ? `<section id="accepted"><div class="wrap"><h2>${w.accepted}</h2><p class="muted">${w.acceptedNote}</p><ul class="plain">${r.accepted.map((f) => `<li><strong>${escape(f.where)}</strong> ${escape(f.what)}</li>`).join("")}</ul></div></section>`
     : "";
+  // Front alone: the command that builds it, ready to copy. The back too: what the back would have to provide, and no command.
+  const needsHtml = (f: NonNullable<ResultPage["features"]>["entries"][number]) =>
+    f.needs === "front"
+      ? `<p class="small">${w.frontOnly}</p><div class="cmd-row"><code class="cmd">${escape(buildCommand(f))}</code><button type="button" class="copy" data-copied="${w.copied}" data-selected="${w.selected}" data-copy="${escape(buildCommand(f))}">${w.copy}</button></div>`
+      : f.needs === "back" && f.back
+        ? `<p class="small">${w.needsBack} ${escape(f.back)}</p>`
+        : "";
   const features = named
     ? `<section id="features"><div class="wrap"><h2>${w.features}</h2><p class="muted">${w.featuresNote}</p>${named.entries
-        .map((f) => `<article class="feature" data-journey="${escape(f.slug)}"><div><h3>${escape(f.name)}</h3><p class="small">${w.blocksAtStep(escape(String(f.step)))} ${escape(f.why)}</p><p class="missing">${escape(f.missing)}</p></div><figure class="step">${img(f.capture, `${f.name}, ${w.blocksAt} ${f.step}`, w)}</figure></article>`)
+        .map((f) => `<article class="feature" data-journey="${escape(f.slug)}"><div><h3>${escape(f.name)}</h3><p class="small">${w.blocksAtStep(escape(String(f.step)))} ${escape(f.why)}</p><p class="missing">${escape(f.missing)}</p>${needsHtml(f)}</div><figure class="step">${img(f.capture, `${f.name}, ${w.blocksAt} ${f.step}`, w)}</figure></article>`)
         .join("")}${named.more ? `<p class="muted">${w.more(named.more)}</p>` : ""}</div></section>`
     : "";
   // Every round of directions, the last first: the front as it is, then each direction with what the comparison
@@ -1027,6 +1068,10 @@ ${fontFaces()}
   .feature { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; align-items: start; border: 2px dashed var(--ink); border-radius: 16px; padding: 16px; margin-top: 12px; }
   .feature h3 { font-size: 17px; }
   .missing { font-size: 18px; font-weight: 800; line-height: 1.25; margin-top: 6px; }
+  .cmd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+  .cmd { min-width: 0; overflow-wrap: anywhere; user-select: all; background: var(--white); border: 1.5px solid var(--ink); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .copy { border: 2px solid var(--ink); background: var(--sun); border-radius: 10px; padding: 5px 11px; font-weight: 800; font-size: 13px; box-shadow: 2px 2px 0 var(--ink); }
+  .copy:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
   figure.step img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border: 1.5px solid var(--ink); border-radius: 8px; }
 
   .left { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }

@@ -33,6 +33,59 @@ test("the verdicts the page asks about are exactly the ones a server can be told
   assert.deepEqual(ids(resultHtml(PAGE)), pageVerdicts(PAGE).map((v) => v.id));
 });
 
+test("each missing feature says whether the front alone builds it, with the command that builds it ready to copy, or what the back would have to provide", async () => {
+  const feature = { step: 2, capture: null, why: "Ajouter adds nothing." };
+  const page: ResultPage = {
+    ...PAGE,
+    features: {
+      entries: [
+        { ...feature, slug: "add", name: "Add a product", missing: 'A way to put a product\n in the "order".', needs: "front" },
+        { ...feature, slug: "pay", name: "Pay", missing: "A way to pay.", needs: "back", back: "A payment route, and the provider behind it." },
+        { ...feature, slug: "old", name: "Named before", missing: "Something." },
+      ],
+      more: 0,
+    },
+  };
+  // Pasted into Claude Code as it is: on one line, its quotes the sentence's own, no escape that would end in the request.
+  const command = `/aeom build "A way to put a product in the 'order'." --journey add`;
+  const html = resultHtml(page);
+  const shown = command.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  assert.match(html, new RegExp(`<code class="cmd">${shown.replace(/[.\\]/g, "\\$&")}</code><button type="button" class="copy" data-copied="Copied" data-selected="Selected: press Ctrl\\+C or ⌘C" data-copy="${shown.replace(/[.\\]/g, "\\$&")}">Copy</button>`));
+  assert.match(html, /Front only: AEOM builds it when you ask\./);
+  assert.match(html, /Needs the back too: A payment route, and the provider behind it\./);
+  assert.equal(html.match(/<code class="cmd">/g)?.length, 1, "no command for a feature that needs the back, nor for one named before AEOM said which");
+  const fr = resultHtml(page, { lang: "fr" });
+  assert.match(fr, /Seulement du front : AEOM la construit quand vous le demandez\./);
+  assert.match(fr, /Demande aussi du back : A payment route, and the provider behind it\./);
+  assert.match(fr, />Copier<\/button>/);
+
+  // In a browser, served as aeom report --serve serves it, the button puts the command on the clipboard as it is shown;
+  // where the page may not write there, the command is selected, to copy by hand.
+  const server = createServer((_, res) => res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(html));
+  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const tab = await context.newPage();
+    const errors: Error[] = [];
+    tab.on("pageerror", (error) => errors.push(error));
+    await tab.goto(`http://127.0.0.1:${(server.address() as { port: number }).port}/`);
+    await tab.getByRole("button", { name: "Copy" }).click();
+    await tab.getByRole("button", { name: "Copied" }).waitFor({ timeout: 2000 });
+    assert.equal(await tab.evaluate(() => navigator.clipboard.readText()), command);
+    const blank = await context.newPage();
+    await blank.setContent(html);
+    await blank.getByRole("button", { name: "Copy" }).click();
+    assert.equal(await blank.evaluate(() => getSelection()?.toString()), command, "no clipboard: the command selected");
+    assert.match(await blank.locator("button.copy").innerText(), /^(Copied|Selected: press Ctrl\+C or ⌘C)$/, "the button says what happened");
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+    await new Promise((done) => server.close(done));
+  }
+});
+
 test("« nothing to redo » is itself a verdict on the screens, and the page asks about it alone", () => {
   assert.deepEqual(pageVerdicts(NOTHING), [{ id: "nothing-to-redo", category: "screens", verdict: "Nothing to redo" }]);
   assert.deepEqual(ids(resultHtml(NOTHING)), ["nothing-to-redo"]);
@@ -178,6 +231,39 @@ test("a run that built what was asked in a sentence shows the request, what AEOM
     await rm(join(dir, "review.md"));
     assert.equal((await readRun(dir, "run-3")).asked?.review, null, "not reviewed yet");
     assert.match(resultHtml(await readRun(dir, "run-3")), /Not reviewed against the standard yet\./);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a run that built a missing feature shows the journey that blocked now reaching its end, and none of the journeys that only open a screen of the plan", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-feature-"));
+  try {
+    const run = (broken: { step: number; reason: string } | null, steps: number) => ({ width: 1280, steps: [], calls: [], screens: ["/voies.html"], counts: { steps, screens: 1, back: 0 }, broken, sheet: "" });
+    const replay = (find: ReturnType<typeof run>, open: ReturnType<typeof run>) => ({ url: "http://x", replayedAt: "", widths: [1280], warnings: [], journeys: [{ slug: "find", name: "Trouver une voie", runs: [find] }, { slug: "aeom-open-voies-html", name: "Open /voies.html", runs: [open] }] });
+    await mkdir(join(dir, "journeys-before"), { recursive: true });
+    await mkdir(join(dir, "journeys-end"), { recursive: true });
+    await mkdir(join(dir, "end", "captures"), { recursive: true });
+    await writeFile(join(dir, "journeys-before", "report.json"), JSON.stringify(replay(run({ step: 2, reason: "no button Filtrer" }, 2), run(null, 1))));
+    await writeFile(join(dir, "journeys-end", "report.json"), JSON.stringify(replay(run(null, 3), run(null, 1))));
+    await writeFile(join(dir, "end", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [{ url: "http://x/voies.html", path: "/voies.html", files: [{ width: 1280, file: "voies-html@1280.png" }] }], errors: [] }));
+    await writeFile(join(dir, "request"), "Un filtre par niveau sur la liste des voies\n");
+    const page = await readRun(dir, "run-4");
+    assert.deepEqual(page.journeys.map((j) => [j.slug, j.status]), [["find", "kept"]], "the journey the build unblocked, improved; the journeys AEOM wrote to open a screen are its own");
+    assert.match(resultHtml(page, { lang: "fr" }), /<h3>Trouver une voie<\/h3><span class="status kept">amélioré<\/span>/);
+
+    // A journey the judges blocked went to its end before as after: the journey asked for, replayed and judged on its own,
+    // is improved once nothing blocks it there.
+    await writeFile(join(dir, "journeys-before", "report.json"), JSON.stringify(replay(run(null, 3), run(null, 1))));
+    assert.deepEqual((await readRun(dir, "run-4")).journeys.map((j) => j.status), ["unchanged"]);
+    await writeFile(join(dir, "journey"), "find\n");
+    await mkdir(join(dir, "journey-asked"), { recursive: true });
+    await writeFile(join(dir, "journey-asked", "report.json"), JSON.stringify({ ...replay(run(null, 3), run(null, 1)), journeys: [replay(run(null, 3), run(null, 1)).journeys[0]] }));
+    const judged = (pass: boolean) => ({ judgedAt: "", voters: ["1", "2", "3"], principles: [{ id: "result-shown", text: "" }], failures: pass ? 0 : 1, pages: [{ page: "find", verdicts: [{ principle: "result-shown", pass, votes: "3/3", reasons: ["The filtered list is shown."], dissent: [], steps: [3] }] }] });
+    await writeFile(join(dir, "journey-asked", "judge-journeys.json"), JSON.stringify(judged(false)));
+    assert.deepEqual((await readRun(dir, "run-4")).journeys.map((j) => j.status), ["unchanged"], "still blocked by its judges");
+    await writeFile(join(dir, "journey-asked", "judge-journeys.json"), JSON.stringify(judged(true)));
+    assert.deepEqual((await readRun(dir, "run-4")).journeys.map((j) => j.status), ["kept"], "nothing blocks it any more");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
