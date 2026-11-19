@@ -490,7 +490,7 @@ test("a run that only judged is read as a judgement, from its option or, without
   }
 });
 
-test("the judgement says the product, what was measured, the verdict and the recommendation, in the product sheet's language", async () => {
+test("the judgement says the product, what was measured, the verdict and what comes next, on two lines above a triage list, in the product sheet's language", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
     const page = await readRun(await judgedRun(root), "run-1");
@@ -500,12 +500,17 @@ test("the judgement says the product, what was measured, the verdict and the rec
     assert.deepEqual(j.measured, { screens: 3, widths: [390, 1280], checks: 4, principles: 4, journeys: 2, journeyPrinciples: 2, judges: 6 });
     const html = resultHtml(page);
     assert.match(html, /<html lang="fr">/, "no --lang: the sheet's language");
-    assert.match(html, /<h1[^>]*>Radar<\/h1>/);
-    assert.match(html, /Une interface interne de veille, pour suivre les appels d’offres/);
-    for (const said of ["3 écrans", "390 et 1280 px", "2 parcours", "6 juges"]) assert.match(html, new RegExp(said), said);
-    assert.match(html, /class="verdict"[^>]*>[^<]*\d+ points? à reprendre/, "the verdict in one sentence");
-    assert.match(html, /gardant son style/, "the recommendation, said for a person: keep the front's own direction");
-    assert.match(resultHtml(page, { lang: "en" }), /<html lang="en">[\s\S]*Strengths[\s\S]*Weak points/, "--lang still decides");
+    const top = html.split('<header class="top"')[1]!.split("</header>")[0]!;
+    assert.match(top, /class="prod"[^>]*>Radar</);
+    assert.match(top, /5 à reprendre/, "a pill with what is to rework");
+    assert.match(top, /data-copy="\/aeom redo --garder-le-style"[^>]*><span class="lab">Suite conseillée/, "the next command, ready to copy");
+    const band = html.split('<div class="verdict"')[1]!.split("</div>\n")[0]!;
+    assert.equal(band.match(/<i class="cell"/g)?.length, 3, "one cell per screen");
+    assert.match(band, /Les 3 écrans tiennent le style\./);
+    assert.match(band, /gardant son style/, "what AEOM advises, for a person");
+    for (const said of ["3 écrans", "2 parcours", "6 juges", "390 · 1280 px"]) assert.match(band, new RegExp(said), said);
+    assert.doesNotMatch(html.split('<main class="app"')[0]!, /<h1|<p class="lede"/, "nothing else above the content: no big title, no paragraph");
+    assert.match(resultHtml(page, { lang: "en" }), /<html lang="en">[\s\S]*To rework[\s\S]*Strengths[\s\S]*Outside the demo/, "--lang still decides");
     assert.doesNotMatch(html, />(Avant|Après|Before|After)<|No capture|Pas de capture|inchangé|unchanged/, "a judgement compares nothing");
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -515,7 +520,8 @@ test("the judgement says the product, what was measured, the verdict and the rec
 test("the strengths come from what the judges passed, one per principle, a reason pasted over several principles left out, each with its capture", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
-    const j = (await readRun(await judgedRun(root), "run-1")).judgement!;
+    const page = await readRun(await judgedRun(root), "run-1");
+    const j = page.judgement!;
     assert.deepEqual(j.strengths.map((s) => s.principle).sort(), ["hierarchy", "one-direction", "result-shown"]);
     const direction = j.strengths.find((s) => s.principle === "one-direction")!;
     assert.deepEqual([direction.count, direction.of], [3, 3]);
@@ -524,56 +530,64 @@ test("the strengths come from what the judges passed, one per principle, a reaso
     assert.equal(j.strengths.find((s) => s.principle === "hierarchy")!.reason, "The « Commandes » title leads, then the table of 12 orders.");
     assert.equal(j.strengths.find((s) => s.principle === "result-shown")!.shot, "before/captures/journeys/see-orders@1280-02.png", "a journey's strength shows its step");
     assert.ok(j.strengths.every((s) => s.reason !== CATCH_ALL), "a reason given to several principles says nothing of any");
+    const view = resultHtml(page).split('id="view-forts"')[1]!.split("</section>")[0]!;
+    assert.equal(view.match(/class="card"/g)?.length, 3, "a card for each, with its capture");
+    assert.match(view, /Une seule direction[\s\S]*sur les 3 écrans/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("the weak points: a journey that breaks first, then the principles with their votes, then the checks; what repeats across screens is one point that names them", async () => {
+test("the weak points, worst first: journeys, then principles with their votes, then checks; what repeats across screens is one point with a place for each", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
     const page = await readRun(await judgedRun(root), "run-1");
     const j = page.judgement!;
-    assert.deepEqual(j.weak.map((w) => w.id), ["weak:breaks:see-orders", "weak:journey-principle:same-words", "weak:principle:density", "weak:principle:states", "weak:check:focus", "weak:check:contrast"]);
+    assert.deepEqual(j.weak.map((w) => w.id), ["weak:breaks:see-orders", "weak:journey-principle:same-words", "weak:principle:density", "weak:check:focus", "weak:check:contrast"]);
     const focus = j.weak.find((w) => w.id === "weak:check:focus")!;
     assert.deepEqual(focus.places.map((p) => p.where), ["/", "/equipe", "/commandes"], "one point, every screen it is on");
     assert.equal(focus.places[0]!.reason, '"RADAR": nothing shows it has the keyboard focus', "one element at two widths is one element");
     const density = j.weak.find((w) => w.id === "weak:principle:density")!;
     assert.deepEqual(density.places.map((p) => [p.where, p.votes]), [["/", "3/3"], ["/commandes", "2/3"]]);
     assert.equal(density.places[0]!.shot, "before/captures/index@1280.png");
+    assert.deepEqual(j.weak[1]!.places.map((p) => [p.where, p.journey, p.step]), [["Voir mes commandes", "see-orders", 2], ["Trouver un membre", "find-member", 2]], "a journey's place says its step");
     assert.equal(j.weak[0]!.places[0]!.shot, "before/captures/journeys/see-orders@1280-02.png", "a journey that breaks shows the step where it does");
     const html = resultHtml(page);
-    assert.equal(html.match(/data-weak="weak:check:focus"/g)?.length, 1, "focus on three screens is one point");
-    const item = html.split('data-weak="weak:check:focus"')[1]!.split("</article>")[0]!;
-    for (const route of ["/", "/equipe", "/commandes"]) assert.match(item, new RegExp(`>${route}<`), route);
-    assert.match(html.split('data-weak="weak:principle:density"')[1]!.split("</article>")[0]!, /3\/3[\s\S]*2\/3/, "each screen with its count of votes");
-    assert.ok(html.indexOf('data-weak="weak:breaks:see-orders"') < html.indexOf('data-weak="weak:principle:density"') && html.indexOf('data-weak="weak:principle:density"') < html.indexOf('data-weak="weak:check:focus"'), "worst first");
+    const rows = [...html.matchAll(/<button type="button" class="row[^"]*" data-n="(\d+)" data-weak="([^"]+)"/g)].map((m) => [Number(m[1]), m[2]]);
+    assert.deepEqual(rows, j.weak.map((w, i) => [i + 1, w.id]), "a row for each, numbered worst first");
+    const row = (id: string) => html.split(`data-weak="${id}"`)[1]!.split("</button>")[0]!;
+    assert.match(row("weak:journey-principle:same-words"), /Parcours<\/span>\s*· 2 parcours[\s\S]*Rapide[\s\S]*3\/3 juges/);
+    assert.match(row("weak:check:focus"), /Contrôle<\/span>\s*· 3 écrans[\s\S]*mesuré/);
+    const detail = html.split('<article class="point" data-weak="weak:check:focus"')[1]!.split("</article>")[0]!;
+    for (const route of ["/", "/equipe", "/commandes"]) assert.match(detail, new RegExp(`class="place[^"]*"[^>]*><img[^>]*>${route.replace(/\//g, "\\/")}<`), route);
+    assert.match(detail, /Ce que vit l’utilisateur[\s\S]*&quot;RADAR&quot;: nothing shows/);
+    assert.match(html.split('<article class="point" data-weak="weak:journey-principle:same-words"')[1]!, /Voir mes commandes · étape 2/, "the address bar of a journey says its step");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("what comes from the test environment is set apart, to check outside the demo: a server error in the console, a page blank because a service is not configured", async () => {
+test("what comes from the demo goes wholly to Hors démo: a server error in the console, a journey result the demo hides, a screen the demo leaves blank", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
     const page = await readRun(await judgedRun(root), "run-1");
     const j = page.judgement!;
-    assert.deepEqual(j.env.map((w) => w.id).sort(), ["env:check:console", "env:journey-principle:result-shown", "env:principle:hierarchy"]);
-    assert.ok(!j.weak.some((w) => w.key === "console" || w.key === "result-shown" || w.key === "hierarchy"), "never mixed with the design's weak points");
-    assert.ok(j.weak.some((w) => w.key === "states" && w.places.some((p) => p.where === "/equipe")), "an error state with no way on is the design's, demo or not");
+    assert.deepEqual(j.env.map((w) => w.id).sort(), ["env:check:console", "env:journey-principle:result-shown", "env:page:/equipe"]);
+    assert.deepEqual(j.env.find((w) => w.kind === "page")!.places.map((p) => p.where), ["/equipe"], "the blank screen is one point, its failures together");
+    assert.ok(!j.weak.some((w) => w.places.some((p) => p.where === "/equipe") && w.kind === "principle"), "none of its principles left among the weak points");
     // The page's own text said the service is missing; without it, a dissent or a word such as « unavailable » says nothing.
     const without = (await readRun(await judgedRun(await mkdtemp(join(tmpdir(), "aeom-judgement-")), { pageText: false }), "run-1")).judgement!;
-    assert.ok(without.weak.some((w) => w.key === "hierarchy"), "the losing side's words do not set a failure apart");
-    const box = resultHtml(page).split('id="env"')[1]!.split("</section>")[0]!;
-    assert.match(box, /À vérifier hors démo/);
-    assert.match(box, /503/);
-    assert.match(box, />\/equipe</);
+    assert.deepEqual(without.weak.filter((w) => w.places.some((p) => p.where === "/equipe") && w.kind === "principle").map((w) => w.key).sort(), ["hierarchy", "states"], "the losing side's words do not set a screen apart");
+    const view = resultHtml(page).split('id="view-demo"')[1]!.split("</section>")[0]!;
+    assert.match(view, /Sans doute l’environnement de démo, pas le design/);
+    assert.match(view, /Une page vide en démo[\s\S]*\/equipe/);
+    assert.match(view, /503/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("each weak point has its lead, the judges' most concrete fix or the page's own, ranked by effect then effort, never a new feature", async () => {
+test("each lead lives on its point, the judges' most concrete fix or the page's own, with its effort and its effect: no list of leads apart", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
     const page = await readRun(await judgedRun(root), "run-1");
@@ -581,25 +595,36 @@ test("each weak point has its lead, the judges' most concrete fix or the page's 
     assert.equal(j.weak.find((w) => w.key === "density")!.fix, "Move the three « À faire » cards under the calendar and drop the empty third column.", "the judges' fix, the most concrete of the screens'");
     assert.equal(j.weak.find((w) => w.key === "same-words")!.fix, "Name the menu entry « Commandes », as the page is named.");
     assert.equal(j.weak.find((w) => w.key === "contrast")!.fix, null, "no judge for a check: the page says its own");
-    const leads = resultHtml(page).split('id="leads"')[1]!.split("</section>")[0]!;
-    assert.match(leads, /Move the three « À faire » cards/);
-    assert.match(leads, /Foncer les textes trop pâles/, "a check's lead, in the page's language");
-    const rank = { high: 0, medium: 1, low: 2 } as const;
-    const effects = [...leads.matchAll(/data-effect="(high|medium|low)"/g)].map((m) => rank[m[1] as keyof typeof rank]);
-    assert.equal(effects.length, j.weak.length, "one lead per weak point");
-    assert.deepEqual(effects, [...effects].sort((a, b) => a - b), "the most effect first");
-    for (const effort of [...leads.matchAll(/data-effort="([a-z]+)"/g)].map((m) => m[1])) assert.ok(["quick", "medium", "big"].includes(effort!), effort);
+    const html = resultHtml(page);
+    assert.doesNotMatch(html, /id="leads"|Pistes d’amélioration|Pistes d'amélioration/, "no section of leads apart");
+    const detail = (id: string) => html.split(`<article class="point" data-weak="${id}"`)[1]!.split("</article>")[0]!;
+    assert.match(detail("weak:principle:density"), /class="fix"[\s\S]*Move the three « À faire » cards[\s\S]*Moyen · beaucoup d’effet/);
+    assert.match(detail("weak:check:contrast"), /class="fix"[\s\S]*Foncer les textes trop pâles[\s\S]*Rapide · peu d’effet/, "a check's lead, in the page's language");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("the person agrees or disagrees with each weak point, the ones set apart included, and the server accepts exactly those", async () => {
+test("the filters count what they show: the views, the types, the efforts, and each journey", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
+  try {
+    const html = resultHtml(await readRun(await judgedRun(root), "run-1"));
+    const count = (filter: string) => Number(html.split(`data-f="${filter}"`)[1]!.match(/class="c">(\d+)</)![1]);
+    assert.deepEqual(["all", "forts", "demo"].map(count), [5, 3, 3], "à reprendre, points forts, hors démo");
+    assert.deepEqual(["type:journey", "type:principle", "type:check"].map(count), [2, 1, 2], "parcours, principes, contrôles");
+    assert.deepEqual(["effort:quick", "effort:medium", "effort:big"].map(count), [3, 2, 0], "rapide, moyen, gros chantier");
+    assert.deepEqual(["journey:see-orders", "journey:find-member"].map(count), [2, 1], "each journey, by the points on its steps");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("the person agrees or disagrees with each point to rework, and the server accepts exactly those", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
     const page = await readRun(await judgedRun(root), "run-1");
     const verdicts = pageVerdicts(page);
-    assert.deepEqual(verdicts.map((v) => v.id), [...page.judgement!.weak, ...page.judgement!.env].map((w) => w.id));
+    assert.deepEqual(verdicts.map((v) => v.id), page.judgement!.weak.map((w) => w.id));
     assert.deepEqual(verdicts.find((v) => v.id === "weak:check:focus"), { id: "weak:check:focus", category: "screens", verdict: "focus fails on /, /equipe, /commandes" });
     assert.deepEqual(verdicts.find((v) => v.id === "weak:breaks:see-orders"), { id: "weak:breaks:see-orders", category: "journeys", verdict: "Voir mes commandes breaks at step 2" });
     assert.equal(verdicts.find((v) => v.id === "weak:principle:density")!.category, "principles");
@@ -609,35 +634,51 @@ test("the person agrees or disagrees with each weak point, the ones set apart in
   }
 });
 
-test("the page of a full run is not a judgement: same page as before, no strength, no lead", async () => {
+test("the page of a full run is not a judgement: same page as before, no triage list", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   try {
     const page = await readRun(await judgedRun(root, { state: false, after: true, base: true }), "run-1");
     assert.equal(page.judged, undefined);
     assert.equal(page.judgement, undefined);
     const html = resultHtml(page);
-    assert.doesNotMatch(html, /id="(strengths|weak|leads|env)"/);
+    assert.doesNotMatch(html, /id="view-(forts|demo)"|class="row( on)?" data-n/);
     assert.match(html, /What the run gave/);
-    assert.doesNotMatch(resultHtml(PAGE), /id="(strengths|weak|leads|env)"|prefers-color-scheme/, "a full run's page keeps its one light theme");
+    assert.doesNotMatch(resultHtml(PAGE), /id="view-(forts|demo)"|prefers-color-scheme/, "a full run's page keeps its one light theme");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("in a browser, a judgement's captures are thumbnails that open large, and the page has a light and a dark theme", async () => {
+test("in a browser, the triage list shows the point chosen, J and K walk it, a place changes the capture, the filters and views work, and the page has a light and a dark theme", async () => {
   const root = await mkdtemp(join(tmpdir(), "aeom-judgement-"));
   const browser = await chromium.launch();
   try {
     const dir = await judgedRun(root);
     await writeFile(join(dir, "report.html"), resultHtml(await readRun(dir, "run-1")));
-    const page = await browser.newPage({ colorScheme: "dark" });
+    const page = await browser.newPage({ colorScheme: "dark", viewport: { width: 1440, height: 900 } });
     await page.goto(pathToFileURL(join(dir, "report.html")).href);
+    const shown = () => page.locator("article.point:visible").getAttribute("data-weak");
+    assert.equal(await shown(), "weak:breaks:see-orders", "the worst point first");
+    await page.locator('.row[data-n="4"]').click();
+    assert.equal(await shown(), "weak:check:focus");
+    await page.locator('article.point[data-weak="weak:check:focus"] .place').nth(1).click();
+    assert.match((await page.locator('article.point[data-weak="weak:check:focus"] .vimg img').getAttribute("src")) ?? "", /equipe@1280\.png$/, "a place shows its capture");
+    assert.match((await page.locator('article.point[data-weak="weak:check:focus"] .url').textContent()) ?? "", /\/equipe$/, "and its address");
+    await page.keyboard.press("j");
+    assert.equal(await shown(), "weak:check:contrast", "J goes to the next point");
+    await page.keyboard.press("k");
+    await page.keyboard.press("k");
+    assert.equal(await shown(), "weak:principle:density", "K to the one before");
+    await page.locator('[data-f="type:check"]').click();
+    assert.deepEqual(await page.locator(".row:visible").evaluateAll((rows) => rows.map((r) => r.getAttribute("data-weak"))), ["weak:check:focus", "weak:check:contrast"], "a filter keeps its points");
+    await page.locator('[data-f="forts"]').click();
+    assert.ok(await page.locator("#view-forts").isVisible(), "the strengths' view");
+    await page.locator('[data-f="all"]').click();
+    await page.locator("article.point:visible .vimg img").click();
+    assert.equal(await page.locator("dialog#large[open]").count(), 1, "a capture opens large");
+    await page.keyboard.press("Escape");
     const ground = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     const dark = await ground();
-    await page.locator("#strengths .shot").first().click();
-    assert.equal(await page.locator("dialog#large[open]").count(), 1, "the capture opens large");
-    assert.match((await page.locator("dialog#large img").getAttribute("src")) ?? "", /before\/captures\/equipe@1280\.png$/);
-    await page.keyboard.press("Escape");
     await page.locator("[data-theme-toggle]").click();
     assert.notEqual(await ground(), dark, "the toggle switches to the light theme");
   } finally {

@@ -7,7 +7,6 @@ import type { CheckReport } from "../checks/run.js";
 import type { JourneyReport } from "../journey/replay.js";
 import { concreteness } from "../judge/lazy.js";
 import type { JudgeReport, PrincipleVerdict } from "../judge/tally.js";
-import { fontFaces } from "./fonts.js";
 import type { FeedbackCategory } from "./taste.js";
 import { IDENTITY_PRINCIPLES, STYLE_CHECKS, STYLE_PRINCIPLES } from "./verdict.js";
 
@@ -28,14 +27,20 @@ export interface WeakPlace {
   votes?: string;
   reason: string;
   shot: string | null;
+  /** On a journey: its slug and the step it shows at. */
+  journey?: string;
+  step?: number;
 }
 
 /** One thing that fails, merged across every screen or journey it fails on. */
 export interface WeakPoint {
   /** `weak:<kind>:<key>`, or `env:<kind>:<key>` for one set apart as the test environment's. */
   id: string;
-  kind: "does-not-load" | "breaks" | "journey-principle" | "principle" | "check";
-  /** The principle or the check, the journey's slug when it breaks, `does-not-load` for screens that do not load. */
+  kind: "does-not-load" | "breaks" | "journey-principle" | "principle" | "check" | "page";
+  /**
+   * The principle or the check, the journey's slug when it breaks, `does-not-load` for screens that do not load, the
+   * route of a screen the demo left blank (`page`, set apart whole).
+   */
   key: string;
   /** A journey that breaks: its name and the step where it does. */
   journey?: { name: string; step: number };
@@ -155,9 +160,7 @@ export function sheetLang(text: string | null): JudgementLang | null {
  * the screen's own words; never a bare « unavailable », which a screen may say on purpose.
  */
 const ENV = /n['’]est pas configur|not configured|non configur|unconfigured|config(uration)? error|erreur de config|(indisponible|unavailable) (en|in)( the)? d[ée]mo|mode d[ée]mo|demo mode|service (unavailable|indisponible)|status (code )?(of )?5\d\d(?!\d)|(?<!\p{L})(error|erreur|http) 5\d\d(?!\d)|variable d['’]environnement|environment variable|missing api key|cl[ée] (d['’])?api manquante/iu;
-/** What a screen left blank by a missing service fails for that alone: nothing to look at, nothing to place. */
-const BLANK = ["density", "hierarchy"];
-/** What the design owes whatever the environment: an error state that says what to do, a way on or back. */
+/** What a journey owes whatever the environment: an error state that says what to do, a way on or back. */
 const NEVER_ENV = ["states", "no-dead-end"];
 const isEnv = (...texts: (string | undefined)[]) => texts.some((t) => !!t && ENV.test(t));
 
@@ -266,20 +269,25 @@ export function judgementOf(input: JudgementInput): Judgement {
     const critique = journeyJudge?.pages.find((p) => p.page === j.slug)?.verdicts.filter((v) => !v.pass && (v.steps ?? []).includes(step)) ?? [];
     const env = isEnv(reason, dialog) || critique.some((v) => isEnv(...v.reasons));
     // Its lead is the page's own: a fix the judges gave on that step answers its principle, not the break.
-    add("breaks", j.slug, env, { where: j.name, reason, shot: stepShot(j.slug, step), weight: 1 }, undefined, { name: j.name, step });
+    add("breaks", j.slug, env, { where: j.name, reason, shot: stepShot(j.slug, step), journey: j.slug, step, weight: 1 }, undefined, { name: j.name, step });
   }
-  // Principles: a screen that says a service is missing, in its own words or in what failed it, is blank for that.
+  // Principles. A screen that says a service is missing, in its own words or in what failed it, is the demo's: set
+  // apart whole, as one point, never half among the design's weak points.
   const failing = (v: PrincipleVerdict) => !v.pass && !v.accepted && !styleOnly.has(v.principle);
   const pageEnv = new Set(judge.pages.filter((p) => isEnv(texts[p.page]) || p.verdicts.some((v) => failing(v) && isEnv(...v.reasons))).map((p) => p.page));
   for (const p of judge.pages) {
-    for (const v of p.verdicts.filter(failing)) {
-      const env = !NEVER_ENV.includes(v.principle) && (isEnv(...v.reasons) || (pageEnv.has(p.page) && BLANK.includes(v.principle)));
-      add("principle", v.principle, env, { where: p.page, votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: shotOf(p.page), weight: agreement(v.votes) }, v.fix);
+    const fails = p.verdicts.filter(failing);
+    if (pageEnv.has(p.page) && fails.length) {
+      const said = fails.find((v) => isEnv(...v.reasons)) ?? fails[0]!;
+      add("page", p.page, true, { where: p.page, reason: said.reasons[0] ?? "", shot: shotOf(p.page), weight: 1 });
+      continue;
     }
+    for (const v of fails) add("principle", v.principle, false, { where: p.page, votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: shotOf(p.page), weight: agreement(v.votes) }, v.fix);
   }
   for (const p of journeyJudge?.pages ?? []) {
     for (const v of p.verdicts.filter(failing)) {
-      add("journey-principle", v.principle, !NEVER_ENV.includes(v.principle) && isEnv(...v.reasons), { where: nameOf(p.page), votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: stepShot(p.page, v.steps[0]), weight: agreement(v.votes) }, v.fix);
+      const step = (v.steps ?? [])[0];
+      add("journey-principle", v.principle, !NEVER_ENV.includes(v.principle) && isEnv(...v.reasons), { where: nameOf(p.page), votes: shortVotes(v.votes), reason: v.reasons[0] ?? "", shot: stepShot(p.page, step), journey: p.page, ...(step ? { step } : {}), weight: agreement(v.votes) }, v.fix);
     }
   }
   // Checks: one point per check, each screen once with how many elements fail it there, each element once whatever
@@ -300,8 +308,10 @@ export function judgementOf(input: JudgementInput): Judgement {
   const screens = manifest?.pages.length ?? check.pages.length;
   const point = (d: Draft): WeakPoint & { score: number; rank: number } => {
     const mean = d.places.reduce((n, p) => n + p.weight, 0) / d.places.length;
-    const rank = d.kind === "does-not-load" || d.kind === "breaks" ? 0 : d.kind === "check" ? 2 : 1;
-    const effect: Effect = rank === 0 ? "high" : rank === 1 ? (d.places.length >= 2 || d.places.some((p) => p.weight === 1 && Number(p.votes?.split("/")[1]) >= 3) ? "high" : "medium") : d.places.length >= 2 && d.places.length * 2 >= screens ? "medium" : "low";
+    // Worst first: what breaks, then what a journey fails, then what a screen fails, then what is measured.
+    const rank = d.kind === "does-not-load" || d.kind === "breaks" ? 0 : d.kind === "journey-principle" ? 1 : d.kind === "check" ? 3 : 2;
+    const judged = rank === 1 || rank === 2;
+    const effect: Effect = rank === 0 ? "high" : judged ? (d.places.length >= 2 || d.places.some((p) => p.weight === 1 && Number(p.votes?.split("/")[1]) >= 3) ? "high" : "medium") : d.places.length >= 2 && d.places.length * 2 >= screens ? "medium" : "low";
     return {
       id: `${d.env ? "env" : "weak"}:${d.kind}:${d.key}`,
       kind: d.kind,
@@ -312,11 +322,11 @@ export function judgementOf(input: JudgementInput): Judgement {
       effort: EFFORT[d.key] ?? EFFORT[d.kind] ?? "medium",
       effect,
       // Checks weigh by their screens, then by how many elements fail them; principles by places and agreement.
-      score: rank === 2 ? d.places.length + d.places.reduce((n, p) => n + p.weight, 0) / 1000 : d.places.length * mean,
+      score: rank === 3 ? d.places.length + d.places.reduce((n, p) => n + p.weight, 0) / 1000 : d.places.length * mean,
       rank,
     };
   };
-  const ordered = [...drafts.values()].map(point).sort((a, b) => a.rank - b.rank || b.score - a.score || (a.kind === "journey-principle" ? -1 : 0) - (b.kind === "journey-principle" ? -1 : 0) || a.key.localeCompare(b.key));
+  const ordered = [...drafts.values()].map(point).sort((a, b) => a.rank - b.rank || b.score - a.score || a.key.localeCompare(b.key));
   const clean = ({ score: _score, rank: _rank, ...w }: WeakPoint & { score: number; rank: number }): WeakPoint => w;
 
   const identityFails = IDENTITY_PRINCIPLES.map((principle) => ({ principle, where: judge.pages.filter((p) => p.verdicts.some((v) => v.principle === principle && failing(v))).map((p) => p.page) })).filter((f) => f.where.length);
@@ -406,120 +416,110 @@ export async function readJudgement(runDir: string): Promise<Judgement | null> {
   });
 }
 
-/** The verdicts of a judgement the person can agree or disagree with: every weak point, those set apart included. */
+/** The verdicts of a judgement the person can agree or disagree with: every point to rework. */
 export function judgementVerdicts(j: Judgement): { id: string; category: FeedbackCategory; verdict: string }[] {
-  return [...j.weak, ...j.env].map((w) => ({
+  return j.weak.map((w) => ({
     id: w.id,
     category: w.kind === "breaks" ? "journeys" : w.kind === "check" || w.kind === "does-not-load" ? "screens" : "principles",
-    verdict: `${w.kind === "breaks" ? `${w.journey!.name} breaks at step ${w.journey!.step}` : w.kind === "does-not-load" ? `${w.places.map((p) => p.where).join(", ")} does not load` : `${w.key} fails on ${w.places.map((p) => p.where).join(", ")}`}${w.id.startsWith("env:") ? " (to check outside the demo)" : ""}`,
+    verdict: w.kind === "breaks" ? `${w.journey!.name} breaks at step ${w.journey!.step}` : w.kind === "does-not-load" ? `${w.places.map((p) => p.where).join(", ")} does not load` : `${w.key} fails on ${w.places.map((p) => p.where).join(", ")}`,
   }));
 }
 
-// ——— The page ———
+// ——— The page: a triage list ———
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 /** « /a, /b et /c »: the places of a list, the last joined by the language's own word. */
 const and = (items: string[], word: string) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} ${word} ${items.at(-1)}` : (items[0] ?? ""));
 
+/** What a weak point is, as the list sorts and colours it: a journey, a principle of a screen, or what a check measured. */
+type Type = "journey" | "principle" | "check";
+const typeOf = (wp: WeakPoint): Type => (wp.kind === "breaks" || wp.kind === "journey-principle" ? "journey" : wp.kind === "principle" || wp.kind === "page" ? "principle" : "check");
+/** How grave, in three bars: what breaks or what a journey fails, then a screen, then what is measured. */
+const severity = (wp: WeakPoint) => (wp.kind === "does-not-load" || typeOf(wp) === "journey" ? 3 : typeOf(wp) === "principle" ? 2 : 1);
+
 const WORDS = {
   fr: {
-    kicker: "Jugement du front", noName: "Le front jugé",
-    measured: (m: Judgement["measured"]) => [`${plural(m.screens, "écran", "écrans")} à ${m.widths.join(" et ")} px`, `${plural(m.checks, "contrôle", "contrôles")} et ${plural(m.principles, "principe", "principes")} par écran`, ...(m.journeys ? [`${m.journeys} parcours sur ${plural(m.journeyPrinciples, "principe", "principes")}`] : []), plural(m.judges, "juge", "juges")],
-    verdict: (n: number, breaks: number, env: number) => (n === 0 && env === 0 ? "Rien à reprendre : tout ce qui a été mesuré passe." : `${n === 0 ? "Aucun point de design à reprendre" : plural(n, "point à reprendre", "points à reprendre")}${breaks ? `, dont ${breaks} parcours qui casse${breaks > 1 ? "nt" : ""}` : ""}${env ? ` ; ${plural(env, "autre à vérifier", "autres à vérifier")} hors démo` : ""}.`),
-    recommend: {
-      direction: (d: string) => `La direction gardée avec <code>/aeom directions</code>, ${d}, est prête : <code>/aeom redo</code> la porte dans l'app.`,
-      style: "Le style est gardé : <code>/aeom redo</code> corrige ce qui échoue sans toucher à la charte.",
-      keep: "Le front a une direction à lui : AEOM recommande de l'améliorer en gardant son style, avec <code>/aeom redo</code>.",
-      directions: (where: string[]) => `Le front ne tient pas encore une direction à lui sur tous ses écrans${where.length ? ` : ${and(where, "et")} ${where.length > 1 ? "en sortent" : "en sort"}` : ""}. AEOM recommande de nouvelles directions, avec <code>/aeom directions</code> puis <code>/aeom redo</code>.`,
-      nothing: "Rien à refaire : le front peut rester tel qu'il est.",
-    },
-    strengths: "Points forts", strengthsNote: "Ce que les juges ont vu de bon, regroupé par thème, avec l'écran ou l'étape qui le montre.",
-    noStrength: "Les juges n'ont rien dit de précis de ce qui passe.",
-    on: (n: number, of: number, kind: "screens" | "journeys") => (kind === "screens" ? (n === of ? (of > 1 ? `sur les ${of} écrans` : "sur l'écran") : `sur ${n} écrans sur ${of}`) : n === of ? (of > 1 ? `sur les ${of} parcours` : "sur le parcours") : `sur ${n} parcours sur ${of}`),
-    weak: "Points faibles", weakNote: "Du plus grave au moins grave : les parcours qui cassent, puis les principes, puis les contrôles mesurables. Ce qui se répète d'un écran à l'autre est un seul point.",
-    noWeak: "Rien ne casse et rien n'échoue, hors ce qui est à vérifier hors démo.",
-    env: "À vérifier hors démo", envNote: "Ces points viennent sans doute de l'environnement de test, un service non configuré ou un serveur qui répond en erreur, plutôt que du design. Vérifiez-les sur une version configurée avant de les corriger.",
-    leads: "Pistes d'amélioration", leadsNote: "Une piste par point faible, sans nouvelle fonction ni nouvelle donnée : le texte, les états, l'ordre des étapes, la navigation, le style.",
-    effect: { high: "Le plus d'effet", medium: "Effet moyen", low: "Moins d'effet" } as Record<Effect, string>,
+    judgement: "Jugement", judgedOn: (d: string) => `Jugement du ${d}`, toRework: (n: number) => `${n} à reprendre`, next: "Suite conseillée", copied: "Copiée", theme: "Changer de thème",
+    held: (held: number, total: number, out: string[]) =>
+      total === 0 ? "" : held === total ? `<b>${total === 1 ? "L’écran tient le style." : `Les ${total} écrans tiennent le style.`}</b>` : `<b>${held} écran${held > 1 ? "s" : ""} sur ${total} tiennent le style.</b> ${and(out, "et")} ${out.length > 1 ? "en sortent" : "en sort"} :`,
+    advise: { directions: "AEOM conseille de repartir de nouvelles directions.", keep: "AEOM conseille de le corriger en gardant son style.", style: "AEOM conseille de corriger ce qui échoue sans toucher à la charte.", direction: (d: string) => `AEOM conseille de porter dans l’app la direction gardée, ${d}.`, nothing: "Rien à reprendre." },
+    stats: (m: Judgement["measured"]) => [plural(m.screens, "écran", "écrans"), ...(m.journeys ? [`${m.journeys} parcours`] : []), plural(m.judges, "juge", "juges"), `${m.widths.join(" · ")} px`],
+    meter: "Écrans qui tiennent la direction",
+    view: "Vue", rework: "À reprendre", strengths: "Points forts", demo: "Hors démo", type: "Type", effortTitle: "Effort", journeysTitle: "Parcours",
+    types: { journey: "Parcours", principle: "Principes", check: "Contrôles" } as Record<Type, string>,
+    kinds: { "does-not-load": "Écran", breaks: "Parcours", "journey-principle": "Parcours", principle: "Principe", check: "Contrôle", page: "Écran" } as Record<WeakPoint["kind"], string>,
     effort: { quick: "Rapide", medium: "Moyen", big: "Gros chantier" } as Record<Effort, string>,
-    detail: "Le détail", detailNote: "Écran par écran et parcours par parcours, tout ce que les juges et les contrôles ont dit.",
-    kinds: { "does-not-load": "Écran qui ne charge pas", breaks: "Parcours qui casse", "journey-principle": "Parcours", principle: "Principe", check: "Contrôle" } as Record<WeakPoint["kind"], string>,
-    onScreens: (n: number) => plural(n, "écran", "écrans"), onJourneys: (n: number) => `${n} parcours`,
-    breaksAt: (name: string, step: number) => `« ${name} » s'arrête à l'étape ${step}`,
-    noLoad: "Des écrans ne se chargent pas",
-    votes: "juges", lead: "Piste", seeWeak: "Voir le point",
-    passes: "passe", fails: "échoue", accepted: "accepté", goesThrough: "va au bout", stopsAt: (n: number) => `s'arrête à l'étape ${n}`,
-    failing: (p: number, c: number) => [p ? plural(p, "principe en échec", "principes en échec") : "", c ? plural(c, "contrôle en échec", "contrôles en échec") : ""].filter(Boolean).join(" · ") || "rien en échec",
-    checksTitle: "Contrôles en échec", stepsTitle: "Les étapes", screensTitle: "Les écrans", journeysTitle: "Les parcours", judgesTitle: "Les juges",
+    effect: { high: "beaucoup d’effet", medium: "effet moyen", low: "peu d’effet" } as Record<Effect, string>,
+    worst: "Du plus grave ↓", onScreens: (n: number) => plural(n, "écran", "écrans"), onJourneys: (n: number) => `${n} parcours`,
+    judges: (v: string) => `${v} juges`, agreeing: (v: string) => `${v} juges d’accord`, measured: "mesuré", measuredBy: "mesuré par AEOM", number: (n: number) => `n° ${n}`,
+    step: (name: string, n: number) => `${name} · étape ${n}`, noShot: "Capture absente",
+    lived: "Ce que vit l’utilisateur", lead: "Piste", agree: "D’accord avec ce point ?", keys: "pour passer au suivant",
+    nothingLeft: "Rien à reprendre : tout ce qui a été mesuré passe.",
+    keepTag: "À garder", keepTitle: "Ce qui tient déjà", noStrength: "Les juges n’ont rien dit de précis de ce qui passe.",
+    on: (n: number, of: number, kind: "screens" | "journeys") => (kind === "screens" ? (n === of ? (of > 1 ? `sur les ${of} écrans` : "sur l’écran") : `${n} écrans sur ${of}`) : n === of ? (of > 1 ? `sur les ${of} parcours` : "sur le parcours") : `${n} parcours sur ${of}`),
+    checkTag: "À vérifier", demoTitle: "Sans doute l’environnement de démo, pas le design", demoNote: "Un service non configuré ou un serveur qui répond en erreur. À revoir sur une version branchée avant d’y toucher.", noDemo: "Rien ne semble venir de l’environnement de démo.",
     acceptedTitle: "Accepté par la fiche produit", leftToStyle: (ids: string) => `Laissé au style gardé : ${ids}.`,
-    judgedBy: (m: string, p: string) => `Jugé par ${m}, sur ${p}.`, unnamed: "un modèle que les votants n'ont pas nommé",
-    theme: "Changer de thème", close: "Fermer", enlarge: "Agrandir",
-    feedbackNote: "Pour dire si vous êtes d'accord avec chaque point, ouvrez cette page avec <code>aeom report --serve</code>.",
+    judgedBy: (m: string, p: string) => `Jugé par ${m}, sur ${p}.`, unnamed: "un modèle que les votants n’ont pas nommé",
+    feedbackNote: "Pour dire si vous êtes d’accord avec chaque point, ouvrez cette page avec <code>aeom report --serve</code>.",
+    close: "Fermer", enlarge: "Agrandir",
+    breaksAt: (name: string, step: number) => `« ${name} » s’arrête à l’étape ${step}`, noLoad: "Des écrans ne se chargent pas", blankPage: "Une page vide en démo",
     titles: {
-      "one-direction": "L'écran sort de la direction du reste", "consistent-chrome": "L'en-tête ou les boutons changent d'un écran à l'autre", "not-generic": "Un écran qui pourrait être celui de n'importe quel produit", "not-ai-default": "Le look par défaut d'une IA",
-      hierarchy: "L'œil ne sait pas par où commencer", grid: "Les éléments ne tombent pas sur une grille", density: "Trop serré ou trop vide", states: "Un état vide ou d'erreur laissé en blanc",
-      "clear-start": "On ne voit pas par où commencer", "next-step": "L'étape suivante n'est pas en vue", "result-shown": "Le résultat n'est pas montré à la fin", "no-dead-end": "Une impasse : rien pour avancer ni revenir", short: "Le parcours fait un détour", "same-words": "Ce qu'on cherche change de nom en route",
-      cursor: "Ce qui se clique ne montre pas la main", overflow: "La page défile de côté", contrast: "Du texte trop pâle pour être bien lu", console: "Des erreurs dans la console du navigateur", header: "L'en-tête disparaît quand on défile", wrap: "Des libellés coupés sur deux lignes",
-      uneven: "Des cartes d'une même rangée de tailles différentes", clipped: "Du texte coupé net", "tap-size": "Des cibles trop petites pour le doigt", "font-size": "Du texte trop petit pour être lu", "line-length": "Des lignes trop longues à suivre", zoom: "Le zoom est bloqué",
-      images: "Des images qui ne chargent pas ou se déforment", labels: "Des contrôles sans nom pour un lecteur d'écran", focus: "Au clavier, on ne voit pas où l'on est", "layout-shift": "La page saute pendant qu'elle charge", "gradient-text": "Du texte rempli d'un dégradé", "side-stripe": "Des blocs marqués d'un liseré sur un côté",
-      "nested-card": "Des cartes dans des cartes", bounce: "Des animations qui rebondissent", placeholder: "Des trous laissés à remplir", "ai-text": "Du texte qui parle de l'interface ou de la démo", "hollow-words": "Des mots creux", "nested-radius": "Des coins arrondis qui ne se suivent pas",
-      orphan: "Un mot seul en fin de titre", motion: "Des animations qui déplacent la mise en page", finish: "La page n'est pas finie",
+      "one-direction": "L’écran sort de la direction du reste", "consistent-chrome": "L’en-tête et les boutons changent d’un écran à l’autre", "not-generic": "Un écran qui pourrait être celui de n’importe quel produit", "not-ai-default": "Le look par défaut d’une IA",
+      hierarchy: "L’œil ne sait pas par où commencer", grid: "Les blocs ne tombent pas sur une grille", density: "Trop serré ici, trop vide là", states: "Une erreur ou un vide laissé en blanc",
+      "clear-start": "On ne voit pas par où commencer", "next-step": "L’étape suivante n’est pas en vue", "result-shown": "Le résultat n’est pas montré à la fin", "no-dead-end": "Une impasse : rien pour avancer ni revenir", short: "Le parcours fait un détour", "same-words": "Ce qu’on cherche change de nom en route",
+      cursor: "Ce qui se clique ne montre pas la main", overflow: "La page défile de côté", contrast: "Du texte trop pâle", console: "Des erreurs dans la console du navigateur", header: "L’en-tête disparaît quand on défile", wrap: "Des libellés coupés sur deux lignes",
+      uneven: "Des cartes d’une même rangée de tailles différentes", clipped: "Du texte coupé net", "tap-size": "Des cibles trop petites pour le doigt", "font-size": "Du texte trop petit pour être lu", "line-length": "Des lignes trop longues à suivre", zoom: "Le zoom est bloqué",
+      images: "Des images qui ne chargent pas ou se déforment", labels: "Des contrôles sans nom pour un lecteur d’écran", focus: "Au clavier, on ne voit pas où l’on est", "layout-shift": "La page saute pendant qu’elle charge", "gradient-text": "Du texte rempli d’un dégradé", "side-stripe": "Des blocs marqués d’un liseré sur un côté",
+      "nested-card": "Des cartes dans des cartes", bounce: "Des animations qui rebondissent", placeholder: "Des trous laissés à remplir", "ai-text": "Du texte qui parle de l’interface ou de la démo", "hollow-words": "Des mots creux", "nested-radius": "Des coins arrondis qui ne se suivent pas",
+      orphan: "Un mot seul en fin de titre", motion: "Des animations qui déplacent la mise en page", finish: "La page n’est pas finie",
     } as Record<string, string>,
     fixes: {
-      "does-not-load": "Faire répondre ces écrans, ou les retirer des liens qui y mènent.", breaks: "Faire aboutir cette étape : l'écran montre ce que le parcours attend, ou dit pourquoi et propose une suite.",
-      "one-direction": "Ramener l'écran dans la direction du reste : mêmes typographies, mêmes couleurs, mêmes composants.", "consistent-chrome": "Reprendre l'en-tête, la navigation et le style de bouton des autres écrans.", "not-generic": "Remplacer le gabarit passe-partout par ce qui est propre au produit : ses mots, ses couleurs, ses formes.", "not-ai-default": "Sortir du look par défaut en partant du monde du produit plutôt que d'un style tout fait.",
-      hierarchy: "Donner un seul point de départ : un titre ou une action nettement plus fort que le reste.", grid: "Aligner les blocs sur les mêmes colonnes et les mêmes marges que l'en-tête.", density: "Resserrer ce qui flotte, aérer ce qui étouffe, et donner un rôle à chaque zone vide.", states: "Dessiner l'état : dire ce qui manque et proposer l'action suivante, au lieu d'un blanc.",
-      "clear-start": "Mettre la première action en vue sur l'écran de départ, nommée avec les mots de l'utilisateur.", "next-step": "Rendre l'étape suivante visible sur chaque écran : un lien ou un bouton nommé, sans détour.", "result-shown": "Montrer le résultat à la fin : ce qui a été trouvé ou fait, ou un état vide qui dit quoi faire.", "no-dead-end": "Donner à chaque écran d'erreur un moyen d'avancer ou de revenir.", short: "Ouvrir un accès direct à l'écran visé, sans passer par un écran qui n'est pas le but.", "same-words": "Donner un seul nom à ce que cherche l'utilisateur, du lien au titre et au bouton.",
-      cursor: "Donner le curseur main à tout ce qui se clique.", overflow: "Contenir la largeur : rien ne doit dépasser de l'écran.", contrast: "Foncer les textes trop pâles jusqu'à un contraste de 4,5:1 sur leur fond.", console: "Corriger les erreurs que la page écrit dans la console.", header: "Garder l'en-tête visible quand on défile.", wrap: "Raccourcir ou élargir les libellés pour qu'ils tiennent sur une ligne.",
-      uneven: "Donner la même hauteur aux cartes d'une rangée.", clipped: "Laisser le texte entier, ou le couper avec des points de suspension.", "tap-size": "Agrandir les cibles à 44 px de côté au moins.", "font-size": "Passer les petits textes à 12 px au moins.", "line-length": "Limiter les paragraphes à 75 caractères par ligne environ.", zoom: "Retirer ce qui bloque le zoom dans la balise viewport.",
-      images: "Réparer les images cassées et garder leurs proportions.", labels: "Donner un nom à chaque bouton, lien, champ et image.", focus: "Ajouter un contour visible au focus clavier (:focus-visible).", "layout-shift": "Réserver la place de ce qui charge, pour que rien ne saute.", "gradient-text": "Remplir le texte d'une couleur pleine.", "side-stripe": "Marquer ces blocs autrement qu'avec un liseré d'un côté.",
-      "nested-card": "Sortir les cartes de la carte qui les contient.", bounce: "Remplacer le rebond par une courbe douce.", placeholder: "Remplir les trous avec le vrai contenu.", "ai-text": "Remplacer le texte sur l'interface par les mots du produit.", "hollow-words": "Remplacer les mots creux par ce que le produit fait vraiment.", "nested-radius": "Faire suivre au rayon intérieur celui du coin qui le contient.",
-      orphan: "Équilibrer les titres pour qu'aucun mot ne reste seul.", motion: "Animer sans déplacer la mise en page : transformations et opacité seulement.", finish: "Finir la page : titre, icône, description, image de partage, et une 404 qui ramène.",
+      "does-not-load": "Faire répondre ces écrans, ou les retirer des liens qui y mènent.", breaks: "Faire aboutir cette étape : l’écran montre ce que le parcours attend, ou dit pourquoi et propose une suite.",
+      "one-direction": "Ramener l’écran dans la direction du reste : mêmes typographies, mêmes couleurs, mêmes composants.", "consistent-chrome": "Reprendre l’en-tête, la navigation et le style de bouton des autres écrans.", "not-generic": "Remplacer le gabarit passe-partout par ce qui est propre au produit : ses mots, ses couleurs, ses formes.", "not-ai-default": "Sortir du look par défaut en partant du monde du produit plutôt que d’un style tout fait.",
+      hierarchy: "Donner un seul point de départ : un titre ou une action nettement plus fort que le reste.", grid: "Aligner les blocs sur les mêmes colonnes et les mêmes marges que l’en-tête.", density: "Resserrer ce qui flotte, aérer ce qui étouffe, et donner un rôle à chaque zone vide.", states: "Dessiner l’état : dire ce qui manque et proposer l’action suivante, au lieu d’un blanc.",
+      "clear-start": "Mettre la première action en vue sur l’écran de départ, nommée avec les mots de l’utilisateur.", "next-step": "Rendre l’étape suivante visible sur chaque écran : un lien ou un bouton nommé, sans détour.", "result-shown": "Montrer le résultat à la fin : ce qui a été trouvé ou fait, ou un état vide qui dit quoi faire.", "no-dead-end": "Donner à chaque écran d’erreur un moyen d’avancer ou de revenir.", short: "Ouvrir un accès direct à l’écran visé, sans passer par un écran qui n’est pas le but.", "same-words": "Donner un seul nom à ce que cherche l’utilisateur, du lien au titre et au bouton.",
+      cursor: "Donner le curseur main à tout ce qui se clique.", overflow: "Contenir la largeur : rien ne doit dépasser de l’écran.", contrast: "Foncer les textes trop pâles jusqu’à un contraste de 4,5:1 sur leur fond.", console: "Corriger les erreurs que la page écrit dans la console.", header: "Garder l’en-tête visible quand on défile.", wrap: "Raccourcir ou élargir les libellés pour qu’ils tiennent sur une ligne.",
+      uneven: "Donner la même hauteur aux cartes d’une rangée.", clipped: "Laisser le texte entier, ou le couper avec des points de suspension.", "tap-size": "Agrandir les cibles à 44 px de côté au moins.", "font-size": "Passer les petits textes à 12 px au moins.", "line-length": "Limiter les paragraphes à 75 caractères par ligne environ.", zoom: "Retirer ce qui bloque le zoom dans la balise viewport.",
+      images: "Réparer les images cassées et garder leurs proportions.", labels: "Donner un nom à chaque bouton, lien, champ et image.", focus: "Ajouter un contour visible au focus clavier (:focus-visible).", "layout-shift": "Réserver la place de ce qui charge, pour que rien ne saute.", "gradient-text": "Remplir le texte d’une couleur pleine.", "side-stripe": "Remplacer le liseré par un fond teinté ou une pastille.",
+      "nested-card": "Garder un seul niveau de cadre : sortir les cartes de la carte.", bounce: "Remplacer le rebond par une courbe douce.", placeholder: "Remplir les trous avec le vrai contenu.", "ai-text": "Remplacer le texte sur l’interface par les mots du produit.", "hollow-words": "Remplacer les mots creux par ce que le produit fait vraiment.", "nested-radius": "Faire suivre au rayon intérieur celui du coin qui le contient.",
+      orphan: "Équilibrer les titres pour qu’aucun mot ne reste seul.", motion: "Animer sans déplacer la mise en page : transformations et opacité seulement.", finish: "Finir la page : titre, icône, description, image de partage, et une 404 qui ramène.",
     } as Record<string, string>,
     names: {
-      "one-direction": "Une seule direction", "consistent-chrome": "En-tête et boutons pareils partout", "not-generic": "Rien de générique", "not-ai-default": "Pas un look d'IA par défaut",
-      hierarchy: "Une hiérarchie claire", grid: "Une grille alignée", density: "Une densité maîtrisée", states: "Des états vides et d'erreur dessinés",
-      "clear-start": "Un départ clair", "next-step": "L'étape suivante en vue", "result-shown": "Le résultat montré", "no-dead-end": "Pas d'impasse", short: "Des parcours courts", "same-words": "Les mêmes mots partout",
+      "one-direction": "Une seule direction", "consistent-chrome": "En-tête et boutons pareils partout", "not-generic": "Rien de générique", "not-ai-default": "Pas un look d’IA par défaut",
+      hierarchy: "Une hiérarchie claire", grid: "Une grille alignée", density: "Une densité maîtrisée", states: "Des états vides et d’erreur dessinés",
+      "clear-start": "Un départ clair", "next-step": "L’étape suivante en vue", "result-shown": "Le résultat montré", "no-dead-end": "Pas d’impasse", short: "Des parcours courts", "same-words": "Les mêmes mots partout",
     } as Record<string, string>,
   },
   en: {
-    kicker: "Judgement of the front", noName: "The front judged",
-    measured: (m: Judgement["measured"]) => [`${plural(m.screens, "screen", "screens")} at ${m.widths.join(" and ")} px`, `${plural(m.checks, "check", "checks")} and ${plural(m.principles, "principle", "principles")} on each`, ...(m.journeys ? [`${plural(m.journeys, "journey", "journeys")} on ${plural(m.journeyPrinciples, "principle", "principles")}`] : []), plural(m.judges, "judge", "judges")],
-    verdict: (n: number, breaks: number, env: number) => (n === 0 && env === 0 ? "Nothing to rework: everything measured passes." : `${n === 0 ? "No design point to rework" : plural(n, "point to rework", "points to rework")}${breaks ? `, ${plural(breaks, "journey that breaks", "journeys that break")} among them` : ""}${env ? `; ${env} more to check outside the demo` : ""}.`),
-    recommend: {
-      direction: (d: string) => `The direction kept with <code>/aeom directions</code>, ${d}, is ready: <code>/aeom redo</code> carries it into the app.`,
-      style: "The style is kept: <code>/aeom redo</code> fixes what fails without touching the charter.",
-      keep: "The front has a direction of its own: AEOM recommends improving it while keeping its style, with <code>/aeom redo</code>.",
-      directions: (where: string[]) => `The front does not hold one direction of its own on every screen yet${where.length ? `: ${and(where, "and")} ${where.length > 1 ? "step" : "steps"} out of it` : ""}. AEOM recommends new directions, with <code>/aeom directions</code> then <code>/aeom redo</code>.`,
-      nothing: "Nothing to redo: the front can stay as it is.",
-    },
-    strengths: "Strengths", strengthsNote: "What the judges saw as good, grouped by theme, with the screen or the step that shows it.",
-    noStrength: "The judges said nothing precise about what passes.",
-    on: (n: number, of: number, kind: "screens" | "journeys") => (n === of ? (of > 1 ? `on all ${of} ${kind}` : `on the ${kind === "screens" ? "screen" : "journey"}`) : `on ${n} of ${of} ${kind}`),
-    weak: "Weak points", weakNote: "Worst first: journeys that break, then principles, then measurable checks. What repeats from screen to screen is one point.",
-    noWeak: "Nothing breaks and nothing fails, apart from what is to check outside the demo.",
-    env: "To check outside the demo", envNote: "These most likely come from the test environment, a service not configured or a server answering with an error, rather than from the design. Check them on a configured version before fixing them.",
-    leads: "Leads", leadsNote: "One lead per weak point, with no new feature and no new data: the copy, the states, the order of steps, the navigation, the style.",
-    effect: { high: "Most effect", medium: "Some effect", low: "Less effect" } as Record<Effect, string>,
+    judgement: "Judgement", judgedOn: (d: string) => `Judgement of ${d}`, toRework: (n: number) => `${n} to rework`, next: "Next", copied: "Copied", theme: "Switch theme",
+    held: (held: number, total: number, out: string[]) =>
+      total === 0 ? "" : held === total ? `<b>${total === 1 ? "The screen holds the style." : `All ${total} screens hold the style.`}</b>` : `<b>${held} of ${total} screens hold the style.</b> ${and(out, "and")} ${out.length > 1 ? "step" : "steps"} out of it:`,
+    advise: { directions: "AEOM advises starting again from new directions.", keep: "AEOM advises fixing it while keeping its style.", style: "AEOM advises fixing what fails without touching the charter.", direction: (d: string) => `AEOM advises carrying the direction kept, ${d}, into the app.`, nothing: "Nothing to rework." },
+    stats: (m: Judgement["measured"]) => [plural(m.screens, "screen", "screens"), ...(m.journeys ? [plural(m.journeys, "journey", "journeys")] : []), plural(m.judges, "judge", "judges"), `${m.widths.join(" · ")} px`],
+    meter: "Screens that hold the direction",
+    view: "View", rework: "To rework", strengths: "Strengths", demo: "Outside the demo", type: "Type", effortTitle: "Effort", journeysTitle: "Journeys",
+    types: { journey: "Journeys", principle: "Principles", check: "Checks" } as Record<Type, string>,
+    kinds: { "does-not-load": "Screen", breaks: "Journey", "journey-principle": "Journey", principle: "Principle", check: "Check", page: "Screen" } as Record<WeakPoint["kind"], string>,
     effort: { quick: "Quick", medium: "Medium", big: "Big job" } as Record<Effort, string>,
-    detail: "In detail", detailNote: "Screen by screen and journey by journey, everything the judges and the checks said.",
-    kinds: { "does-not-load": "Screen that does not load", breaks: "Journey that breaks", "journey-principle": "Journey", principle: "Principle", check: "Check" } as Record<WeakPoint["kind"], string>,
-    onScreens: (n: number) => plural(n, "screen", "screens"), onJourneys: (n: number) => plural(n, "journey", "journeys"),
-    breaksAt: (name: string, step: number) => `“${name}” stops at step ${step}`,
-    noLoad: "Screens that do not load",
-    votes: "judges", lead: "Lead", seeWeak: "See the point",
-    passes: "passes", fails: "fails", accepted: "accepted", goesThrough: "goes to its end", stopsAt: (n: number) => `stops at step ${n}`,
-    failing: (p: number, c: number) => [p ? plural(p, "principle failing", "principles failing") : "", c ? plural(c, "check failing", "checks failing") : ""].filter(Boolean).join(" · ") || "nothing failing",
-    checksTitle: "Checks failing", stepsTitle: "The steps", screensTitle: "Screens", journeysTitle: "Journeys", judgesTitle: "The judges",
+    effect: { high: "a lot of effect", medium: "some effect", low: "little effect" } as Record<Effect, string>,
+    worst: "Worst first ↓", onScreens: (n: number) => plural(n, "screen", "screens"), onJourneys: (n: number) => plural(n, "journey", "journeys"),
+    judges: (v: string) => `${v} judges`, agreeing: (v: string) => `${v} judges agree`, measured: "measured", measuredBy: "measured by AEOM", number: (n: number) => `no. ${n}`,
+    step: (name: string, n: number) => `${name} · step ${n}`, noShot: "No screenshot",
+    lived: "What the user lives", lead: "Lead", agree: "Do you agree with this point?", keys: "to go to the next",
+    nothingLeft: "Nothing to rework: everything measured passes.",
+    keepTag: "To keep", keepTitle: "What already holds", noStrength: "The judges said nothing precise about what passes.",
+    on: (n: number, of: number, kind: "screens" | "journeys") => (n === of ? (of > 1 ? `on all ${of} ${kind}` : `on the ${kind === "screens" ? "screen" : "journey"}`) : `${n} of ${of} ${kind}`),
+    checkTag: "To check", demoTitle: "Most likely the demo environment, not the design", demoNote: "A service not configured, or a server answering with an error. Look again on a connected version before touching it.", noDemo: "Nothing seems to come from the demo environment.",
     acceptedTitle: "Accepted by the product sheet", leftToStyle: (ids: string) => `Left to the style kept: ${ids}.`,
     judgedBy: (m: string, p: string) => `Judged by ${m}, on ${p}.`, unnamed: "a model the voters did not name",
-    theme: "Switch theme", close: "Close", enlarge: "Enlarge",
     feedbackNote: "To say whether you agree with each point, open this page with <code>aeom report --serve</code>.",
+    close: "Close", enlarge: "Enlarge",
+    breaksAt: (name: string, step: number) => `“${name}” stops at step ${step}`, noLoad: "Screens that do not load", blankPage: "A page blank in the demo",
     titles: {
-      "one-direction": "The screen leaves the direction of the rest", "consistent-chrome": "The header or the buttons change from screen to screen", "not-generic": "A screen that could belong to any product", "not-ai-default": "An AI's default look",
-      hierarchy: "The eye does not know where to start", grid: "Elements do not sit on a grid", density: "Too cramped or too empty", states: "An empty or error state left blank",
+      "one-direction": "The screen leaves the direction of the rest", "consistent-chrome": "The header and the buttons change from screen to screen", "not-generic": "A screen that could belong to any product", "not-ai-default": "An AI's default look",
+      hierarchy: "The eye does not know where to start", grid: "Blocks do not sit on a grid", density: "Too cramped here, too empty there", states: "An error or an emptiness left blank",
       "clear-start": "Where to start is not in sight", "next-step": "The next step is not in sight", "result-shown": "The result is not shown at the end", "no-dead-end": "A dead end: nothing to go on or back", short: "The journey takes a detour", "same-words": "What the user is after changes names on the way",
-      cursor: "What clicks does not show the hand", overflow: "The page scrolls sideways", contrast: "Text too pale to read well", console: "Errors in the browser's console", header: "The header goes away on scroll", wrap: "Labels broken over two lines",
+      cursor: "What clicks does not show the hand", overflow: "The page scrolls sideways", contrast: "Text too pale", console: "Errors in the browser's console", header: "The header goes away on scroll", wrap: "Labels broken over two lines",
       uneven: "Cards of one row in different sizes", clipped: "Text cut off", "tap-size": "Targets too small for a finger", "font-size": "Text too small to read", "line-length": "Lines too long to follow", zoom: "Zoom is blocked",
       images: "Images that do not load or lose their shape", labels: "Controls without a name for a screen reader", focus: "With a keyboard, you cannot see where you are", "layout-shift": "The page jumps while it loads", "gradient-text": "Text filled with a gradient", "side-stripe": "Blocks marked by a stripe on one side",
       "nested-card": "Cards inside cards", bounce: "Motion that bounces", placeholder: "Holes left to fill", "ai-text": "Text about the interface or the demo", "hollow-words": "Hollow words", "nested-radius": "Rounded corners that do not follow",
@@ -532,8 +532,8 @@ const WORDS = {
       "clear-start": "Put the first action in sight on the starting screen, named in the user's words.", "next-step": "Make the next step visible on every screen: a named link or button, with no detour.", "result-shown": "Show the result at the end: what was found or done, or an empty state that says what to do.", "no-dead-end": "Give every error screen a way on or a way back.", short: "Open a direct way to the screen the user wants, without a screen that is not the goal.", "same-words": "Give what the user is after one name, from the link to the title and the button.",
       cursor: "Give the pointer cursor to everything that clicks.", overflow: "Contain the width: nothing goes past the screen.", contrast: "Darken pale text to a 4.5:1 contrast on its background.", console: "Fix the errors the page writes to the console.", header: "Keep the header in sight on scroll.", wrap: "Shorten or widen labels so they hold on one line.",
       uneven: "Give the cards of one row the same height.", clipped: "Leave the text whole, or cut it with an ellipsis.", "tap-size": "Make targets 44 px wide at least.", "font-size": "Set small text to 12 px at least.", "line-length": "Keep paragraphs to about 75 characters a line.", zoom: "Remove what blocks zoom in the viewport tag.",
-      images: "Repair broken images and keep their proportions.", labels: "Give every button, link, field and image a name.", focus: "Add a visible outline to the keyboard focus (:focus-visible).", "layout-shift": "Reserve room for what loads, so nothing jumps.", "gradient-text": "Fill text with a solid colour.", "side-stripe": "Mark these blocks otherwise than with a stripe on one side.",
-      "nested-card": "Take the cards out of the card that holds them.", bounce: "Replace the bounce with a soft curve.", placeholder: "Fill the holes with the real content.", "ai-text": "Replace text about the interface with the product's own words.", "hollow-words": "Replace hollow words with what the product really does.", "nested-radius": "Make the inner radius follow the corner that holds it.",
+      images: "Repair broken images and keep their proportions.", labels: "Give every button, link, field and image a name.", focus: "Add a visible outline to the keyboard focus (:focus-visible).", "layout-shift": "Reserve room for what loads, so nothing jumps.", "gradient-text": "Fill text with a solid colour.", "side-stripe": "Replace the stripe with a tinted ground or a badge.",
+      "nested-card": "Keep one level of frame: take the cards out of the card.", bounce: "Replace the bounce with a soft curve.", placeholder: "Fill the holes with the real content.", "ai-text": "Replace text about the interface with the product's own words.", "hollow-words": "Replace hollow words with what the product really does.", "nested-radius": "Make the inner radius follow the corner that holds it.",
       orphan: "Balance headings so no word stays alone.", motion: "Animate without moving the layout: transforms and opacity only.", finish: "Finish the page: a title, an icon, a description, a share image, and a 404 that leads back.",
     } as Record<string, string>,
     names: {
@@ -548,6 +548,15 @@ type Words = (typeof WORDS)["fr"];
 const esc = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 /** A path inside the run's folder, each segment URL-encoded: a `#` or `?` in a file name stays part of the name. */
 const href = (path: string) => path.split("/").map((s) => encodeURI(s).replace(/#/g, "%23").replace(/\?/g, "%3F")).join("/");
+/** The day of a run, from its name (`run-20261118-1949`), in the page's language; null for a name without one. */
+const dayOf = (run: string, lang: JudgementLang) => {
+  const m = run.match(/(\d{4})(\d{2})(\d{2})/);
+  if (!m) return null;
+  const date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(date.getTime()) ? null : new Intl.DateTimeFormat(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
+/** The product as an address shows it: `crispy-tenders/opportunites`. */
+const slugOf = (name: string | null) => (name ?? "app").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "app";
 
 /** What the page around it gives the judgement: the boxes to agree or disagree, the rates, and the script that sends them. */
 export interface JudgementPageParts {
@@ -558,72 +567,68 @@ export interface JudgementPageParts {
   feedbackScript: string;
 }
 
-/** The judgement as one page: its styles, fonts and scripts inline, its captures beside it in the run's folder. */
+/**
+ * The judgement as a triage list, one page: a bar with the product and what comes next, a band with the verdict,
+ * then the filters, the weak points from the worst, and the one chosen in detail with its captures and its lead. Its
+ * styles and scripts inline, its captures beside it in the run's folder, nothing from the network.
+ */
 export function judgementHtml(j: Judgement, parts: JudgementPageParts): string {
   const w: Words = WORDS[parts.lang] ?? WORDS.en;
   const verdicts = new Map(judgementVerdicts(j).map((v) => [v.id, v]));
-  const title = (wp: WeakPoint) => (wp.kind === "breaks" ? w.breaksAt(wp.journey!.name, wp.journey!.step) : wp.kind === "does-not-load" ? w.noLoad : (w.titles[wp.key] ?? wp.key));
+  const title = (wp: WeakPoint) => (wp.kind === "breaks" ? w.breaksAt(wp.journey!.name, wp.journey!.step) : wp.kind === "does-not-load" ? w.noLoad : wp.kind === "page" ? w.blankPage : (w.titles[wp.key] ?? wp.key));
   const fixOf = (wp: WeakPoint) => wp.fix ?? w.fixes[wp.key] ?? w.fixes[wp.kind] ?? "";
-  const shot = (src: string | null, alt: string, cls = "") => (src ? `<button type="button" class="shot${cls ? ` ${cls}` : ""}" data-full="${esc(href(src))}" data-title="${esc(alt)}" aria-label="${esc(`${w.enlarge} : ${alt}`)}"><img src="${esc(href(src))}" alt="${esc(alt)}" loading="lazy"></button>` : "");
-  // A screen by its route, in the type of code; a journey by its name, in the page's own.
-  const route = (where: string) => `<span class="where${where.startsWith("/") ? "" : " where--name"}">${esc(where)}</span>`;
-  const count = (wp: WeakPoint) => (wp.kind === "breaks" ? "" : wp.kind === "journey-principle" ? w.onJourneys(wp.places.length) : w.onScreens(wp.places.length));
+  const scope = (wp: WeakPoint) => (wp.kind === "page" ? wp.places[0]!.where : typeOf(wp) === "journey" ? w.onJourneys(new Set(wp.places.map((p) => p.journey ?? p.where)).size) : w.onScreens(wp.places.length));
+  const judged = (wp: WeakPoint) => wp.kind === "principle" || wp.kind === "journey-principle";
+  const slug = slugOf(j.product.name);
+  const addressOf = (p: WeakPlace) => (p.journey && p.step ? w.step(p.where, p.step) : p.where.startsWith("/") ? `${slug}${p.where}` : p.where);
+  const img = (src: string | null, alt: string) => (src ? `<img src="${esc(href(src))}" alt="${esc(alt)}" loading="lazy">` : `<span class="noshot">${w.noShot}</span>`);
+  const bars = (n: number, cls: string) => `<span class="sev ${cls}" aria-hidden="true">${[1, 2, 3].map((i) => `<i${i <= n ? ' class="on"' : ""}></i>`).join("")}</span>`;
 
-  // ——— Head: the product, what was measured, the verdict and what comes next.
-  const breaks = j.weak.filter((wp) => wp.kind === "breaks").length;
-  const outside = [...new Set(j.identityFails.flatMap((f) => f.where))].map((where) => `<span class="where">${esc(where)}</span>`);
-  const recommendation = j.nothingToRedo ? w.recommend.nothing : j.direction ? w.recommend.direction(esc(j.direction)) : j.keepStyle ? w.recommend.style : j.recommend === "directions" ? w.recommend.directions(outside) : w.recommend.keep;
-  const head = `<header class="hero"><div class="wrap">
-<div class="bar"><span class="brand"><span class="eye" aria-hidden="true"><i></i></span>AEOM</span><span class="bar__end"><span class="run">${esc(parts.run)}</span><button type="button" class="theme" data-theme-toggle aria-label="${w.theme}"><span aria-hidden="true">◐</span></button></span></div>
-<p class="kicker">${w.kicker}</p>
-<h1>${esc(j.product.name ?? w.noName)}</h1>
-${j.product.sentence ? `<p class="what">${esc(j.product.sentence)}</p>` : ""}
-<ul class="measured">${w.measured(j.measured).map((m) => `<li>${esc(m)}</li>`).join("")}</ul>
-<div class="call"><p class="verdict">${esc(w.verdict(j.weak.length, breaks, j.env.length))}</p><p class="next">${recommendation}</p>${j.leftToStyle.length ? `<p class="small">${esc(w.leftToStyle(j.leftToStyle.join(", ")))}</p>` : ""}${j.nothingToRedo ? parts.say({ id: "nothing-to-redo", category: "screens", verdict: "Nothing to redo" }) : ""}</div>
-</div></header>`;
+  // ——— The bar: the product, the day, what is to rework, and the command that comes next.
+  const advice = j.nothingToRedo ? { say: w.advise.nothing, cmd: null } : j.direction ? { say: w.advise.direction(esc(j.direction)), cmd: "/aeom redo" } : j.keepStyle ? { say: w.advise.style, cmd: "/aeom redo" } : j.recommend === "directions" ? { say: w.advise.directions, cmd: "/aeom directions" } : { say: w.advise.keep, cmd: "/aeom redo --garder-le-style" };
+  const day = dayOf(parts.run, parts.lang);
+  const top = `<header class="top"><div class="logo"><i></i>AEOM</div><div class="crumb"><span>/</span><b class="prod"${j.product.sentence ? ` title="${esc(j.product.sentence)}"` : ""}>${esc(j.product.name ?? parts.run)}</b><span>/</span><span>${day ? w.judgedOn(day) : w.judgement}</span></div><div class="sp"></div><span class="pill"><i></i>${w.toRework(j.weak.length)}</span><button type="button" class="btn sec" data-theme-toggle aria-label="${w.theme}" title="${w.theme}">◐</button>${advice.cmd ? `<button type="button" class="btn pri" data-copy="${esc(advice.cmd)}" data-done="${w.copied}"><span class="lab">${w.next}</span> <span class="mono">${esc(advice.cmd)}</span></button>` : ""}</header>`;
 
-  const nav = `<nav class="jump" aria-label="${esc(w.detail)}"><div class="wrap"><a href="#strengths">${w.strengths}<b>${j.strengths.length}</b></a><a href="#weak">${w.weak}<b>${j.weak.length}</b></a>${j.env.length ? `<a href="#env">${w.env}<b>${j.env.length}</b></a>` : ""}${j.weak.length ? `<a href="#leads">${w.leads}<b>${j.weak.length}</b></a>` : ""}<a href="#detail">${w.detail}</a></div></nav>`;
+  // ——— The band: a cell per screen, red where it leaves the direction, the verdict in a sentence, what was measured.
+  const direction = j.screens.map((s) => ({ page: s.page, verdict: s.verdicts.find((v) => v.principle === "one-direction") })).filter((s) => s.verdict);
+  const out = direction.filter((s) => !s.verdict!.pass).map((s) => s.page);
+  const held = w.held(direction.length - out.length, direction.length, out.map(esc));
+  const band = `<div class="verdict"><div class="meter" title="${w.meter}">${direction.map((s) => `<i class="cell${s.verdict!.pass ? "" : " on"}" title="${esc(s.page)}"></i>`).join("")}</div><span class="vphrase">${held}${held ? " " : ""}${advice.say}</span><div class="stats">${w.stats(j.measured).map((x) => `<span>${esc(x)}</span>`).join("")}</div></div>\n`;
 
-  // ——— Strengths.
-  const strengths = `<section id="strengths"><div class="wrap"><h2>${w.strengths}</h2><p class="note">${w.strengthsNote}</p>${
-    j.strengths.length
-      ? `<ul class="strengths">${j.strengths.map((s) => `<li class="strength">${shot(s.shot, `${s.where}`, "shot--wide")}<div class="strength__text"><h3>${esc(w.names[s.principle] ?? s.principle)}</h3><p class="scope">${esc(w.on(s.count, s.of, s.kind))}</p><blockquote>${esc(s.reason)}</blockquote><p class="small">${route(s.where)}</p></div></li>`).join("")}</ul>`
-      : `<p class="muted">${w.noStrength}</p>`
-  }</div></section>`;
+  // ——— The filters, each with its count.
+  const count = { type: (t: Type) => j.weak.filter((wp) => typeOf(wp) === t).length, effort: (e: Effort) => j.weak.filter((wp) => wp.effort === e).length };
+  const journeysOf = (wp: WeakPoint) => [...new Set(wp.places.map((p) => p.journey).filter((s): s is string => !!s))];
+  const filter = (id: string, label: string, n: number, mark: string, on = false) => `<button type="button" class="f${on ? " on" : ""}" data-f="${esc(id)}">${mark}<span class="fl">${esc(label)}</span><span class="c">${n}</span></button>`;
+  const dot = (cls: string) => `<span class="d ${cls}"></span>`;
+  const glyph = (g: string) => `<span class="q">${g}</span>`;
+  const side = `<aside class="side"><p class="gl">${w.view}</p>${filter("all", w.rework, j.weak.length, dot("red"), true)}${filter("forts", w.strengths, j.strengths.length, dot("green"))}${filter("demo", w.demo, j.env.length, dot("amber"))}<p class="gl">${w.type}</p>${filter("type:journey", w.types.journey, count.type("journey"), glyph("↝"))}${filter("type:principle", w.types.principle, count.type("principle"), glyph("◇"))}${filter("type:check", w.types.check, count.type("check"), glyph("✓"))}<p class="gl">${w.effortTitle}</p>${filter("effort:quick", w.effort.quick, count.effort("quick"), glyph("⚡"))}${filter("effort:medium", w.effort.medium, count.effort("medium"), glyph("◑"))}${filter("effort:big", w.effort.big, count.effort("big"), glyph("●"))}${
+    j.journeys.length ? `<p class="gl">${w.journeysTitle}</p>${j.journeys.map((jr) => filter(`journey:${jr.slug}`, jr.name, j.weak.filter((wp) => journeysOf(wp).includes(jr.slug)).length, glyph("↝"))).join("")}` : ""
+  }<div class="foot">${parts.rates}<p class="small" id="feedback-note" hidden>${w.feedbackNote}</p>${j.judges ? `<p class="small">${w.judgedBy(esc(j.judges.models.join(", ") || w.unnamed), esc(j.judges.principles))}</p>` : ""}</div></aside>`;
 
-  // ——— Weak points, and those set apart.
-  let n = 0;
-  const weakHtml = (wp: WeakPoint) => {
-    const anchor = wp.id.startsWith("env:") ? "" : ` id="weak-${++n}"`;
-    const shots = [...new Set(wp.places.map((p) => p.shot).filter((s): s is string => !!s))].slice(0, 3);
-    const places = wp.places.map((p) => `<li>${wp.kind === "breaks" ? "" : route(p.where)}${p.votes ? `<span class="votes" title="${w.votes}">${esc(p.votes)}</span>` : ""}<span class="said">${esc(p.reason)}</span></li>`);
-    // Four places in sight, the others folded: a check on eleven screens stays one point that reads at a glance.
-    const list = places.length > 4 ? `<ul class="places">${places.slice(0, 4).join("")}</ul><details><summary>+ ${places.length - 4}</summary><ul class="places">${places.slice(4).join("")}</ul></details>` : `<ul class="places">${places.join("")}</ul>`;
-    return `<article class="point" data-weak="${esc(wp.id)}"${anchor}>${anchor ? `<span class="point__n" aria-hidden="true">${n}</span>` : ""}<div class="point__body"><p class="point__kind"><span class="kind kind--${wp.kind}">${w.kinds[wp.kind]}</span>${count(wp) ? ` <span class="muted">${esc(count(wp))}</span>` : ""}</p><h3>${esc(title(wp))}</h3>${list}${shots.length ? `<div class="shots">${shots.map((s, i) => shot(s, `${title(wp)} · ${wp.places.find((p) => p.shot === s)?.where ?? i + 1}`)).join("")}</div>` : ""}${parts.say(verdicts.get(wp.id) ?? null)}</div></article>`;
+  // ——— The list: the weak points from the worst; the strengths and what is set apart, each in its own view.
+  const votesShown = (wp: WeakPoint) => (judged(wp) && wp.places[0]?.votes ? w.judges(wp.places[0].votes) : w.measured);
+  const row = (wp: WeakPoint, i: number) =>
+    `<button type="button" class="row${i === 0 ? " on" : ""}" data-n="${i + 1}" data-weak="${esc(wp.id)}" data-type="${typeOf(wp)}" data-effort="${wp.effort}" data-journeys="${esc(journeysOf(wp).join(" "))}">${bars(severity(wp), `s${severity(wp)}`)}<span class="rt"><span class="t">${esc(title(wp))}</span><span class="w"><span class="ty ty-${typeOf(wp)}${wp.kind === "does-not-load" ? " ty-journey" : ""}">${w.kinds[wp.kind]}</span> · ${esc(scope(wp))}</span></span><span class="r"><span class="eff ${wp.effort}">${w.effort[wp.effort]}</span><span class="vt">${esc(votesShown(wp))}</span></span></button>`;
+  const quiet = (t: string, s: string, cls: string) => `<div class="row quiet">${bars(3, cls)}<span class="rt"><span class="t">${esc(t)}</span><span class="w">${esc(s)}</span></span></div>`;
+  const list = `<section class="list"><div class="lh" data-view="faibles"><h2>${w.rework} <span id="count-faibles">${j.weak.length}</span></h2><span class="sort">${w.worst}</span></div><div class="lh" data-view="forts" hidden><h2>${w.strengths} <span>${j.strengths.length}</span></h2></div><div class="lh" data-view="demo" hidden><h2>${w.demo} <span>${j.env.length}</span></h2></div><div class="rows" data-view="faibles">${j.weak.length ? j.weak.map(row).join("") : `<p class="empty">${w.nothingLeft}</p>`}</div><div class="rows" data-view="forts" hidden>${j.strengths.map((s) => quiet(w.names[s.principle] ?? s.principle, w.on(s.count, s.of, s.kind), "green")).join("")}</div><div class="rows" data-view="demo" hidden>${j.env.map((e) => quiet(title(e), scope(e), "amber")).join("")}</div></section>`;
+
+  // ——— The detail of each point: its capture in a browser's frame, a place for each screen or step it touches, what
+  // the user lives there, its lead, and whether the person agrees.
+  const point = (wp: WeakPoint, i: number) => {
+    const first = wp.places[0]!;
+    const places = wp.places.length > 1 ? `<div class="places">${wp.places.map((p, k) => `<button type="button" class="place${k === 0 ? " on" : ""}" data-src="${p.shot ? esc(href(p.shot)) : ""}" data-url="${esc(addressOf(p))}" data-lived="${esc(p.reason)}">${p.shot ? `<img src="${esc(href(p.shot))}" alt="" loading="lazy">` : ""}${esc(p.where)}</button>`).join("")}</div>` : "";
+    const where = wp.kind === "check" && wp.places.length > 1 ? `<span class="src mono">${wp.places.map((p) => esc(p.where)).join(" · ")}</span>` : "";
+    const agreement = judged(wp) && first.votes ? w.agreeing(first.votes) : w.measuredBy;
+    return `<article class="point" data-weak="${esc(wp.id)}" data-n="${i + 1}"${i === 0 ? "" : " hidden"}><p class="dk"><span class="ty ty-${typeOf(wp)}">${w.kinds[wp.kind]}</span> · ${w.number(i + 1)} · ${esc(scope(wp))} · ${esc(agreement)}</p><h2 class="dt">${esc(title(wp))}</h2><div class="viewer"><div class="chrome"><i></i><i></i><i></i><span class="url mono">${esc(addressOf(first))}</span></div><div class="vimg">${img(first.shot, first.where)}</div>${places}</div><div class="blk"><h3>${w.lived}</h3><p class="lived">${esc(first.reason)}</p>${where}</div><div class="blk"><h3>${w.lead}</h3><div class="fix"><span class="ic" aria-hidden="true">→</span><div><p>${esc(fixOf(wp))}</p><p class="m">${w.effort[wp.effort]} · ${w.effect[wp.effect]}</p></div></div></div><div class="agree"><span>${w.agree}</span>${parts.say(verdicts.get(wp.id) ?? null)}<span class="k"><kbd>J</kbd> <kbd>K</kbd> ${w.keys}</span></div></article>`;
   };
-  const weak = `<section id="weak"><div class="wrap"><h2>${w.weak}</h2><p class="note">${w.weakNote}</p>${parts.rates}<p class="muted small" id="feedback-note" hidden>${w.feedbackNote}</p>${j.weak.length ? `<div class="points">${j.weak.map(weakHtml).join("")}</div>` : `<p class="muted">${w.noWeak}</p>`}</div></section>`;
-  const env = j.env.length ? `<section id="env"><div class="wrap"><div class="aside"><h2>${w.env}</h2><p class="note">${w.envNote}</p><div class="points points--env">${j.env.map(weakHtml).join("")}</div></div></div></section>` : "";
+  const strong = `<section id="view-forts" data-view="forts" hidden><p class="dk"><span class="ty ty-green">${w.keepTag}</span></p><h2 class="dt">${w.keepTitle}</h2>${
+    j.strengths.length ? `<div class="strong">${j.strengths.map((s) => `<div class="card">${s.shot ? `<button type="button" class="zoom" data-full="${esc(href(s.shot))}" data-title="${esc(s.where)}">${img(s.shot, s.where)}</button>` : ""}<div class="cb"><b>${esc(w.names[s.principle] ?? s.principle)}</b><span class="cs">${esc(w.on(s.count, s.of, s.kind))}</span><p>${esc(s.reason)}</p><span class="src mono">${esc(s.where)}</span></div></div>`).join("")}</div>` : `<p class="lived">${w.noStrength}</p>`
+  }${j.accepted.length ? `<div class="blk"><h3>${w.acceptedTitle}</h3><ul class="plain">${j.accepted.map((a) => `<li><span class="mono">${esc(a.where)}</span> ${esc(a.what)}</li>`).join("")}</ul></div>` : ""}${j.leftToStyle.length ? `<p class="small">${esc(w.leftToStyle(j.leftToStyle.join(", ")))}</p>` : ""}</section>`;
+  const demo = `<section id="view-demo" data-view="demo" hidden><p class="dk"><span class="ty ty-amber">${w.checkTag}</span></p><h2 class="dt">${w.demoTitle}</h2><p class="lived">${j.env.length ? w.demoNote : w.noDemo}</p>${
+    j.env.length ? `<ul class="demo">${j.env.map((e) => `<li>${e.places[0]?.shot ? `<button type="button" class="zoom" data-full="${esc(href(e.places[0].shot))}" data-title="${esc(title(e))}">${img(e.places[0].shot, e.places[0].where)}</button>` : ""}<div><b>${esc(title(e))}</b><span class="src mono">${esc(scope(e))}</span><p>${esc(e.places[0]?.reason ?? "")}</p></div></li>`).join("")}</ul>` : ""
+  }</section>`;
+  const detail = `<section class="detail"><div data-view="faibles">${j.weak.length ? j.weak.map(point).join("") : `<p class="lived">${w.nothingLeft}</p>${parts.say({ id: "nothing-to-redo", category: "screens", verdict: "Nothing to redo" })}`}</div>${strong}${demo}</section>`;
 
-  // ——— Leads: one per weak point, the most effect first, then the quickest.
-  const indexOf = new Map(j.weak.map((wp, i) => [wp.id, i + 1]));
-  const rank = { high: 0, medium: 1, low: 2, quick: 0, big: 2 } as Record<string, number>;
-  const leadsByEffect = (["high", "medium", "low"] as Effect[]).map((effect) => ({ effect, items: j.weak.filter((wp) => wp.effect === effect).sort((a, b) => rank[a.effort]! - rank[b.effort]! || indexOf.get(a.id)! - indexOf.get(b.id)!) })).filter((g) => g.items.length);
-  const leads = j.weak.length
-    ? `<section id="leads"><div class="wrap"><h2>${w.leads}</h2><p class="note">${w.leadsNote}</p>${leadsByEffect.map((g) => `<div class="leads"><h3>${w.effect[g.effect]}</h3><ol>${g.items.map((wp) => `<li class="lead" data-effect="${wp.effect}" data-effort="${wp.effort}"><p class="lead__fix">${esc(fixOf(wp))}</p><p class="lead__meta"><span class="effort effort--${wp.effort}">${w.effort[wp.effort]}</span><a href="#weak-${indexOf.get(wp.id)}">${indexOf.get(wp.id)}. ${esc(title(wp))}</a></p></li>`).join("")}</ol></div>`).join("")}</div></section>`
-    : "";
-
-  // ——— Detail: every screen and every journey, folded.
-  const mark = (pass: boolean, accepted?: boolean) => `<span class="mark ${accepted ? "mark--accepted" : pass ? "mark--ok" : "mark--bad"}">${accepted ? w.accepted : pass ? w.passes : w.fails}</span>`;
-  const screenDetail = (s: Judgement["screens"][number]) => {
-    const failing = s.verdicts.filter((v) => !v.pass).length;
-    return `<details class="fold"><summary>${route(s.page)}<span class="muted">${esc(w.failing(failing, s.checks.length))}</span></summary><div class="fold__body">${shot(s.shot, s.page, "shot--tall")}<div><ul class="verdicts">${s.verdicts.map((v) => `<li>${mark(v.pass, v.accepted)}<b>${esc(w.names[v.principle] ?? v.principle)}</b><span class="votes">${esc(v.votes)}</span><span class="said">${esc(v.reason)}</span></li>`).join("")}</ul>${s.checks.length ? `<h4>${w.checksTitle}</h4><ul class="verdicts">${s.checks.map((c) => `<li>${mark(false)}<b>${esc(w.titles[c.check] ?? c.check)}</b><span class="votes">×${c.count}</span><span class="said">${esc(c.example)}</span></li>`).join("")}</ul>` : ""}</div></div></details>`;
-  };
-  const journeyDetail = (jr: Judgement["journeys"][number]) =>
-    `<details class="fold"><summary><span class="name">${esc(jr.name)}</span><span class="muted">${esc(jr.broke ? w.stopsAt(jr.broke.step) : w.goesThrough)}</span></summary><div class="fold__body fold__body--journey"><ol class="steps">${jr.steps.map((s) => `<li${jr.broke?.step === s.index ? ' class="steps__broke"' : ""}>${shot(s.shot, `${jr.name} · ${s.index}. ${s.action}`)}<span class="steps__n">${s.index}</span><span class="small">${esc(s.action)}</span></li>`).join("")}</ol>${jr.broke ? `<p class="said">${esc(jr.broke.reason)}</p>` : ""}<ul class="verdicts">${jr.verdicts.map((v) => `<li>${mark(v.pass)}<b>${esc(w.names[v.principle] ?? v.principle)}</b><span class="votes">${esc(v.votes)}</span><span class="said">${esc(v.reason)}</span></li>`).join("")}</ul></div></details>`;
-  const accepted = j.accepted.length ? `<h3>${w.acceptedTitle}</h3><ul class="plain">${j.accepted.map((a) => `<li>${route(a.where)} ${esc(a.what)}</li>`).join("")}</ul>` : "";
-  const detail = `<section id="detail"><div class="wrap"><h2>${w.detail}</h2><p class="note">${w.detailNote}</p><h3>${w.screensTitle}</h3><div class="folds">${j.screens.map(screenDetail).join("")}</div>${j.journeys.length ? `<h3>${w.journeysTitle}</h3><div class="folds">${j.journeys.map(journeyDetail).join("")}</div>` : ""}${accepted}</div></section>`;
-
-  const foot = `<footer><div class="wrap">${j.judges ? `<p>${w.judgedBy(esc(j.judges.models.join(", ") || w.unnamed), esc(j.judges.principles))}</p>` : ""}<p>${esc(parts.run)}</p></div></footer>`;
   const dialog = `<dialog id="large" aria-labelledby="large-title"><div class="large"><div class="large__bar"><span id="large-title"></span><button type="button" class="large__close">${w.close}</button></div><div class="large__body"><img alt=""></div></div></dialog>`;
 
   return `<!doctype html>
@@ -632,24 +637,17 @@ ${j.product.sentence ? `<p class="what">${esc(j.product.sentence)}</p>` : ""}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AEOM · ${esc(j.product.name ?? parts.run)}</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23fff' stroke='%2316130f' stroke-width='3'/%3E%3Ccircle cx='18' cy='16' r='6' fill='%2316130f'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230F1115'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23fff'/%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem("aeom-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
-<style>
-${fontFaces()}
-${STYLE}
-</style>
+<style>${STYLE}</style>
 </head>
 <body>
-${head}
-${nav}
-<main>
-${strengths}
-${weak}
-${env}
-${leads}
+${top}
+${band}<main class="app">
+${side}
+${list}
 ${detail}
 </main>
-${foot}
 ${dialog}
 <script>${parts.feedbackScript}</script>
 <script>${SCRIPT}</script>
@@ -658,213 +656,273 @@ ${dialog}
 `;
 }
 
-/** The page's own gestures: a capture opened large, the theme switched and kept. */
+/** The page's own gestures: the views and the filters, a point chosen by a click or J and K, a place, a capture large, the theme, the command copied. */
 const SCRIPT = `
 (() => {
   const root = document.documentElement;
   const dark = () => (root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches);
-  const toggle = document.querySelector("[data-theme-toggle]");
-  if (toggle) toggle.addEventListener("click", () => {
+  document.querySelectorAll("[data-theme-toggle]").forEach((b) => b.addEventListener("click", () => {
     const next = dark() ? "light" : "dark";
     root.dataset.theme = next;
     try { localStorage.setItem("aeom-theme", next); } catch (e) {}
+  }));
+  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+    const text = b.dataset.copy;
+    try { await navigator.clipboard.writeText(text); } catch (e) {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.append(area);
+      area.select();
+      try { document.execCommand("copy"); } catch (e2) {}
+      area.remove();
+    }
+    const label = b.querySelector(".lab");
+    const was = label.textContent;
+    label.textContent = b.dataset.done;
+    setTimeout(() => { label.textContent = was; }, 1600);
+  }));
+
+  let view = "faibles", filter = "all";
+  const rows = [...document.querySelectorAll("button.row")];
+  const points = [...document.querySelectorAll("article.point")];
+  let chosen = rows[0] ? rows[0].dataset.weak : null;
+  const matches = (r) => {
+    if (filter === "all") return true;
+    const [k, v] = filter.split(":");
+    if (k === "type") return r.dataset.type === v;
+    if (k === "effort") return r.dataset.effort === v;
+    if (k === "journey") return (r.dataset.journeys || "").split(" ").includes(v);
+    return true;
+  };
+  const choose = (id) => {
+    chosen = id;
+    rows.forEach((r) => r.classList.toggle("on", r.dataset.weak === id));
+    points.forEach((p) => (p.hidden = p.dataset.weak !== id));
+  };
+  const render = () => {
+    document.querySelectorAll("[data-view]").forEach((e) => (e.hidden = e.dataset.view !== view));
+    document.querySelectorAll(".f").forEach((b) => b.classList.toggle("on", view === "faibles" ? b.dataset.f === filter : b.dataset.f === view));
+    if (view !== "faibles") return;
+    const shown = rows.filter(matches);
+    rows.forEach((r) => (r.hidden = !shown.includes(r)));
+    const n = document.getElementById("count-faibles");
+    if (n) n.textContent = shown.length;
+    choose(shown.some((r) => r.dataset.weak === chosen) ? chosen : shown[0] ? shown[0].dataset.weak : null);
+  };
+  document.querySelectorAll(".f").forEach((b) => b.addEventListener("click", () => {
+    const f = b.dataset.f;
+    if (f === "forts" || f === "demo") view = f;
+    else { view = "faibles"; filter = f; }
+    render();
+  }));
+  rows.forEach((r) => r.addEventListener("click", () => choose(r.dataset.weak)));
+  document.addEventListener("keydown", (e) => {
+    if (view !== "faibles" || e.metaKey || e.ctrlKey || e.altKey || (e.key !== "j" && e.key !== "k")) return;
+    if (e.target.closest && e.target.closest("input, textarea")) return;
+    const shown = rows.filter((r) => !r.hidden);
+    const i = shown.findIndex((r) => r.dataset.weak === chosen);
+    const next = shown[e.key === "j" ? i + 1 : i - 1];
+    if (!next) return;
+    choose(next.dataset.weak);
+    next.scrollIntoView({ block: "nearest" });
   });
+  points.forEach((p) => p.querySelectorAll(".place").forEach((b) => b.addEventListener("click", () => {
+    p.querySelectorAll(".place").forEach((x) => x.classList.toggle("on", x === b));
+    const box = p.querySelector(".vimg");
+    if (b.dataset.src) {
+      let image = box.querySelector("img");
+      if (!image) { box.replaceChildren(); image = document.createElement("img"); image.alt = ""; box.append(image); }
+      image.src = b.dataset.src;
+    }
+    p.querySelector(".url").textContent = b.dataset.url;
+    p.querySelector(".lived").textContent = b.dataset.lived;
+  })));
+
   const dialog = document.getElementById("large");
-  const image = dialog.querySelector("img");
-  document.addEventListener("click", (event) => {
-    const opener = event.target.closest(".shot");
-    if (!opener) return;
-    image.src = opener.dataset.full;
-    image.alt = opener.dataset.title || "";
-    dialog.querySelector("#large-title").textContent = opener.dataset.title || "";
+  const large = dialog.querySelector("img");
+  const open = (src, label) => {
+    large.src = src;
+    large.alt = label || "";
+    dialog.querySelector("#large-title").textContent = label || "";
     dialog.showModal();
     dialog.querySelector(".large__body").scrollTop = 0;
+  };
+  document.addEventListener("click", (e) => {
+    const zoom = e.target.closest && e.target.closest(".zoom");
+    if (zoom) return open(zoom.dataset.full, zoom.dataset.title);
+    const shot = e.target.closest && e.target.closest(".vimg img");
+    if (shot) open(shot.getAttribute("src"), shot.closest("article").querySelector(".url").textContent);
   });
   dialog.querySelector(".large__close").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+  render();
 })();`;
 
 /**
- * AEOM's own kit, as its site and its other pages wear it: sun, ink, paper and the eye, Bricolage Grotesque and
- * JetBrains Mono. A page to read top to bottom: the verdict, then what is good, what fails, what to do. Light and dark.
+ * The colours and the type of the validated mockup, « la liste de tri », light and dark. Geist when the machine has
+ * it, the system's sans otherwise: AEOM ships no copy of it, and the page loads nothing from the network.
  */
 const STYLE = `
-  :root {
-    --sun: #ffd84d; --ink: #16130f; --paper: #fffaf0; --surface: #ffffff; --muted: #5f5649; --rule: rgba(22, 19, 15, 0.14);
-    --ok: #1f7a45; --ok-soft: #dff3e5; --bad: #b8321a; --bad-soft: #ffe3dc; --warn: #8a5a00; --warn-soft: #fff1c7; --flat: #efe8d8;
-    --hero: var(--sun); --hero-ink: var(--ink); --shadow: var(--ink);
-    --display: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
-    --gutter: max(16px, min(4vw, 40px));
-    color-scheme: light;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ink: #f4ecdb; --paper: #14110d; --surface: #1e1a14; --muted: #b5aa95; --rule: rgba(244, 236, 219, 0.14);
-      --ok: #7fd6a0; --ok-soft: #173023; --bad: #ff9277; --bad-soft: #3a1d15; --warn: #ffd27a; --warn-soft: #33290f; --flat: #2a241b;
-      --hero: #1e1a14; --hero-ink: #f4ecdb; --shadow: #000;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --ink: #f4ecdb; --paper: #14110d; --surface: #1e1a14; --muted: #b5aa95; --rule: rgba(244, 236, 219, 0.14);
-    --ok: #7fd6a0; --ok-soft: #173023; --bad: #ff9277; --bad-soft: #3a1d15; --warn: #ffd27a; --warn-soft: #33290f; --flat: #2a241b;
-    --hero: #1e1a14; --hero-ink: #f4ecdb; --shadow: #000;
-    color-scheme: dark;
-  }
-  * { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-  html { scroll-padding-top: 64px; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font: 500 15.5px/1.5 var(--display); -webkit-font-smoothing: antialiased; }
-  h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin: 0; }
-  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; }
-  p, li, blockquote { text-wrap: pretty; }
-  img { display: block; max-width: 100%; height: auto; }
-  button { font: inherit; color: inherit; cursor: pointer; }
-  a { color: inherit; }
-  code, .where, .run, .votes { font-family: var(--mono); font-weight: 500; }
-  code { font-size: 0.9em; padding: 1px 5px; border-radius: 5px; background: var(--flat); }
-  :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 6px; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding-inline: var(--gutter); }
-  .muted, .note { color: var(--muted); }
-  .small { font-size: 13px; }
-  .note { max-width: 68ch; margin-bottom: 18px; }
+:root{
+  --bg:#F5F6F8; --panel:#FFFFFF; --ink:#0F1115; --ink-2:#3A3F4A; --muted:#6B7280; --line:#E3E5EA; --soft:#F0F1F4; --sel:#EEF1FF; --sel-line:#C9D2FF;
+  --accent:#3451E0; --red:#E5484D; --orange:#EC7A1C; --gray:#9AA0AB; --green:#1F9D61; --green-bg:#E7F6EE; --amber:#B7740C; --amber-bg:#FDF3E2;
+  --sans:Geist, system-ui, -apple-system, "Segoe UI", sans-serif; --mono:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1013;--panel:#15181D;--ink:#ECEEF2;--ink-2:#C4C8D0;--muted:#8B919C;--line:#252A31;--soft:#1C2026;--sel:#1C2342;--sel-line:#2F3D7A;--accent:#7C8FFF;--green-bg:#122A1E;--amber-bg:#2E2412;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1013;--panel:#15181D;--ink:#ECEEF2;--ink-2:#C4C8D0;--muted:#8B919C;--line:#252A31;--soft:#1C2026;--sel:#1C2342;--sel-line:#2F3D7A;--accent:#7C8FFF;--green-bg:#122A1E;--amber-bg:#2E2412;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:400 14px/1.5 var(--sans);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono,code,kbd{font-family:var(--mono)}
+code{font-size:.92em;background:var(--soft);padding:1px 5px;border-radius:5px}
+.small{font-size:12px;color:var(--muted)}
 
-  .eye { display: inline-block; flex: none; position: relative; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid currentColor; }
-  .eye i { position: absolute; width: 44%; height: 44%; left: 28%; top: 28%; border-radius: 50%; background: #16130f; transform: translate(18%, 4%); }
+.top{height:56px;flex:none;display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-.01em}
+.logo i{width:20px;height:20px;border-radius:6px;background:var(--ink);display:grid;place-items:center}
+.logo i:after{content:"";width:8px;height:8px;border-radius:50%;background:var(--panel)}
+.crumb{color:var(--muted);display:flex;gap:8px;align-items:center;min-width:0;white-space:nowrap}
+.crumb b{color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:99px;background:var(--soft);font-weight:500;font-size:13px;white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:9px;font-weight:500;font-size:13px;white-space:nowrap}
+.btn.pri{background:var(--ink);color:var(--panel)}
+.btn.sec{border:1px solid var(--line);background:var(--panel)}
+.btn .mono{font-size:12px;opacity:.7}
 
-  .hero { background: var(--hero); color: var(--hero-ink); border-bottom: 2px solid var(--ink); }
-  .hero .wrap { padding-block: 20px 34px; display: grid; gap: 12px; }
-  .bar { display: flex; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  .brand { display: inline-flex; gap: 8px; align-items: center; font-weight: 800; letter-spacing: 0.04em; }
-  .bar__end { display: inline-flex; gap: 12px; align-items: center; }
-  .run { font-size: 12px; opacity: 0.75; }
-  .theme { width: 34px; height: 34px; border-radius: 50%; border: 2px solid currentColor; background: transparent; font-size: 17px; line-height: 1; display: grid; place-items: center; }
-  .kicker { font-weight: 800; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
-  .hero h1 { font-size: clamp(36px, 6vw, 64px); line-height: 0.98; letter-spacing: -0.045em; }
-  .what { font-size: clamp(17px, 2vw, 20px); max-width: 52ch; }
-  .measured { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-  .measured li { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1.5px solid currentColor; }
-  .call { margin-top: 14px; display: grid; gap: 8px; max-width: 72ch; }
-  .verdict { font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; }
-  .next { font-size: 16px; }
-  .next code { background: rgba(22, 19, 15, 0.1); }
-  :root[data-theme="dark"] .next code { background: var(--flat); }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .next code { background: var(--flat); } }
+.verdict{flex:none;display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink-2)}
+.verdict b{color:var(--ink);font-weight:600}
+.meter{display:flex;gap:3px;align-items:center;flex:none}
+.meter i{width:14px;height:6px;border-radius:2px;background:var(--line)}
+.meter i.on{background:var(--red)}
+.vphrase .where,.vphrase code{font-family:var(--mono);font-size:.92em}
+.verdict .stats{margin-left:auto;display:flex;gap:16px;color:var(--muted);font-size:13px;white-space:nowrap}
 
-  .jump { position: sticky; top: 0; z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); }
-  .jump .wrap { display: flex; gap: 6px; overflow-x: auto; padding-block: 10px; scrollbar-width: none; }
-  .jump a { flex: none; text-decoration: none; font-weight: 700; font-size: 14px; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--ink); background: var(--surface); }
-  .jump a:hover { background: var(--sun); color: #16130f; }
-  .jump b { margin-left: 6px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .jump a:hover b { color: inherit; }
+.app{flex:1;display:grid;grid-template-columns:232px 440px minmax(0,1fr);min-height:0}
+.side{border-right:1px solid var(--line);padding:16px 12px;overflow:auto;background:var(--panel)}
+.gl{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:14px 10px 6px}
+.gl:first-child{padding-top:0}
+.f{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;color:var(--ink-2);text-align:left}
+.f:hover{background:var(--soft)}
+.f.on{background:var(--sel);color:var(--ink);font-weight:500}
+.f .fl{min-width:0}
+.f .c{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.f .d{flex:none;width:8px;height:8px;border-radius:50%}
+.d.red{background:var(--red)}.d.green{background:var(--green)}.d.amber{background:var(--amber)}
+.f .q{flex:none;width:16px;text-align:center;color:var(--muted)}
+.foot{margin:18px 10px 0;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:8px}
+.rates{font-size:12px;color:var(--muted)}
 
-  section { padding-block: 44px 8px; }
-  section h2 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.03em; margin-bottom: 6px; }
+.list{border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+.lh{position:sticky;top:0;background:var(--panel);display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);z-index:1}
+.lh h2{font-size:15px;font-weight:600}
+.lh h2 span{color:var(--muted);font-weight:400;margin-left:6px}
+.lh .sort{font-size:12.5px;color:var(--muted)}
+.row{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:12px;width:100%;padding:12px 18px;border-bottom:1px solid var(--soft);text-align:left;align-items:start}
+button.row{cursor:pointer}
+button.row:hover{background:var(--soft)}
+.row.on{background:var(--sel);box-shadow:inset 3px 0 0 var(--accent)}
+.row.quiet{grid-template-columns:18px minmax(0,1fr)}
+.sev{margin-top:4px;display:flex;gap:2px;align-items:flex-end;height:12px}
+.sev i{width:3px;border-radius:1px;background:var(--line)}
+.sev i:nth-child(1){height:5px}.sev i:nth-child(2){height:8px}.sev i:nth-child(3){height:12px}
+.sev.s3 i.on{background:var(--red)}.sev.s2 i.on{background:var(--orange)}.sev.s1 i.on{background:var(--gray)}
+.sev.green i{background:var(--green)}.sev.amber i{background:var(--amber)}
+.rt{display:block;min-width:0}
+.row .t{display:block;font-weight:500;line-height:1.35}
+.row .w{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.ty{font-weight:500}
+.ty-journey{color:var(--red)}.ty-principle{color:var(--orange)}.ty-check{color:var(--muted)}.ty-green{color:var(--green)}.ty-amber{color:var(--amber)}
+.row .r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.eff{font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2);white-space:nowrap}
+.eff.quick{background:var(--green-bg);color:var(--green)}
+.eff.big{background:var(--amber-bg);color:var(--amber)}
+.vt{font-size:12px;color:var(--muted);white-space:nowrap}
+.empty{padding:18px;color:var(--muted)}
 
-  .shot { display: block; padding: 0; border: 1.5px solid var(--ink); border-radius: 10px; overflow: hidden; background: var(--surface); aspect-ratio: 16 / 10; width: 100%; cursor: zoom-in; }
-  .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: transform 0.25s ease-out; }
-  .shot:hover img { transform: scale(1.03); }
-  .shot--tall { aspect-ratio: 4 / 5; }
+.detail{overflow:auto;padding:24px 28px 40px}
+.dk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.dk .ty{font-weight:600}
+.dt{font-size:26px;line-height:1.2;letter-spacing:-.02em;font-weight:600;margin:8px 0 18px;max-width:22em}
+.viewer{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.chrome{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.chrome i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.chrome .url{margin-left:8px;background:var(--soft);padding:3px 10px;border-radius:6px;flex:1;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vimg{aspect-ratio:16/9.2;overflow:hidden;background:var(--soft);display:grid;place-items:start center}
+.vimg img{width:100%;display:block;cursor:zoom-in}
+.noshot{place-self:center;color:var(--muted);font-size:13px}
+.places{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);overflow:auto}
+.place{flex:none;display:flex;gap:9px;align-items:center;padding:5px 10px 5px 5px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;color:var(--ink-2);background:var(--panel)}
+.place img{width:44px;height:28px;object-fit:cover;object-position:top;border-radius:5px}
+.place.on{border-color:var(--accent);background:var(--sel);color:var(--ink)}
+.blk{margin-top:22px}
+.blk h3{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.lived{font-size:16px;line-height:1.55;color:var(--ink)}
+.src{display:block;font-size:12.5px;color:var(--muted);margin-top:6px}
+.fix{display:flex;gap:14px;padding:16px 18px;border-radius:12px;background:var(--green-bg);align-items:flex-start}
+.fix .ic{flex:none;width:28px;height:28px;border-radius:8px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:600}
+.fix p{font-size:15px;font-weight:500;color:var(--ink)}
+.fix .m{font-size:12.5px;color:var(--green);font-weight:500;margin-top:3px}
+.agree{margin-top:22px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:18px;border-top:1px solid var(--line)}
+.agree .k{margin-left:auto;font-size:12px;color:var(--muted)}
+.say{display:inline-flex;flex-wrap:wrap;align-items:center;gap:10px}
+.say button{padding:7px 14px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--panel)}
+.say button:first-of-type{border-radius:9px 0 0 9px}
+.say button+button{border-left:0;border-radius:0 9px 9px 0}
+.say button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.say input{display:none;font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);min-width:220px}
+.say[data-agree="false"] input{display:block}
+.say .said{font-size:12.5px;color:var(--muted)}
+kbd{font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 5px;background:var(--panel)}
 
-  .strengths { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 36px; }
-  .strength { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 16px; align-items: start; }
-  .strength__text { display: grid; gap: 6px; }
-  .strength h3 { font-size: 20px; }
-  .scope { font-weight: 700; color: var(--ok); font-size: 14px; }
-  blockquote { font-size: 15px; padding: 2px 0 2px 14px; border-left: 3px solid var(--sun); }
+.strong{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.zoom{display:block;width:100%;cursor:zoom-in}
+.card .zoom img{width:100%;aspect-ratio:16/8;object-fit:cover;object-position:top;display:block;border-bottom:1px solid var(--line)}
+.cb{padding:12px 14px}
+.cb b{font-weight:600;display:flex;gap:8px;align-items:center}
+.cb b:before{content:"✓";flex:none;width:18px;height:18px;border-radius:50%;background:var(--green-bg);color:var(--green);display:grid;place-items:center;font-size:11px}
+.cs{display:block;font-size:12.5px;color:var(--green);margin:2px 0 4px 26px}
+.cb p{font-size:13px;color:var(--ink-2);margin-left:26px}
+.cb .src{margin-left:26px}
+.demo{list-style:none;margin-top:18px;display:grid;gap:10px}
+.demo li{display:grid;grid-template-columns:160px minmax(0,1fr);gap:14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+.demo li:not(:has(.zoom)){grid-template-columns:minmax(0,1fr)}
+.demo .zoom img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;border-radius:8px;display:block}
+.demo b{font-weight:600}
+.demo p{font-size:13px;color:var(--ink-2);margin-top:4px}
+.plain{list-style:none;display:grid;gap:6px;font-size:13px;color:var(--ink-2)}
 
-  .points { display: grid; gap: 14px; }
-  .point { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 18px 0 20px; border-top: 1.5px solid var(--ink); }
-  .points--env .point { grid-template-columns: minmax(0, 1fr); }
-  .point__n { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-  .point__body { display: grid; gap: 10px; min-width: 0; }
-  .point h3 { font-size: 20px; line-height: 1.2; }
-  .point__kind { font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .kind { font-weight: 800; padding: 3px 9px; border-radius: 999px; background: var(--flat); color: var(--muted); }
-  .kind--breaks, .kind--does-not-load { background: var(--bad); color: var(--paper); }
-  .kind--principle, .kind--journey-principle { background: var(--bad-soft); color: var(--bad); }
-  .places { list-style: none; padding: 0; display: grid; gap: 6px; }
-  .places li { display: grid; grid-template-columns: minmax(90px, max-content) auto minmax(0, 1fr); gap: 4px 12px; align-items: baseline; font-size: 14px; }
-  .where { font-size: 13px; overflow-wrap: anywhere; }
-  .where--name { font-family: var(--display); font-size: 14px; font-weight: 700; }
-  .next .where { font-size: 0.92em; }
-  .votes { font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--bad-soft); color: var(--bad); white-space: nowrap; }
-  .places li:not(:has(.votes)) { grid-template-columns: minmax(90px, max-content) minmax(0, 1fr); }
-  .places li:not(:has(.where)) { grid-template-columns: minmax(0, 1fr); }
-  .said { color: var(--muted); }
-  .shots { display: grid; grid-template-columns: repeat(3, minmax(0, 220px)); gap: 10px; }
-  .point details summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); }
+dialog{width:min(1200px,96vw);height:92vh;max-height:92vh;margin:auto;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink)}
+dialog::backdrop{background:rgba(8,9,12,.6)}
+.large{display:grid;grid-template-rows:auto minmax(0,1fr);height:100%}
+.large__bar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);font-family:var(--mono)}
+.large__close{font-family:var(--sans);border:1px solid var(--line);border-radius:9px;padding:5px 12px;font-weight:500;color:var(--ink)}
+.large__body{overflow:auto;padding:14px;background:var(--soft)}
+.large__body img{display:block;margin:0 auto;max-width:100%;border-radius:6px}
 
-  .aside { background: var(--warn-soft); border: 2px dashed var(--warn); border-radius: 18px; padding: 22px 22px 8px; }
-  .aside h2 { color: var(--warn); }
-  .aside .point { border-top-color: var(--rule); }
-  .points--env .kind { background: transparent; border: 1.5px solid var(--warn); color: var(--warn); }
-
-  .leads { margin-top: 18px; }
-  .leads h3 { font-size: 15px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .leads ol { list-style: none; padding: 0; display: grid; gap: 0; }
-  .lead { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--rule); }
-  .lead__fix { font-size: 16.5px; font-weight: 600; max-width: 72ch; }
-  .lead__meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
-  .lead__meta a { text-underline-offset: 3px; }
-  .effort { font-weight: 800; font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1.5px solid var(--ink); color: var(--ink); }
-  .effort--quick { background: var(--sun); color: #16130f; border-color: #16130f; }
-
-  .folds { display: grid; gap: 0; margin-bottom: 22px; border-top: 1.5px solid var(--ink); }
-  .fold { border-bottom: 1px solid var(--rule); }
-  .fold summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; padding: 12px 0; font-weight: 700; list-style: none; }
-  .fold summary::-webkit-details-marker { display: none; }
-  .fold summary::before { content: "+"; width: 18px; font: 800 16px/1 var(--mono); color: var(--muted); }
-  .fold[open] summary::before { content: "−"; }
-  .fold summary .muted { font-size: 13px; font-weight: 600; }
-  .fold__body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; padding: 4px 0 20px; }
-  .fold__body--journey { grid-template-columns: minmax(0, 1fr); }
-  .fold h4 { font-size: 14px; margin: 14px 0 6px; }
-  .verdicts { list-style: none; padding: 0; display: grid; gap: 7px; }
-  .verdicts li { display: grid; grid-template-columns: 70px minmax(140px, max-content) auto minmax(0, 1fr); gap: 4px 10px; align-items: baseline; font-size: 13.5px; }
-  .mark { font-size: 12px; font-weight: 800; }
-  .mark--ok { color: var(--ok); } .mark--bad { color: var(--bad); } .mark--accepted { color: var(--muted); }
-  .verdicts .votes { background: var(--flat); color: var(--muted); }
-  .steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-  .steps li { position: relative; display: grid; gap: 6px; align-content: start; }
-  .steps__n { position: absolute; left: 6px; top: 6px; width: 22px; height: 22px; border-radius: 50%; background: #16130f; color: var(--sun); font: 800 12px/22px var(--display); text-align: center; pointer-events: none; }
-  .steps__broke .shot { border-color: var(--bad); border-width: 2.5px; }
-  .plain { list-style: none; padding: 0; display: grid; gap: 8px; font-size: 14px; }
-  #detail h3 { font-size: 17px; margin: 8px 0; }
-
-  .say { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .say button { border: 1.5px solid var(--ink); background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: 12.5px; font-weight: 700; }
-  .say button[aria-pressed="true"][data-agree="true"] { background: var(--ok); border-color: var(--ok); color: var(--paper); }
-  .say button[aria-pressed="true"][data-agree="false"] { background: var(--bad); border-color: var(--bad); color: var(--paper); }
-  .say input { display: none; font: inherit; font-size: 13px; padding: 4px 8px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--surface); color: var(--ink); flex: 1 1 200px; min-width: 0; }
-  .say[data-agree="false"] input { display: block; }
-  .said[role="status"] { font-size: 12.5px; }
-  .rates { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-
-  footer { padding-block: 40px 48px; }
-  footer p { font-size: 13px; color: var(--muted); }
-
-  dialog { width: min(1200px, 96vw); height: 92vh; max-height: 92vh; padding: 0; border: 2px solid var(--ink); border-radius: 16px; background: var(--paper); color: var(--ink); }
-  dialog::backdrop { background: rgba(10, 8, 6, 0.7); }
-  .large { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; }
-  .large__bar { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1.5px solid var(--ink); background: var(--sun); color: #16130f; font-size: 14px; font-weight: 700; }
-  .large__close { border: 1.5px solid #16130f; background: #fff; color: #16130f; border-radius: 999px; padding: 5px 12px; font-weight: 800; }
-  .large__body { overflow: auto; padding: 14px; }
-  .large__body img { margin: 0 auto; border: 1.5px solid var(--ink); border-radius: 6px; }
-
-  @media (max-width: 760px) {
-    .strengths { grid-template-columns: 1fr; }
-    .strength { grid-template-columns: 120px minmax(0, 1fr); }
-    .point { grid-template-columns: 30px minmax(0, 1fr); }
-    .point__n { font-size: 22px; }
-    .places li, .places li:not(:has(.votes)) { grid-template-columns: 1fr; gap: 2px; }
-    .places .votes { justify-self: start; }
-    .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fold__body { grid-template-columns: 1fr; }
-    .fold__body .shot--tall { max-width: 260px; }
-    .verdicts li { grid-template-columns: 64px minmax(0, 1fr); }
-    .verdicts .votes, .verdicts .said { grid-column: 2; }
-  }
-  @media (prefers-reduced-motion: reduce) { .shot img { transition: none; } }
+@media (max-width:1100px){
+  html,body{height:auto}
+  .app{grid-template-columns:1fr}
+  .side{border-right:0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .side .gl{width:100%;padding:8px 4px 2px}
+  .side .f{width:auto}
+  .side .foot{width:100%}
+  .list{max-height:50vh;border-right:0;border-bottom:1px solid var(--line)}
+  .verdict{flex-wrap:wrap}
+  .verdict .stats{margin-left:0}
+  .top{gap:10px;padding:0 14px}
+  .crumb span:last-child{display:none}
+  .strong{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .top .pill,.btn.pri .lab{display:none}
+  .demo li{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 `;
