@@ -97,6 +97,7 @@ A full run is long and spawns many agents: some twenty-five subagents (judges, w
 | `aeom principles` | Print the principles the judge uses |
 | `aeom snapshot` | Keep a copy of the captures and reports, such as before a fleet run |
 | `aeom compare` | Compare two snapshots page by page |
+| `aeom ratchet` | Keep the pages that got better after the wave, and put the others back |
 | `aeom sheet` | Lay captures side by side in one image |
 | `aeom direction` | Keep the direction chosen, until a run builds on it |
 | `aeom mockups` | Capture, lay out and check every direction of a round, at once |

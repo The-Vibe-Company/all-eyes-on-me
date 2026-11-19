@@ -20,6 +20,7 @@ import { runEstimate } from "./commands/estimate.js";
 import { runCost } from "./commands/cost.js";
 import { runBench } from "./commands/bench.js";
 import { runRunState } from "./commands/run-state.js";
+import { runRatchet } from "./commands/ratchet.js";
 import { runVerdict } from "./commands/verdict.js";
 import { commandName, ping } from "./telemetry.js";
 import { runUpdate } from "./commands/update.js";
@@ -40,6 +41,7 @@ Commands:
   principles  Print the principles the judge uses
   snapshot    Keep a copy of the captures and reports, such as before a fleet run
   compare     Compare two snapshots page by page
+  ratchet     Keep the pages that got better after the wave, and put the others back
   sheet       Lay captures side by side in one image
   tournament  Run a knockout between directions, one vote per duel, three for the final
   direction   Keep the direction chosen, until a run builds on it
@@ -71,6 +73,7 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
   principles: runPrinciples,
   snapshot: runSnapshot,
   compare: runCompare,
+  ratchet: runRatchet,
   sheet: runSheet,
   tournament: runTournament,
   direction: runDirection,

@@ -5,7 +5,7 @@ import { parseArgs, promisify } from "node:util";
 import { agentLines, markAgent, markRun, newRunState, readRunState, resumePlan, type AgentStatus, type OnDisk, type RunState } from "@aeom/core";
 
 const USAGE = `Usage: aeom run mark <run folder> --phase <name> [--step <step>] [--set NAME=value]... [--option <option>]...
-       aeom run agent <run folder> --name <name> --status <launched|done|merged|refused> [--kind <kind>] [--worktree <path>] [--branch <branch>] [--from <commit>]
+       aeom run agent <run folder> --name <name> --status <launched|done|merged|refused> [--kind <kind>] [--worktree <path>] [--branch <branch>] [--from <commit>] [--page <route>]
        aeom run status [<run folder>]
        aeom run resume [<run folder>]
 
@@ -18,7 +18,8 @@ session closed can be taken up by a new one.
           was asked with, such as --option sans-pr. It notes the run branch's
           commit too.
   agent   An agent is launched (with its worktree, its branch and the commit
-          it started from), done, merged or refused.
+          it started from, and for a page worker its page), done, merged or
+          refused.
   status  Where the run is, and what each agent left, as the disk shows it.
   resume  What a new session sets again, what to do with each agent, and the
           step to go on at.
@@ -146,6 +147,7 @@ export async function runRunState(argv: string[]): Promise<number> {
       worktree: { type: "string" },
       branch: { type: "string" },
       from: { type: "string" },
+      page: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -189,10 +191,14 @@ export async function runRunState(argv: string[]): Promise<number> {
           console.error(`aeom run agent needs --name and --status.`);
           return 1;
         }
+        if (values.page !== undefined && !values.page.startsWith("/")) {
+          console.error(`--page takes the route the page worker rebuilt, as the measure names it, such as --page /cart.`);
+          return 1;
+        }
         const worktree = values.worktree ? resolve(values.worktree) : undefined;
         await update(runDir, (s) => {
           if (values.branch && !values.from && !s.agents.some((a) => a.name === name && a.from)) throw new Error(`--branch goes with --from, the commit its worktree started from, so a new session can tell what it committed.`);
-          return markAgent(s, { name, status: status as AgentStatus, at, kind: values.kind, worktree, branch: values.branch, from: values.from });
+          return markAgent(s, { name, status: status as AgentStatus, at, kind: values.kind, worktree, branch: values.branch, from: values.from, page: values.page });
         });
       }
       return 0;

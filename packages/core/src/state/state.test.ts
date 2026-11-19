@@ -23,6 +23,9 @@ test("each agent is kept with its worktree, its branch, the commit it started fr
   assert.deepEqual(s.agents, [{ name: "dir-topo", kind: "direction worker", status: "done", worktree: "/wt/run-1-dir-topo", branch: "aeom/run-1-dir-topo", from: "abc", at: AT }]);
   assert.throws(() => markAgent(s, { name: "x", status: "gone" as never, at: AT }), /launched, done, merged or refused/);
   assert.throws(() => markAgent(s, { name: "new-one", status: "done", at: AT }), /new-one was never launched/);
+  s = markAgent(s, { name: "cart", kind: "page worker", status: "launched", branch: "aeom/run-1-cart", from: "def", page: "/cart", at: AT });
+  s = markAgent(s, { name: "cart", status: "merged", at: AT });
+  assert.equal(s.agents.find((a) => a.name === "cart")!.page, "/cart", "a page worker keeps its page once merged");
 });
 
 test("the plan to resume says what to set again, what each agent left, and where to go on", () => {
