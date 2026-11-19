@@ -135,17 +135,31 @@ test("aeom bench score --judge counts the last passes of /aeom judge of each app
     assert.match(first.out, /No earlier judge bench to compare with: this one is the first\./);
     const kept = JSON.parse(readFileSync(join(out, "benchmark-judge.json"), "utf8")) as { aeom: string; apps: { app: string; passes: { run: string }[] }[] };
     assert.deepEqual(kept.apps.find((a) => a.app === "boutique")!.passes.map((p) => p.run), ["run-20261119-0900", "run-20261119-1000", "run-20261119-1100"]);
+    const history = () => readFileSync(join(out, "history.jsonl"), "utf8").trim().split("\n");
 
-    // Two passes asked: the last two. The bench before is the first one, kept with its version.
-    const second = await run(["bench", "score", out, "--bench", bench, "--judge", "--passes", "2"]);
-    assert.match(second.out, /boutique +2 passes +found 1\/2 +beyond the list 0\.5 \(0–1\) +1 verdict that changes/);
-    assert.match(second.out, /Since the judge bench of \d{4}-\d{2}-\d{2} \(AEOM [0-9a-f]{7,}\):\n +boutique +found −0\.3 +beyond the list \+0\.2 +verdicts that change −1 +cost ±0/);
-    assert.equal(readFileSync(join(out, "history.jsonl"), "utf8").trim().split("\n").length, 2, "each judge bench kept");
+    // A fourth pass, and one that stopped before its verdict: the last three that judged, compared with the bench before.
+    await runOf("run-20261119-1200", { judged: true, failures: [faint, { kind: "principle", where: "/panier", what: "states: nothing says the cart is empty" }] });
+    await mkdir(join(out, "boutique", ".aeom", "runs", "run-20261119-1300"), { recursive: true });
+    await writeFile(join(out, "boutique", ".aeom", "runs", "run-20261119-1300", "state.json"), JSON.stringify({ run: "run-20261119-1300", options: ["juger"], phase: "understand" }));
+    const second = await run(["bench", "score", out, "--bench", bench, "--judge"]);
+    assert.match(second.out, /boutique +3 passes +found 1\.3\/2 \(1–2\) +beyond the list 0\.3 \(0–1\) +2 verdicts that change/);
+    assert.match(second.out, /Since the judge bench of \d{4}-\d{2}-\d{2} \(AEOM [0-9a-f]{7,}\):\n +boutique +found ±0 +beyond the list ±0 +verdicts that change ±0 +cost ±0/);
+    assert.equal(history().length, 2, "each judge bench kept");
+    // The same passes scored again: nothing new to keep, and still compared with the bench before them.
+    const again = await run(["bench", "score", out, "--bench", bench, "--judge", "--json"]);
+    assert.equal(again.code, 0, again.out);
+    assert.equal(history().length, 2, "the same bench is not kept twice");
+    assert.match((await run(["bench", "score", out, "--bench", bench, "--judge"])).out, /Since the judge bench of [^\n]*:\n +boutique +found ±0/);
+    // Two passes asked: not compared with a bench of three.
+    assert.match((await run(["bench", "score", out, "--bench", bench, "--judge", "--passes", "2"])).out, /boutique +2 passes +found 1\.5\/2 \(1–2\) +beyond the list 0 +1 verdict that changes[\s\S]*boutique +not compared: 3 passes then, 2 now/);
+    // A line of the history that is not a bench is skipped.
+    await writeFile(join(out, "history.jsonl"), `${readFileSync(join(out, "history.jsonl"), "utf8")}{"mode":"judge","apps":[{"app":"boutique"}]}\n`);
+    assert.equal((await run(["bench", "score", out, "--bench", bench, "--judge"])).code, 0);
 
     // The score of a full run takes the last run that is not a pass of /aeom judge.
     const full = await run(["bench", "score", out, "--bench", bench]);
-    assert.match(full.out, /boutique, run-20261119-0800:/);
-    assert.doesNotMatch(full.out, /run-20261119-1100/);
+    assert.match(full.out, /boutique, run-20261119-0800:/, "not a pass, even one that stopped before its capture");
+    assert.doesNotMatch(full.out, /run-20261119-1[123]00/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

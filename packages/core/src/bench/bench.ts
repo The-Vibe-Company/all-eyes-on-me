@@ -203,13 +203,17 @@ export interface JudgeBenchEntry {
   at: string;
   mode: "judge";
   aeom: string;
-  apps: { app: string; passes: number; total: number; found: number; beyond: number; flips: number; dollars: number | null }[];
+  /** Each app's means, with the runs counted: the same runs scored again are the same bench. */
+  apps: { app: string; runs: string[]; passes: number; total: number; found: number; beyond: number; flips: number; dollars: number | null }[];
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const spread = (values: number[]): Spread | null => (values.length ? { mean: round1(values.reduce((a, b) => a + b, 0) / values.length), min: Math.min(...values), max: Math.max(...values) } : null);
-/** A failure by where it shows and what names it: the same verdict in other words, or on a record made at each visit, is one. */
-const keyOf = (f: Failure) => `${f.where.startsWith("/") ? pageShape(f.where.replace(/[?#].*$/, "")) : f.where.trim().toLowerCase()}\n${idOf(f)}`;
+/**
+ * A failure by where it shows and what names it: the same verdict in other words, or on a record made at each visit,
+ * is one; a page of another query is another screen, as a defect noted with its query says.
+ */
+const keyOf = (f: Failure) => `${f.where.startsWith("/") ? pageShape(f.where.replace(/#.*$/, "")) : f.where.trim().toLowerCase()}\n${idOf(f)}`;
 
 /**
  * What several passes of /aeom judge found of an app's defects: each defect with how many passes found it, the
@@ -219,7 +223,8 @@ export function scoreJudgePasses({ defects, passes, asked = passes.length }: { d
   const total = defects.defects.length;
   if (!passes.length) return { app: defects.app, error: "no /aeom judge run", asked, passes: [], total, found: null, beyond: null, dollars: null, defects: [], flips: [], beyondList: [] };
   const known = (f: Failure) => defects.defects.some((d) => names(d)(f));
-  const each = passes.map((p) => ({ run: p.run, found: defects.defects.filter((d) => p.failures.some(names(d))).length, beyond: p.failures.filter((f) => !known(f)).length, dollars: p.dollars }));
+  // What lies beyond the list counts each verdict once, as the list below says it.
+  const each = passes.map((p) => ({ run: p.run, found: defects.defects.filter((d) => p.failures.some(names(d))).length, beyond: new Set(p.failures.filter((f) => !known(f)).map(keyOf)).size, dollars: p.dollars }));
   // Every verdict once, in the order the passes first gave it, with how many passes gave it and the words of the first.
   const seen = new Map<string, { what: string; label: string; in: number; known: boolean }>();
   for (const p of passes) {
@@ -251,7 +256,7 @@ export function scoreJudgePasses({ defects, passes, asked = passes.length }: { d
 
 /** The bench as `history.jsonl` keeps it, each app by its means: what the next bench is compared with. */
 export function judgeBenchEntry(scores: JudgeBenchScore[], { at, aeom }: { at: string; aeom: string }): JudgeBenchEntry {
-  return { at, mode: "judge", aeom, apps: scores.filter((s) => !s.error).map((s) => ({ app: s.app, passes: s.passes.length, total: s.total, found: s.found!.mean, beyond: s.beyond!.mean, flips: s.flips.length, dollars: s.dollars?.mean ?? null })) };
+  return { at, mode: "judge", aeom, apps: scores.filter((s) => !s.error).map((s) => ({ app: s.app, runs: s.passes.map((p) => p.run), passes: s.passes.length, total: s.total, found: s.found!.mean, beyond: s.beyond!.mean, flips: s.flips.length, dollars: s.dollars?.mean ?? null })) };
 }
 
 const num = (n: number) => String(round1(n));
@@ -271,7 +276,7 @@ export function judgeBenchText(scores: JudgeBenchScore[], previous?: JudgeBenchE
     if (s.error) return `${s.app.padEnd(width)}not measured: ${s.error}`;
     const n = s.passes.length;
     const passes = `${n} ${n === 1 ? "pass" : "passes"}${n < s.asked ? ` of ${s.asked} asked` : ""}`;
-    const cost = s.dollars ? `≈ $${num(s.dollars.mean)} a pass` : "cost not measured";
+    const cost = !s.dollars ? "cost not measured" : s.dollars.max > 0 && s.dollars.mean < 0.1 ? "< $0.1 a pass" : `≈ $${num(s.dollars.mean)} a pass`;
     return `${s.app.padEnd(width)}${passes}  found ${range(s.found!, `/${s.total}`)}  beyond the list ${range(s.beyond!)}  ${s.flips.length} ${s.flips.length === 1 ? "verdict that changes" : "verdicts that change"}  ${cost}`;
   });
   const details = scores
@@ -295,6 +300,8 @@ export function judgeBenchText(scores: JudgeBenchScore[], previous?: JudgeBenchE
             ...judgeBenchEntry(scores, { at: "", aeom: "" }).apps.map((a) => {
               const was = previous.apps.find((p) => p.app === a.app);
               if (!was) return `  ${a.app.padEnd(width)}not in the bench before`;
+              // Fewer passes give fewer verdicts that change: benches of different sizes say nothing of each other.
+              if (was.passes !== a.passes) return `  ${a.app.padEnd(width)}not compared: ${was.passes} passes then, ${a.passes} now`;
               const cost = a.dollars !== null && was.dollars !== null ? `  cost ${moved(a.dollars - was.dollars)}` : "";
               return `  ${a.app.padEnd(width)}found ${moved(a.found - was.found)}  beyond the list ${moved(a.beyond - was.beyond)}  verdicts that change ${moved(a.flips - was.flips)}${cost}`;
             }),

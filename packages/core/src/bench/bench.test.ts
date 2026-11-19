@@ -149,10 +149,28 @@ test("a verdict that changes from one pass to another is listed: a defect found 
 test("each judge bench is kept with its date and AEOM's version, and says how far each mean moved since the one before, or that it is the first", () => {
   const score = scoreJudgePasses({ defects: DEFECTS, passes: PASSES });
   const entry = judgeBenchEntry([score], { at: "2026-11-19T12:00:00.000Z", aeom: "d23ecfb" });
-  assert.deepEqual(entry, { at: "2026-11-19T12:00:00.000Z", mode: "judge", aeom: "d23ecfb", apps: [{ app: "ugly-app", passes: 3, total: 5, found: 2.7, beyond: 1.3, flips: 2, dollars: 2.3 }] });
+  assert.deepEqual(entry, { at: "2026-11-19T12:00:00.000Z", mode: "judge", aeom: "d23ecfb", apps: [{ app: "ugly-app", runs: ["run-20261119-0900", "run-20261119-1000", "run-20261119-1100"], passes: 3, total: 5, found: 2.7, beyond: 1.3, flips: 2, dollars: 2.3 }] });
   assert.match(judgeBenchText([score], null), /No earlier judge bench to compare with: this one is the first\./);
   const before = { ...entry, at: "2026-11-12T12:00:00.000Z", aeom: "9c3c951", apps: [{ ...entry.apps[0]!, found: 2, beyond: 3, flips: 4, dollars: 2.3 }] };
   assert.match(judgeBenchText([score], before), /Since the judge bench of 2026-11-12 \(AEOM 9c3c951\):\n +ugly-app +found \+0\.7 +beyond the list −1\.7 +verdicts that change −2 +cost ±0/);
+  // Fewer passes give fewer verdicts that change: two benches of different sizes are not compared.
+  const two = { ...before, apps: [{ ...before.apps[0]!, passes: 2 }] };
+  assert.match(judgeBenchText([score], two), /ugly-app +not compared: 2 passes then, 3 now/);
+});
+
+test("a verdict is one by its screen with its query, a record made at each visit aside; what lies beyond the list counts each verdict once", () => {
+  const defects: DefectList = { app: "cours", noted: "by hand", defects: [{ id: "faint-intro", where: "/cours.html?id=intro", what: "faint text on the intro", match: ["contrast"] }] };
+  const score = scoreJudgePasses({
+    defects,
+    passes: [
+      { run: "a", dollars: 0.03, failures: [{ kind: "check", where: "/cours.html?id=intro", what: "contrast: 2.1:1" }, { kind: "principle", where: "/p/1", what: "states: blank" }, { kind: "principle", where: "/p/2", what: "states: blank too" }] },
+      { run: "b", dollars: 0.03, failures: [{ kind: "check", where: "/cours.html?id=outro", what: "contrast: 2.4:1" }] },
+    ],
+  });
+  assert.equal(score.defects[0]!.in, 1);
+  assert.deepEqual(score.flips.map((f) => f.what), ["/cours.html?id=intro: contrast", "/p/1: states", "/cours.html?id=outro: contrast"], "another page's query is another screen");
+  assert.deepEqual(score.passes.map((p) => p.beyond), [1, 1], "two records of one screen are one verdict");
+  assert.match(judgeBenchText([score]), /< \$0\.1 a pass/, "a cheap pass is not said to cost nothing");
 });
 
 test("an app the judge bench cannot measure says why; an app with fewer passes than asked counts those it has and says so", () => {

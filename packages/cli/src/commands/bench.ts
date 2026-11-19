@@ -133,10 +133,20 @@ async function prepare(bench: string, names: string[], out: string): Promise<num
   return failed === names.length ? 1 : 0;
 }
 
-/** A project's runs, by their names: run-YYYYMMDD-HHMM sorts by time. Each says whether it only judged (/aeom judge). */
+/**
+ * A project's runs, by their names: run-YYYYMMDD-HHMM sorts by time. Each says whether it only judged (/aeom judge):
+ * as its page reads it, or, for a pass that stopped before its capture, as its state kept the option.
+ */
 async function runsOf(project: string): Promise<{ name: string; judged: boolean }[]> {
   const names = (await readdir(join(project, ".aeom", "runs")).catch(() => [] as string[])).filter((n) => n.startsWith("run-")).sort();
-  return Promise.all(names.map(async (name) => ({ name, judged: await readRun(join(project, ".aeom", "runs", name), name).then((p) => p.judged === true, () => false) })));
+  const optionOf = async (dir: string) => {
+    const options = (await json<{ options?: unknown }>(join(dir, "state.json")))?.options;
+    return Array.isArray(options) && options.some((o) => typeof o === "string" && /^(--)?(juger|diagnostic)$/.test(o));
+  };
+  return Promise.all(names.map(async (name) => {
+    const dir = join(project, ".aeom", "runs", name);
+    return { name, judged: await readRun(dir, name).then((p) => p.judged === true, () => optionOf(dir)) };
+  }));
 }
 /** The last run of a project that is not a pass of /aeom judge: a judgement redoes nothing, so it scores no fix. */
 const lastRun = async (project: string) => (await runsOf(project)).filter((r) => !r.judged).at(-1)?.name;
@@ -159,7 +169,7 @@ async function scoreApp(bench: string, out: string, name: string): Promise<AppSc
   }
   const project = join(out, name);
   const run = await lastRun(project);
-  if (!run) return unscored(defects.app, defects.defects.length, null, `no run in ${join(project, ".aeom", "runs")}: the app did not start, or /aeom was not run there`);
+  if (!run) return unscored(defects.app, defects.defects.length, null, (await runsOf(project)).length ? `only passes of /aeom judge in ${join(project, ".aeom", "runs")}: score them with --judge, or run /aeom --autonome --sans-pr there` : `no run in ${join(project, ".aeom", "runs")}: the app did not start, or /aeom was not run there`);
   const dir = join(project, ".aeom", "runs", run);
   try {
     const page = await readRun(dir, run);
@@ -216,14 +226,16 @@ async function scoreJudgeApp(bench: string, out: string, name: string, asked: nu
     return { ...scoreJudgePasses({ defects: { app: name, noted: "", defects: [] }, passes: [], asked }), error: `${join(bench, name, "defects.json")} cannot be read: ${message(error)}` };
   }
   const project = join(out, name);
+  // A pass that stopped before its verdict judged nothing: it is not one, and an older pass counts instead.
+  const judged: { run: string; failures: JudgePass["failures"] }[] = [];
+  for (const { name: run } of (await runsOf(project)).filter((r) => r.judged)) {
+    const page = await readRun(join(project, ".aeom", "runs", run), run).catch(() => null);
+    if (page?.verdict) judged.push({ run, failures: page.verdict.failures });
+  }
   const passes: JudgePass[] = [];
-  for (const { name: run } of (await runsOf(project)).filter((r) => r.judged).slice(-asked)) {
-    const dir = join(project, ".aeom", "runs", run);
-    // A pass that stopped before its verdict judged nothing: it is not one.
-    const page = await readRun(dir, run).catch(() => null);
-    if (!page?.verdict) continue;
-    const cost = await costOf(project, dir, run);
-    passes.push({ run, failures: page.verdict.failures, dollars: typeof cost?.total?.dollars === "number" ? cost.total.dollars : null });
+  for (const { run, failures } of judged.slice(-asked)) {
+    const cost = await costOf(project, join(project, ".aeom", "runs", run), run);
+    passes.push({ run, failures, dollars: typeof cost?.total?.dollars === "number" ? cost.total.dollars : null });
   }
   return scoreJudgePasses({ defects, passes, asked });
 }
@@ -237,12 +249,22 @@ async function scoreJudge(bench: string, names: string[], out: string, asked: nu
   for (const name of names) scores.push(await scoreJudgeApp(bench, out, name, asked));
   const at = new Date().toISOString();
   const aeom = await AEOM_VERSION();
-  // The judge bench before, as history.jsonl kept it: a line that is not one is skipped.
+  const measured = scores.some((s) => !s.error);
+  // The judge benches before, as history.jsonl kept them: a line that is not one is skipped.
   const history = join(out, "history.jsonl");
-  const lines = (await readFile(history, "utf8").catch(() => "")).split("\n").filter((l) => l.trim());
-  const previous = lines.map((l) => { try { return JSON.parse(l) as JudgeBenchEntry; } catch { return null; } }).filter((e): e is JudgeBenchEntry => e?.mode === "judge" && Array.isArray(e.apps)).at(-1) ?? null;
+  const isNumber = (n: unknown) => typeof n === "number" && Number.isFinite(n);
+  const isEntry = (e: unknown): e is JudgeBenchEntry => {
+    const x = e as Partial<JudgeBenchEntry> | null;
+    return !!x && x.mode === "judge" && typeof x.at === "string" && Array.isArray(x.apps) && x.apps.every((a) => typeof a?.app === "string" && Array.isArray(a.runs) && [a.passes, a.found, a.beyond, a.flips].every(isNumber));
+  };
+  const entries = (await readFile(history, "utf8").catch(() => "")).split("\n").filter((l) => l.trim()).map((l) => { try { return JSON.parse(l) as unknown; } catch { return null; } }).filter(isEntry);
+  const entry = judgeBenchEntry(scores, { at, aeom });
+  // The same passes scored again are the bench already kept: kept once, and compared with the one before it.
+  const runsSaid = (e: JudgeBenchEntry) => JSON.stringify(e.apps.map((a) => [a.app, a.runs]).sort());
+  const same = entries.length > 0 && runsSaid(entries.at(-1)!) === runsSaid(entry);
+  const previous = (same ? entries.at(-2) : entries.at(-1)) ?? null;
   await writeFile(join(out, "benchmark-judge.json"), `${JSON.stringify({ scored: at, aeom, passes: asked, apps: scores }, null, 2)}\n`);
-  if (scores.some((s) => !s.error)) await appendFile(history, `${JSON.stringify(judgeBenchEntry(scores, { at, aeom }))}\n`);
-  console.log(asJson ? JSON.stringify(scores, null, 2) : `${judgeBenchText(scores, previous)}\n\nWritten to ${join(out, "benchmark-judge.json")}, kept in ${history}.`);
-  return scores.every((s) => s.error) ? 1 : 0;
+  if (measured && !same) await appendFile(history, `${JSON.stringify(entry)}\n`);
+  console.log(asJson ? JSON.stringify(scores, null, 2) : `${judgeBenchText(scores, measured ? previous : undefined)}\n\nWritten to ${join(out, "benchmark-judge.json")}${measured ? `, kept in ${history}` : ""}.`);
+  return measured ? 0 : 1;
 }
