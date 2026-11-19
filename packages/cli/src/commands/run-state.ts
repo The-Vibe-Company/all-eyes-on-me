@@ -3,7 +3,7 @@ import { readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises
 import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { existsSync } from "node:fs";
-import { agentLines, doneSince, markAgent, markDone, markRun, newRunState, readRunState, resumePlan, type AgentStatus, type OnDisk, type RunState } from "@aeom/core";
+import { agentLines, doneSinceLine, markAgent, markDone, markRun, newRunState, readRunState, resumePlan, type AgentStatus, type OnDisk, type RunState } from "@aeom/core";
 
 const USAGE = `Usage: aeom run mark <run folder> --phase <name> [--step <step>] [--set NAME=value]... [--option <option>]...
        aeom run agent <run folder> --name <name> --status <launched|done|merged|refused> [--kind <kind>] [--worktree <path>] [--branch <branch>] [--from <commit>] [--page <route>]
@@ -112,11 +112,13 @@ function runFolderOf(path: string): string | null {
  * coordinator's marks: a run taken up, and aeom pr, then know it was done though nobody marked it. Only a run that
  * keeps its state is noted. A note that cannot be written is said, and never stops the command.
  */
-export async function noteDone(output: string, phase: string, done: string): Promise<void> {
+export async function noteDone(output: string, phase: string, done: string, { committed = false }: { committed?: boolean } = {}): Promise<void> {
   const runDir = runFolderOf(output);
   if (!runDir || !existsSync(join(runDir, FILE))) return;
   try {
-    await update(runDir, (s) => markDone(s, { phase, done, at: new Date().toISOString() }));
+    // A command that committed on the run branch notes where it left it, as a mark does.
+    const branchAt = committed ? await runBranch(projectOf(runDir), basename(runDir)) : undefined;
+    await update(runDir, (s) => markDone(s, { phase, done, at: new Date().toISOString(), ...(branchAt !== undefined ? { branchAt } : {}) }));
   } catch (error) {
     console.error(`(${done} is done, but could not note it in ${join(runDir, FILE)}: ${error instanceof Error ? error.message.split("\n")[0] : String(error)})`);
   }
@@ -238,8 +240,8 @@ export async function runRunState(argv: string[]): Promise<number> {
     if (action === "resume") console.log(resumePlan(s, disk));
     else {
       const since = s.history.findLast((h) => h.done === undefined)?.at;
-      const did = doneSince(s);
-      console.log([`${s.run}: "${s.phase ?? "nothing yet"}"${s.step ? `, at step ${s.step} of the skill` : ""}${since ? `, since ${since}` : ""}.`, ...(did.length ? [`Since that mark, AEOM's commands did: ${did.join(", ")}.`] : []), ...agentLines(s, disk)].join("\n"));
+      const did = doneSinceLine(s);
+      console.log([`${s.run}: "${s.phase ?? "nothing yet"}"${s.step ? `, at step ${s.step} of the skill` : ""}${since ? `, since ${since}` : ""}.`, ...(did ? [did] : []), ...agentLines(s, disk)].join("\n"));
     }
     return 0;
   } catch (error) {

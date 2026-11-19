@@ -103,4 +103,19 @@ test("the phases a run went through are its marks, its commands' notes, and the 
   assert.deepEqual([...phasesWent(s, { fromWorkers: false })].sort(), ["measure", "verdict"]);
   const refused = markAgent(markAgent(newRunState("run-2", AT), { name: "cart", kind: "page worker", status: "launched", at: AT }), { name: "cart", status: "refused", at: AT });
   assert.deepEqual([...phasesWent(refused)], ["pages"], "a worker launched, even refused, says its wave began");
+  // Read as aeom cost reads roles: a screen worker is a page worker, and so is any worker marked with its page.
+  assert.deepEqual([...phasesWent(markAgent(newRunState("run-3", AT), { name: "s", kind: "screen worker", status: "launched", at: AT }))], ["pages"]);
+  assert.deepEqual([...phasesWent(markAgent(newRunState("run-4", AT), { name: "s", kind: "rebuilder", status: "launched", page: "/", at: AT }))], ["pages"]);
+  // The champion merged is the kit and the screens it was built on, though no page worker ran.
+  const champion = markAgent(markAgent(newRunState("run-5", AT), { name: "topo", kind: "direction worker", status: "launched", at: AT }), { name: "topo", status: "merged", at: AT });
+  assert.deepEqual([...phasesWent(champion)].sort(), ["directions", "kit", "pages"]);
+});
+
+test("notes made before any mark of the coordinator are said since the run started, and a command that committed moves the branch it notes", () => {
+  const s = markDone(newRunState("run-1", AT), { phase: "judge", done: "aeom snapshot before", at: AT });
+  const plan = resumePlan(s, { worktrees: {}, commits: {}, runBranch: null });
+  assert.match(plan, /Since the run started, AEOM's commands did: aeom snapshot before\./);
+  assert.doesNotMatch(plan, /Since that mark/);
+  assert.equal(markDone(s, { phase: "measure", done: "aeom ratchet --apply", at: AT, branchAt: "abc123" }).branchAt, "abc123");
+  assert.equal(markDone(s, { phase: "measure", done: "aeom compare", at: AT }).branchAt, null, "a note that committed nothing leaves it");
 });

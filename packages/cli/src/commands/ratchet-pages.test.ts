@@ -99,6 +99,8 @@ test("aeom ratchet keeps the pages that got better, puts the others back with th
     assert.deepEqual(decision.journeyFiles, [".aeom/journeys/buy.json"]);
     assert.equal(decision.applied, null);
     assert.equal(await git(dir, "rev-parse", "HEAD"), rewritten, "without --apply nothing is touched");
+    const noted = async () => JSON.parse(await readFile(join(dir, R, "state.json"), "utf8")) as { branchAt: string | null; history: { phase: string; done?: string }[] };
+    assert.deepEqual((await noted()).history.at(-1), { ...(await noted()).history.at(-1), phase: "measure", done: "aeom ratchet: /cart goes back" });
 
     await git(dir, "checkout", "-q", "main");
     const elsewhere = await run(dir, ["ratchet", R, "--apply"]);
@@ -124,11 +126,14 @@ test("aeom ratchet keeps the pages that got better, puts the others back with th
     assert.match(applied.out, /aeom snapshot \.aeom\/runs\/run-1\/after-revert/);
     assert.match(applied.out, /replay them again into \.aeom\/runs\/run-1\/journeys-after/);
     assert.match(JSON.parse(await readFile(join(dir, R, "after", "ratchet.json"), "utf8")).applied, /^[0-9a-f]{40}$/);
+    assert.equal((await noted()).history.at(-1)!.done, "aeom ratchet --apply: /cart put back");
+    assert.equal((await noted()).branchAt, await git(dir, "rev-parse", "HEAD"), "its own commit is not a stranger's to a run taken up");
 
     const head = await git(dir, "rev-parse", "HEAD");
     const again = await run(dir, ["ratchet", R, "--apply"]);
     assert.equal(again.code, 0, again.out);
     assert.match(again.out, /already as they were before the wave: nothing to commit/);
+    assert.equal((await noted()).history.at(-1)!.done, "aeom ratchet --apply: /cart already as before the wave");
     assert.equal(await git(dir, "rev-parse", "HEAD"), head);
     assert.equal(JSON.parse(await readFile(join(dir, R, "after", "ratchet.json"), "utf8")).applied, head, "the commit of the first --apply stays named");
     assert.match((await run(dir, ["ratchet", R, "--back", "/nowhere=gone"])).out, /--back \/nowhere=gone: no page of .* starts it/);

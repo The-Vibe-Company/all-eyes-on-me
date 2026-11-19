@@ -242,13 +242,14 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
   }
   if (await exec("git", ["-C", root, "diff", "--cached", "--quiet"]).then(() => true, () => false)) {
     console.log(`The pages are already as they were before the wave: nothing to commit.`);
+    await noteDone(runDir, "measure", `aeom ratchet --apply: ${going.map((p) => p.page).join(", ")} already as before the wave`);
     return 0;
   }
   await git(root, ["commit", "-q", "-m", `aeom: pages put back as they were before the screen wave: ${going.map((p) => p.page).join(", ")}`]);
   const sha = await git(root, ["rev-parse", "HEAD"]);
   await writeFile(out, JSON.stringify(decision(sha), null, 2) + "\n");
   console.log(`Put back and committed (${sha.slice(0, 7)}): ${going.map((p) => p.page).join(", ")}.`);
-  await noteDone(runDir, "measure", `aeom ratchet --apply: ${going.map((p) => p.page).join(", ")} put back`);
+  await noteDone(runDir, "measure", `aeom ratchet --apply: ${going.map((p) => p.page).join(", ")} put back`, { committed: true });
   console.log(`They still render through the new kit: measure them again. On ${runBranch}, aeom capture and aeom check at the run's widths, the page judge on what changed since ${after}, aeom snapshot ${join(runDir, "after-revert")}, then aeom compare ${join(runDir, "before")} ${join(runDir, "after-revert")}.`);
   if (replays.after) console.log(`The journeys were replayed on the pages before: replay them again into ${journeysAfter}, judge them, and run their ratchet again.`);
   return 0;

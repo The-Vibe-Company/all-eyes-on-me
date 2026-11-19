@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -55,6 +55,10 @@ test("the run's commands note what they did in its state, beside the coordinator
     assert.match(resume.out, /Since that mark, AEOM's commands did: aeom snapshot before, aeom snapshot after, aeom compare before → after\./);
     assert.match(resume.out, /Go on at step 4, after what they did\.$/m);
     assert.match((await run(dir, ["run", "status", R])).out, /Since that mark, AEOM's commands did: .*aeom compare before → after\./);
+
+    // Each folder the skill names belongs to its phase, given in any form; a folder of another name is not noted.
+    for (const name of ["kit-look", "after-revert", "end", "elsewhere"]) assert.equal((await run(dir, ["snapshot", join(await realpath(dir), R, name) + "/"])).code, 0);
+    assert.deepEqual((await notes(join(dir, R))).history.slice(4).map((h) => [h.phase, h.done]), [["kit", "aeom snapshot kit-look"], ["measure", "aeom snapshot after-revert"], ["remeasure", "aeom snapshot end"]]);
 
     // A run folder that keeps no state gets none from a command; a broken one does not stop the command.
     assert.equal((await run(dir, ["snapshot", ".aeom/runs/run-2/before"])).code, 0);
@@ -110,6 +114,10 @@ test("aeom pr holds a wave the coordinator never marked, by the workers it launc
     const written = await run(dir, ["standard", `${R}/standard.md`]);
     assert.equal(written.code, 0, written.out);
     assert.equal((await notes(join(dir, R))).history.at(-1)!.done, "aeom standard: .aeom/standard.md written");
+    // A draft that is not a standard yet reaches nothing: it is fixed and run again.
+    await put(join(dir, R, "bad.md"), draft.replace(/## Rules\n[^\n]+/, "## Rules\n<the product's own rules>"));
+    assert.equal((await run(dir, ["standard", `${R}/bad.md`])).code, 1);
+    assert.equal((await notes(join(dir, R))).history.at(-1)!.done, "aeom standard: .aeom/standard.md written", "no note for a draft refused");
     const ready = await run(dir, ["pr", R, "--dry-run"]);
     assert.equal(ready.code, 0, ready.out);
     assert.match(ready.out, /AEOM: the front fixed \(run-1\)/);

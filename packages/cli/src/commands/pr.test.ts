@@ -420,3 +420,20 @@ test("the order of a run is held in code: a run whose state says it rebuilt page
   await state(["understand", "journeys", "report"], ["ux"]);
   assert.match((await run(dir, ["pr", R, "--dry-run"])).out, /the standard of the front was not reached/);
 });
+
+test("the workers a run launched say the waves it went through, though nobody marked them, but never on a front built from scratch", async () => {
+  const { dir, R } = await project();
+  const agents = [{ name: "kit", kind: "kit worker", status: "merged", at: "" }, { name: "home", kind: "page worker", status: "merged", page: "/", at: "" }];
+  await put(join(R, "state.json"), { run: "run-1", started: "", options: [], phase: "verdict", step: "run.3", vars: {}, branchAt: null, agents, history: [{ phase: "verdict", step: "run.3", at: "" }] });
+  await rm(join(R, "after", "compare.json"));
+  const held = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(held.code, 1);
+  assert.match(held.out, /the pages were not measured after their wave/);
+  assert.match(held.out, /the standard of the front was not reached/);
+  // A front built from scratch has no before: its page workers ask for no measure against one, only its standard.
+  await rm(join(R, "before"), { recursive: true });
+  await put(join(R, "state.json"), { run: "run-1", started: "", options: [], phase: "standard", step: null, vars: {}, branchAt: null, agents, history: [{ phase: "standard", step: null, at: "" }] });
+  const built = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(built.code, 0, built.out);
+  assert.match(built.out, /AEOM: a first front \(run-1\)/);
+});
