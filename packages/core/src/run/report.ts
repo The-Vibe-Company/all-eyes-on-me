@@ -192,9 +192,9 @@ async function readRounds(runDir: string): Promise<NonNullable<ResultPage["round
     if (!files.includes("index.html")) return undefined;
     return ["index.html", ...files.filter((f) => f.endsWith(".html") && f !== "index.html").sort()].map((f) => `directions/${slug}/${f}`);
   };
-  // The narrowest phone its checks measured; the default's when they say no width.
+  // The narrowest phone its checks measured; none when they say no width: a phone is never guessed.
   const phoneOf = async (slug: string) => {
-    const widths = usableWidths((await json<{ widths?: unknown }>(join(D, `${slug}-checks`, "check.json")).catch(() => null))?.widths) ?? DEFAULT_WIDTHS;
+    const widths = usableWidths((await json<{ widths?: unknown }>(join(D, `${slug}-checks`, "check.json")).catch(() => null))?.widths) ?? [];
     return widths.filter(isPhone).sort((a, b) => a - b)[0] ?? null;
   };
   // A direction's sentence is the one its round gave, else the last an earlier round gave.
@@ -850,7 +850,7 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
   // A mockup opens for real: each page in a tab of its own, and its first page on a phone, where its own links lead to the others.
   const liveHtml = (e: NonNullable<ResultPage["rounds"]>[number]["entrants"][number]) =>
     e.pages?.length
-      ? `<p class="live">${w.live}${e.pages.map((p) => `<a href="${escape(href(p))}" target="_blank" rel="noopener">${escape(p === `directions/${e.slug}/index.html` ? "/" : `/${p.split("/").at(-1)}`)}</a>`).join(" · ")}</p>${e.phone ? `<details class="phone"><summary>${escape(w.onPhone(e.phone))}</summary><iframe src="${escape(href(e.pages[0]!))}" title="${escape(w.phoneTitle(e.slug))}" width="${e.phone}" loading="lazy"></iframe></details>` : ""}`
+      ? `<p class="live">${w.live}${e.pages.map((p) => `<a href="${escape(href(p))}" target="_blank" rel="noopener">${escape(p === `directions/${e.slug}/index.html` ? "/" : `/${p.split("/").at(-1)}`)}</a>`).join(" · ")}</p>${e.phone ? `<details class="phone"><summary>${escape(w.onPhone(e.phone))}</summary><div class="phone__frame"><iframe src="${escape(href(e.pages[0]!))}" title="${escape(w.phoneTitle(e.slug))}" width="${e.phone}" loading="lazy"></iframe></div></details>` : ""}`
       : "";
   const roundHtml = (round: NonNullable<ResultPage["rounds"]>[number]) =>
     `<section class="round" data-round="${round.round}"><h3>${w.round(round.round)}</h3><div class="entrants">${round.now ? `<article class="direction direction-now"><h4>${w.now}</h4>${shotOf(round.now, w.now)}</article>` : ""}${round.entrants
@@ -1038,11 +1038,12 @@ ${fontFaces()}
   .entrants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 12px; }
   .round + .round, details .round { margin-top: 24px; }
   .round > h3 { font-size: 17px; }
-  .direction { display: grid; gap: 8px; align-content: start; }
+  .direction { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 8px; align-content: start; }
   .direction h4 { font-size: 16px; }
   .thumb--direction { aspect-ratio: 4 / 3; }
   .live a { font-weight: 700; }
-  .phone iframe { display: block; max-width: 100%; height: 760px; margin-top: 10px; border: 1.5px solid var(--ink); border-radius: 22px; background: var(--white); }
+  .phone__frame { overflow-x: auto; }
+  .phone iframe { box-sizing: content-box; display: block; max-width: none; height: 760px; margin-top: 10px; border: 1.5px solid var(--ink); border-radius: 22px; background: var(--white); }
   .chosen { margin-top: 14px; }
   details > summary { margin-top: 18px; }
 

@@ -176,8 +176,9 @@ async function serve(runDir: string, home: string, port: number, open: boolean, 
       if (!file || !isInside(file, root) || !(page || mockup || SHOWN.has(extname(file)))) return send(404, "Not here.");
       const data = await readFile(file).catch(() => null);
       if (!data) return send(404, "Not here.");
-      // Only the page runs its script: a mockup, or an image opened on its own, is sandboxed, so nothing in it speaks for the page.
-      res.writeHead(200, { "content-type": TYPES[extname(file)]!, ...(page ? {} : { "content-security-policy": "sandbox" }) }).end(data);
+      // Only the page runs its script: in a mockup, or an image opened on its own, no script runs, so nothing in it speaks for the page.
+      // Its own origin is kept, so its fonts, masks and sprites still load from its folder.
+      res.writeHead(200, { "content-type": TYPES[extname(file)]!, ...(page ? {} : { "content-security-policy": "sandbox allow-same-origin" }) }).end(data);
     } catch {
       send(400, "Bad request.");
     }

@@ -165,7 +165,7 @@ test("no function is lost: every worker keeps what a page lets its users do, and
 
 test("the result page speaks the person's language, and a run of directions has its own page, every round in it", () => {
   assert.match(read("SKILL.md"), /aeom report \.aeom\/runs\/\$RUN --serve --open --lang \$AEOM_LANG/);
-  assert.match(read("phase-mockups.md"), /8\. \*\*The end\.\*\* Serve the run's page, as \*\*The result page, served\*\* in SKILL\.md says: every round, the last first/);
+  assert.match(read("phase-mockups.md"), /8\. \*\*The end\.\*\* Serve the run's page, or write it again, as step 7 says: every round, the last first/);
 });
 
 test("the judges write in the person's language: kept in the run's mark, read by every voter from aeom principles, ids unchanged", () => {
@@ -270,9 +270,11 @@ test("the screening judge reads each direction's own image, never a sheet of sev
 
 test("/aeom directions serves its page before it asks: the person chooses on the mockups, and the message only names them", () => {
   const step7 = read("phase-mockups.md").split("7. **Show them all, then ask.**")[1]?.split("**Variants.**")[0] ?? "";
-  assert.match(step7, /Then serve the run's page, as \*\*The result page, served\*\* in SKILL\.md says, so the person chooses on it, not on an image/);
+  assert.match(step7, /Then serve the run's page, unless nobody chooses, as in `\/aeom build --autonome`, as \*\*The result page, served\*\* in SKILL\.md says, so the person chooses on it, not on an image/);
   assert.match(step7, /its pages to open for real, and on a phone when the run aims at one/);
   assert.ok(step7.indexOf("Then serve the run's page") < step7.indexOf("and ask, with the session's question tool"), "served before the question");
   assert.match(step7, /each direction by its name and its sentence, its detail being on the page/);
+  // One page server for the run: a new round, a variant or a mix writes the page again, and the person reloads it.
+  assert.match(step7, /when this run's page is served already, write it again, `aeom report \.aeom\/runs\/\$RUN --lang \$AEOM_LANG`, which the server reads at each request, and tell the person to reload it/);
   assert.doesNotMatch(step7, /its strong point, its weak point and its fit as the comparison says them, what its checks found/, "the detail is on the page, not in the message");
 });

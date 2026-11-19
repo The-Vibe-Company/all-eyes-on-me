@@ -291,7 +291,7 @@ test("served, the page answers this machine alone: another name, another origin,
   }
 });
 
-test("served, a mockup of the round opens for real, its styles and images with it, and no script in it can speak for the page", async () => {
+test("served, a mockup of the round opens for real with what its pages load from its folder, sandboxed: no script runs in it, so none speaks for the page", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-"));
   const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
   const R = join(dir, ".aeom", "runs", "run-8");
@@ -302,6 +302,7 @@ test("served, a mockup of the round opens for real, its styles and images with i
     await put(join(D, "lutrin", "style.css"), "body { color: #123; }");
     await put(join(D, "lutrin", "img", "hero.png"), "png");
     await put(join(D, "lutrin", "icons", "pluie.svg"), "<svg xmlns='http://www.w3.org/2000/svg'/>");
+    await put(join(D, "lutrin", "fonts", "titres.woff2"), "woff2");
     await put(join(D, "lutrin", "notes.md"), "a worker's notes");
     await put(join(D, "lutrin.png"), "png");
     await put(join(D, "rounds.json"), [{ round: 1, entrants: ["lutrin"] }]);
@@ -312,11 +313,12 @@ test("served, a mockup of the round opens for real, its styles and images with i
       assert.equal(page.status, 200);
       assert.match(page.text, /href="directions\/lutrin\/index\.html"/);
       assert.equal(page.headers["content-security-policy"], undefined, "the page itself keeps its script");
-      for (const [path, type] of [["/directions/lutrin/index.html", "text/html"], ["/directions/lutrin/registre.html", "text/html"], ["/directions/lutrin/style.css", "text/css"], ["/directions/lutrin/img/hero.png", "image/png"], ["/directions/lutrin/icons/pluie.svg", "image/svg+xml"]]) {
+      for (const [path, type] of [["/directions/lutrin/index.html", "text/html"], ["/directions/lutrin/registre.html", "text/html"], ["/directions/lutrin/style.css", "text/css"], ["/directions/lutrin/img/hero.png", "image/png"], ["/directions/lutrin/icons/pluie.svg", "image/svg+xml"], ["/directions/lutrin/fonts/titres.woff2", "font/woff2"]]) {
         const got = await raw(url, path!);
         assert.equal(got.status, 200, path);
         assert.ok(String(got.headers["content-type"]).startsWith(type!), path);
-        assert.equal(got.headers["content-security-policy"], "sandbox", `${path}: no script of a mockup runs as the page`);
+        // No allow-scripts: nothing runs in it. Its own origin kept, so its fonts, masks and sprites still load from its folder.
+        assert.equal(got.headers["content-security-policy"], "sandbox allow-same-origin", `${path}: no script of a mockup runs as the page`);
       }
       assert.equal((await raw(url, "/directions/lutrin/notes.md")).status, 404, "only what a page shows");
       assert.equal((await raw(url, "/stray.html")).status, 404, "a page outside the directions is not one of them");

@@ -266,7 +266,7 @@ test("each mockup of a round opens for real from the page: its pages, the first 
   try {
     const D = join(dir, "directions");
     // Two mockups of /aeom directions, one checked at a phone width and one at a computer's alone, and a direction of a run, built in a worktree, with no page in the run.
-    for (const slug of ["lutrin", "verriere"]) {
+    for (const slug of ["lutrin", "verriere", "craie"]) {
       await mkdir(join(D, slug, "img"), { recursive: true });
       for (const page of ["index.html", "registre.html", "accueil.html"]) await writeFile(join(D, slug, page), "<!doctype html>");
       await writeFile(join(D, slug, "style.css"), "");
@@ -279,17 +279,22 @@ test("each mockup of a round opens for real from the page: its pages, the first 
     await writeFile(join(D, "lutrin-checks", "check.json"), JSON.stringify({ widths: [1280, 390], pages: ["http://x/"], errors: [], findings: [] }));
     await writeFile(join(D, "verriere-checks", "check.json"), JSON.stringify({ widths: [1280], pages: ["http://x/"], errors: [], findings: [] }));
     const said = (slug: string, named?: string) => ({ slug, strong: `${slug} reads first.`, weak: `${slug} hides the search.`, fit: `${slug} is a desk.`, ...(named ? { named } : {}) });
-    await writeFile(join(D, "rounds.json"), JSON.stringify([{ round: 1, entrants: ["lutrin", "verriere", "atelier"], compare: { directions: [said("lutrin"), said("verriere", "Cream paper and a serif: a banned look."), said("atelier")], start: { slug: "lutrin", why: "x" } } }]));
+    await writeFile(join(D, "rounds.json"), JSON.stringify([{ round: 1, entrants: ["lutrin", "verriere", "atelier", "craie"], compare: { directions: [said("lutrin"), said("verriere", "Cream paper and a serif: a banned look."), said("atelier"), said("craie")], start: { slug: "lutrin", why: "x" } } }]));
     const page = await readRun(dir, "run-3");
-    const [lutrin, verriere, atelier] = page.rounds![0]!.entrants;
+    const [lutrin, verriere, atelier, craie] = page.rounds![0]!.entrants;
     assert.deepEqual(lutrin!.pages, ["directions/lutrin/index.html", "directions/lutrin/accueil.html", "directions/lutrin/registre.html"], "the first screen first, then the others");
     assert.equal(lutrin!.phone, 390);
     assert.equal(verriere!.phone, null, "a run aimed at computers alone has no phone to show");
     assert.equal(atelier!.pages, undefined, "a direction built in a worktree has no page in the run");
+    assert.equal(craie!.phone, null, "checks that did not run say no width: no phone is guessed");
     const html = resultHtml(page, { lang: "fr" });
     assert.match(html, /Ses pages, en vrai\s: <a href="directions\/lutrin\/index\.html" target="_blank" rel="noopener">\/<\/a>/);
     assert.match(html, /<a href="directions\/lutrin\/registre\.html" target="_blank" rel="noopener">\/registre\.html<\/a>/);
-    assert.match(html, /<details class="phone"><summary>Sur un téléphone · 390 px<\/summary><iframe src="directions\/lutrin\/index\.html" title="lutrin, sur un téléphone" width="390" loading="lazy"><\/iframe><\/details>/);
+    // The frame is the phone's width inside its border, and scrolls sideways on a narrower screen rather than shrink.
+    assert.match(html, /<details class="phone"><summary>Sur un téléphone · 390 px<\/summary><div class="phone__frame"><iframe src="directions\/lutrin\/index\.html" title="lutrin, sur un téléphone" width="390" loading="lazy"><\/iframe><\/div><\/details>/);
+    assert.match(html, /\.phone iframe \{[^}]*box-sizing: content-box;/);
+    assert.match(html, /\.phone__frame \{ overflow-x: auto; \}/);
+    assert.match(html, /\.direction \{ display: grid; grid-template-columns: minmax\(0, 1fr\); min-width: 0;/, "on a phone, the frame scrolls, never the page");
     assert.match(html, /<a href="directions\/verriere\/index\.html"/);
     assert.equal(html.match(/<details class="phone">/g)?.length, 1, "verriere has no phone, atelier no page");
     assert.doesNotMatch(html, /directions\/atelier\//);
