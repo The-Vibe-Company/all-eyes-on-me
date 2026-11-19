@@ -1,0 +1,35 @@
+skills/aeom/phase-mockups.md
+  s_3d953ee14bf302::t_0da7dd82168384 32-33,36-37,42
+packages/cli/src/commands/mockups.test.ts
+  s_3d953ee14bf302::t_45e519e2b0a738 132,134-135,141,148-149,152,157
+packages/cli/src/commands/mockups.ts
+  s_3d953ee14bf302::t_0da7dd82168384 141
+packages/core/src/directions/angle.ts
+  s_3d953ee14bf302::t_0da7dd82168384 47,53
+  s_3d953ee14bf302::t_a6cb0e3f34f766 7-8
+packages/cli/src/commands/direction.ts
+  s_3d953ee14bf302::t_0da7dd82168384 20-24,63
+skills/skills.test.mjs
+  s_3d953ee14bf302::t_0da7dd82168384 316
+  s_3d953ee14bf302::t_45e519e2b0a738 309-312,314-315
+packages/cli/src/commands/direction.test.ts
+  s_3d953ee14bf302::t_45e519e2b0a738 88
+packages/core/src/directions/directions.test.ts
+  s_3d953ee14bf302::t_45e519e2b0a738 197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c4533940b33e04b7c959c109b0d72d7510cdfc4a",
+  "prompts": {},
+  "sessions": {
+    "s_3d953ee14bf302": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "788756be-7ea4-42f0-bbad-ca01f237bf18",
+        "model": "unknown"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
