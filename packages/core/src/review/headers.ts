@@ -40,12 +40,13 @@ export async function headerLinks({ url, paths, signedIn }: { url: string; paths
   }
 }
 
-/** How a page's header differs from the reference's, in words; null when it offers the same. */
-export function headerDifference(page: string[] | null, reference: string[] | null): string | null {
+/** How a page's header differs from the reference's, in words, in English or French; null when it offers the same. */
+export function headerDifference(page: string[] | null, reference: string[] | null, lang: "en" | "fr" = "en"): string | null {
+  const fr = lang === "fr";
   if (!reference) return null;
-  if (!page) return "no header, where the rest of the app has one";
+  if (!page) return fr ? "pas d'en-tête, alors que le reste de l'app en a un" : "no header, where the rest of the app has one";
   const missing = reference.filter((l) => !page.includes(l));
   const extra = page.filter((l) => !reference.includes(l));
-  if (!missing.length && !extra.length) return reference.join("|") === page.join("|") ? null : "the same links in another order";
-  return [...missing.map((l) => `no « ${l} »`), ...extra.map((l) => `« ${l} » the rest of the app does not have`)].join(", ");
+  if (!missing.length && !extra.length) return reference.join("|") === page.join("|") ? null : fr ? "les mêmes liens dans un autre ordre" : "the same links in another order";
+  return [...missing.map((l) => (fr ? `pas de « ${l} »` : `no « ${l} »`)), ...extra.map((l) => (fr ? `« ${l} », que le reste de l'app n'a pas` : `« ${l} » the rest of the app does not have`))].join(", ");
 }

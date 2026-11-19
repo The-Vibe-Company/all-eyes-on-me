@@ -4,7 +4,7 @@ title: Le résultat de aeom review dans la langue de la fiche produit
 milestone: 04-garder-a-chaque-pr
 depends_on: [07, 08]
 design: null
-status: todo
+status: done
 tracker: { tool: github, id: 197, url: https://github.com/The-Vibe-Company/all-eyes-on-me/issues/197 }
 ---
 
