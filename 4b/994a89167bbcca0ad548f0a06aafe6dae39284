@@ -1,0 +1,39 @@
+packages/cli/src/commands/directions.test.ts
+  s_3d953ee14bf302::t_bc41dafde412b9 176-194
+packages/cli/src/commands/report.ts
+  s_3d953ee14bf302::t_d774bb8ccfb75d 97-111,172,174-176,179-180
+packages/cli/src/commands/directions.ts
+  s_3d953ee14bf302::t_cbef46dc1e68a4 184
+packages/core/src/directions/compare.ts
+  s_3d953ee14bf302::t_cbef46dc1e68a4 3-4,43
+packages/core/src/run/report.test.ts
+  s_3d953ee14bf302::t_dd6a6c4aad0dbc 290
+  s_3d953ee14bf302::t_b6b650c1c7caec 264-280,283-289,291-296,300-304
+  s_3d953ee14bf302::t_bc41dafde412b9 281-282,297-299
+packages/cli/src/commands/report.test.ts
+  s_3d953ee14bf302::t_eb24653f99f0d2 41,46,294-323
+  s_3d953ee14bf302::t_a248685ce99df0 324-332
+skills/aeom/phase-mockups.md
+  s_3d953ee14bf302::t_0a301f4eb3c7bb 35
+skills/skills.test.mjs
+  s_3d953ee14bf302::t_a7930e3b31b677 268-277
+packages/core/src/run/report.ts
+  s_3d953ee14bf302::t_cbef46dc1e68a4 80,170,210,432,488,859
+  s_3d953ee14bf302::t_dd6a6c4aad0dbc 1,76-79,81-86,189-199,209,850-854,1044-1045
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4b994a89167bbcca0ad548f0a06aafe6dae39284",
+  "prompts": {},
+  "sessions": {
+    "s_3d953ee14bf302": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "788756be-7ea4-42f0-bbad-ca01f237bf18",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
