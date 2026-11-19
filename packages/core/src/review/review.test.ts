@@ -234,6 +234,34 @@ test("an unknown colour or length names the nearest token of its kind, whatever 
   assert.deepEqual(reviewCode({ standard, diff: diff("app/page.css", 1, [`.a { color: color(display-p3 1 0 0); }`]) }).map((f) => f.what), ["color(display-p3 1 0 0) is not a colour of the standard"]);
 });
 
+test("in French, every deviation of the code is said in French, the values and names as the code writes them", () => {
+  const standard = readStandard(STANDARD);
+  const found = reviewCode({
+    standard,
+    lang: "fr",
+    diff: [
+      diff("src/export/ExportButton.tsx", 14, [`<div style={{ color: "#7c3aed", background: "#1F4B57" }}>`, `<button onClick={go}>Exporter</button>`]),
+      diff("pages/export.css", 3, [".titre { font-family: Inter, sans-serif; font-size: 31px; margin: 16px 12px; border-radius: 3px; }", ".x { @apply bg-sky-300; }"]),
+      diff("src/reports/layout.tsx", 8, [`<header className="top">Rapports</header>`, `<nav>`]),
+    ].join(""),
+  });
+  assert.deepEqual(found.map((f) => `${f.file}:${f.line} ${f.what}`), [
+    "src/export/ExportButton.tsx:14 #7c3aed n'est pas une couleur du standard : le token le plus proche est --petrole (#1f4b57)",
+    "src/export/ExportButton.tsx:14 #1F4B57 est la valeur de --petrole, écrite en dur : utilise le token",
+    "src/export/ExportButton.tsx:15 un bouton fait à la main : celui du standard est .bouton dans shared/kit.css",
+    "pages/export.css:3 la police Inter n'est pas une police du standard",
+    "pages/export.css:3 la taille 31px n'est pas une taille du standard : le token le plus proche est --taille-titre (28px)",
+    "pages/export.css:3 l'espace 16px est la valeur de --espace, écrite en dur : utilise le token",
+    "pages/export.css:3 l'espace 12px n'est pas un espace du standard : le token le plus proche est --espace (16px)",
+    "pages/export.css:4 bg-sky-300 n'est pas une couleur du standard",
+    "src/reports/layout.tsx:8 un en-tête fait à la main : celui du standard est Header dans src/components/Header.tsx",
+  ]);
+  assert.equal(headerDifference(["Accueil"], ["Accueil", "Produits"], "fr"), "pas de « Produits »");
+  assert.equal(headerDifference(["Accueil", "Exporter"], ["Accueil"], "fr"), "« Exporter », que le reste de l'app n'a pas");
+  assert.equal(headerDifference(null, ["Accueil"], "fr"), "pas d'en-tête, alors que le reste de l'app en a un");
+  assert.equal(headerDifference(["B", "A"], ["A", "B"], "fr"), "les mêmes liens dans un autre ordre");
+});
+
 test("a component is made by hand only when the kit has that very part, outside the kit's own folder, with no class of the kit across its opening tag", () => {
   const standard = readStandard(`## Tokens\n\n## Components\n- \`Button\` in \`src/ui/button.tsx\`\n- \`CardHeader\` in \`src/ui/card.tsx\`\n- \`DropdownMenu\` in \`src/ui/dropdown.tsx\`\n- \`.bouton\` in \`shared/kit.css\`\n`);
   const read = (file: string) => (file === "src/pages/Article.tsx" ? `<article>\n<header>Titre</header>\n</article>\n` : null);

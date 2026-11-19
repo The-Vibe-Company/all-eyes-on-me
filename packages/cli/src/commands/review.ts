@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
-import { AppStartError, checkSite, guardJourneys, headerDifference, headerLinks, JourneyError, loadConfig, loadJourneys, pageShape, readStandard, replayJourneys, reviewCode, route, routeTouched, screensTouched, serveFolder, startApp, STYLE_CHECKS, type Journey, type JourneyReport, type ProjectConfig } from "@aeom/core";
+import { AppStartError, checkSite, guardJourneys, headerDifference, headerLinks, JourneyError, loadConfig, loadJourneys, pageShape, readStandard, replayJourneys, reviewCode, route, routeTouched, screensTouched, serveFolder, sheetLang, startApp, STYLE_CHECKS, WIDTH_RANGE, type Journey, type JourneyReport, type ProjectConfig } from "@aeom/core";
+import { reviewWords, type Lang, type ReviewWords } from "./review-words.js";
 import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, servingFolder, sheetExceptions, signInFromConfig, withApp, withConfig } from "./app.js";
 
 export const REVIEW_HELP = `Usage: aeom review [--base <branch>] [--url <url> | --start "<command>" | --dir <folder>] [options]
@@ -48,6 +49,9 @@ Options:
                        default branch, then main or master)
   --summary <file>     Also write the result in Markdown, words only, to this
                        file, such as $GITHUB_STEP_SUMMARY
+  --lang <fr|en>       The language of the result (default: the language of
+                       .aeom/product.md, else English); the checks' own words
+                       stay as aeom check writes them
   --install-check      Write the GitHub workflow, as above
   --aeom-ref <ref>     With --install-check, the version of AEOM it installs
                        (default main)
@@ -79,27 +83,28 @@ interface Covered {
 const bare = (r: string) => r.replace(/[?#].*$/, "").replace(/(.)\/+$/, "$1") || "/";
 
 /** What a review measured, in words: the screens touched, how they were found, those it could not measure, and the journeys replayed. */
-function coverage(covered: Covered | null, unmeasured: string[], replayed: { journeys: number; base: string | null } | null): string[] {
+function coverage(w: ReviewWords, covered: Covered | null, unmeasured: string[], replayed: { journeys: number; base: string | null } | null): string[] {
   if (!covered && !unmeasured.length) return [];
-  const n = covered?.screens.length ?? 0;
   const missed = [...new Set([...(covered?.missed ?? []), ...unmeasured])];
-  const how = !n ? "no screen" : !missed.length ? (n === 1 ? "the one screen" : `the ${n} screens`) : `${n} of the ${n + missed.length} screens`;
-  const widths = covered?.widths ?? [];
-  const at = !n ? "" : `, at ${widths.length > 1 ? `${widths.slice(0, -1).join(", ")} and ${widths.at(-1)}` : widths[0]} px`;
-  const lines = [
-    `Measured ${how} it touches${at}${covered?.from ? `, found by following the links from ${covered.from}` : ""}${missed.length ? `; not measured: ${missed.join(", ")}` : ""}${covered?.capped ? `; the links are followed to ${FOLLOWED} pages at most: any other was not measured` : ""}.`,
-  ];
-  if (replayed?.journeys) lines.push(`Replayed ${replayed.journeys} key journey${replayed.journeys === 1 ? " that crosses" : "s that cross"} them, ${replayed.base ? `on the branch and on ${replayed.base}` : "on the branch alone"}.`);
+  const lines = [w.covered(covered?.screens.length ?? 0, missed, covered?.widths ?? [], covered?.from, covered?.capped ?? false, FOLLOWED)];
+  if (replayed?.journeys) lines.push(w.replayed(replayed.journeys, replayed.base));
   return lines;
 }
 
 export async function runReview(argv: string[]): Promise<number> {
-  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, base: { type: "string" }, summary: { type: "string" }, "install-check": { type: "boolean" }, "aeom-ref": { type: "string" }, force: { type: "boolean" } } }).values;
+  const parsed = parseArgs({ args: argv, options: { ...APP_OPTIONS, base: { type: "string" }, summary: { type: "string" }, "install-check": { type: "boolean" }, "aeom-ref": { type: "string" }, force: { type: "boolean" }, lang: { type: "string" } } }).values;
   if (parsed.help) {
     console.log(REVIEW_HELP);
     return 0;
   }
+  if (parsed.lang !== undefined && parsed.lang !== "fr" && parsed.lang !== "en") {
+    console.error(`--lang is fr or en, not ${parsed.lang}.`);
+    return 1;
+  }
   if (parsed["install-check"]) return installCheck(parsed["aeom-ref"], Boolean(parsed.force));
+  // The person's language: the one asked, else the product sheet's, else English.
+  const lang: Lang = (parsed.lang as Lang | undefined) ?? sheetLang(await readFile(join(".aeom", "product.md"), "utf8").catch(() => null)) ?? "en";
+  const w = reviewWords(lang);
   // A review that stops before it starts says why, in the check's summary too.
   const stop = async (said: string, md: string) => {
     console.error(said);
@@ -125,12 +130,12 @@ export async function runReview(argv: string[]): Promise<number> {
   }
   if (!from) {
     const shallow = (await git(["rev-parse", "--is-shallow-repository"]).catch(() => "")).trim() === "true";
-    const said = `Cannot compare this branch with ${candidates.join(", ") || "its base"}: ${why}${shallow ? " The clone is shallow: fetch its history (fetch-depth: 0 in GitHub Actions)." : " Give the branch to compare with: --base <branch>."}`;
+    const said = w.cannotCompare(candidates.join(", "), why, shallow);
     return stop(said, text(said));
   }
   // The standard as the base holds it: a branch never reviews itself against its own edit of it.
   const standardText = (await git(["show", `${from}:./.aeom/standard.md`]).catch(() => null)) ?? (await readFile(join(".aeom", "standard.md"), "utf8").catch(() => null));
-  if (standardText === null) return stop(`No standard in .aeom/standard.md: run /aeom first, which writes it from the front as it is.`, "No standard in `.aeom/standard.md`: run /aeom first, which writes it from the front as it is.");
+  if (standardText === null) return stop(w.noStandard(".aeom/standard.md"), w.noStandard("`.aeom/standard.md`"));
   const branch = (await git(["branch", "--show-current"]).catch(() => "")).trim() || "HEAD";
   const baseName = base;
   const ahead = Number((await git(["rev-list", "--count", `${from}..${head}`])).trim());
@@ -141,7 +146,7 @@ export async function runReview(argv: string[]): Promise<number> {
   const uncommitted = status.filter((l) => !/\.aeom\/review(\/|$)/.test(l)).length;
   const reviewShots = status.some((l) => /\.aeom\/review(\/|$)/.test(l));
 
-  const inCode = reviewCode({ standard: readStandard(standardText), diff, read: (file) => {
+  const inCode = reviewCode({ standard: readStandard(standardText), diff, lang, read: (file) => {
     try {
       return readFileSync(file, "utf8");
     } catch {
@@ -168,7 +173,7 @@ export async function runReview(argv: string[]): Promise<number> {
   // aeom check finds them, by following the links from the home page.
   const follow = touched.all && !known.length;
   const routes = follow ? ["/"] : touched.routes;
-  for (const shape of touched.unmeasured) notes.push(`${shape} was not measured: no route of its shape is known. Add one to "pages" in .aeom/config.json.`);
+  for (const shape of touched.unmeasured) notes.push(w.unmeasuredShape(shape));
 
   let measured = false;
   let journeys: Journey[] = [];
@@ -179,10 +184,10 @@ export async function runReview(argv: string[]): Promise<number> {
   let replayedOn: { journeys: number; base: string | null } | null = null;
   if (routes.length) {
     const values = await withConfig(parsed);
-    if (!values.url) notes.push(`No app to start: .aeom/config.json has no url, so the screens were not measured, only the code read.`);
+    if (!values.url) notes.push(w.noUrl);
     else {
       const widths = parseWidths(values.widths);
-      if (typeof widths === "string") notes.push(widths);
+      if (typeof widths === "string") notes.push(w.badWidths(WIDTH_RANGE.min, WIDTH_RANGE.max));
       else {
         const url = values.url;
         const signedOut = values.public?.split(",");
@@ -192,7 +197,7 @@ export async function runReview(argv: string[]): Promise<number> {
           try {
             const session = await signInFromConfig(url);
             if (session === "failed") {
-              notes.push(`The sign-in failed, as said above: the screens were not measured.`);
+              notes.push(w.signInFailed);
               return 0;
             }
             const signedIn = session ? session.signedIn : undefined;
@@ -218,10 +223,10 @@ export async function runReview(argv: string[]): Promise<number> {
               const line = `${f.check}: ${f.element ? `${f.element}: ` : ""}${f.message}`;
               if (said.has(`${route(f.url)} ${line}`)) continue;
               said.add(`${route(f.url)} ${line}`);
-              if (keepStyle && STYLE_CHECKS.includes(f.check)) charter.push([route(f.url), `${line}: the charter's, kept, said, not refused`]);
+              if (keepStyle && STYLE_CHECKS.includes(f.check)) charter.push([route(f.url), w.charter(line)]);
               else rows.push([route(f.url), line]);
             }
-            for (const e of report.errors) if (!elsewhere(e)) rows.push([route(e.url), `does not load: ${e.reason}`]);
+            for (const e of report.errors) if (!elsewhere(e)) rows.push([route(e.url), w.doesNotLoad(e.reason)]);
             // The header of each screen touched, against the one most screens it did not touch share; with every screen
             // touched and found by the links, none is left to compare with.
             const others = known.filter((r) => !routes.includes(r)).slice(0, 3);
@@ -238,11 +243,11 @@ export async function runReview(argv: string[]): Promise<number> {
               const leftOut = (path: string) => (except.header ?? []).some((r) => r.replace(/[?#].*$/, "").replace(/(.)\/+$/, "$1") === path);
               for (const h of headers.slice(others.length)) {
                 if (h.failed) {
-                  rows.push([h.path, `does not load: ${h.failed}`]);
+                  rows.push([h.path, w.doesNotLoad(h.failed)]);
                   continue;
                 }
-                const differs = common ? headerDifference(h.links, common.links) : null;
-                if (differs && !leftOut(h.path)) rows.push([h.path, `its header differs from the rest of the app: ${differs}`]);
+                const differs = common ? headerDifference(h.links, common.links, lang) : null;
+                if (differs && !leftOut(h.path)) rows.push([h.path, w.headerDiffers(differs)]);
               }
             }
             // The key journeys, replayed on the branch: which of them cross the screens it touches.
@@ -250,7 +255,7 @@ export async function runReview(argv: string[]): Promise<number> {
             if (existsSync(join(".aeom", "journeys"))) {
               journeys = await loadJourneys(join(".aeom", "journeys")).catch((error: unknown) => {
                 if (!(error instanceof JourneyError)) throw error;
-                for (const problem of error.problems) rows.push([".aeom/journeys", `cannot be replayed: ${problem}`]);
+                for (const problem of error.problems) rows.push([".aeom/journeys", w.cannotReplay(problem)]);
                 return [];
               });
             }
@@ -260,12 +265,12 @@ export async function runReview(argv: string[]): Promise<number> {
             }
             measured = true;
           } catch (error) {
-            notes.push(`The screens could not be measured: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
+            notes.push(w.couldNotMeasure(error instanceof Error ? error.message.split("\n")[0]! : String(error)));
           }
           return 0;
         }, (message, output) => (failure = `${message}${output ? `\n\n\`\`\`\n${output.slice(-2000)}\n\`\`\`` : ""}`));
         if (started !== 0) {
-          notes.push(`The app did not start, as said above: the screens were not measured.`);
+          notes.push(w.appDidNotStart);
           if (failure) startFailure = failure;
         }
       }
@@ -276,7 +281,7 @@ export async function runReview(argv: string[]): Promise<number> {
   // a new call is a feature, said and never refused, since a PR may bring one.
   const passed: string[] = [];
   const features: [string, string][] = [];
-  if (measured && !journeys.length) notes.push(`No key journeys recorded in .aeom/journeys: none replayed.`);
+  if (measured && !journeys.length) notes.push(w.noJourneys);
   // Set inside the app's run: TypeScript cannot see it there.
   const replayed = onBranch as JourneyReport | null;
   if (replayed) {
@@ -284,10 +289,10 @@ export async function runReview(argv: string[]): Promise<number> {
     // so one the branch breaks before the touched screen is still seen.
     const named = (slug: string) => (journeys.find((j) => j.slug === slug)?.steps ?? []).flatMap((s) => ("path" in s && s.path ? [s.path] : "lands" in s && s.lands ? [s.lands] : []));
     const crossing = replayed.journeys.filter((j) => [...j.runs.flatMap((r) => r.screens), ...named(j.slug)].some((path) => routeTouched(path, touched)));
-    if (!crossing.length) notes.push(`No key journey crosses the screens touched.`);
+    if (!crossing.length) notes.push(w.noneCrosses);
     else {
       const widths = replayed.widths;
-      const base = await replayOnBase({ from, journeys: journeys.filter((j) => crossing.some((c) => c.slug === j.slug)), dir: parsed.dir, config, widths, start: parsed.start ?? (parsed.url === undefined ? config.start : undefined), url: parsed.url ?? config.url, timeout: parsed.timeout });
+      const base = await replayOnBase({ from, journeys: journeys.filter((j) => crossing.some((c) => c.slug === j.slug)), dir: parsed.dir, config, widths, start: parsed.start ?? (parsed.url === undefined ? config.start : undefined), url: parsed.url ?? config.url, timeout: parsed.timeout, w });
       if (base.note) notes.push(base.note);
       replayedOn = { journeys: crossing.length, base: base.report ? baseName : null };
       const branchCrossing: JourneyReport = { ...replayed, journeys: crossing };
@@ -301,59 +306,59 @@ export async function runReview(argv: string[]): Promise<number> {
         // Excused only when the base breaks the same way: the same width, the same step, the same reason.
         const there = b?.runs.find((r) => r.width === broke.width);
         if (there?.broken && there.broken.step === broke.broken!.step && there.broken.reason === broke.broken!.reason) {
-          notes.push(`${a.name} already broke on ${baseName}, the same way: not this branch's doing.`);
+          notes.push(w.alreadyBroke(a.name, baseName));
           continue;
         }
         const capture = (broke.steps.find((s) => s.index === broke.broken!.step) ?? broke.steps.at(-1))?.capture;
-        const before = !b ? `breaks (the base could not be replayed)` : there && !there.broken ? `went to its end on ${baseName} and breaks` : `breaks (on ${baseName} it broke otherwise: step ${there?.broken?.step}, ${there?.broken?.reason})`;
-        rows.push([a.name, `${before} at step ${broke.broken!.step} at ${broke.width} px: ${broke.broken!.reason}${capture ? ` (${join(".aeom", "review", "branch", capture)})` : ""}`]);
+        const before = !b ? w.brokeBaseUnreplayed : there && !there.broken ? w.wentToEnd(baseName) : w.brokeOtherwise(baseName, there?.broken?.step, there?.broken?.reason);
+        rows.push([a.name, `${before}${w.atStep(broke.broken!.step, broke.width, broke.broken!.reason)}${capture ? ` (${join(".aeom", "review", "branch", capture)})` : ""}`]);
       }
       if (base.report) {
         // A base journey that broke early made fewer calls: its warnings would be noise.
         const whole = (r: JourneyReport) => ({ ...r, journeys: r.journeys.filter((j) => (base.report!.journeys.find((x) => x.slug === j.slug)?.runs ?? []).every((x) => !x.broken)) });
         const { refused } = guardJourneys({ before: whole(base.report), after: whole(branchCrossing) });
-        for (const v of refused.filter((v) => v.kind !== "file")) features.push([v.journey ?? v.journeys?.[0] ?? "", `${v.what}: ${v.kind === "call" ? "a call the base did not make" : v.why}: a feature, said, not refused`]);
+        for (const v of refused.filter((v) => v.kind !== "file")) features.push([v.journey ?? v.journeys?.[0] ?? "", w.feature(v.what, v.kind === "call" ? null : v.why)]);
       }
     }
   }
 
-  const lines = [`${branch} against ${base}, held to .aeom/standard.md: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
+  const lines = [w.head(branch, base, ".aeom/standard.md", ahead), ""];
   const shown = rows.slice(0, MOST);
   const column = Math.max(0, ...shown.map(([where]) => where.length), ...passed.map((n) => n.length), ...features.map(([w]) => w.length), ...charter.map(([w]) => w.length)) + 2;
   for (const [where, what] of shown) lines.push(`✗ ${where.padEnd(column)}${what}`);
   // Every screen touched, the rows may be many for one line changed: no rewrite there.
-  if (rows.length > MOST) lines.push(`… and ${rows.length - MOST} more${touched.all ? "." : ": the branch rewrites more than it changes."}`);
-  for (const name of passed) lines.push(`✓ ${name.padEnd(column)}still reaches its end`);
+  if (rows.length > MOST) lines.push(w.more(rows.length - MOST, touched.all));
+  for (const name of passed) lines.push(`✓ ${name.padEnd(column)}${w.stillReaches}`);
   for (const [where, what] of [...features, ...charter]) lines.push(`⚠ ${where.padEnd(column)}${what}`);
   if (rows.length || passed.length || features.length || charter.length) lines.push("");
-  if (reviewShots) notes.push(`The journeys' captures are in .aeom/review/, which git does not ignore: add .aeom/review/ to .gitignore, so no capture enters a commit.`);
-  if (uncommitted) notes.push(`${uncommitted} uncommitted file${uncommitted === 1 ? "" : "s"} not reviewed: commit ${uncommitted === 1 ? "it" : "them"} first.`);
+  if (reviewShots) notes.push(w.shotsNotIgnored);
+  if (uncommitted) notes.push(w.uncommitted(uncommitted));
   if (notes.length) lines.push(...notes, "");
   // Just before the verdict, what it rests on: also when the only screen touched has a route no known one fits. Set
   // inside the app's run: TypeScript cannot see it there.
   const done = measured ? (covered as Covered | null) : null;
-  const said = measured || !routes.length ? coverage(done, touched.unmeasured, replayedOn) : [];
+  const said = measured || !routes.length ? coverage(w, done, touched.unmeasured, replayedOn) : [];
   if (said.length) lines.push(...said, "");
   // Screens touched and none measured is no green, whatever kept them from being measured.
   const anyScreen = routes.length > 0 || touched.unmeasured.length > 0;
   let code = 0;
   if (rows.length) {
-    lines.push(`${rows.length} thing${rows.length === 1 ? "" : "s"} outside the standard.`);
+    lines.push(w.outside(rows.length));
     code = 1;
   } else if (anyScreen && !done?.screens.length) {
-    lines.push(`Nothing outside the standard in the code; the screens it touches were not measured.`);
+    lines.push(w.notMeasured);
     code = 2;
-  } else lines.push(anyScreen ? `Nothing outside the standard.` : `No screen touched, and nothing outside the standard.`);
+  } else lines.push(anyScreen ? w.nothing : w.noScreen);
   console.log(lines.join("\n"));
   // The check's summary, words only: what is outside the standard, and why nothing could be measured when it could not.
   if (parsed.summary) {
-    const md = [`## aeom review`, "", `${asCode(branch)} against ${asCode(base)}, held to ${asCode(".aeom/standard.md")}: ${ahead} commit${ahead === 1 ? "" : "s"} ahead.`, ""];
+    const md = [`## aeom review`, "", w.head(asCode(branch), asCode(base), asCode(".aeom/standard.md"), ahead), ""];
     for (const [where, what] of shown) md.push(`- ${asCode(where)} ${text(what)}`);
-    for (const name of passed) md.push(`- ✓ ${text(name)} still reaches its end`);
-    for (const [where, what] of [...features, ...charter]) md.push(`- ⚠ ${text(where)}: ${text(what)}`);
-    if (rows.length > MOST) md.push(`- … and ${rows.length - MOST} more.`);
+    for (const name of passed) md.push(`- ✓ ${text(name)} ${w.stillReaches}`);
+    for (const [where, what] of [...features, ...charter]) md.push(`- ⚠ ${text(where)}${w.sep}${text(what)}`);
+    if (rows.length > MOST) md.push(`- ${w.moreShort(rows.length - MOST)}`);
     if (shown.length || passed.length || features.length || charter.length) md.push("");
-    for (const note of notes) md.push(note.startsWith("The app did not start") && startFailure ? `The app did not start: ${startFailure}` : text(note), "");
+    for (const note of notes) md.push(note === w.appDidNotStart && startFailure ? w.appDidNotStartWith(startFailure) : text(note), "");
     for (const line of said) md.push(text(line), "");
     md.push(`**${text(lines.at(-1)!)}**`, "");
     await appendFile(parsed.summary, md.join("\n"));
@@ -363,7 +368,7 @@ export async function runReview(argv: string[]): Promise<number> {
     const prefix = (await git(["rev-parse", "--show-prefix"]).catch(() => "")).trim();
     const shownHere = inCode.slice(0, ANNOTATIONS);
     shownHere.forEach((d, i) => {
-      const more = i === shownHere.length - 1 && inCode.length > ANNOTATIONS ? `; ${inCode.length - ANNOTATIONS} more in ${parsed.summary ? "the check's summary" : "the review's output"}` : "";
+      const more = i === shownHere.length - 1 && inCode.length > ANNOTATIONS ? w.annotationMore(inCode.length - ANNOTATIONS, Boolean(parsed.summary)) : "";
       console.log(`::error file=${property(prefix + d.file)},line=${d.line},title=aeom::${data(d.what + more)}`);
     });
   }
@@ -393,8 +398,8 @@ const property = (said: string) => data(said).replace(/:/g, "%3A").replace(/,/g,
  * The journeys replayed on the base, from a worktree of it: its folder of pages served, or its app started with the
  * config's start, sequentially, once the branch's app has stopped. Without a way to start it, the branch is judged alone.
  */
-async function replayOnBase({ from, journeys, dir, config, widths, start, url: appUrl, timeout }: { from: string; journeys: Journey[]; dir?: string; config: ProjectConfig; widths: number[]; start?: string; url?: string; timeout?: string }): Promise<{ report: JourneyReport | null; note?: string }> {
-  if (dir === undefined && (!start || !appUrl)) return { report: null, note: `The base's app cannot be started (no start command: the app given by --url, or none in .aeom/config.json): the journeys were replayed on the branch alone.` };
+async function replayOnBase({ from, journeys, dir, config, widths, start, url: appUrl, timeout, w }: { from: string; journeys: Journey[]; dir?: string; config: ProjectConfig; widths: number[]; start?: string; url?: string; timeout?: string; w: ReviewWords }): Promise<{ report: JourneyReport | null; note?: string }> {
+  if (dir === undefined && (!start || !appUrl)) return { report: null, note: w.baseCannotStart };
   const root = (await git(["rev-parse", "--show-toplevel"])).trim();
   const prefix = (await git(["rev-parse", "--show-prefix"])).trim();
   const place = await mkdtemp(join(tmpdir(), "aeom-review-base-"));
@@ -426,20 +431,20 @@ async function replayOnBase({ from, journeys, dir, config, widths, start, url: a
         stop = () => app.stop();
       } catch (error) {
         if (!(error instanceof AppStartError)) throw error;
-        return { report: null, note: `The base's app did not start (${error.message.split("\n")[0]}): the journeys were replayed on the branch alone.` };
+        return { report: null, note: w.baseDidNotStart(error.message.split("\n")[0]!) };
       }
     }
     try {
       // Signed in on the base as on the branch: a journey behind a sign-in breaks on neither for want of one.
       const session = dir === undefined ? await signInFromConfig(url) : null;
-      if (session === "failed") return { report: null, note: `The sign-in failed on the base: the journeys were replayed on the branch alone.` };
+      if (session === "failed") return { report: null, note: w.baseSignInFailed };
       const report = await replayJourneys({ url, journeys, outDir: join(".aeom", "review", "base"), widths, ...(dir === undefined && config.reset ? { reset: config.reset, resetCwd: here } : {}), ...(session ?? {}), ...(dir !== undefined ? { closed: { api: null } } : {}) });
-      return { report, ...(workspace ? { note: `In this workspace, the base ran on the branch's installed packages: a shared package the branch changed shows its new code on the base too.` } : {}) };
+      return { report, ...(workspace ? { note: w.workspace } : {}) };
     } finally {
       await stop();
     }
   } catch (error) {
-    return { report: null, note: `The journeys could not be replayed on the base (${error instanceof Error ? error.message.split("\n")[0] : String(error)}): the branch is judged alone.` };
+    return { report: null, note: w.baseCouldNotReplay(error instanceof Error ? error.message.split("\n")[0]! : String(error)) };
   } finally {
     await git(["worktree", "remove", "--force", tree]).catch(() => undefined);
     await rm(place, { recursive: true, force: true });

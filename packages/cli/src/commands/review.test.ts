@@ -148,6 +148,35 @@ test("a Tailwind class outside the standard is named with its file and line, lik
   }
 });
 
+test("with a product sheet in French, the review speaks French, in the terminal and in the check's summary; --lang says otherwise", async () => {
+  git("checkout", "-q", "-b", "feat/fr");
+  await writeFile(join(dir, ".aeom", "product.md"), "# Boutique\n\nUne petite boutique en ligne qui vend des lampes, des chaises et des tapis. Elle sert à ceux qui meublent leur maison, et le panier est au cœur de la boucle.\n");
+  await writeFile(join(dir, "front", "promo.css"), ".promo { color: #7c3aed; }\n");
+  git("add", "-A");
+  git("commit", "-q", "-m", "en français");
+  const summary = join(dir, "summary.md");
+  try {
+    const fr = await run(["review", "--base", "main", "--summary", summary]);
+    assert.equal(fr.code, 1, fr.out);
+    assert.match(fr.out, /^feat\/fr face à main, tenue à \.aeom\/standard\.md : 1 commit d'avance\./);
+    assert.match(fr.out, /✗ front\/promo\.css:1\s+#7c3aed n'est pas une couleur du standard : le token le plus proche est --petrole \(#1f4b57\)/);
+    assert.match(fr.out, /Pas d'app à démarrer : \.aeom\/config\.json n'a pas d'url, donc les écrans n'ont pas été mesurés, seul le code a été lu\./);
+    assert.match(fr.out, /\n1 écart au standard\.\n?$/);
+    const said = (await import("node:fs")).readFileSync(summary, "utf8");
+    assert.match(said, /^## aeom review\n\n`feat\/fr` face à `main`, tenue à `\.aeom\/standard\.md` : 1 commit d'avance\./);
+    assert.match(said, /\*\*1 écart au standard\.\*\*/);
+    const en = await run(["review", "--base", "main", "--lang", "en"]);
+    assert.match(en.out, /^feat\/fr against main, held to \.aeom\/standard\.md: 1 commit ahead\./, en.out);
+    assert.match(en.out, /\n1 thing outside the standard\.\n?$/);
+    const wrong = await run(["review", "--base", "main", "--lang", "de"]);
+    assert.equal(wrong.code, 1);
+    assert.match(wrong.out, /--lang is fr or en/);
+  } finally {
+    git("checkout", "-q", "main");
+    await rm(summary, { force: true });
+  }
+});
+
 test("a deleted page is not measured; the base is found without being given; the standard is the base's", async () => {
   git("checkout", "-q", "-b", "chore/menage");
   await rm(join(dir, "front", "produits.html"));
@@ -300,6 +329,9 @@ test("a review that stops before it starts still says why in the check's summary
     const summary = join(bare, "summary.md");
     await promisify(execFile)("node", [AEOM, "review", "--summary", summary], { cwd: bare, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(bare, ".home") } }).catch(() => undefined);
     assert.match((await import("node:fs")).readFileSync(summary, "utf8"), /^## aeom review\n\nNo standard in `\.aeom\/standard\.md`: run \/aeom first/);
+    await rm(summary, { force: true });
+    await promisify(execFile)("node", [AEOM, "review", "--summary", summary, "--lang", "fr"], { cwd: bare, env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(bare, ".home") } }).catch(() => undefined);
+    assert.match((await import("node:fs")).readFileSync(summary, "utf8"), /^## aeom review\n\nPas de standard dans `\.aeom\/standard\.md` : lance d'abord \/aeom/);
   } finally {
     await rm(bare, { recursive: true, force: true });
   }
@@ -317,6 +349,10 @@ test("the key journeys a branch crosses are replayed on its base and on it: one 
     const { code, out } = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280"]);
     assert.equal(code, 1, out);
     assert.match(out, /✗ Voir les produits\s+went to its end on main and breaks at step 2 at 1280 px: [^\n]*\(\.aeom\/review\/branch\/[^)]+\.png\)/);
+    // In French: the journey, what was measured and what was replayed.
+    const fr = await run(["review", "--base", "main", "--dir", "front", "--widths", "1280", "--lang", "fr"]);
+    assert.match(fr.out, /✗ Voir les produits\s+allait au bout sur main et casse à l'étape 2 à 1280 px : /, fr.out);
+    assert.match(fr.out, /\nÉcrans touchés mesurés : 1 sur 1, à 1280 px\.\n1 parcours clé qui les traverse, rejoué sur la branche et sur main\.\n/);
   } finally {
     git("checkout", "-q", "main");
   }
@@ -330,6 +366,21 @@ test("the key journeys a branch crosses are replayed on its base and on it: one 
     assert.match(out, /⚠ Voir les produits\s+POST \/produits\.html: a call the base did not make: a feature, said, not refused/);
   } finally {
     git("checkout", "-q", "main");
+  }
+  // New fields to a call the base made, said in French in the terminal and in the check's summary.
+  git("checkout", "-q", "-b", "feat/quantite", "feat/panier");
+  await writeFile(join(dir, "front", "produits.html"), page(["Accueil", "Produits"], `<h1>Produits</h1><script>fetch("produits.html", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ article: 1, quantite: 2 }) })</script>`));
+  git("commit", "-q", "-am", "quantite");
+  const summary = join(dir, "summary.md");
+  try {
+    const { code, out } = await run(["review", "--base", "feat/panier", "--dir", "front", "--widths", "1280", "--lang", "fr", "--summary", summary]);
+    assert.equal(code, 0, out);
+    assert.match(out, /✓ Voir les produits\s+va toujours au bout/);
+    assert.match(out, /⚠ Voir les produits\s+POST \/produits\.html : envoie de nouveaux champs : quantite : une feature, dite, pas refusée/);
+    assert.match((await import("node:fs")).readFileSync(summary, "utf8"), /- ⚠ Voir les produits : POST \/produits\.html : envoie de nouveaux champs : quantite : une feature, dite, pas refusée/);
+  } finally {
+    git("checkout", "-q", "main");
+    await rm(summary, { force: true });
   }
 });
 

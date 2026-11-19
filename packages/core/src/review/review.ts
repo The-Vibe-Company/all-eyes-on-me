@@ -9,6 +9,37 @@ export interface ReviewStandard {
   components: { name: string | null; file: string }[];
 }
 
+/** The language a review speaks: the person's, from the product sheet. */
+export type ReviewLang = "en" | "fr";
+
+/** What a value is, said in a sentence: its kind with its article, and the same kind as one of many. */
+const KIND = {
+  en: { colour: ["", "a colour"], font: ["the font ", "a font"], size: ["the size ", "a size"], space: ["the space ", "a space"], radius: ["the radius ", "a radius"] },
+  fr: { colour: ["", "une couleur"], font: ["la police ", "une police"], size: ["la taille ", "une taille"], space: ["l'espace ", "un espace"], radius: ["l'arrondi ", "un arrondi"] },
+} as const;
+type Kind = keyof (typeof KIND)["en"];
+/** The parts of the kit, in French with their gender: a button is « fait », a navigation « faite ». */
+const PART_FR: Record<string, [string, boolean]> = { button: ["un bouton", false], field: ["un champ", false], select: ["une liste déroulante", true], "text area": ["une zone de texte", true], header: ["un en-tête", false], navigation: ["une navigation", true] };
+
+/** The sentences of the code review, in the review's language. */
+const SAY = {
+  en: {
+    hard: (kind: Kind, value: string, token: string) => `${KIND.en[kind][0]}${value} is ${token} written in hard: use the token`,
+    outside: (kind: Kind, value: string, near?: { name: string; value: string }) => `${KIND.en[kind][0]}${value} is not ${KIND.en[kind][1]} of the standard${near ? `: the nearest is ${near.name} (${near.value})` : ""}`,
+    byHand: (part: string, use: string) => `a ${part} made by hand: the standard's is ${use}`,
+    in: "in",
+  },
+  fr: {
+    hard: (kind: Kind, value: string, token: string) => `${KIND.fr[kind][0]}${value} est la valeur de ${token}, écrite en dur : utilise le token`,
+    outside: (kind: Kind, value: string, near?: { name: string; value: string }) => `${KIND.fr[kind][0]}${value} n'est pas ${KIND.fr[kind][1]} du standard${near ? ` : le token le plus proche est ${near.name} (${near.value})` : ""}`,
+    byHand: (part: string, use: string) => {
+      const [name, feminine] = PART_FR[part] ?? [part, false];
+      return `${name} fait${feminine ? "e" : ""} à la main : ${feminine ? "celle" : "celui"} du standard est ${use}`;
+    },
+    in: "dans",
+  },
+};
+
 /** One way a pull request's code leaves the standard, where it shows. */
 export interface CodeDeviation {
   file: string;
@@ -203,7 +234,8 @@ function nested(content: string, line: number): boolean {
  * `read` gives a file as the branch holds it, to tell a header inside an
  * article from the site's.
  */
-export function reviewCode({ standard, diff, read }: { standard: ReviewStandard; diff: string; read?: (file: string) => string | null }): CodeDeviation[] {
+export function reviewCode({ standard, diff, read, lang = "en" }: { standard: ReviewStandard; diff: string; read?: (file: string) => string | null; lang?: ReviewLang }): CodeDeviation[] {
+  const words = SAY[lang];
   const tokenFiles = new Set(standard.tokens.map((t) => t.file));
   const colours = standard.tokens.filter((t) => isColour(t.value));
   // What to write instead is a colour of the light page: a dark theme's token is the same name, another value.
@@ -255,12 +287,12 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
       const classes = classesOf(text);
       const fallbacks = varRanges(text);
       const inVar = (at: number) => fallbacks.some(([a, b]) => at > a && at < b);
-      const valueAt = (tokens: typeof lengths, value: string, what: string) => {
+      const valueAt = (tokens: typeof lengths, value: string, what: "size" | "space" | "radius") => {
         // Outside the standard, the step of its scale it is nearest: what to write instead; at no distance, the same
         // length written another way (`8px` for `0.5rem`).
         const near = nearestLength(pixels(value) ?? NaN, tokens);
         const token = tokens.find((t) => t.value === value) ?? (near?.distance === 0 ? near.token : null);
-        say(token ? `the ${what} ${value} is ${token.name} written in hard: use the token` : `the ${what} ${value} is not a ${what} of the standard${near ? `: the nearest is ${near.token.name} (${near.token.value})` : ""}`);
+        say(token ? words.hard(what, value, token.name) : words.outside(what, value, near?.token));
       };
       if (colours.length) {
         for (const m of text.matchAll(COLOUR)) {
@@ -271,13 +303,13 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
           if (!property || !COLOUR_PROPERTY.test(property)) continue;
           const near = nearestColour(m[0], candidates);
           const token = colours.find((t) => colourKey(t.value) === colourKey(m[0])) ?? (near && near.distance < SAME_COLOUR ? near.token : null);
-          say(token ? `${m[0]} is ${token.name} written in hard: use the token` : `${m[0]} is not a colour of the standard${near ? `: the nearest is ${near.token.name} (${near.token.value})` : ""}`);
+          say(token ? words.hard("colour", m[0], token.name) : words.outside("colour", m[0], near?.token));
         }
         // A colour of Tailwind's default palette, its opacity left aside, unless the standard names that very colour.
         for (const { written, utility } of classes) {
           const m = utility.replace(SLASHED, "").match(TW_COLOUR);
           if (!m || colourNames.has(`${m[1]}-${m[2]}`) || colourNames.has(m[1]!)) continue;
-          say(`${written} is not a colour of the standard`);
+          say(words.outside("colour", written));
         }
       }
       if (fontNames.size) {
@@ -293,7 +325,7 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
           const first = families(value.replace(/["'`]?\s*[,}]?\s*$/, ""))[0];
           if (!first || GENERIC.test(first)) continue;
           const token = fontNames.get(first.toLowerCase());
-          say(token ? `the font ${first} is ${token} written in hard: use the token` : `the font ${first} is not a font of the standard`);
+          say(token ? words.hard("font", first, token) : words.outside("font", first));
         }
       }
       // A length written in hard: CSS (`font-size: 18px`), or JSX (`fontSize: 18` is in pixels).
@@ -341,7 +373,7 @@ export function reviewCode({ standard, diff, read }: { standard: ReviewStandard;
       const classes = kit.map((c) => c.name).filter((n): n is string => !!n && n.startsWith(".")).map((n) => n.slice(1).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
       if (classes.some((c) => new RegExp(`(^|[\\s"'\`{(,])${c}($|[\\s"'\`}),])`).test(tagText))) continue;
       const use = kit[0]!;
-      say(`a ${kind} made by hand: the standard's is ${use.name ? `${use.name} in ${use.file}` : use.file}`);
+      say(words.byHand(kind, use.name ? `${use.name} ${words.in} ${use.file}` : use.file));
     }
   }
   return found;
