@@ -37,7 +37,7 @@ const WORDS = {
     scratchFake: "Every screen runs on fake data, kept in one module and named as such, until an API replaces it.",
     screens: "Screens",
     journeys: "Journeys",
-    status: { kept: "kept", new: "new", missing: "missing", unchanged: "unchanged", "does not load": "does not load", "sent back": "sent back" } as Record<string, string>,
+    status: { kept: "kept", new: "new", changed: "changed", missing: "missing", unchanged: "unchanged", "does not load": "does not load", "sent back": "sent back" } as Record<string, string>,
     journeyStatus: { kept: "kept", "sent back": "sent back", unchanged: "unchanged", new: "new" } as Record<string, string>,
     counts: (before: number, after: number) => `${before} → ${after} failing`,
     steps: (before: number, after: number) => `${before} → ${after} steps`,
@@ -64,6 +64,7 @@ const WORDS = {
     cut: (report: string) => `…cut here: the rest is on the result page, ${report}.`,
     footer: "Opened by All Eyes On Me. It follows this repository's rules: AEOM merges nothing.",
     colon: ":",
+    said: (text: string) => text,
   },
   fr: {
     title: {
@@ -77,11 +78,11 @@ const WORDS = {
     intro: (report: string) => `Ce qu'All Eyes On Me a fait sur ce run, en mots. Les captures restent sur la machine qui l'a lancé, comme la page de résultat : ${report}, depuis la racine du dépôt.`,
     beforeRun: "Avant le run.",
     measured: (m: Measured) => `Mesuré : ${m.screens} ${plural(m.screens, "écran", "écrans")} à ${m.widths} px, ${m.checks} ${plural(m.checks, "contrôle", "contrôles")} et ${m.principles} ${plural(m.principles, "principe", "principes")} chacun${m.journeys === null ? "" : ` ; ${m.journeys} parcours sur ${m.journeyPrinciples} ${plural(m.journeyPrinciples!, "principe", "principes")}`}.`,
-    knockout: (among: string) => `choisie par élimination entre ${among}`,
+    knockout: (among: string) => `choisie par élimination parmi ${among}`,
     person: "choisie par la personne",
-    personNoKnockout: (among: string) => `choisie par la personne entre ${among}, sans élimination`,
-    validated: (among: string) => `choisie par élimination entre ${among}, et validée par la personne`,
-    overruled: (among: string, judges: string) => `choisie par la personne ; l'élimination des juges entre ${among} avait retenu ${judges}`,
+    personNoKnockout: (among: string) => `choisie par la personne parmi ${among}, sans élimination`,
+    validated: (among: string) => `choisie par élimination parmi ${among}, et validée par la personne`,
+    overruled: (among: string, judges: string) => `choisie par la personne ; l'élimination des juges parmi ${among} avait retenu ${judges}`,
     direction: "Direction",
     styleKept: "Style gardé",
     styleKeptText: "Pas de nouvelle direction : le run a corrigé ce qui échouait, dans le style de l'app.",
@@ -93,33 +94,42 @@ const WORDS = {
     scratchFake: "Chaque écran tourne sur des données fictives, gardées dans un seul module et nommées comme telles, jusqu'à ce qu'une API les remplace.",
     screens: "Écrans",
     journeys: "Parcours",
-    status: { kept: "gardé", new: "nouveau", missing: "disparu", unchanged: "inchangé", "does not load": "ne charge pas", "sent back": "renvoyé" } as Record<string, string>,
+    status: { kept: "gardé", new: "nouveau", changed: "modifié", missing: "disparu", unchanged: "inchangé", "does not load": "ne charge pas", "sent back": "renvoyé" } as Record<string, string>,
     journeyStatus: { kept: "amélioré", "sent back": "remis", unchanged: "inchangé", new: "nouveau" } as Record<string, string>,
     counts: (before: number, after: number) => `${before} → ${after} en échec`,
     steps: (before: number, after: number) => `${before} → ${after} étapes`,
     lostAll: "renvoyé : il a perdu ce qu'il permettait de faire.",
     backSame: "renvoyé, pareil qu'avant",
     backWorse: "renvoyé, moins bien qu'avant",
-    cleared: "Corrigé",
-    still: "Échoue encore",
-    newly: "Échoue désormais",
+    cleared: "Réglé",
+    still: "Encore en échec",
+    newly: "Nouvel échec",
     lost: "Perdu",
     brokeBefore: (how: string) => `Avant le run, ${how}.`,
     atEnd: (how: string) => `À la fin, ${how}.`,
     asked: "Demandé",
-    review: "Revue du standard",
+    review: "Relecture du standard",
     notReviewed: "Pas encore relu au regard du standard.",
-    features: "Features manquantes",
+    features: "Fonctions manquantes",
     featuresText: "Ce qu'il faudrait à un parcours clé pour aller au bout. AEOM n'en a rien construit.",
     blocks: (name: string, step: number, missing: string) => `**${name}**, bloque à l'étape ${step} : ${missing}`,
     more: (n: number) => `${n} ${plural(n, "autre parcours bloqué, non nommé", "autres parcours bloqués, non nommés")}.`,
-    stillFailing: "Échoue encore",
+    stillFailing: "Encore en échec",
     notMeasured: "Pas mesuré après le run : ce qui échouait avant lui.",
     nothing: "Rien.",
     andMore: (n: number) => `…et ${n} de plus, sur la page de résultat.`,
     cut: (report: string) => `…coupé ici : la suite est sur la page de résultat, ${report}.`,
     footer: "Ouverte par All Eyes On Me. Elle suit les règles de ce dépôt : AEOM ne merge rien.",
     colon: " :",
+    // What the CLI writes in English, in the words the result page gives it in French; any other text stays as written.
+    said: (text: string) =>
+      text === "Nothing outside the standard." ? "Rien hors du standard."
+      : text === "No screen touched, and nothing outside the standard." ? "Aucun écran touché, et rien hors du standard."
+      : text === "Nothing outside the standard in the code; the screens it touches were not measured." ? "Rien hors du standard dans le code ; les écrans touchés n'ont pas été mesurés."
+      : text === "did not load before the run, and was not measured after the run" ? "ne chargeait pas avant le run, et n'a pas été mesurée après"
+      : text
+          .replace(/^(\d+) things? outside the standard\.$/, (_, n: string) => `${n} ${n === "1" ? "chose" : "choses"} hors du standard.`)
+          .replace(/^it broke at step (\d+): ([\s\S]*)$/, (_, n: string, why: string) => `il s'est arrêté à l'étape ${n} : ${why}`),
   },
 };
 type Words = (typeof WORDS)["en"];
@@ -182,8 +192,8 @@ function screenLine(s: ResultPage["screens"][number], w: Words): string {
 function journeyLine(j: ResultPage["journeys"][number], w: Words, asked = false): string {
   const steps = j.steps.before !== null && j.steps.after !== null ? `, ${w.steps(j.steps.before, j.steps.after)}` : "";
   // A run that built what was asked weighs no journey against another: where one breaks at its end is said.
-  const end = asked && j.broke.after ? ` ${w.atEnd(words(j.broke.after))}` : "";
-  return `- **${words(j.name)}** ${w.journeyStatus[j.status] ?? j.status}${steps}.${j.why ? ` ${words(j.why)}` : ""}${j.broke.before ? ` ${w.brokeBefore(words(j.broke.before))}` : ""}${end}${list(w.cleared, j.cleared, w)}${list(w.still, j.remaining, w)}`;
+  const end = asked && j.broke.after ? ` ${w.atEnd(words(w.said(j.broke.after)))}` : "";
+  return `- **${words(j.name)}** ${w.journeyStatus[j.status] ?? j.status}${steps}.${j.why ? ` ${words(j.why)}` : ""}${j.broke.before ? ` ${w.brokeBefore(words(w.said(j.broke.before)))}` : ""}${end}${list(w.cleared, j.cleared, w)}${list(w.still, j.remaining, w)}`;
 }
 
 /** Cut between two lines, under GitHub's limit, saying where the rest is. */
@@ -254,12 +264,12 @@ export function prBody(page: ResultPage, reportPath: string, lang: PageLang = "e
   // What a run that built what was asked measures is the review of the standard, not a verdict of judges.
   if (page.asked) {
     const review = page.asked.review;
-    lines.push(`## ${w.review}`, "", ...(review ? [`**${words(review.verdict)}**`, "", ...(review.lines.length ? [...capped(review.lines.map((l) => `- ${words(l)}`), w), ""] : [])] : [w.notReviewed, ""]));
+    lines.push(`## ${w.review}`, "", ...(review ? [`**${words(w.said(review.verdict))}**`, "", ...(review.lines.length ? [...capped(review.lines.map((l) => `- ${words(l)}`), w), ""] : [])] : [w.notReviewed, ""]));
     return { title, body: fit(lines.join("\n") + "\n", report, w) };
   }
   lines.push(`## ${w.stillFailing}`, "");
   if (!page.measuredAfter) lines.push(w.notMeasured, "");
-  if (page.stillFailing.length) lines.push(...capped(page.stillFailing.map((f) => `- ${code(f.where)} ${words(f.what)}`), w), "");
+  if (page.stillFailing.length) lines.push(...capped(page.stillFailing.map((f) => `- ${code(f.where)} ${words(w.said(f.what))}`), w), "");
   else if (page.measuredAfter) lines.push(w.nothing, "");
   return { title, body: fit(lines.join("\n") + "\n", report, w) };
 }

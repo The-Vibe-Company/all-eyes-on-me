@@ -147,9 +147,15 @@ test("the PR speaks the run's language: the one its state keeps, else the produc
   const wrong = await run(dir, ["pr", "--dry-run", "--lang", "de"]);
   assert.equal(wrong.code, 1);
   assert.match(wrong.out, /--lang is en or fr/);
-  // A run that kept no language: the product sheet's.
-  await rm(join(R, "state.json"));
+  // The run's language comes before the product sheet's, and --lang before both.
   await put(join(dir, ".aeom", "product.md"), "# Boutique\n\nUne boutique de tissus pour les tapissiers : ils choisissent une pièce, l'ajoutent à la commande et la suivent jusqu'à l'atelier.\n");
+  await put(join(R, "state.json"), { run: "run-1", started: "", options: [], phase: "pr", step: "run.8", vars: { AEOM_LANG: "en" }, branchAt: null, agents: [], history: [] });
+  assert.match((await run(dir, ["pr", "--dry-run"])).out, /AEOM: the front fixed \(run-1\)/, "the run spoke English: its PR too, whatever the sheet");
+  assert.match((await run(dir, ["pr", "--dry-run", "--lang", "fr"])).out, /AEOM : le front corrigé \(run-1\)/);
+  // A run that kept no language, or a state broken by hand: the product sheet's.
+  await put(join(R, "state.json"), "{ not json");
+  assert.match((await run(dir, ["pr", "--dry-run"])).out, /AEOM : le front corrigé \(run-1\)/);
+  await rm(join(R, "state.json"));
   assert.match((await run(dir, ["pr", "--dry-run"])).out, /AEOM : le front corrigé \(run-1\)/);
   await rm(join(dir, ".aeom", "product.md"));
   assert.match((await run(dir, ["pr", "--dry-run"])).out, /AEOM: the front fixed \(run-1\)/, "nothing says it: English");

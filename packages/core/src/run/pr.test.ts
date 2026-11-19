@@ -152,17 +152,17 @@ test("the PR speaks the person's language: in French, its title, its headings, i
   for (const words of [
     /^Ce qu'All Eyes On Me a fait sur ce run, en mots\. Les captures restent sur la machine qui l'a lancé, comme la page de résultat : `\.aeom\/runs\/run-1\/report\.html`, depuis la racine du dépôt\./,
     /\*\*Avant le run\.\*\* Mesuré : 4 écrans à 390, 1280 px, 27 contrôles et 8 principes chacun ; 1 parcours sur 6 principes\./,
-    /\*\*tissus\*\*, choisie par élimination entre tissus, plaid\. Sert la boucle principale\./,
+    /\*\*tissus\*\*, choisie par élimination parmi tissus, plaid\. Sert la boucle principale\./,
     /## Écrans/,
-    /`\/` gardé : 10 → 1 en échec\. Corrigé : grid\. Échoue encore : not-generic\./,
+    /`\/` gardé : 10 → 1 en échec\. Réglé : grid\. Encore en échec : not-generic\./,
     /`\/contact` renvoyé, pareil qu'avant : 8 → 8 en échec\./,
     /`\/produits` renvoyé, moins bien qu'avant : 6 → 9 en échec\./,
     /`\/aide` ne charge pas\./,
     /## Parcours\n\n- \*\*See my orders\*\* amélioré, 4 → 3 étapes\./,
-    /## Features manquantes\n\nCe qu'il faudrait à un parcours clé pour aller au bout\. AEOM n'en a rien construit\./,
+    /## Fonctions manquantes\n\nCe qu'il faudrait à un parcours clé pour aller au bout\. AEOM n'en a rien construit\./,
     /\*\*Add a product\*\*, bloque à l'étape 2 : A way to put a product in the order\./,
     /- 2 autres parcours bloqués, non nommés\./,
-    /## Échoue encore\n\n- `\/contact` states: the list is blank/,
+    /## Encore en échec\n\n- `\/contact` states: the list is blank/,
     /Ouverte par All Eyes On Me\. Elle suit les règles de ce dépôt : AEOM ne merge rien\.$/,
   ])
     assert.match(body, words);
@@ -186,13 +186,20 @@ test("in French, every kind of run has its own title and its own words", () => {
   const lost = fr({ ...page, screens: [{ ...page.screens[1]!, back: { verdict: "worse", before: 8, after: 8, lost: ['link "Contact"'] } }] });
   assert.match(lost.body, /`\/contact` renvoyé : il a perdu ce qu'il permettait de faire\. Perdu : link "Contact"\./);
   const person = fr({ ...page, direction: { ...page.direction!, decision: { judges: "plaid", dropped: [] } } });
-  assert.match(person.body, /choisie par la personne ; l'élimination des juges entre tissus, plaid avait retenu plaid\./);
+  assert.match(person.body, /choisie par la personne ; l'élimination des juges parmi tissus, plaid avait retenu plaid\./);
   const unmeasured = fr({ ...page, measuredAfter: false, stillFailing: [] });
   assert.match(unmeasured.body, /Pas mesuré après le run : ce qui échouait avant lui\./);
-  assert.match(fr({ ...page, stillFailing: [] }).body, /## Échoue encore\n\nRien\./);
-  const asked = fr({ ...page, direction: null, asked: { request: "Un filtre par niveau sur la liste des voies", plan: null, review: null }, journeys: [{ ...page.journeys[0]!, broke: { before: null, after: "it breaks at step 2" } }] });
+  assert.match(fr({ ...page, stillFailing: [] }).body, /## Encore en échec\n\nRien\./);
+  const asked = fr({ ...page, direction: null, asked: { request: "Un filtre par niveau sur la liste des voies", plan: null, review: null }, journeys: [{ ...page.journeys[0]!, broke: { before: "it broke at step 2: the button does nothing", after: "it broke at step 3: no field" } }] });
   assert.equal(asked.title, "AEOM : Un filtre par niveau sur la liste des voies (run-1)");
   assert.match(asked.body, /## Demandé\n\nUn filtre par niveau sur la liste des voies/);
-  assert.match(asked.body, /À la fin, it breaks at step 2\./);
-  assert.match(asked.body, /## Revue du standard\n\nPas encore relu au regard du standard\./);
+  assert.match(asked.body, /Avant le run, il s'est arrêté à l'étape 2 : the button does nothing\. À la fin, il s'est arrêté à l'étape 3 : no field\./);
+  assert.match(asked.body, /## Relecture du standard\n\nPas encore relu au regard du standard\./);
+  const reviewed = fr({ ...page, direction: null, asked: { request: "Un filtre", plan: null, review: { verdict: "2 things outside the standard.", lines: [], passed: false } as never }, screens: [{ ...page.screens[0]!, status: "changed", count: { before: 1, after: 0 } }] });
+  assert.match(reviewed.body, /\*\*2 choses hors du standard\.\*\*/);
+  assert.match(reviewed.body, /`\/` modifié : 1 → 0 en échec\./);
+  assert.match(fr({ ...page, stillFailing: [{ kind: "page", where: "/aide", what: "did not load before the run, and was not measured after the run" } as never] }).body, /`\/aide` ne chargeait pas avant le run, et n'a pas été mesurée après/);
+  assert.match(fr({ ...page, verdict: { ...page.verdict!, line: "Measured: 1 screen at 1280 px, 1 check and 1 principle each." } }).body, /Mesuré : 1 écran à 1280 px, 1 contrôle et 1 principe chacun\./);
+  const many = fr({ ...page, stillFailing: Array.from({ length: 45 }, (_, i) => ({ kind: "principle", where: `/p${i}`, what: "grid" }) as never) });
+  assert.match(many.body, /- …et 5 de plus, sur la page de résultat\./);
 });
