@@ -32,7 +32,8 @@ const temp = async (prefix: string) => {
   temps.push(dir);
   return dir;
 };
-after(() => Promise.all(temps.map((dir) => rm(dir, { recursive: true, force: true }))));
+// A git hook of the machine may still be writing into a repository's .git as it is removed: tried again, not failed.
+after(() => Promise.all(temps.map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }))));
 
 /** A project on main, a run branch that changed a page and commits `files` (null deletes one), and the run's folder. */
 async function project({ nothing = false, files = {} as Record<string, string | null>, compare = "better", base = "main\n" } = {}) {
@@ -191,6 +192,42 @@ test("nothing to redo, or nothing kept: no PR", async () => {
   const sentBack = await run((await project({ compare: "worse" })).dir, ["pr"]);
   assert.equal(sentBack.code, 0, sentBack.out);
   assert.match(sentBack.out, /Nothing kept: no PR\./);
+});
+
+test("a run that built what was asked gets its PR once reviewed against the standard, and is told when it was not", async () => {
+  const { dir, R } = await project({ compare: "worse" });
+  await put(join(R, "request"), "Un filtre par niveau sur la liste des voies\n");
+  await put(join(R, "state.json"), { run: "run-1", started: "", options: [], phase: "build", step: null, vars: {}, branchAt: null, agents: [], history: [{ phase: "build", step: null, at: "" }] });
+  const unreviewed = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(unreviewed.code, 1, unreviewed.out);
+  assert.match(unreviewed.out, /- what was asked was not reviewed against the standard \(no review in review\.md that went through\): aeom review --summary, phase review/);
+  assert.doesNotMatch(unreviewed.out, /the standard of the front was not reached/, "an asked run holds the standard, it does not write it");
+  await put(join(R, "review.md"), "## aeom review\n\n**Nothing outside the standard.**\n");
+  const held = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(held.code, 0, held.out);
+  assert.doesNotMatch(held.out, /Nothing kept/, "what was asked is built, whatever a comparison of the pages says");
+  assert.match(held.out, /AEOM: Un filtre par niveau sur la liste des voies \(run-1\)/);
+  assert.match(held.out, /`\/` changed/);
+  // A review that stopped before it began reviewed nothing: the file is there, the review is not.
+  await put(join(R, "review.md"), "## aeom review\n\n**Nothing outside the standard.**\n\n## aeom review\n\nNo standard in `.aeom/standard.md`: run /aeom first, which writes it from the front as it is.\n");
+  assert.match((await run(dir, ["pr", R, "--dry-run"])).out, /what was asked was not reviewed against the standard/);
+  await put(join(R, "review.md"), "## aeom review\n\n**Nothing outside the standard.**\n");
+  // The steps of a run that redoes pages are not an asked run's, whatever phase it was marked with.
+  await put(join(R, "state.json"), { run: "run-1", started: "", options: [], phase: "pages", step: null, vars: {}, branchAt: null, agents: [], history: ["build", "pages", "journeys"].map((phase) => ({ phase, step: null, at: "" })) });
+  await rm(join(R, "after", "compare.json"));
+  const marked = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(marked.code, 0, marked.out);
+  assert.doesNotMatch(marked.out, /skipped/);
+  // Nothing merged on the run branch but what AEOM keeps in .aeom: nothing was built, no PR.
+  await git(dir, "branch", "-f", "aeom/run-1", "main");
+  await git(dir, "checkout", "-q", "aeom/run-1");
+  await put(join(dir, ".aeom", "standard.md"), "# The standard\n");
+  await git(dir, "add", "-A");
+  await git(dir, "commit", "-qm", "aeom: the standard of the front");
+  await git(dir, "checkout", "-q", "main");
+  const nothing = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(nothing.code, 0, nothing.out);
+  assert.match(nothing.out, /Nothing built on aeom\/run-1: no PR\./);
 });
 
 test("an image or a capture anywhere in the run's commits is refused before anything is pushed, whatever its name", async () => {

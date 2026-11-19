@@ -41,7 +41,8 @@ export interface ResultPage {
   } | null;
   screens: {
     page: string;
-    status: "kept" | "sent back" | "new" | "missing" | "unchanged" | "does not load";
+    /** `changed`: a screen a run built what was asked on (`/aeom build "<sentence>"`). */
+    status: "kept" | "sent back" | "new" | "changed" | "missing" | "unchanged" | "does not load";
     /** What fails on it, before the run and at the end, when both were measured. */
     count: { before: number; after: number } | null;
     /** Why the page wave sent it back: as many failing as before, or more, counted on the version it put back. */
@@ -90,12 +91,46 @@ export interface ResultPage {
   api?: string;
   /** True for a run that plugged an existing front into its API (`/aeom build --api`): its screens did not change. */
   replug?: boolean;
+  /**
+   * A run that built what a sentence asked (`/aeom build "<sentence>"`), from its `request` file: what AEOM said it
+   * would build, from `plan`, and the last review of the standard, from the `aeom review --summary` kept in `review.md`.
+   */
+  asked?: { request: string; plan: string | null; review: Review | null };
   /** True for a run that only judged (`/aeom judge`, kept as `--juger` or `--diagnostic` in its `state.json`): it redid nothing. */
   judged?: true;
   /** What a run that only judged found, good and bad, merged and ranked: its page is a judgement, not a comparison. */
   judgement?: Judgement;
   /** What blocked journeys would need, named by `aeom features`, never built. */
   features: { entries: { slug: string; name: string; step: number; capture: string | null; why: string; missing: string }[]; more: number } | null;
+}
+
+/** What `aeom review` said of a branch: its last line, whether it holds, and each thing it listed. */
+export interface Review {
+  passed: boolean;
+  verdict: string;
+  lines: string[];
+}
+
+/**
+ * The last review in what `aeom review --summary` wrote, which appends: its bold last line, then what it listed
+ * and noted, as plain words, its first line (the branch against its base) left out. Only « Nothing outside the
+ * standard. », or no screen touched with nothing outside it, holds; screens it could not measure do not. Null
+ * when no review is there, or one that stopped before it began.
+ */
+function lastReview(summary: string): Review | null {
+  // A fence holds what an app that did not start printed: never cut into lines of the review.
+  const block = summary.split(/^## aeom review[ \t]*$/m).slice(1).at(-1)?.replace(/^```[\s\S]*?^```[ \t]*$/gm, "");
+  if (block === undefined) return null;
+  const plain = (text: string) => text.replace(/``\s?(.*?)\s?``|`([^`]*)`/g, (_, a: string | undefined, b: string | undefined) => a ?? b ?? "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
+  const paragraphs = block.split(/\n[ \t]*\n/).map((p) => p.trim()).filter(Boolean);
+  const bold = paragraphs.at(-1)?.match(/^\*\*([\s\S]+)\*\*$/);
+  if (!bold) return null;
+  const verdict = plain(bold[1]!);
+  const lines = paragraphs
+    .slice(0, -1)
+    .filter((p) => !/held to `?\.aeom\/standard\.md`?: \d+ commits? ahead\.$/.test(p))
+    .flatMap((p) => (p.startsWith("- ") ? p.split("\n").filter((l) => l.startsWith("- ")).map((l) => plain(l.slice(2))) : [plain(p)]));
+  return { passed: /^(Nothing outside the standard|No screen touched, and nothing outside the standard)\.$/.test(verdict), verdict, lines };
 }
 
 /** A run folder without what the page needs. */
@@ -167,21 +202,27 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const rounds = await readRounds(runDir);
   // A run of the journeys only (--ux) takes no snapshot of the screens: its replays are what it shows.
   const replayBefore = await json<JourneyReport>(join(runDir, "journeys-before", "report.json"));
+  // A run that built what a sentence asked, as the skill notes it in the run's folder: the request, what it said it would
+  // build, and the last review of the standard. A screen it only added has no before, and the front was there all the same.
+  const text = (file: string) => readFile(join(runDir, file), "utf8").then((t) => t.trim(), () => "");
+  const request = await text("request");
+  const asked = request ? { request, plan: (await text("plan")) || null, review: lastReview(await text("review.md")) } : undefined;
   // A run that built a front from nothing has no before: only what it built.
-  const built = !before && !replayBefore && (await first(runDir, ["end", "after"], join("captures", "manifest.json"))) !== null;
+  const built = !asked && !before && !replayBefore && (await first(runDir, ["end", "after"], join("captures", "manifest.json"))) !== null;
   // The API given, and whether the run only plugged an existing front into it, as the skill notes them in the run's folder.
   const api = (await readFile(join(runDir, "api"), "utf8").catch(() => "")).trim() || undefined;
   const replug = await exists(join(runDir, "replug"));
   // A run of directions alone, /aeom directions: its rounds are what it shows.
   if (!before && !replayBefore && !built && rounds.length) return { run, verdict: null, direction: null, screens: [], journeys: [], stillFailing: [], measuredAfter: false, features: null, rounds };
-  if (!before && !replayBefore && !built) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
+  if (!before && !replayBefore && !built && !asked) throw new RunReportError(`${join(runDir, "before")} holds no snapshot: the run took none, so there is nothing to show.`);
   const verdict = await json<SavedVerdict>(join(runDir, "verdict.json"));
   const keepStyle = verdict?.keepStyle === true;
 
   // The last state the run branch matches: after the journeys, after pages were put back, or after the pages.
   const last = await first(runDir, ["end", "after-revert", "after"], join("captures", "manifest.json"));
   const after = last ? await json<CaptureManifest>(join(runDir, last, "captures", "manifest.json")) : null;
-  const reports = async (dir: string) => ({ check: (await json<CheckReport>(join(runDir, dir, "reports", "check.json"))) ?? undefined, judge: (await json<JudgeReport>(join(runDir, dir, "reports", "judge.json"))) ?? undefined });
+  // A run that built what was asked judges nothing: a judge report beside its checks is an older run's, copied by the snapshot.
+  const reports = async (dir: string) => ({ check: (await json<CheckReport>(join(runDir, dir, "reports", "check.json"))) ?? undefined, judge: asked ? undefined : ((await json<JudgeReport>(join(runDir, dir, "reports", "judge.json"))) ?? undefined) });
   const was = await reports("before");
   const now = last ? await reports(last) : null;
   const ignore = keepStyle ? [...STYLE_PRINCIPLES, ...STYLE_CHECKS] : [];
@@ -194,7 +235,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   // A page after pairs with the page before of the same route, or of the same shape, such as a record made at each visit.
   const paired = pairRoutes(before?.pages.map((p) => p.path) ?? [], after?.pages.map((p) => p.path) ?? []);
   const nameAfter = (path: string) => paired.get(path) ?? path;
-  const pages = [...new Set([...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore, ...(after?.pages.map((p) => nameAfter(p.path)) ?? []), ...erroredAfter])];
+  // An asked run shows the screens its end measured, the plan's: its before may hold routes an older capture left.
+  const pages = [...new Set([...(asked ? [] : [...(before?.pages.map((p) => p.path) ?? []), ...erroredBefore]), ...(after?.pages.map((p) => nameAfter(p.path)) ?? []), ...erroredAfter])];
   // The pages the run gave no worker, because nothing failed on them once the kit was in. A list that does not read
   // only loses that note: the result page is still written.
   const noWorker = await json<unknown>(join(runDir, "no-worker.json")).then((l) => (Array.isArray(l) ? l.filter((p): p is string => typeof p === "string") : []), () => [] as string[]);
@@ -207,7 +249,9 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
     const failingAfter = c?.after?.failing ?? [];
     const d = decided?.find((x) => x.page === page);
     const decision = d?.verdict;
-    const status: ResultPage["screens"][number]["status"] = built ? (erroredAfter.includes(page) ? "does not load" : replug ? "unchanged" : "new") :
+    // What was asked is built on every screen the run measured, the screens the plan named: changed, or new when it adds one.
+    const status: ResultPage["screens"][number]["status"] = asked ? (erroredAfter.includes(page) ? "does not load" : !a ? "missing" : b ? "changed" : "new") :
+      built ? (erroredAfter.includes(page) ? "does not load" : replug ? "unchanged" : "new") :
       erroredAfter.includes(page) || (erroredBefore.includes(page) && !a) ? "does not load"
       : !decision ? (c?.verdict === "new" ? "new" : "unchanged")
       : decision === "better" ? "kept" : decision === "new" || decision === "missing" ? decision : "sent back";
@@ -328,7 +372,7 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   const judged = options.some((o) => /^(--)?(juger|diagnostic)$/.test(o)) || (state?.phase === "done" && !last && !built && !rounds.length && verdict !== null && verdict.nothingToRedo !== true && !(await exists(join(runDir, "base"))));
   // A folder the judgement cannot read, a replay of an odd shape, keeps the page of what fails.
   const judgement = judged ? await readJudgement(runDir).catch(() => null) : null;
-  return { run, verdict, direction, screens, journeys, stillFailing, ...(rounds.length ? { rounds } : {}), ...(accepted.length ? { accepted } : {}), ...(judges ? { judges } : {}), measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}), ...(judged ? { judged: true as const } : {}), ...(judgement ? { judgement } : {}) };
+  return { run, verdict, direction, screens, journeys, stillFailing, ...(rounds.length ? { rounds } : {}), ...(accepted.length ? { accepted } : {}), ...(judges ? { judges } : {}), measuredAfter, features, ...(widths ? { widths } : {}), ...(built ? { built: true } : {}), ...(api ? { api } : {}), ...(replug ? { replug: true } : {}), ...(asked ? { asked } : {}), ...(judged ? { judged: true as const } : {}), ...(judgement ? { judgement } : {}) };
 }
 
 
@@ -339,13 +383,13 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 const WORDS = {
   en: {
-    replug: "The front, on its API", built: "What the run built", nothing: "Nothing to redo", gave: "What the run gave", directions: "Directions", judged: "What fails",
+    replug: "The front, on its API", built: "What the run built", asked: "What you asked", review: "The review of the standard", notReviewed: "Not reviewed against the standard yet.", reviewSaid: (said: string) => said, nothing: "Nothing to redo", gave: "What the run gave", directions: "Directions", judged: "What fails",
     beforeRun: "Before the run. ", judgedBy: (m: string, p: string) => `Judged by ${m}, on ${p}.`, unnamed: "a model the voters did not name",
     feedbackNote: "To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.",
     direction: "Direction", screens: "Screens", journeys: "Journeys", features: "Missing features", still: "Still failing",
     directionOf: (c: string) => `Direction: ${c}`, styleKept: "Style kept", styleKeptNote: "No new direction: the run fixed what failed on the app's own style.",
     sheetAlt: "The directions, side by side", onApi: "On its API", builtSide: "Built", before: "Before", after: "After", beforeWord: "before", afterWord: "after", noCapture: "No capture",
-    status: { kept: "kept", "sent back": "sent back", new: "new", missing: "missing", unchanged: "unchanged", "does not load": "does not load" } as Record<string, string>,
+    status: { kept: "kept", "sent back": "sent back", new: "new", changed: "changed", missing: "missing", unchanged: "unchanged", "does not load": "does not load" } as Record<string, string>,
     journeyStatus: { kept: "improved", "sent back": "put back", new: "new", unchanged: "unchanged" } as Record<string, string>,
     byKit: "Fixed by the kit: no worker touched it.", failing: (b: number, a: number) => `${b} → ${a} failing`,
     lost: "Lost, so sent back:", cleared: "Cleared:", stillList: "Still failing:", newly: "Newly failing:",
@@ -388,13 +432,19 @@ const WORDS = {
     } as Record<string, string>,
   },
   fr: {
-    replug: "Le front, sur son API", built: "Ce que le run a construit", nothing: "Rien à refaire", gave: "Ce que le run a donné", directions: "Les directions", judged: "Ce qui ne va pas",
+    replug: "Le front, sur son API", built: "Ce que le run a construit", asked: "Ce que vous avez demandé", review: "La relecture du standard", notReviewed: "Pas encore relu au regard du standard.",
+    // aeom review speaks English: its last line, in the page's words when it is one of the four it writes.
+    reviewSaid: (said: string) =>
+      said === "Nothing outside the standard." ? "Rien hors du standard."
+      : said === "No screen touched, and nothing outside the standard." ? "Aucun écran touché, et rien hors du standard."
+      : said === "Nothing outside the standard in the code; the screens it touches were not measured." ? "Rien hors du standard dans le code ; les écrans touchés n'ont pas été mesurés."
+      : said.replace(/^(\d+) things? outside the standard\.$/, (_, n: string) => `${n} ${n === "1" ? "chose" : "choses"} hors du standard.`), nothing: "Rien à refaire", gave: "Ce que le run a donné", directions: "Les directions", judged: "Ce qui ne va pas",
     beforeRun: "Avant le run. ", judgedBy: (m: string, p: string) => `Jugé par ${m}, sur ${p}.`, unnamed: "un modèle que les votants n'ont pas nommé",
     feedbackNote: "Pour dire si vous êtes d'accord avec chaque verdict, ouvrez cette page avec <code>aeom report --serve</code>.",
     direction: "Direction", screens: "Écrans", journeys: "Parcours", features: "Fonctions manquantes", still: "Encore en échec",
     directionOf: (c: string) => `Direction : ${c}`, styleKept: "Style gardé", styleKeptNote: "Pas de nouvelle direction : le run a corrigé ce qui échouait, dans le style de l'app.",
     sheetAlt: "Les directions, côte à côte", onApi: "Sur son API", builtSide: "Construit", before: "Avant", after: "Après", beforeWord: "avant", afterWord: "après", noCapture: "Pas de capture",
-    status: { kept: "gardé", "sent back": "renvoyé", new: "nouveau", missing: "disparu", unchanged: "inchangé", "does not load": "ne charge pas" } as Record<string, string>,
+    status: { kept: "gardé", "sent back": "renvoyé", new: "nouveau", changed: "modifié", missing: "disparu", unchanged: "inchangé", "does not load": "ne charge pas" } as Record<string, string>,
     journeyStatus: { kept: "amélioré", "sent back": "remis", new: "nouveau", unchanged: "inchangé" } as Record<string, string>,
     byKit: "Corrigé par le kit : aucun worker n'y a touché.", failing: (b: number, a: number) => `${b} → ${a} en échec`,
     lost: "Perdu, donc renvoyé :", cleared: "Réglé :", stillList: "Encore en échec :", newly: "Nouvel échec :",
@@ -484,7 +534,7 @@ const ofFailure = (f: Failure): PageVerdict | null => {
 };
 
 /** The screens in the order the page shows them: what the run redid or built first, then what it put back, then the rest. */
-const SCREEN_ORDER: ResultPage["screens"][number]["status"][] = ["kept", "new", "sent back", "unchanged", "does not load", "missing"];
+const SCREEN_ORDER: ResultPage["screens"][number]["status"][] = ["kept", "changed", "new", "sent back", "unchanged", "does not load", "missing"];
 const orderedScreens = (r: ResultPage) => {
   const ordered = SCREEN_ORDER.flatMap((status) => r.screens.filter((s) => s.status === status));
   if (!isJudgement(r)) return ordered;
@@ -698,15 +748,16 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
   const failingScreens = new Set(still.filter((f) => !isJourney(f)).map((f) => f.where)).size;
   const failingJourneys = new Set(still.filter(isJourney).map((f) => f.where)).size;
 
-  const title = onlyDirections ? w.directions : r.replug ? w.replug : r.built ? w.built : nothing ? w.nothing : judged ? w.judged : w.gave;
-  const headline = r.built || r.replug || nothing || onlyDirections ? null
+  const title = onlyDirections ? w.directions : r.asked ? w.asked : r.replug ? w.replug : r.built ? w.built : nothing ? w.nothing : judged ? w.judged : w.gave;
+  // What was asked is said as typed: its sentence is the head of the page, what AEOM said it would build under it.
+  const headline = r.asked ? r.asked.request : r.built || r.replug || nothing || onlyDirections ? null
     : judged ? [w.failsOn(screensAfter, failingScreens, r.screens.length), ...(r.journeys.length ? [w.failsOnJourneys(journeysAfter, failingJourneys, r.journeys.length)] : [])].join(", ")
     : [w.redoneOf(redone, r.screens.length), ...(r.journeys.length ? [w.improvedOf(improved, r.journeys.length)] : [])].join(", ");
-  const lede = onlyDirections ? "" : nothing ? (r.verdict ? escape(r.verdict.line) : "")
+  const lede = onlyDirections ? "" : r.asked ? escape(r.asked.plan ?? "") : nothing ? (r.verdict ? escape(r.verdict.line) : "")
     : r.built ? w.builtLede(r.screens.length, r.journeys.length)
     : judged ? w.judgedLede
     : [putBack ? w.putBackLede(putBack) : "", r.measuredAfter ? w.leftLede(still.length) : w.notMeasured, named ? w.missingLede(named.entries.length) : ""].filter(Boolean).join(" ");
-  const nums = onlyDirections || nothing ? ""
+  const nums = onlyDirections || nothing || r.asked ? ""
     : r.built ? `<div class="nums">${tile(String(still.length), w.tStill)}${named ? tile(String(named.entries.length), w.tMissing(named.entries.length)) : ""}</div>`
     : judged ? `<div class="nums">${tile(String(screensAfter), w.tScreens)}${r.journeys.length ? tile(String(journeysAfter), w.tJourneys) : ""}${tile(`${r.screens.length - failingScreens}/${r.screens.length}`, w.tClean)}</div>`
     : `<div class="nums">${tile(`${screensBefore} → ${after(screensAfter)}`, w.tScreens)}${r.journeys.length ? tile(`${journeysBefore} → ${after(journeysAfter)}`, w.tJourneys) : ""}${tile(after(still.length), w.tStill)}${named ? tile(String(named.entries.length), w.tMissing(named.entries.length)) : ""}</div>`;
@@ -738,7 +789,7 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
     ? tiles(ordered)
     : judged
       ? `${group(w.gFailing, "", rows(ordered.filter((s) => failingOn(s.page).length || s.status === "does not load")))}${group(w.gClean, "", tiles(ordered.filter((s) => !failingOn(s.page).length && s.status !== "does not load")))}`
-      : `${group(r.built ? w.gBuilt : w.gRedone, r.built ? "" : w.drag, ordered.filter((s) => s.status === "kept" || s.status === "new").map(large).join(""))}${group(w.gBack, w.gBackNote, rows(ordered.filter((s) => s.status === "sent back")))}${group(w.gSame, "", rows(ordered.filter((s) => s.status === "unchanged")))}${group(w.gBroken, "", rows(ordered.filter((s) => s.status === "does not load" || s.status === "missing")))}`;
+      : `${group(r.built || r.asked ? w.gBuilt : w.gRedone, r.built ? "" : w.drag, ordered.filter((s) => s.status === "kept" || s.status === "new" || s.status === "changed").map(large).join(""))}${group(w.gBack, w.gBackNote, rows(ordered.filter((s) => s.status === "sent back")))}${group(w.gSame, "", rows(ordered.filter((s) => s.status === "unchanged")))}${group(w.gBroken, "", rows(ordered.filter((s) => s.status === "does not load" || s.status === "missing")))}`;
 
   const journeyStatus = (status: string) => w.journeyStatus[status] ?? status;
   const journeys = r.journeys
@@ -790,11 +841,18 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
       : "";
 
   const count = (n: number) => `<b>${n}</b>`;
-  const nav = nothing || onlyDirections ? "" : `<nav class="jump" aria-label="${w.jump}"><div class="wrap">${r.rounds?.length && !r.direction ? `<a href="#directions">${w.directions}</a>` : ""}${r.direction || r.verdict?.keepStyle ? `<a href="#direction">${w.direction}</a>` : ""}<a href="#screens">${w.screens}${count(r.screens.length)}</a>${r.journeys.length ? `<a href="#journeys">${w.journeys}${count(r.journeys.length)}</a>` : ""}${named ? `<a href="#features">${w.features}${count(named.entries.length)}</a>` : ""}<a href="#still">${judged ? w.judged : w.still}${count(still.length)}</a></div></nav>`;
+  const nav = nothing || onlyDirections ? "" : `<nav class="jump" aria-label="${w.jump}"><div class="wrap">${r.rounds?.length && !r.direction ? `<a href="#directions">${w.directions}</a>` : ""}${r.direction || r.verdict?.keepStyle ? `<a href="#direction">${w.direction}</a>` : ""}<a href="#screens">${w.screens}${count(r.screens.length)}</a>${r.journeys.length ? `<a href="#journeys">${w.journeys}${count(r.journeys.length)}</a>` : ""}${named ? `<a href="#features">${w.features}${count(named.entries.length)}</a>` : ""}${r.asked ? `<a href="#review">${w.review}</a>` : `<a href="#still">${judged ? w.judged : w.still}${count(still.length)}</a>`}</div></nav>`;
   const screensSection = `<section id="screens"><div class="wrap"><h2>${w.screens}</h2>${screens}</div></section>`;
   const journeysSection = r.journeys.length ? `<section id="journeys"><div class="wrap"><h2>${w.journeys}</h2><ol class="journeys">${journeys}</ol></div></section>` : "";
+  // What a run that built what was asked measures is the review of the standard: what it said last, and what it listed.
+  const review = r.asked?.review;
+  const reviewSection = r.asked
+    ? `<section id="review"><div class="wrap"><h2>${w.review}</h2>${review ? `<p><b class="${review.passed ? "ok" : "bad"}">${escape(w.reviewSaid(review.verdict))}</b></p>${review.lines.length ? `<ul class="plain">${review.lines.map((l) => `<li>${escape(l)}</li>`).join("")}</ul>` : ""}` : `<p class="muted">${w.notReviewed}</p>`}</div></section>`
+    : "";
   const body = onlyDirections
     ? `${direction}${directions}`
+    : r.asked
+    ? `${screensSection}${journeysSection}${reviewSection}`
     : nothing
     ? `${screensSection}${journeysSection}${accepted}`
     : `${directions}${direction}${screensSection}${journeysSection}${features}<section id="still"><div class="wrap"><h2>${judged ? w.judged : w.still}</h2>${stillHtml}</div></section>${accepted}`;
@@ -875,7 +933,7 @@ ${fontFaces()}
   .sheet .open, .rounds .open { width: 100%; aspect-ratio: 16 / 10; }
 
   .status { display: inline-block; font: 800 12px/1 var(--display); letter-spacing: 0.02em; padding: 4px 9px; border-radius: 999px; background: var(--flat); color: var(--muted); vertical-align: 2px; }
-  .status.kept, .status.new { background: var(--ok); color: var(--white); }
+  .status.kept, .status.new, .status.changed { background: var(--ok); color: var(--white); }
   .status.sent-back, .status.missing, .status.does-not-load { background: var(--bad-soft); color: var(--bad); }
 
   .open { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--ink); background: var(--sun); border-radius: 10px; padding: 7px 12px; font-weight: 800; font-size: 14px; box-shadow: 2px 2px 0 var(--ink); }

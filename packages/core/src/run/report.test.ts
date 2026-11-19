@@ -124,6 +124,65 @@ test("a run that built a front from nothing has no before: its page shows what i
   }
 });
 
+test("a run that built what was asked in a sentence shows the request, what AEOM said it would build, each screen before and after, and the review of the standard", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-asked-"));
+  try {
+    const shot = (path: string, file: string) => ({ url: `http://x${path}`, path, files: [{ width: 1280, file }] });
+    const check = (pages: string[], findings: { check: string; url: string }[]) => ({ url: "http://x", checkedAt: "", widths: [1280], checks: ["cursor"], pages: pages.map((p) => `http://x${p}`), errors: [], findings: findings.map((f) => ({ ...f, width: 1280, message: "no pointer" })) });
+    await mkdir(join(dir, "before", "captures"), { recursive: true });
+    await mkdir(join(dir, "before", "reports"), { recursive: true });
+    await mkdir(join(dir, "end", "captures"), { recursive: true });
+    await mkdir(join(dir, "end", "reports"), { recursive: true });
+    // /compte stands for what an older capture left: a route the plan did not name, measured before but not at the end.
+    await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [shot("/voies.html", "voies-html@1280.png"), shot("/compte", "compte@1280.png")], errors: [] }));
+    await writeFile(join(dir, "before", "reports", "check.json"), JSON.stringify(check(["/voies.html"], [{ check: "cursor", url: "http://x/voies.html" }])));
+    // A judge report an older run left in .aeom/reports: an asked run judges nothing, so it counts for nothing.
+    await writeFile(join(dir, "before", "reports", "judge.json"), JSON.stringify({ judgedAt: "", voters: ["1"], principles: [], failures: 1, pages: [{ page: "/voies.html", verdicts: [{ principle: "grid", pass: false, votes: "", reasons: [], dissent: [], steps: [] }] }] }));
+    await writeFile(join(dir, "end", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [shot("/voies.html", "voies-html@1280.png"), shot("/voies/niveau.html", "voies-niveau-html@1280.png")], errors: [] }));
+    await writeFile(join(dir, "end", "reports", "check.json"), JSON.stringify(check(["/voies.html", "/voies/niveau.html"], [])));
+    await writeFile(join(dir, "request"), "Un filtre par niveau sur la liste des voies\n");
+    await writeFile(join(dir, "plan"), "Sur /voies.html, un filtre par niveau avec les puces du kit ; /voies/niveau.html, la liste filtrée, avec ses cartes.\n");
+    // aeom review --summary appends: the last review is the one that counts.
+    const review = (lines: string[], verdict: string) => ["## aeom review", "", "`aeom/run-3` against `main`, held to `.aeom/standard.md`: 2 commits ahead.", "", ...lines, "", `**${verdict}**`, ""].join("\n");
+    await writeFile(join(dir, "review.md"), review(["- `front/voies.html:12` the colour #c0392b is written in hard, outside the tokens"], "1 thing outside the standard.") + review(["- ✓ Trouver une voie still reaches its end"], "Nothing outside the standard."));
+    const page = await readRun(dir, "run-3");
+    assert.deepEqual(page.asked, { request: "Un filtre par niveau sur la liste des voies", plan: "Sur /voies.html, un filtre par niveau avec les puces du kit ; /voies/niveau.html, la liste filtrée, avec ses cartes.", review: { passed: true, verdict: "Nothing outside the standard.", lines: ["✓ Trouver une voie still reaches its end"] } });
+    assert.equal(page.built, undefined, "a front that was there before: not built from scratch");
+    assert.deepEqual(page.screens.map((s) => [s.page, s.status]), [["/voies.html", "changed"], ["/voies/niveau.html", "new"]], "the screens the end measured, never one an older capture left as « missing »");
+    assert.deepEqual(page.screens[0]!.count, { before: 1, after: 0 }, "counted on the checks alone: an asked run judges nothing");
+    assert.deepEqual(page.stillFailing, []);
+    const html = resultHtml(page);
+    assert.match(html, /<p class="kicker">What you asked<\/p><h1>Un filtre par niveau sur la liste des voies<\/h1>/);
+    assert.match(html, /<p class="lede">Sur \/voies\.html, un filtre par niveau avec les puces du kit/);
+    assert.match(html, /<h3>Built<\/h3>/);
+    assert.match(html, /class="cmp"/, "each screen changed, before and after on one frame");
+    assert.match(html, /<section id="review">[\s\S]*Nothing outside the standard\.[\s\S]*Trouver une voie still reaches its end/);
+    assert.doesNotMatch(html, /Not measured after the run|id="still"/, "the review is what an asked run measures");
+    const fr = resultHtml(page, { lang: "fr" });
+    assert.match(fr, /<p class="kicker">Ce que vous avez demandé<\/p>/);
+    assert.match(fr, /<h2>La relecture du standard<\/h2>/);
+    assert.match(fr, /<span class="status changed">modifié<\/span>/);
+    assert.match(fr, /<b class="ok">Rien hors du standard\.<\/b>/, "the review's last line in the page's words");
+
+    await writeFile(join(dir, "review.md"), review(["- `front/voies.html:12` the colour #c0392b is written in hard, outside the tokens"], "1 thing outside the standard."));
+    const failing = await readRun(dir, "run-3");
+    assert.deepEqual(failing.asked?.review, { passed: false, verdict: "1 thing outside the standard.", lines: ["front/voies.html:12 the colour #c0392b is written in hard, outside the tokens"] });
+    assert.match(resultHtml(failing), /<section id="review">[\s\S]*1 thing outside the standard\.[\s\S]*front\/voies\.html:12 the colour #c0392b/);
+    assert.match(resultHtml(failing, { lang: "fr" }), /<b class="bad">1 chose hors du standard\.<\/b>/);
+    // A review that stopped before it began says nothing of the branch: the run is not reviewed.
+    await writeFile(join(dir, "review.md"), review([], "Nothing outside the standard.") + "## aeom review\n\nCannot compare this branch with main: unknown revision. Give the branch to compare with: --base <branch>.\n");
+    assert.equal((await readRun(dir, "run-3")).asked?.review, null, "a review that stopped is no review");
+    // An app that did not start: its output, in a fence, is not cut into lines.
+    await writeFile(join(dir, "review.md"), review(["The app did not start: npm run dev exited.\n\n```\nError: port taken\n\nat listen\n```"], "Nothing outside the standard in the code; the screens it touches were not measured."));
+    assert.deepEqual((await readRun(dir, "run-3")).asked?.review, { passed: false, verdict: "Nothing outside the standard in the code; the screens it touches were not measured.", lines: ["The app did not start: npm run dev exited."] });
+    await rm(join(dir, "review.md"));
+    assert.equal((await readRun(dir, "run-3")).asked?.review, null, "not reviewed yet");
+    assert.match(resultHtml(await readRun(dir, "run-3")), /Not reviewed against the standard yet\./);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("a run on an API keeps its address, and one that plugged an existing front into it says so at its head", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-api-"));
   try {

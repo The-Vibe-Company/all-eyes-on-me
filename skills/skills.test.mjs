@@ -106,6 +106,33 @@ test("every worker writes only the product's own words, and the checks that name
   assert.match(read("phase-build.md").split("**Screen brief.**")[1] ?? "", /no sentence about the interface or the demo, no hole to fill, no hollow word/);
 });
 
+test("/aeom build builds what a sentence asks, inside the standard: it says first what it builds, refuses what needs a back end, holds the result to aeom review and the guard, and needs a standard", () => {
+  assert.doesNotMatch(read("SKILL.md"), /comes later: say so in one line and stop/, "a change asked in a sentence is built, no longer put off");
+  assert.match(read("SKILL.md"), /\*\*`\/aeom build`\*\* with a sentence builds what it asks inside the standard \(section 2f\)/);
+  const asked = read("phase-build.md").split("## 2f.")[1] ?? "";
+  assert.match(asked, /^ What is asked in a sentence \(`\/aeom build "<what is asked>"/);
+  assert.match(asked, /When `\.aeom\/standard\.md` does not exist[^\n]*propose `\/aeom` first/, "no standard: said, and a run of /aeom proposed");
+  assert.match(asked, /A standard not committed yet is the run branch's first commit/, "« rien à refaire » leaves it uncommitted: built on all the same");
+  assert.match(asked, /a piece of data the front does not receive yet, a call to a server it does not make yet[^\n]*business logic[^\n]*refuse: say what the back would have to provide/);
+  assert.match(asked, /Do not wait for an answer: the run goes on\./);
+  assert.match(asked, /`\.aeom\/runs\/\$RUN\/request`/);
+  assert.match(asked, /`\.aeom\/runs\/\$RUN\/plan`/);
+  assert.match(asked, /for each route of the plan, `open-<route's slug>\.json`, a journey that only opens it/, "the guard sees the calls of every screen of the plan, crossed by a key journey or not");
+  assert.match(asked, /aeom journey --journeys \.aeom\/runs\/\$RUN\/journeys --out \.aeom\/runs\/\$RUN\/journeys-before/);
+  assert.match(asked, /aeom journey --journeys \.aeom\/runs\/\$RUN\/journeys --out \.aeom\/runs\/\$RUN\/journeys-end/);
+  assert.match(asked, /`aeom capture`, `check`, `journey` and `review` take `--widths "\$WIDTHS"`/, "only the commands that have --widths");
+  assert.match(asked, /what the guard still refuses, a call or a journey that no longer reaches its end, stops the run before its PR/);
+  assert.match(asked, /aeom guard \.aeom\/runs\/\$RUN\/journeys-before \.aeom\/runs\/\$RUN\/journeys-end --base \$BASE`/, "an app: no call it did not make before");
+  assert.match(asked, /aeom guard --from-scratch \.aeom\/runs\/\$RUN\/journeys-end --base \$BASE`, with `--api <url>`/, "a front built from scratch: no call but its API's");
+  assert.match(asked, /aeom review --base \$BASE --summary \.aeom\/runs\/\$RUN\/review\.md/);
+  assert.match(asked, /--phase build/);
+  assert.match(asked, /--phase review/);
+  const brief = asked.split("**Asked brief.**")[1] ?? "";
+  assert.match(brief, /its tokens, and the kit's components wherever the kit has the part/);
+  assert.match(brief, /Change neither the kit's files nor `\.aeom\/standard\.md`\./);
+  assert.match(brief, /no new call to a server, no data written in the page, no business logic/);
+});
+
 test("every list of what the style kept leaves to the charter names the same checks as the CLI", () => {
   const verdict = readFileSync(new URL("../packages/core/src/run/verdict.ts", import.meta.url), "utf8");
   const checks = JSON.parse(verdict.match(/STYLE_CHECKS = (\[[^\]]*\])/)[1]);
