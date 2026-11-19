@@ -2,7 +2,8 @@ import { execFile } from "node:child_process";
 import { readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { agentLines, markAgent, markRun, newRunState, readRunState, resumePlan, type AgentStatus, type OnDisk, type RunState } from "@aeom/core";
+import { existsSync } from "node:fs";
+import { agentLines, doneSince, markAgent, markDone, markRun, newRunState, readRunState, resumePlan, type AgentStatus, type OnDisk, type RunState } from "@aeom/core";
 
 const USAGE = `Usage: aeom run mark <run folder> --phase <name> [--step <step>] [--set NAME=value]... [--option <option>]...
        aeom run agent <run folder> --name <name> --status <launched|done|merged|refused> [--kind <kind>] [--worktree <path>] [--branch <branch>] [--from <commit>] [--page <route>]
@@ -94,6 +95,30 @@ async function update(runDir: string, change: (s: RunState) => RunState): Promis
     await rename(temporary, join(runDir, FILE));
   } finally {
     await rm(lock, { force: true });
+  }
+}
+
+/** The run folder a path is in, <project>/.aeom/runs/<run>, or null when it is in none. */
+function runFolderOf(path: string): string | null {
+  for (let dir = resolve(path); ; dir = dirname(dir)) {
+    const parent = dirname(dir);
+    if (basename(parent) === "runs" && basename(dirname(parent)) === ".aeom") return dir;
+    if (parent === dir) return null;
+  }
+}
+
+/**
+ * What a command of the run did on its own, noted in the state of the run its output went into, beside the
+ * coordinator's marks: a run taken up, and aeom pr, then know it was done though nobody marked it. Only a run that
+ * keeps its state is noted. A note that cannot be written is said, and never stops the command.
+ */
+export async function noteDone(output: string, phase: string, done: string): Promise<void> {
+  const runDir = runFolderOf(output);
+  if (!runDir || !existsSync(join(runDir, FILE))) return;
+  try {
+    await update(runDir, (s) => markDone(s, { phase, done, at: new Date().toISOString() }));
+  } catch (error) {
+    console.error(`(${done} is done, but could not note it in ${join(runDir, FILE)}: ${error instanceof Error ? error.message.split("\n")[0] : String(error)})`);
   }
 }
 
@@ -212,8 +237,9 @@ export async function runRunState(argv: string[]): Promise<number> {
     const disk = await onDisk(s, projectOf(runDir));
     if (action === "resume") console.log(resumePlan(s, disk));
     else {
-      const since = s.history.at(-1)?.at;
-      console.log([`${s.run}: "${s.phase ?? "nothing yet"}"${s.step ? `, at step ${s.step} of the skill` : ""}${since ? `, since ${since}` : ""}.`, ...agentLines(s, disk)].join("\n"));
+      const since = s.history.findLast((h) => h.done === undefined)?.at;
+      const did = doneSince(s);
+      console.log([`${s.run}: "${s.phase ?? "nothing yet"}"${s.step ? `, at step ${s.step} of the skill` : ""}${since ? `, since ${since}` : ""}.`, ...(did.length ? [`Since that mark, AEOM's commands did: ${did.join(", ")}.`] : []), ...agentLines(s, disk)].join("\n"));
     }
     return 0;
   } catch (error) {

@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
+import { noteDone } from "./run-state.js";
 import { decidePages, journeyFilesBack, pageShape, readRunState, type JourneyReport, type JudgeReport, type PageComparison, type PageDecision, type RatchetVerdict, type RunState, type Step } from "@aeom/core";
 
 const USAGE = `Usage: aeom ratchet <run folder> [--apply] [--back <route>[=<why>]]...
@@ -219,6 +220,7 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
   const earlier = await json<{ applied?: unknown }>(out).catch(() => null);
   const applied = typeof earlier?.applied === "string" ? earlier.applied : null;
   await writeFile(out, JSON.stringify(decision(applied), null, 2) + "\n");
+  if (!apply || !going.length) await noteDone(runDir, "measure", going.length ? `aeom ratchet: ${going.map((p) => p.page).join(", ")} ${going.length === 1 ? "goes" : "go"} back` : "aeom ratchet: nothing goes back");
   if (!going.length) return 0;
   if (!apply) {
     console.log(`Run again with --apply, on ${runBranch}, to put ${going.length === 1 ? "it" : "them"} back and commit. Decision: ${out}`);
@@ -246,6 +248,7 @@ async function ratchet(runDir: string, apply: boolean, backs: string[]): Promise
   const sha = await git(root, ["rev-parse", "HEAD"]);
   await writeFile(out, JSON.stringify(decision(sha), null, 2) + "\n");
   console.log(`Put back and committed (${sha.slice(0, 7)}): ${going.map((p) => p.page).join(", ")}.`);
+  await noteDone(runDir, "measure", `aeom ratchet --apply: ${going.map((p) => p.page).join(", ")} put back`);
   console.log(`They still render through the new kit: measure them again. On ${runBranch}, aeom capture and aeom check at the run's widths, the page judge on what changed since ${after}, aeom snapshot ${join(runDir, "after-revert")}, then aeom compare ${join(runDir, "before")} ${join(runDir, "after-revert")}.`);
   if (replays.after) console.log(`The journeys were replayed on the pages before: replay them again into ${journeysAfter}, judge them, and run their ratchet again.`);
   return 0;

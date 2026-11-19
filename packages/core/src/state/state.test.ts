@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { markAgent, markRun, newRunState, readRunState, resumePlan, type RunState } from "./index.js";
+import { agentLines, markAgent, markDone, markRun, newRunState, phasesWent, readRunState, resumePlan, type RunState } from "./index.js";
 
 const AT = "2026-10-10T19:00:00.000Z";
 
@@ -74,4 +74,33 @@ test("an older or partial state file is read with what it leaves out filled in",
   const s = readRunState({ run: "run-1", phase: "pages" }, "run-1")!;
   assert.deepEqual([s.agents, s.vars, s.options, s.history], [[], {}, [], []]);
   assert.equal(readRunState([], "run-1"), null);
+});
+
+test("what a command did is noted beside the coordinator's mark, never in its place, and the plan to resume says it", () => {
+  let s = markRun(newRunState("run-1", AT), { phase: "pages", step: "4", at: AT });
+  s = markDone(s, { phase: "measure", done: "aeom snapshot after", at: "2026-10-10T20:00:00.000Z" });
+  s = markDone(s, { phase: "measure", done: "aeom compare before → after", at: "2026-10-10T20:01:00.000Z" });
+  assert.equal(s.phase, "pages", "the coordinator's phase stays");
+  assert.equal(s.step, "4", "and its step");
+  assert.deepEqual(s.history.map((h) => [h.phase, h.done ?? null]), [["pages", null], ["measure", "aeom snapshot after"], ["measure", "aeom compare before → after"]]);
+  assert.throws(() => markDone(s, { phase: "", done: "x", at: AT }), /A phase is named/);
+  const plan = resumePlan(s, { worktrees: {}, commits: {}, runBranch: "abc" });
+  assert.match(plan, /Since that mark, AEOM's commands did: aeom snapshot after, aeom compare before → after\./);
+  assert.match(plan, /Go on at step 4, after what they did\.$/);
+  // A new mark of the coordinator: what came before it is no longer said.
+  const later = markRun(s, { phase: "standard", step: "run.8", at: AT });
+  assert.doesNotMatch(resumePlan(later, { worktrees: {}, commits: {}, runBranch: "abc" }), /Since that mark/);
+  assert.match(resumePlan(later, { worktrees: {}, commits: {}, runBranch: "abc" }), /Go on at step run\.8\.$/);
+  assert.equal(agentLines(s, { worktrees: {}, commits: {} }).length, 0);
+  assert.deepEqual(readRunState(JSON.parse(JSON.stringify(s)), "run-1")!.history, s.history, "a note is read back as written");
+});
+
+test("the phases a run went through are its marks, its commands' notes, and the workers it launched", () => {
+  let s = markRun(newRunState("run-1", AT), { phase: "verdict", step: "run.3", at: AT });
+  s = markDone(s, { phase: "measure", done: "aeom snapshot after", at: AT });
+  for (const [name, kind] of [["kit", "kit worker"], ["cart", "page worker"], ["promo", "promotion worker"], ["buy", "journey worker"], ["shared", "shared worker"], ["topo", "direction worker"], ["j1", "page judge"]] as const) s = markAgent(s, { name, kind, status: "launched", at: AT });
+  assert.deepEqual([...phasesWent(s)].sort(), ["directions", "journeys", "kit", "measure", "pages", "verdict"]);
+  assert.deepEqual([...phasesWent(s, { fromWorkers: false })].sort(), ["measure", "verdict"]);
+  const refused = markAgent(markAgent(newRunState("run-2", AT), { name: "cart", kind: "page worker", status: "launched", at: AT }), { name: "cart", status: "refused", at: AT });
+  assert.deepEqual([...phasesWent(refused)], ["pages"], "a worker launched, even refused, says its wave began");
 });

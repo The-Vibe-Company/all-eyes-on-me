@@ -34,7 +34,8 @@ export interface RunState {
   /** The run branch's commit when the run last noted where it is, to tell later commits apart. */
   branchAt: string | null;
   agents: AgentState[];
-  history: { phase: string; step: string | null; at: string }[];
+  /** Every mark, the coordinator's and, with `done`, what a command of the run did on its own. */
+  history: { phase: string; step: string | null; at: string; done?: string }[];
 }
 
 export const newRunState = (run: string, at: string): RunState => ({ run, started: at, options: [], phase: null, step: null, vars: {}, branchAt: null, agents: [], history: [] });
@@ -74,6 +75,39 @@ export function markRun(
   };
 }
 
+/**
+ * What a command of the run did on its own, such as a snapshot or a comparison: noted in the history under the phase it
+ * belongs to, beside the coordinator's marks. The phase and the step the coordinator marked stay theirs.
+ */
+export function markDone(s: RunState, { phase, done, at }: { phase: string; done: string; at: string }): RunState {
+  if (!phase.trim()) throw new Error("A phase is named, such as measure or standard.");
+  return { ...s, history: [...s.history, { phase, step: null, at, done }] };
+}
+
+/** The workers whose launch says a phase began, by the role their kind names. */
+const WORKER_PHASES: [RegExp, string][] = [
+  [/\bkit worker\b/i, "kit"],
+  [/\b(page|promotion) worker\b/i, "pages"],
+  [/\b(journey|shared) worker\b/i, "journeys"],
+  [/\bdirection worker\b/i, "directions"],
+];
+
+/**
+ * The phases a run went through: the coordinator's marks, what its commands noted, and, unless `fromWorkers` is false,
+ * the phase each worker it launched belongs to, so a wave the coordinator forgot to mark is still known.
+ */
+export function phasesWent(s: RunState, { fromWorkers = true }: { fromWorkers?: boolean } = {}): Set<string> {
+  const went = new Set([...s.history.map((h) => h.phase), ...(s.phase ? [s.phase] : [])]);
+  if (fromWorkers) for (const a of s.agents) for (const [kind, phase] of WORKER_PHASES) if (kind.test(a.kind ?? "")) went.add(phase);
+  return went;
+}
+
+/** What the run's commands did since the coordinator's last mark, oldest first. */
+export function doneSince(s: RunState): string[] {
+  const last = s.history.findLastIndex((h) => h.done === undefined);
+  return s.history.slice(last + 1).flatMap((h) => (h.done === undefined ? [] : [h.done]));
+}
+
 /** An agent is launched, done, merged or refused; what it was launched with stays. */
 export function markAgent(s: RunState, agent: Partial<Omit<AgentState, "name" | "status" | "at">> & { name: string; status: AgentStatus; at: string }): RunState {
   if (!AGENT_STATUSES.includes(agent.status)) throw new Error(`An agent is launched, done, merged or refused, not ${agent.status}.`);
@@ -109,7 +143,11 @@ export function resumePlan(s: RunState, disk: OnDisk): string {
   else if (disk.runBranch) lines.push(`Check out aeom/${s.run}.`);
   lines.push("", "Set again:", `export RUN=${s.run}`, ...Object.entries(s.vars).map(([k, v]) => `export ${k}=${/^[\w./:@-]+$/.test(v) ? v : `'${v.replace(/'/g, `'\\''`)}'`}`));
   lines.push(...agentLines(s, disk));
-  lines.push("", s.step ? `Go on at step ${s.step}.` : `Go on with "${s.phase ?? "the run"}".`);
+  // A command that did its part after the last mark moved the run on, though the mark did not.
+  const since = doneSince(s);
+  if (since.length) lines.push("", `Since that mark, AEOM's commands did: ${since.join(", ")}.`);
+  const after = since.length ? ", after what they did" : "";
+  lines.push("", s.step ? `Go on at step ${s.step}${after}.` : `Go on with "${s.phase ?? "the run"}"${after}.`);
   return lines.join("\n");
 }
 

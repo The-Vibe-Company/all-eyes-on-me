@@ -4,7 +4,7 @@ import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { blockedJourneys, prBody, readRun, readRunState, RunReportError, sheetLang, type JourneyReport, type JudgeReport, type PageLang, type ResultPage } from "@aeom/core";
+import { blockedJourneys, phasesWent, prBody, readRun, readRunState, RunReportError, sheetLang, type JourneyReport, type JudgeReport, type PageLang, type ResultPage } from "@aeom/core";
 import { latestRun } from "./report.js";
 
 const exec = promisify(execFile);
@@ -207,7 +207,9 @@ async function stepsLeft(runDir: string, page: ResultPage): Promise<string[]> {
     // A state broken by hand holds nothing.
   }
   if (!state) return [];
-  const went = new Set([...state.history.map((h) => h.phase), ...(state.phase ? [state.phase] : [])]);
+  // The phases marked, noted by the commands, and said by the workers launched: a wave the coordinator forgot to mark
+  // is still held. A front built from scratch has no before to measure its screens against: its workers say nothing.
+  const went = phasesWent(state, { fromWorkers: !page.built });
   const has = (path: string) => existsSync(join(runDir, path));
   const left: string[] = [];
   if (!page.asked && went.has("pages") && !has(join("after", "compare.json"))) left.push("the pages were not measured after their wave (no after/compare.json): aeom compare, section 5, phase measure");
