@@ -11,7 +11,7 @@
   },
   "04-garder-a-chaque-pr/10": {
     "kind": "waiting-human",
-    "reason": "Le cache du check ne se prouve que sur un vrai run GitHub : installer le check sur un projet, merger son workflow, puis deux PR. PR ouverte et verte.",
+    "reason": "Code mergé (#203) sans vrai run, sur le choix d'Antoine. Reste le dernier critère : deux PR de suite sur un projet qui a le check, la seconde plus rapide.",
     "pr": "#203"
   }
 }
