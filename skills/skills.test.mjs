@@ -174,7 +174,7 @@ test("the judges write in the person's language: kept in the run's mark, read by
   for (const brief of ["**Screening brief.**", "**Duel brief.**"]) assert.match(read("phase-directions.md").split(brief)[1] ?? "", /^ Give [^.]*the person's language \(`AEOM_LANG`\)/, brief);
   assert.doesNotMatch(["SKILL.md", "phase-mockups.md", "phase-build.md", "phase-directions.md"].map(read).join("") + readFileSync(new URL("./aeom-judge/SKILL.md", import.meta.url), "utf8"), /\$LANG\b|(?<![A-Z_])LANG=/, "never the shell's own LANG");
   const judge = readFileSync(new URL("./aeom-judge/SKILL.md", import.meta.url), "utf8");
-  assert.match(judge, /\*\*In the person's language\.\*\*[^\n]*every brief below runs `aeom principles --lang \$AEOM_LANG`[^\n]*keeps each principle's id and each key of the JSON as they are/);
+  assert.match(judge, /\*\*In the product sheet's language\.\*\* Every voter writes its `reason` and its `fix` in the language `\.aeom\/product\.md` is written in[^\n]*the run's `AEOM_LANG`[^\n]*every brief below runs `aeom principles --lang <it>`[^\n]*keeps each principle's id and each key of the JSON as they are/);
   assert.match(readFileSync(new URL("../agents/claude/aeom-judge.md", import.meta.url), "utf8"), /Write your reasons in the language `aeom principles` asks for, and every id and key as it is\./);
 });
 
