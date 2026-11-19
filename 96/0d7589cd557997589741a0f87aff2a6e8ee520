@@ -1,0 +1,48 @@
+packages/cli/src/commands/review.test.ts
+  s_36049fd871fcc3::t_4c3b82c92000c1 134-149
+packages/cli/src/commands/review.ts
+  s_36049fd871fcc3::t_f62d9308406275 17-20
+.veebee/milestones/04-garder-a-chaque-pr/tickets/08-a-sa-ligne.md
+  s_36049fd871fcc3::t_78bfe179925f9c 1-30
+packages/core/src/review/review.ts
+  s_36049fd871fcc3::t_3f36c757db3b4f 246
+  s_36049fd871fcc3::t_cb6dda4e55e9c8 84-85,124-127,138-139
+  s_36049fd871fcc3::t_a8cb3f67f91455 263-264,267-268,272-273,277
+  s_36049fd871fcc3::t_44b522a01aa9c9 103-106,109-123,129-137,140-153
+  s_36049fd871fcc3::t_66b29ad2f118d7 128
+  s_36049fd871fcc3::t_fedd59c160b8fe 107-108,214-215,217-218,227-242,265-266,274-276,304-306
+  s_36049fd871fcc3::t_010a8e3cfe924d 301-303,307-310
+.veebee/autopilot/2026-11-19.md
+  s_36049fd871fcc3::t_dde3d5e6f26596 1-20
+.veebee/milestones/04-garder-a-chaque-pr/tickets/07-tailwind.md
+  s_36049fd871fcc3::t_9d6a0f2d1cd133 7
+  s_36049fd871fcc3::t_78bfe179925f9c 1-6,8-33
+.veebee/milestones/04-garder-a-chaque-pr/tickets/10-le-cache.md
+  s_36049fd871fcc3::t_78bfe179925f9c 1-28
+.veebee/milestones/04-garder-a-chaque-pr/tickets/09-la-langue.md
+  s_36049fd871fcc3::t_78bfe179925f9c 1-29
+packages/core/src/review/review.test.ts
+  s_36049fd871fcc3::t_06df9f74e94f1a 171-173,175-179,181,183-194,196-197
+  s_36049fd871fcc3::t_9f01a4d63aba5a 182,195
+  s_36049fd871fcc3::t_3ab3559173240f 141-170,198-202
+  s_36049fd871fcc3::t_f4a624f0c64176 174
+  s_36049fd871fcc3::t_fedd59c160b8fe 180
+.veebee/milestones/04-garder-a-chaque-pr/tickets/06-tous-les-ecrans.md
+  s_36049fd871fcc3::t_78bfe179925f9c 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "960d7589cd557997589741a0f87aff2a6e8ee520",
+  "prompts": {},
+  "sessions": {
+    "s_36049fd871fcc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "babc76fd-e4c2-482f-b054-1b5f6550c8c2",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
