@@ -1,0 +1,34 @@
+packages/core/src/run/ratchet.test.ts
+  s_17f34effcc8bd8::t_5db1abf6c98491 128-159
+packages/core/src/run/ratchet.ts
+  s_17f34effcc8bd8::t_ee65ca8d337aca 88-105,113-115,117,119,126,132-136,148,160,163-169
+  s_17f34effcc8bd8::t_5db1abf6c98491 161-162
+  s_17f34effcc8bd8::t_e6dd35e1b1aa87 87,170
+skills/aeom/phase-wave.md
+  s_17f34effcc8bd8::t_19359ee769189d 112
+packages/cli/src/commands/run-state.ts
+  s_17f34effcc8bd8::t_6e158ab7c367ff 194-197
+packages/cli/src/commands/ratchet.ts
+  s_17f34effcc8bd8::t_6e158ab7c367ff 61-64,66,114-115,118-120,143-150,167-180,190,218-221,232-233
+  s_17f34effcc8bd8::t_ea48565b422bea 234
+packages/cli/src/commands/ratchet-pages.test.ts
+  s_17f34effcc8bd8::t_0dc4752058f429 73-75,133-141,152-174,176-185
+  s_17f34effcc8bd8::t_505eaa5d70420e 175
+  s_17f34effcc8bd8::t_f709fbe84700ff 186-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8454ad5c2a12c69641fda3da9beaa495a70f40f3",
+  "prompts": {},
+  "sessions": {
+    "s_17f34effcc8bd8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91514880-29b8-4cbf-a24e-e1cd6102ccb7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
