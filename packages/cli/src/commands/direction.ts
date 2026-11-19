@@ -2,9 +2,9 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { createTournament, decideDirection } from "@aeom/core";
+import { createTournament, decideDirection, readAngle, type Angle } from "@aeom/core";
 
-export const DIRECTION_HELP = `Usage: aeom direction keep <folder> --sentence "<its sentence>" --source "<what it was drawn from>" [--why "<their words>"]
+export const DIRECTION_HELP = `Usage: aeom direction keep <folder> --source "<what the round started from>" [--sentence "<its sentence>"] [--why "<their words>"]
        aeom direction show
        aeom direction use --run <run folder>
        aeom direction drop
@@ -17,8 +17,12 @@ The direction the person chose with /aeom directions, kept in the project's
                  .aeom/runs/<run>/directions/<slug>): its pages, their styles
                  and the images generated for it (its captures are beside
                  it, never in it), and what describes it in
-                 .aeom/direction/direction.json. It replaces
-                 the direction kept before, and says which.
+                 .aeom/direction/direction.json: what its own
+                 direction.json says of it (its sentence, unless --sentence
+                 gives another, what it is drawn from, its structure, its
+                 dense page, what its worker saw), and the source of the
+                 round. It replaces the
+                 direction kept before, and says which.
   show           Say which direction is kept, its pages as absolute paths for a
                  worker in another folder; exit 1 when none is, 2 when a run
                  already built on it
@@ -29,7 +33,7 @@ The direction the person chose with /aeom directions, kept in the project's
 
 const KEPT = join(".aeom", "direction");
 
-interface Kept {
+interface Kept extends Angle {
   slug: string;
   sentence: string;
   source: string;
@@ -56,7 +60,7 @@ export async function runDirection(argv: string[]): Promise<number> {
       return 1;
     }
     const pages = (await readdir(KEPT)).filter((f) => f.endsWith(".html")).map((f) => resolve(KEPT, f));
-    console.log(`${kept.slug}: ${kept.sentence}\nFrom ${kept.source}${kept.run ? `, chosen in ${kept.run}` : ""}${kept.why ? `: ${kept.why}` : ""}.\nIts pages: ${pages.join(", ") || "none"}${kept.applied ? `\nAlready built on, in ${kept.applied}: a run draws new directions, or keeps the style.` : ""}`);
+    console.log(`${kept.slug}: ${kept.sentence}${kept.structure ? `\nStructure: ${kept.structure}` : ""}${kept.seen ? `\nWhat one sees: ${kept.seen}` : ""}\nFrom ${kept.source}${kept.run ? `, chosen in ${kept.run}` : ""}${kept.why ? `: ${kept.why}` : ""}.\nIts pages: ${pages.join(", ") || "none"}${kept.applied ? `\nAlready built on, in ${kept.applied}: a run draws new directions, or keeps the style.` : ""}`);
     return kept.applied ? 2 : 0;
   }
   if (action === "use") {
@@ -87,8 +91,8 @@ export async function runDirection(argv: string[]): Promise<number> {
     console.log(kept ? `Forgot ${kept.slug}: the next run draws new directions.` : "No direction was kept.");
     return 0;
   }
-  if (!folder || !values.sentence?.trim() || !values.source?.trim()) {
-    console.error(`aeom direction keep <folder> --sentence "<its sentence>" --source "<what it was drawn from>".`);
+  if (!folder || !values.source?.trim()) {
+    console.error(`aeom direction keep <folder> --source "<what the round started from>", its sentence in its direction.json or as --sentence.`);
     return 1;
   }
   const from = resolve(folder);
@@ -102,6 +106,11 @@ export async function runDirection(argv: string[]): Promise<number> {
     console.error(`${folder} holds no index.html: give the folder of a direction's mockup.`);
     return 1;
   }
+  // What the direction says of itself in its folder; --sentence wins, as the person's words may change it.
+  const { angle, problem } = await readAngle(from);
+  if (problem) return (console.error(problem), 1);
+  const sentence = values.sentence?.trim() || angle?.sentence;
+  if (!sentence) return (console.error(`${folder} has no sentence: give --sentence, or write it in its direction.json.`), 1);
   const before = await read();
   await rm(KEPT, { recursive: true, force: true });
   // The mockup whole, the images generated for it included: its captures are beside its folder, never in it.
@@ -110,7 +119,7 @@ export async function runDirection(argv: string[]): Promise<number> {
   await writeFile(join(KEPT, ".gitignore"), "*.png\n*.jpg\n*.jpeg\n*.webp\n*.gif\n");
   // The run it was chosen in, when the folder is a run's: .aeom/runs/<run>/directions/<slug>.
   const run = basename(dirname(dirname(from))).startsWith("run-") ? basename(dirname(dirname(from))) : null;
-  const kept: Kept = { slug: basename(from), sentence: values.sentence.trim(), source: values.source.trim(), ...(values.why?.trim() ? { why: values.why.trim() } : {}), run, kept: new Date().toISOString() };
+  const kept: Kept = { ...angle, slug: basename(from), sentence, source: values.source.trim(), ...(values.why?.trim() ? { why: values.why.trim() } : {}), run, kept: new Date().toISOString() };
   await writeFile(join(KEPT, "direction.json"), `${JSON.stringify(kept, null, 2)}\n`);
   console.log(`Kept ${kept.slug} in ${KEPT}/${before && before.slug !== kept.slug ? `; it replaces ${before.slug}` : ""}. /aeom redo carries it into the app, /aeom build --from-scratch builds on it; aeom direction drop forgets it.`);
   return 0;

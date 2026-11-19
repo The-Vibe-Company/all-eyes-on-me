@@ -309,3 +309,25 @@ test("/aeom directions serves its page before it asks: the person chooses on the
   assert.match(step7, /when this run's page is served already, write it again, `aeom report \.aeom\/runs\/\$RUN --lang \$AEOM_LANG`, which the server reads at each request, and tell the person to reload it/);
   assert.doesNotMatch(step7, /its strong point, its weak point and its fit as the comparison says them, what its checks found/, "the detail is on the page, not in the message");
 });
+
+test("each direction of /aeom directions is written in its folder, so nothing is retyped in the shell and a run taken up finds it", () => {
+  const mockups = read("phase-mockups.md");
+  const step4 = mockups.split("4. **`$COUNT` angles")[1]?.split("5. **One worker per direction")[0] ?? "";
+  assert.match(step4, /write it in its folder, `\$MAIN\/\.aeom\/runs\/\$RUN\/directions\/<slug>\/direction\.json`, with the session's file tool, never in the shell: `from`, `sentence`, `structure` and `dense`/);
+  const step5 = mockups.split("5. **One worker per direction")[1]?.split("6. **Capture")[0] ?? "";
+  assert.match(step5, /taken up, a worker launched again is given its direction\.json, never a new angle/);
+  const step6 = mockups.split("6. **Capture, lay out and check them all")[1]?.split("7. **Show them all")[0] ?? "";
+  assert.doesNotMatch(step6, /--note/, "the sentences are read in each direction.json");
+  assert.match(step6, /each direction's sentence, structure and dense page read in its direction\.json/);
+  const step7 = mockups.split("7. **Show them all, then ask.**")[1]?.split("**Variants.**")[0] ?? "";
+  assert.match(step7, /aeom direction keep "\$MAIN\/\.aeom\/runs\/\$RUN\/directions\/<slug>" --source "<the front as it is, the prompt, or the spec's file>"/);
+  assert.doesNotMatch(step7, /--sentence "<its sentence>"/);
+  // A variant or a mix may be the one kept: its sentence stands alone.
+  assert.match(mockups.split("**Variants.**")[1]?.split("**A mix**")[0] ?? "", /its direction\.json, as step 4 says, its sentence standing alone: the direction it varies, and what it changes/);
+  assert.match(mockups.split("**A mix**")[1]?.split("8. **The end.**")[0] ?? "", /its sentence standing alone: the two it comes from, and what it borrows/);
+  assert.match(step4, /A direction\.json already in its folder is kept: a run taken up never draws that angle again/);
+  const brief = mockups.split("**Mockup brief.**")[1] ?? "";
+  // The session writes the file; a worker only reads it, and never copies another folder's.
+  assert.match(brief, /Read your angle in your folder's `direction\.json`; never write it, and never copy another folder's/);
+  assert.match(mockups, /add to each direction's `direction\.json` `seen`, its worker's two plain sentences, and `closest`, the banned look it named and what keeps it apart/);
+});

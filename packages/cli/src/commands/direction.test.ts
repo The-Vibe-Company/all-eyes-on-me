@@ -70,3 +70,34 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages a
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom direction keep reads the sentence in the direction's direction.json, keeps all it says, and show says its structure", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-direction-"));
+  const run = (args: string[]) => promisify(execFile)("node", [AEOM, ...args], { cwd: dir, env: { ...process.env, AEOM_HOME: join(dir, ".home"), AEOM_TELEMETRY: "0" } }).then((r) => ({ code: 0, out: r.stdout + r.stderr }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
+  try {
+    const chosen = join(dir, ".aeom", "runs", "run-20261119-1000", "directions", "billet");
+    await mkdir(chosen, { recursive: true });
+    await writeFile(join(chosen, "index.html"), "<!doctype html><title>Billet</title>");
+    const angle = { from: "Un billet en euros", sentence: "Chaque chiffre imprimé comme un billet : l'« affluence » d'un mois.", structure: "Les chiffres en bandes, le tableau dessous.", dense: "affluence.html", seen: "Des fonds pastel. Les chiffres du mois en grand.", closest: "Kraft paper: no stamp keeps it apart." };
+    await writeFile(join(chosen, "direction.json"), JSON.stringify(angle));
+    const kept = await run(["direction", "keep", chosen, "--source", "the front as it is"]);
+    assert.equal(kept.code, 0, kept.out);
+    const saved = JSON.parse(readFileSync(join(dir, ".aeom", "direction", "direction.json"), "utf8"));
+    assert.deepEqual({ ...saved, kept: typeof saved.kept }, { ...angle, slug: "billet", source: "the front as it is", run: "run-20261119-1000", kept: "string" }, "the sentence from the file, and all it says kept");
+    const shown = await run(["direction", "show"]);
+    assert.match(shown.out, /^billet: Chaque chiffre imprimé comme un billet : l'« affluence » d'un mois\.\nStructure: Les chiffres en bandes, le tableau dessous\.\nWhat one sees: Des fonds pastel\. Les chiffres du mois en grand\.\nFrom the front as it is, chosen in run-20261119-1000\./);
+    // --sentence still says it when the person's words change it.
+    const said = await run(["direction", "keep", chosen, "--source", "the front as it is", "--sentence", "Le billet, en plus sobre."]);
+    assert.equal(said.code, 0, said.out);
+    assert.equal(JSON.parse(readFileSync(join(dir, ".aeom", "direction", "direction.json"), "utf8")).sentence, "Le billet, en plus sobre.");
+    // No sentence anywhere: refused, as before.
+    const bare = join(dir, ".aeom", "runs", "run-20261119-1000", "directions", "quai");
+    await mkdir(bare, { recursive: true });
+    await writeFile(join(bare, "index.html"), "<!doctype html>");
+    const refused = await run(["direction", "keep", bare, "--source", "the front as it is"]);
+    assert.equal(refused.code, 1);
+    assert.match(refused.out, /no sentence: give --sentence, or write it in its direction\.json/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

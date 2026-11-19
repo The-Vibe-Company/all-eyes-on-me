@@ -3,13 +3,16 @@ import { existsSync } from "node:fs";
 import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { contactSheet } from "@aeom/core";
+import { contactSheet, readAngle, type Angle } from "@aeom/core";
 import { parseWidths } from "./app.js";
 
 export const MOCKUPS_HELP = `Usage: aeom mockups <directions folder> [<slug>...] [--widths <list>] [--now <route>=<capture>]... [--note <slug>=<sentence>]... [--product <sheet>]
 
 Every direction of a round of /aeom directions, in one command: the slugs
 given, or else each folder in <directions folder> that holds an index.html.
+Each says in its folder's direction.json its sentence, its structure and its
+dense page; one that does not is laid out with no sentence, its first other
+page as its dense one.
 For each direction, its index.html
 and its other page are captured at the widest width and laid out in
 <slug>.png, and it is checked at every width. Then they are laid out three
@@ -21,7 +24,8 @@ the images the screening judge reads: one per direction, never a sheet.
   --widths <list>          The run's widths (default 390,1280)
   --now <route>=<capture>  A screen of the front as it is, captured: laid out
                            first, as now.png
-  --note <slug>=<sentence> One sentence read under that direction
+  --note <slug>=<sentence> One sentence read under that direction, in place of
+                           the one its direction.json gives
   --product <sheet>        A product sheet whose accepted exceptions the checks
                            say apart, such as a spec's`;
 
@@ -72,6 +76,16 @@ export async function runMockups(argv: string[]): Promise<number> {
     if (notes.has(slug)) return (console.error(`Two notes for ${slug}: give each direction one sentence.`), 1);
     notes.set(slug, note.slice(at + 1).trim());
   }
+  // What each direction is meant to be, written in its folder: its sentence and structure under it, unless --note says otherwise.
+  const angles = new Map<string, Angle | null>();
+  const unreadable: string[] = [];
+  for (const slug of slugs) {
+    const read = await readAngle(join(dir, slug));
+    if (read.problem) unreadable.push(read.problem);
+    angles.set(slug, read.angle ?? null);
+  }
+  if (unreadable.length) return (console.error(unreadable.join("\n")), 1);
+  for (const [slug, angle] of angles) if (!notes.has(slug) && angle?.sentence) notes.set(slug, angle.structure ? `${angle.sentence} Structure: ${angle.structure}` : angle.sentence);
   const now: { label: string; file: string }[] = [];
   for (const n of values.now ?? []) {
     const at = n.lastIndexOf("=");
@@ -84,7 +98,11 @@ export async function runMockups(argv: string[]): Promise<number> {
   const results = await Promise.all(
     slugs.map(async (slug) => {
       const folder = join(dir, slug);
-      const dense = (await readdir(folder)).filter((f) => f.endsWith(".html") && f !== "index.html").sort()[0];
+      // The dense page its direction.json names; else, or when it is not there, its first other page, said.
+      const others = (await readdir(folder)).filter((f) => f.endsWith(".html") && f !== "index.html").sort();
+      const named = angles.get(slug)?.dense;
+      const dense = named && others.includes(named) ? named : others[0];
+      const misnamed = named && dense !== named ? `its dense page, ${named}, is not in its folder: ${dense ? `${dense} captured instead` : "its first page alone captured"}` : "";
       const pages = ["/", ...(dense ? [`/${dense}`] : [])];
       const shots = join(dir, `${slug}-shots`);
       // What an earlier round left of it never stands for this one: a direction that no longer opens has no image.
@@ -92,7 +110,7 @@ export async function runMockups(argv: string[]): Promise<number> {
       const captured = await aeom(["capture", "--dir", folder, "--pages", pages.join(","), "--widths", String(widest), "--out", shots]);
       const manifest = await json<{ pages: Shot[] }>(join(shots, "manifest.json"));
       const files = pages.map((page) => ({ page, file: manifest?.pages.find((p) => p.path === page)?.files.find((f) => f.width === widest)?.file }));
-      if (!manifest || files.some((f) => !f.file)) return { slug, opened: false as const, why: captured.said };
+      if (!manifest || files.some((f) => !f.file)) return { slug, opened: false as const, why: captured.said, misnamed };
       await contactSheet({ out: join(dir, `${slug}.png`), items: files.map((f) => ({ label: f.page, file: join(shots, f.file!) })), columns: files.length, cellWidth: 640 });
       await aeom(["check", "--dir", folder, "--widths", widths.join(","), "--out", join(dir, `${slug}-checks`), ...(values.product ? ["--product", values.product] : [])]);
       const report = await json<{ pages?: unknown[]; errors?: unknown[]; findings?: { check: string }[] }>(join(dir, `${slug}-checks`, "check.json"));
@@ -100,7 +118,7 @@ export async function runMockups(argv: string[]): Promise<number> {
       for (const f of report?.findings ?? []) counts.set(f.check, (counts.get(f.check) ?? 0) + 1);
       // A check that measured no page, or not all of them, has not passed them.
       const unchecked = report?.errors?.length ?? 0;
-      return { slug, opened: true as const, failing: [...counts].map(([check, n]) => (n > 1 ? `${check} ×${n}` : check)), checked: Boolean(report?.pages?.length), unchecked };
+      return { slug, opened: true as const, failing: [...counts].map(([check, n]) => (n > 1 ? `${check} ×${n}` : check)), checked: Boolean(report?.pages?.length), unchecked, misnamed };
     }),
   );
 
@@ -119,11 +137,13 @@ export async function runMockups(argv: string[]): Promise<number> {
   await writeFile(join(dir, "sheet.json"), `${JSON.stringify([...first, ...items].map(({ label, note }) => ({ label, note })), null, 2)}\n`);
 
   const column = Math.max(...slugs.map((s) => s.length)) + 2;
+  // What it could not read of a direction's folder, said after what its checks found.
+  const unsaid = (r: (typeof results)[number]) => `${r.misnamed ? `; ${r.misnamed}` : ""}${notes.has(r.slug) ? "" : `; no sentence under it: ${angles.get(r.slug) ? "its direction.json gives none" : "no direction.json in its folder"}`}`;
   const lines = results.map((r) => {
-    if (!r.opened) return `  ${r.slug.padEnd(column)}did not open, left out${r.why ? `: ${r.why}` : ""}`;
-    if (!r.checked) return `  ${r.slug.padEnd(column)}not checked`;
+    if (!r.opened) return `  ${r.slug.padEnd(column)}did not open, left out${r.why ? `: ${r.why}` : ""}${r.misnamed ? `; ${r.misnamed}` : ""}`;
+    if (!r.checked) return `  ${r.slug.padEnd(column)}not checked${unsaid(r)}`;
     const found = r.failing.length ? r.failing.join(", ") : "passes every check";
-    return `  ${r.slug.padEnd(column)}${found}${r.unchecked ? `; ${r.unchecked} page${r.unchecked === 1 ? "" : "s"} not checked` : ""}`;
+    return `  ${r.slug.padEnd(column)}${found}${r.unchecked ? `; ${r.unchecked} page${r.unchecked === 1 ? "" : "s"} not checked` : ""}${unsaid(r)}`;
   });
   const laid = sheets.length > 1 ? `three to a sheet, laid out in ${listed(sheets)}${now.length ? ", the front as it is first on each" : ""}` : `laid out in ${sheets[0]}${now.length ? ", the front as it is first" : ""}`;
   console.log(`${slugs.length} direction${slugs.length === 1 ? "" : "s"}, ${laid}:\n${lines.join("\n")}`);

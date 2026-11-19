@@ -115,3 +115,47 @@ test("a direction redrawn that no longer opens keeps no image of an earlier roun
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("aeom mockups reads each direction's sentence, structure and dense page in its direction.json, so nothing is retyped in the shell, and says what it could not read", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-mockups-"));
+  try {
+    const directions = join(dir, "directions");
+    const put = async (slug: string, pages: string[], angle?: unknown) => {
+      await mkdir(join(directions, slug), { recursive: true });
+      for (const p of pages) await writeFile(join(directions, slug, p), page(`${slug} ${p}`, "#222", p === "index.html" ? pages[1]! : "index.html"));
+      if (angle !== undefined) await writeFile(join(directions, slug, "direction.json"), typeof angle === "string" ? angle : JSON.stringify(angle));
+    };
+    // billet names its dense page, which a page a worker left behind sorts before.
+    await put("billet", ["index.html", "affluence.html", "aaa-brouillon.html"], { from: "Un billet en euros", sentence: "Chaque chiffre imprimé comme un billet : l'« affluence » d'un mois.", structure: "Les chiffres en bandes, le tableau dessous.", dense: "affluence.html" });
+    // quai names a page it did not draw: its other page is captured, and it is said.
+    await put("quai", ["index.html", "registre.html"], { sentence: "Le tableau des départs d'une gare.", structure: "Une file lue de gauche à droite.", dense: "absent.html" });
+    // gare wrote none, and lune one with no sentence: no sentence under them, said. A --note still wins over a file.
+    await put("gare", ["index.html", "notes.html"]);
+    await put("lune", ["index.html", "notes.html"], { from: "La lune", structure: "Un seul écran." });
+    await put("piste", ["index.html", "notes.html"], { sentence: "Une piste, dite dans le fichier.", structure: "Des couloirs." });
+    const env = { ...process.env, AEOM_HOME: join(dir, ".home"), AEOM_TELEMETRY: "0" };
+    const { stdout } = await promisify(execFile)("node", [AEOM, "mockups", directions, "--widths", "1280", "--note", "piste=Une piste d'athlétisme."], { cwd: dir, env });
+    assert.deepEqual(JSON.parse(readFileSync(join(directions, "sheet.json"), "utf8")), [
+      { label: "billet", note: "Chaque chiffre imprimé comme un billet : l'« affluence » d'un mois. Structure: Les chiffres en bandes, le tableau dessous." },
+      { label: "gare" },
+      { label: "lune" },
+      { label: "piste", note: "Une piste d'athlétisme." },
+      { label: "quai", note: "Le tableau des départs d'une gare. Structure: Une file lue de gauche à droite." },
+    ]);
+    const shot = JSON.parse(readFileSync(join(directions, "billet-shots", "manifest.json"), "utf8")) as { pages: { path: string }[] };
+    assert.deepEqual(shot.pages.map((p) => p.path), ["/", "/affluence.html"], "the dense page it names, not the first by name");
+    assert.match(stdout, /quai +.*; its dense page, absent\.html, is not in its folder: registre\.html captured instead/);
+    assert.match(stdout, /gare +.*; no sentence under it: no direction\.json in its folder/);
+    assert.match(stdout, /lune +.*; no sentence under it: its direction\.json gives none/);
+    assert.doesNotMatch(stdout, /(billet|piste) +.*no sentence/);
+    // A direction.json it cannot read stops the round before anything is captured, and names it.
+    const before = readFileSync(join(directions, "billet.png"));
+    await writeFile(join(directions, "quai", "direction.json"), `{ "sentence": "Le tableau`);
+    const broken = await promisify(execFile)("node", [AEOM, "mockups", directions, "--widths", "1280"], { cwd: dir, env }).then(() => null, (e: { code: number; stderr: string }) => e);
+    assert.equal(broken?.code, 1);
+    assert.match(broken!.stderr, /quai\/direction\.json is not a JSON object/);
+    assert.ok(readFileSync(join(directions, "billet.png")).equals(before), "nothing captured again");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
