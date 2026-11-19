@@ -6,7 +6,9 @@ import { dirname, join } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { lastReview } from "@aeom/core";
 import { repoOf } from "./pr.js";
+import { reviewWords } from "./review-words.js";
 
 const AEOM = fileURLToPath(new URL("../index.js", import.meta.url));
 const sh = promisify(execFile);
@@ -264,6 +266,16 @@ test("a run that built what was asked gets its PR once reviewed against the stan
   const nothing = await run(dir, ["pr", R, "--dry-run"]);
   assert.equal(nothing.code, 0, nothing.out);
   assert.match(nothing.out, /Nothing built on aeom\/run-1: no PR\./);
+});
+
+test("what aeom review writes, in English or in French, the result page and the PR read: a review that holds holds in both", () => {
+  for (const lang of ["en", "fr"] as const) {
+    const w = reviewWords(lang);
+    const summary = (verdict: string) => `## aeom review\n\n${w.head("`aeom/run-1`", "`main`", "`.aeom/standard.md`", 2)}\n\n- ✓ See my orders\n\n**${verdict}**\n`;
+    for (const [verdict, passed] of [[w.nothing, true], [w.noScreen, true], [w.notMeasured, false], [w.outside(2), false]] as const) {
+      assert.deepEqual(lastReview(summary(verdict)), { passed, verdict, lines: ["✓ See my orders"] }, `${lang}: ${verdict}`);
+    }
+  }
 });
 
 test("an image or a capture anywhere in the run's commits is refused before anything is pushed, whatever its name", async () => {

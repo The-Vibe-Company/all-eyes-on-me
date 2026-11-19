@@ -125,12 +125,12 @@ export interface Review {
 }
 
 /**
- * The last review in what `aeom review --summary` wrote, which appends: its bold last line, then what it listed
+ * The last review in what `aeom review --summary` wrote, in English or in French, which appends: its bold last line, then what it listed
  * and noted, as plain words, its first line (the branch against its base) left out. Only « Nothing outside the
- * standard. », or no screen touched with nothing outside it, holds; screens it could not measure do not. Null
+ * standard. » (« Rien hors du standard. »), or no screen touched with nothing outside it, holds; screens it could not measure do not. Null
  * when no review is there, or one that stopped before it began.
  */
-function lastReview(summary: string): Review | null {
+export function lastReview(summary: string): Review | null {
   // A fence holds what an app that did not start printed: never cut into lines of the review.
   const block = summary.split(/^## aeom review[ \t]*$/m).slice(1).at(-1)?.replace(/^```[\s\S]*?^```[ \t]*$/gm, "");
   if (block === undefined) return null;
@@ -141,9 +141,10 @@ function lastReview(summary: string): Review | null {
   const verdict = plain(bold[1]!);
   const lines = paragraphs
     .slice(0, -1)
-    .filter((p) => !/held to `?\.aeom\/standard\.md`?: \d+ commits? ahead\.$/.test(p))
+    // aeom review speaks the product sheet's language: its first line in English or in French.
+    .filter((p) => !/(held to|tenue à) `?\.aeom\/standard\.md`? ?: \d+ commits? (ahead|d'avance)\.$/.test(p))
     .flatMap((p) => (p.startsWith("- ") ? p.split("\n").filter((l) => l.startsWith("- ")).map((l) => plain(l.slice(2))) : [plain(p)]));
-  return { passed: /^(Nothing outside the standard|No screen touched, and nothing outside the standard)\.$/.test(verdict), verdict, lines };
+  return { passed: /^(Nothing outside the standard|No screen touched, and nothing outside the standard|Rien hors du standard|Aucun écran touché, et rien hors du standard)\.$/.test(verdict), verdict, lines };
 }
 
 /** A run folder without what the page needs. */
