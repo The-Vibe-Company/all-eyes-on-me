@@ -106,6 +106,22 @@ test("every worker writes only the product's own words, and the checks that name
   assert.match(read("phase-build.md").split("**Screen brief.**")[1] ?? "", /no sentence about the interface or the demo, no hole to fill, no hollow word/);
 });
 
+test("/aeom build --from-scratch ports the screens of the direction chosen onto the kit, instead of building them again", () => {
+  const scratch = read("phase-build.md").split("## 2e.")[1]?.split("## 2f.")[0] ?? "";
+  assert.match(scratch, /the landing one is `index\.html` whatever its route, the densest is named as its route's file \(`voies\.html` for `\/voies\.html`\)/, "the direction draws the screens under the names the front will give them");
+  assert.match(scratch, /each mockup brief gives what the journey files ask on its two screens/);
+  assert.match(scratch, /a kept direction's page that matches no route is not ported, and its screen is built at step 6\. Name them in the kit brief\./);
+  assert.match(scratch, /`git diff --name-only \$BASE <its branch>` lists `front\/kit\/` and the pictures it copied, `front\/data\.js`, `front\/fake\/data\.js`, `front\/data\.md` and the ported pages' files, nothing else, and each ported page passes its check/);
+  assert.match(scratch, /one `aeom-worker` agent per screen the kit did not port/);
+  assert.match(scratch, /A screen the kit ported goes to a screen worker of its own, from `\$KIT_BASE`[^.]*given what fails, its ported page and the direction's page: it changes what fails and keeps the layout and the content the person chose\./);
+  const kit = scratch.split("**Kit brief.**")[1]?.split("**Screen brief.**")[0] ?? "";
+  assert.doesNotMatch(kit, /build no screen\./);
+  assert.match(kit, /then port onto it the pages named to port, and build no other screen/);
+  assert.match(kit, /the same layout, the same content in the same places, now on the kit's tokens, classes and header alone, and every ask of the screen brief below met/);
+  assert.match(kit, /Where the journey files name a control or a link the page lacks, they win/);
+  assert.match(kit, /Port no other page\./);
+});
+
 test("/aeom build builds what a sentence asks, inside the standard: it says first what it builds, refuses what needs a back end, holds the result to aeom review and the guard, and needs a standard", () => {
   assert.doesNotMatch(read("SKILL.md"), /comes later: say so in one line and stop/, "a change asked in a sentence is built, no longer put off");
   assert.match(read("SKILL.md"), /\*\*`\/aeom build`\*\* with a sentence builds what it asks inside the standard \(section 2f\)/);
