@@ -33,3 +33,20 @@ A run never tells the person what it costs: the score measures it with `aeom cos
 - **Regressions**: a check or principle that passed before and fails at the end, a screen gone, a journey that breaks only at the end.
 - **Hidden features**: a call the app never made, refused by the guard.
 - **Beyond the defects noted**: what the run found that the list does not have. Add it to `defects.json` when it is right, or note why it is not.
+
+## The judge alone
+
+A pass of `/aeom judge` costs far less than a full run, and its verdict decides everything a run does after it. The judge bench measures it alone, over several passes, to see what it finds and whether it says the same thing twice.
+
+```bash
+aeom bench prepare ~/aeom-bench               # once, as above
+# in each of ~/aeom-bench/<app>, three Claude Code sessions, one after the other: /aeom judge --autonome
+aeom bench score ~/aeom-bench --judge         # the last three passes of each app, written to benchmark-judge.json
+```
+
+- **Found**: how many defects each pass found, as a mean, then its lowest and highest; each defect with how many passes found it.
+- **Beyond the list**: what the passes found that the list does not have, each with how many passes said it.
+- **Verdicts that change**: what some passes fail and others do not, on the same screen or journey. A judge that says the same thing every time has none.
+- **Since the judge bench before**: how far each mean moved. Every judge bench is kept in `history.jsonl`, with its date and AEOM's version; the first says it has nothing to compare with.
+
+`--passes <n>` counts the last `n` passes instead of three. The score of a full run (`aeom bench score` without `--judge`) never takes a pass of `/aeom judge` for a run.
