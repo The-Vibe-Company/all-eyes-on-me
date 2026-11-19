@@ -106,8 +106,17 @@ test("directions in mockups (/aeom directions), whatever their source, cost thre
 
 test("from scratch, the cost is the directions, the kit, a worker per screen, the measure and the journeys: no judge of a front that does not exist", () => {
   const scratch = estimateRun({ screens: 6, journeys: 3, mode: "scratch" });
-  assert.deepEqual(scratch.phases.map((p) => p.phase), ["Write the product sheet and its journeys", "Three directions, for you to choose", "The kit, on the direction chosen", "The screens of the key journeys", "Measure the screens and the journeys", "The standard, the result page and the PR"]);
-  assert.equal(scratch.phases[3]!.agents, 6, "one worker per screen, the two the direction drew included: they are rebuilt on the kit");
+  assert.deepEqual(scratch.phases.map((p) => p.phase), ["Write the product sheet and its journeys", "Three directions, for you to choose", "The kit, and the screens of the direction chosen ported on it", "The other screens of the key journeys", "Measure the screens and the journeys", "The standard, the result page and the PR"]);
+  assert.equal(scratch.phases[2]!.agents, 1, "the kit's worker ports the two screens the direction drew");
+  assert.equal(scratch.phases[3]!.agents, 4, "one worker per screen the kit did not port");
+  // At most: the work of the two screens moves to the kit's worker, two workers fewer.
+  assert.ok(scratch.phases[2]!.tokens > estimateRun({ screens: 6, journeys: 3, mode: "replug" }).phases[0]!.tokens, "the kit and two screens weigh more than one worker");
+  const two = estimateRun({ screens: 2, journeys: 2, mode: "scratch" });
+  assert.ok(!two.phases.some((p) => p.phase === "The other screens of the key journeys"), "two screens, both ported: no other screen worker");
+  const kept = estimateRun({ screens: 6, journeys: 3, mode: "scratch", kept: true });
+  assert.equal(kept.phases.find((p) => p.phase.startsWith("The kit"))!.phase, "The kit, and the screens of the direction kept ported on it");
+  assert.equal(kept.phases.find((p) => p.phase === "The other screens of the key journeys")!.agents, 6, "at most: a kept direction's pages may match no route, none is counted ported");
+  assert.ok(scratch.phases[2]!.minutes > kept.phases.find((p) => p.phase.startsWith("The kit"))!.minutes, "each screen ported takes the kit's worker its time");
   assert.ok(scratch.total.agents < estimateRun({ screens: 6, journeys: 3, mode: "full" }).total.agents + 4);
   const text = estimateText(scratch, { screens: 6, journeys: 3 });
   assert.match(text, /^From scratch, 6 screens and 3 key journeys:\n/);
@@ -145,5 +154,5 @@ test("a run that builds on the direction kept with /aeom directions draws none: 
   assert.ok(kept.phases.some((p) => p.phase === "The kit, on the direction kept"));
   assert.ok(kept.total.dollars < drawn.total.dollars);
   const scratch = estimateRun({ screens: 5, journeys: 3, mode: "scratch", kept: true });
-  assert.deepEqual(scratch.phases.map((p) => p.phase).filter((p) => /direction/i.test(p)), ["The kit, on the direction kept"]);
+  assert.deepEqual(scratch.phases.map((p) => p.phase).filter((p) => /direction/i.test(p)), ["The kit, and the screens of the direction kept ported on it"]);
 });

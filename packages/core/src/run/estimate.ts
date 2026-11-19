@@ -103,9 +103,14 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
     ]);
   }
   if (mode === "scratch") {
-    // No front to judge first: the sheet from the source, the directions, the kit, a worker per screen, then the measure.
+    // No front to judge first: the sheet from the source, the directions, the kit with the screens the direction drew ported
+    // onto it, a worker per other screen, then the measure. At most: a ported screen weighs on the kit's worker what a
+    // screen worker would have spent on it, one after the other; a kept direction's pages may match no route of the
+    // journeys, so none is counted ported.
     const named = `${NUMBERS[directions] ?? directions} direction${directions === 1 ? "" : "s"}`;
     const critique = journeys ? VOTES : 0;
+    const ported = kept ? 0 : Math.min(DIRECTION_SCREENS, screens);
+    const others = screens - ported;
     const built = withTotal(mode, [
       { phase: "Write the product sheet and its journeys", agents: 0, tokens: 0, minutes: 10 },
       // A direction kept with /aeom directions: none to draw.
@@ -118,8 +123,8 @@ export function estimateRun({ screens, journeys, mode, directions = 3, autonome 
             return { phase: `${named} and the knockout`, agents: directions + VOTES + duelVotes, tokens: directions * PROMPT_WORKER.tokens + VOTES * SCREENING_JUDGE.tokens + duelVotes * DUEL_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes + rounds * DUEL_JUDGE.minutes };
           })()
         : { phase: `${named}, for you to choose`, agents: directions + 1, tokens: directions * PROMPT_WORKER.tokens + SCREENING_JUDGE.tokens, sessionTokens: directions * PROMPT_WORKER.tokens, minutes: PROMPT_WORKER.minutes + SCREENING_JUDGE.minutes }]),
-      { phase: kept ? "The kit, on the direction kept" : "The kit, on the direction chosen", agents: 1, tokens: SHARED_WORKER.tokens, minutes: MINUTES.kit },
-      { phase: "The screens of the key journeys", agents: screens, tokens: screens * WORKER.tokens, minutes: MINUTES.page },
+      { phase: `The kit, and the screens of the direction ${kept ? "kept" : "chosen"} ported on it`, agents: 1, tokens: SHARED_WORKER.tokens + ported * WORKER.tokens, minutes: MINUTES.kit + ported * MINUTES.page },
+      ...(others ? [{ phase: "The other screens of the key journeys", agents: others, tokens: others * WORKER.tokens, minutes: MINUTES.page }] : []),
       { phase: "Measure the screens and the journeys", agents: VOTES + critique, tokens: VOTES * pj.tokens + critique * jj.tokens, minutes: pj.minutes + (critique ? jj.minutes : 0) },
       { phase: "The standard, the result page and the PR", agents: 0, tokens: 0, minutes: MINUTES.end },
     ]);
