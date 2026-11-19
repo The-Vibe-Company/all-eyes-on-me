@@ -151,7 +151,7 @@ test("aeom principles --lang fr ends with the rule that reasons are in French an
   const fr = await run(["principles", "--journeys", "--lang", "fr"]);
   assert.equal(fr.code, 0);
   for (const id of JOURNEY_PRINCIPLES) assert.match(fr.out, new RegExp(`^${id}  `, "m"), "the ids stay as they are");
-  assert.match(fr.out, /\n\nÉcris chaque raison \(« reason »\) en français[^\n]*Garde l'id de chaque principe tel qu'il est écrit ci-dessus/);
+  assert.match(fr.out, /\n\nÉcris chaque raison \(« reason »\) et chaque piste \(« fix »\) en français[^\n]*Garde l'id de chaque principe tel qu'il est écrit ci-dessus/);
   const en = await run(["principles"]);
   assert.equal(en.out, (await run(["principles", "--lang", "en"])).out);
   assert.doesNotMatch(en.out, /français/);

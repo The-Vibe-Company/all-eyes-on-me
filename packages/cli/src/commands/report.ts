@@ -23,7 +23,13 @@ Options:
   --open        Open the page in the browser
   --serve       Serve the page, and keep what you say of each verdict
   --port <n>    The port to serve on, 0 to 65535 (default: 0, any free one)
-  --lang <l>    The page's own words in the person's language: en (default) or fr`;
+  --lang <l>    The page's own words in the person's language: en or fr (default:
+                en; for a run that only judged, the product sheet's language)
+
+A run that only judged (/aeom judge) has a page of its own: the product, what
+was measured and the verdict, the strengths the judges saw, the weak points
+from the worst, each merged across the screens it is on, what to check outside
+the demo, a lead for each weak point, and every screen and journey in detail.`;
 
 /** The run folder most recently changed in .aeom/runs. */
 export async function latestRun(): Promise<string | null> {
@@ -36,14 +42,14 @@ export async function latestRun(): Promise<string | null> {
 export async function runReport(argv: string[]): Promise<number> {
   let args;
   try {
-    args = parseArgs({ args: argv, allowPositionals: true, options: { open: { type: "boolean" }, serve: { type: "boolean" }, port: { type: "string", default: "0" }, lang: { type: "string", default: "en" }, help: { type: "boolean", short: "h" } } });
+    args = parseArgs({ args: argv, allowPositionals: true, options: { open: { type: "boolean" }, serve: { type: "boolean" }, port: { type: "string", default: "0" }, lang: { type: "string" }, help: { type: "boolean", short: "h" } } });
   } catch {
     console.log(REPORT_HELP);
     return 1;
   }
   const { positionals, values } = args;
   const port = /^\d{1,5}$/.test(values.port) ? Number(values.port) : NaN;
-  if (values.lang !== "en" && values.lang !== "fr") {
+  if (values.lang !== undefined && values.lang !== "en" && values.lang !== "fr") {
     console.error(`--lang is en or fr.`);
     return 1;
   }

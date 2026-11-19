@@ -30,7 +30,7 @@ Give each voter this, with `<N>` replaced by its number:
 > 1. Run `aeom principles` to read the principles: an id, then what it asks for.
 > 2. Read `.aeom/captures/manifest.json`. It lists the pages (`path`) and their screenshots (`files`, one per width, in `.aeom/captures/`). A screenshot with `cut` stops at the top of a longer page, whose full height `cut` gives: judge what it shows. If the votes folder holds `to-judge.json`, judge only the pages it lists, and look at the others only to compare.
 > 3. Look at every screenshot of every page, at every width, before deciding anything. Principles such as `consistent-chrome` and `one-direction` compare pages with each other.
-> 4. For each page and each principle, decide `pass` or `fail`, with one sentence of your own that names what you see on the screenshot: a word of the page, a part of it, a colour, a number; never « Looks good » or the same sentence twice. Judge only what is visible, after looking: a vote that says it did not look, or reads another voter's, is refused. When in doubt, fail: a page that is only acceptable does not pass.
+> 4. For each page and each principle, decide `pass` or `fail`, with one sentence of your own that names what you see on the screenshot: a word of the page, a part of it, a colour, a number; never « Looks good » or the same sentence twice. Judge only what is visible, after looking: a vote that says it did not look, or reads another voter's, is refused. When in doubt, fail: a page that is only acceptable does not pass. For a `fail`, add `fix`: one concrete change that would make it pass, in one sentence, naming what to change on the page, within its copy, its states, its navigation or its style; never a new feature or new data.
 > 5. Write `.aeom/reports/judge/<N>.json`, exactly in this shape, with every page you judge and every principle:
 >
 > ```json
@@ -39,7 +39,7 @@ Give each voter this, with `<N>` replaced by its number:
 >   "model": "<the model you run on, as your system prompt names it>",
 >   "pages": {
 >     "/commandes": {
->       "states": { "pass": false, "reason": "The order list is blank, with no message saying there are no orders yet." }
+>       "states": { "pass": false, "reason": "The order list is blank, with no message saying there are no orders yet.", "fix": "Under « Mes commandes », say « Aucune commande pour l'instant » and link to « Produits »." }
 >     }
 >   }
 > }
@@ -56,7 +56,7 @@ Give each of voters 2 and 3 this, with `<N>` replaced by its number:
 > 1. Run `aeom principles` to read the principles: an id, then what it asks for.
 > 2. Read `.aeom/reports/judge/to-confirm.json`: for each page, the principles to decide. Read `.aeom/captures/manifest.json` for the screenshots of each page (`files`, one per width, in `.aeom/captures/`; `cut` when the screenshot stops at the top of a longer page).
 > 3. Look at every screenshot of those pages, at every width, and of the other pages when a principle compares pages (`consistent-chrome`, `one-direction`).
-> 4. For each page and each principle listed, decide `pass` or `fail`, with one sentence of your own that names what you see. When in doubt, fail.
+> 4. For each page and each principle listed, decide `pass` or `fail`, with one sentence of your own that names what you see, and for a `fail` its `fix` as the voter brief says. When in doubt, fail.
 > 5. Write `.aeom/reports/judge/<N>.json` in the voter brief's shape, with only the pages and principles listed.
 >
 > Do not read other judges' votes. Do not change any file other than yours. Reply in one line: the file you wrote.
@@ -79,7 +79,7 @@ The same, one vote first and three on what it fails, on the key journeys instead
 > 1. Run `aeom principles --journeys` to read the journey principles.
 > 2. Read `.aeom/captures/journeys/report.json`. Each journey (`slug`, `name`) was replayed at each width (`runs`); each run lists its steps in order, with the action, the route after it, the capture (`capture`, in `.aeom/captures/journeys/`; with `cut`, it stops at the top of a longer page, whose full height `cut` gives), what the page said in a dialog, and where it broke, if it did. Each run also has a sheet of all its steps (`sheet`).
 > 3. Look at every journey's sheets and step captures, at every width, before deciding anything.
-> 4. For each journey and each principle, decide `pass` or `fail`, with one sentence that says what the user lives, naming what you see, and the number of the step where it shows (`step`). When in doubt, fail.
+> 4. For each journey and each principle, decide `pass` or `fail`, with one sentence that says what the user lives, naming what you see, and the number of the step where it shows (`step`). For a `fail`, add `fix`: one concrete change that would make it pass, in one sentence, within the copy, the states, the order of steps or the navigation; never a new feature or new data. When in doubt, fail.
 > 5. Write `.aeom/reports/judge-journeys/<N>.json`, exactly in this shape, with every journey and every principle:
 >
 > ```json
@@ -88,7 +88,7 @@ The same, one vote first and three on what it fails, on the key journeys instead
 >   "model": "<the model you run on, as your system prompt names it>",
 >   "pages": {
 >     "see-my-orders": {
->       "result-shown": { "pass": false, "reason": "After clicking Commandes, the list under Mes commandes is blank, with no word saying there is no order yet.", "step": 3 }
+>       "result-shown": { "pass": false, "reason": "After clicking Commandes, the list under Mes commandes is blank, with no word saying there is no order yet.", "step": 3, "fix": "When the list is empty, say « Aucune commande pour l'instant » under Mes commandes." }
 >     }
 >   }
 > }

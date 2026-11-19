@@ -290,3 +290,22 @@ test("a careful vote in French counts when it names the type, the spacing or the
   assert.deepEqual(lazyVotes([vote(["La typographie hésite entre deux familles sans raison visible.", "L'espacement entre les sections varie d'une section à l'autre.", "La hiérarchie se perd sous le bandeau du haut.", "Le texte d'introduction est tassé contre la bannière."])]), []);
   assert.equal(lazyVotes([vote(["La page est bien.", "Rien à signaler.", "Propre.", "Ça passe."])]).length, 1);
 });
+
+test("a judge may say how to fix what it fails: the most concrete fix of the winning side is kept, and a vote without one still counts", () => {
+  const withFix = (voter: string, fix?: unknown): Vote => {
+    const v = vote(voter, { "/commandes": ["states"] });
+    if (fix !== undefined) (v.pages["/commandes"]!.states as unknown as Record<string, unknown>).fix = fix;
+    return v;
+  };
+  const report = tally([withFix("1", "Make it clearer."), withFix("2", "Under « Mes commandes », say « Aucune commande pour l'instant » with a button « Voir les produits »."), withFix("3")], pages, principles);
+  const states = report.pages.find((p) => p.page === "/commandes")!.verdicts.find((v) => v.principle === "states")!;
+  assert.equal(states.fix, "Under « Mes commandes », say « Aucune commande pour l'instant » with a button « Voir les produits ».", "one fix, the most concrete");
+  assert.equal("fix" in report.pages.find((p) => p.page === "/")!.verdicts[0]!, false, "a verdict that passes has none");
+  assert.equal("fix" in tally([vote("1", { "/": ["hierarchy"] }), vote("2", { "/": ["hierarchy"] }), vote("3")], pages, principles).pages[0]!.verdicts[0]!, false, "votes without a fix count as before");
+  // A fix given by the losing side is not the verdict's: it argued the page passes.
+  const lost = tally([withFix("1"), withFix("2"), { ...vote("3"), pages: { ...vote("3").pages, "/commandes": { ...vote("3").pages["/commandes"]!, states: { pass: true, reason: "3 on states", fix: "Nothing." } as never } } }], pages, principles);
+  assert.equal("fix" in lost.pages[1]!.verdicts[1]!, false);
+  assert.equal(tally([withFix("1", "  "), withFix("2"), withFix("3")], pages, principles).pages[1]!.verdicts[1]!.fix, undefined, "an empty fix is no fix");
+  assert.equal(tally([withFix("1", null), withFix("2"), withFix("3")], pages, principles).pages[1]!.verdicts[1]!.fix, undefined, "a null fix is no fix, and the vote counts");
+  refuses(() => tally([withFix("1", 42), withFix("2"), withFix("3")], pages, principles), /voter 1, \/commandes: the fix for states must be a sentence/);
+});
