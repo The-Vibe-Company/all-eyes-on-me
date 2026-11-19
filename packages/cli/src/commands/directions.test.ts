@@ -154,6 +154,25 @@ test("with no knockout, the person chooses alone: aeom tournament decide --choos
   }
 });
 
+test("the sheets of a round of six or nine are never taken for directions, to compare or to choose", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-sheets-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  try {
+    await mkdir(D, { recursive: true });
+    for (const name of ["lutrin", "verriere", "now", "sheet", "sheet-2", "sheet-3"]) await writeFile(join(D, `${name}.png`), "");
+    const said = (slug: string) => ({ strong: `${slug}: reads at a glance.`, weak: `${slug}: a heavy header.`, fit: `${slug}: a town hall's desk.` });
+    await writeFile(join(D, "screening-1.json"), JSON.stringify({ out: {}, compare: { lutrin: said("lutrin"), verriere: said("verriere") }, start: { source: "lutrin", why: "the list reads first." } }));
+    const compared = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);
+    assert.equal(compared.code, 0, compared.out);
+    await run(dir, ["tournament", "start", "--no-knockout", "--dir", D, "lutrin", "verriere"]);
+    const chosen = await run(dir, ["tournament", "decide", "--dir", D, "--choose", "sheet-2"], { AEOM_HOME: join(dir, ".home") });
+    assert.equal(chosen.code, 1, chosen.out);
+    assert.match(chosen.out, /sheet-2 is not one of the directions: lutrin, verriere\./);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("aeom tournament compare checks the screening's comparison, keeps it and says it in words; the decision notes whether the person followed its advice", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-compare-dirs-"));
   const home = await mkdtemp(join(tmpdir(), "aeom-home-"));

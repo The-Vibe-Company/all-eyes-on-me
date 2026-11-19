@@ -43,3 +43,35 @@ test("aeom mockups captures, lays out and checks every direction of a round in o
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+// A PNG's height, from its header.
+const height = (file: string) => readFileSync(file).readUInt32BE(20);
+
+test("aeom mockups lays a round out three directions to a sheet, the front as it is first on each, and gives the screening judge each direction's own image", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-mockups-"));
+  try {
+    const directions = join(dir, "directions");
+    const slugs = ["ardoise", "baie", "craie", "dune"];
+    for (const slug of slugs) {
+      await mkdir(join(directions, slug), { recursive: true });
+      await writeFile(join(directions, slug, "index.html"), page(slug, "#222", "notes.html"));
+      await writeFile(join(directions, slug, "notes.html"), page(`${slug} notes`, "#222", "index.html"));
+    }
+    await writeFile(join(dir, "now-home.png"), PIXEL);
+    const env = { ...process.env, AEOM_HOME: join(dir, ".home"), AEOM_TELEMETRY: "0" };
+    const { stdout } = await promisify(execFile)("node", [AEOM, "mockups", directions, "--widths", "1280", "--now", `/=${join(dir, "now-home.png")}`], { cwd: dir, env });
+    assert.match(stdout, /^4 directions, three to a sheet, laid out in \S*sheet\.png and \S*sheet-2\.png, the front as it is first on each:/);
+    assert.ok(!existsSync(join(directions, "sheet-3.png")));
+    assert.ok(height(join(directions, "sheet-2.png")) < height(join(directions, "sheet.png")), "the second sheet holds the front as it is and the fourth direction alone");
+    // A sheet of several directions is shrunk out of reading for a model: the judge reads each one whole.
+    assert.ok(stdout.split("\n").includes(`For the screening judge, one image each: ${["now", ...slugs].map((s) => join(directions, `${s}.png`)).join(", ")}`), stdout);
+    assert.deepEqual(JSON.parse(readFileSync(join(directions, "sheet.json"), "utf8")).map((i: { label: string }) => i.label), ["now", ...slugs], "every direction of the round is said, whatever its sheet");
+    // A later round of two leaves no sheet of the earlier one to be shown by mistake.
+    const again = await promisify(execFile)("node", [AEOM, "mockups", directions, "ardoise", "baie", "--widths", "1280"], { cwd: dir, env });
+    assert.match(again.stdout, /^2 directions, laid out in \S*sheet\.png:/);
+    assert.ok(again.stdout.split("\n").includes(`For the screening judge, one image each: ${join(directions, "ardoise.png")}, ${join(directions, "baie.png")}`), again.stdout);
+    assert.ok(!existsSync(join(directions, "sheet-2.png")), "the earlier round's second sheet is gone");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
