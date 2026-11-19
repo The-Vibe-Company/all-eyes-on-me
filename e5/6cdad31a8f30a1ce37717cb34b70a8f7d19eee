@@ -1,0 +1,37 @@
+packages/cli/src/commands/run-notes.test.ts
+  s_17f34effcc8bd8::t_0d1af436e27126 79,118
+  s_17f34effcc8bd8::t_dcf7e69d0c7af5 1-78,80-117,119-126
+packages/cli/src/commands/run.ts
+  s_17f34effcc8bd8::t_074c47e7040776 152-153,298-299
+  s_17f34effcc8bd8::t_12ca866f995407 2,6-9,25-26
+packages/cli/src/commands/standard.ts
+  s_17f34effcc8bd8::t_074c47e7040776 106-107
+  s_17f34effcc8bd8::t_12ca866f995407 7,104-105,108,112,118,121-122
+packages/core/src/state/state.ts
+  s_17f34effcc8bd8::t_1a51867b7f67f4 37-38,78-110,146-150
+packages/cli/src/commands/run-state.ts
+  s_17f34effcc8bd8::t_220744fd49c8a9 240
+  s_17f34effcc8bd8::t_e0da9f9f7bab06 5-6,101-124,241-242
+packages/cli/src/commands/ratchet.ts
+  s_17f34effcc8bd8::t_12ca866f995407 6,223,251
+packages/core/src/state/state.test.ts
+  s_17f34effcc8bd8::t_cc8bc83d5f1939 3,78-106
+packages/cli/src/commands/pr.ts
+  s_17f34effcc8bd8::t_12ca866f995407 7,210-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e56cdad31a8f30a1ce37717cb34b70a8f7d19eee",
+  "prompts": {},
+  "sessions": {
+    "s_17f34effcc8bd8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91514880-29b8-4cbf-a24e-e1cd6102ccb7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
