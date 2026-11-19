@@ -60,6 +60,9 @@ export async function runMockups(argv: string[]): Promise<number> {
     console.error(absent.length ? `No index.html in ${absent.map((a) => join(dir, a)).join(", ")}: a direction is a folder holding one.` : `No direction in ${dir}: each is a folder holding an index.html.`);
     return 1;
   }
+  // The front as it is and the sheets have these names in the folder: a direction named so would be lost among them.
+  const reserved = slugs.filter((slug) => /^(now|sheet(-\d+)?)$/.test(slug));
+  if (reserved.length) return (console.error(`${reserved.join(", ")}: a direction cannot be named now, sheet or sheet-<n>, which name the front as it is and the sheets. Rename its folder.`), 1);
   const notes = new Map<string, string>();
   for (const note of values.note ?? []) {
     const at = note.indexOf("=");
@@ -84,6 +87,8 @@ export async function runMockups(argv: string[]): Promise<number> {
       const dense = (await readdir(folder)).filter((f) => f.endsWith(".html") && f !== "index.html").sort()[0];
       const pages = ["/", ...(dense ? [`/${dense}`] : [])];
       const shots = join(dir, `${slug}-shots`);
+      // What an earlier round left of it never stands for this one: a direction that no longer opens has no image.
+      await Promise.all([`${slug}.png`, `${slug}-shots`, `${slug}-checks`].map((f) => rm(join(dir, f), { recursive: true, force: true })));
       const captured = await aeom(["capture", "--dir", folder, "--pages", pages.join(","), "--widths", String(widest), "--out", shots]);
       const manifest = await json<{ pages: Shot[] }>(join(shots, "manifest.json"));
       const files = pages.map((page) => ({ page, file: manifest?.pages.find((p) => p.path === page)?.files.find((f) => f.width === widest)?.file }));

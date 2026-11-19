@@ -230,6 +230,7 @@ test("the screening judge reads each direction's own image, never a sheet of sev
   const screening = read("phase-directions.md").split("**Screening brief.**")[1]?.split("**Duel brief.**")[0] ?? "";
   assert.match(screening, /each direction's own image, never a sheet of several: a model shrinks a tall sheet until it reads nothing on it/);
   assert.doesNotMatch(screening, /on the sheet|first on the sheet|Give the judge [^.]*the sheet,/, "the judge is given no sheet");
+  assert.match(screening, /Look first at the front as it is today, `now\.png`, when you are given it/, "from a prompt or a spec there is none");
   const step6 = read("phase-directions.md").split("6. **What a judge sees in them**")[1]?.split("7. **Knockout**")[0] ?? "";
   assert.match(step6, /each with `now\.png` and each direction's image of step 4/);
   const mockups = read("phase-mockups.md");
