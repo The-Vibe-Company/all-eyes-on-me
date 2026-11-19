@@ -162,3 +162,143 @@ export function benchText(scores: AppScore[]): string {
     });
   return [head.join("\n"), ...details].join("\n\n");
 }
+
+// ——— The judge bench: several passes of /aeom judge on each app, and what they agree on ———
+
+/** One pass of /aeom judge on an app: its run, what its verdict failed, and what it cost. */
+export interface JudgePass {
+  run: string;
+  failures: Failure[];
+  dollars: number | null;
+}
+
+/** A count over the passes: its mean, to one decimal, and its lowest and highest. */
+export interface Spread {
+  mean: number;
+  min: number;
+  max: number;
+}
+
+export interface JudgeBenchScore {
+  app: string;
+  /** Why the app was not measured: no pass of /aeom judge. */
+  error?: string;
+  /** How many passes were asked for: fewer passes than that are said. */
+  asked: number;
+  passes: { run: string; found: number; beyond: number; dollars: number | null }[];
+  total: number;
+  found: Spread | null;
+  beyond: Spread | null;
+  dollars: Spread | null;
+  /** Each defect noted by hand, with how many passes found it and the first one's proof. */
+  defects: { id: string; where: string; what: string; in: number; proof: string | null; unnamed?: true }[];
+  /** What some passes fail and others do not, on the same screen or journey: a verdict that changes from one pass to another. */
+  flips: { what: string; in: number }[];
+  /** What the passes found beyond the defects noted, each once, with how many passes said it: to add to the list or reject. */
+  beyondList: { what: string; in: number }[];
+}
+
+/** One judge bench as `history.jsonl` keeps it: its date, AEOM's version, and each app's means. */
+export interface JudgeBenchEntry {
+  at: string;
+  mode: "judge";
+  aeom: string;
+  apps: { app: string; passes: number; total: number; found: number; beyond: number; flips: number; dollars: number | null }[];
+}
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+const spread = (values: number[]): Spread | null => (values.length ? { mean: round1(values.reduce((a, b) => a + b, 0) / values.length), min: Math.min(...values), max: Math.max(...values) } : null);
+/** A failure by where it shows and what names it: the same verdict in other words, or on a record made at each visit, is one. */
+const keyOf = (f: Failure) => `${f.where.startsWith("/") ? pageShape(f.where.replace(/[?#].*$/, "")) : f.where.trim().toLowerCase()}\n${idOf(f)}`;
+
+/**
+ * What several passes of /aeom judge found of an app's defects: each defect with how many passes found it, the
+ * spread of what was found and of what lies beyond the list, and every verdict some passes give and others do not.
+ */
+export function scoreJudgePasses({ defects, passes, asked = passes.length }: { defects: DefectList; passes: JudgePass[]; asked?: number }): JudgeBenchScore {
+  const total = defects.defects.length;
+  if (!passes.length) return { app: defects.app, error: "no /aeom judge run", asked, passes: [], total, found: null, beyond: null, dollars: null, defects: [], flips: [], beyondList: [] };
+  const known = (f: Failure) => defects.defects.some((d) => names(d)(f));
+  const each = passes.map((p) => ({ run: p.run, found: defects.defects.filter((d) => p.failures.some(names(d))).length, beyond: p.failures.filter((f) => !known(f)).length, dollars: p.dollars }));
+  // Every verdict once, in the order the passes first gave it, with how many passes gave it and the words of the first.
+  const seen = new Map<string, { what: string; label: string; in: number; known: boolean }>();
+  for (const p of passes) {
+    for (const key of new Set(p.failures.map(keyOf))) {
+      const f = p.failures.find((x) => keyOf(x) === key)!;
+      const entry = seen.get(key) ?? { what: said(f), label: `${f.where}: ${idOf(f)}`, in: 0, known: known(f) };
+      entry.in++;
+      seen.set(key, entry);
+    }
+  }
+  const byCount = <T extends { in: number }>(list: T[]) => list.map((x, i) => ({ x, i })).sort((a, b) => b.x.in - a.x.in || a.i - b.i).map(({ x }) => x);
+  const dollars = each.map((p) => p.dollars).filter((d): d is number => d !== null);
+  return {
+    app: defects.app,
+    asked,
+    passes: each,
+    total,
+    found: spread(each.map((p) => p.found)),
+    beyond: spread(each.map((p) => p.beyond)),
+    dollars: spread(dollars),
+    defects: defects.defects.map((d) => {
+      const proof = passes.map((p) => p.failures.find(names(d))).find(Boolean);
+      return { id: d.id, where: d.where, what: d.what, in: passes.filter((p) => p.failures.some(names(d))).length, proof: proof ? said(proof) : null, ...(d.match.length ? {} : { unnamed: true as const }) };
+    }),
+    flips: byCount([...seen.values()].filter((e) => e.in < passes.length).map((e) => ({ what: e.label, in: e.in }))),
+    beyondList: byCount([...seen.values()].filter((e) => !e.known).map((e) => ({ what: e.what, in: e.in }))),
+  };
+}
+
+/** The bench as `history.jsonl` keeps it, each app by its means: what the next bench is compared with. */
+export function judgeBenchEntry(scores: JudgeBenchScore[], { at, aeom }: { at: string; aeom: string }): JudgeBenchEntry {
+  return { at, mode: "judge", aeom, apps: scores.filter((s) => !s.error).map((s) => ({ app: s.app, passes: s.passes.length, total: s.total, found: s.found!.mean, beyond: s.beyond!.mean, flips: s.flips.length, dollars: s.dollars?.mean ?? null })) };
+}
+
+const num = (n: number) => String(round1(n));
+/** A mean, then what it is out of, then its lowest and highest when they differ: `2.7/5 (2–3)`. */
+const range = (s: Spread, of = "") => `${num(s.mean)}${of}${s.min !== s.max ? ` (${s.min}–${s.max})` : ""}`;
+/** How far a mean moved: `+0.7`, `−1.7`, `±0`. */
+const moved = (d: number) => (round1(d) === 0 ? "±0" : `${d > 0 ? "+" : "−"}${num(Math.abs(d))}`);
+
+/**
+ * The judge bench as text: a line per app, then each defect with how many passes found it, the verdicts that change,
+ * what lies beyond the list; then how far each mean moved since the bench before (`previous`), or that it is the
+ * first (`null`).
+ */
+export function judgeBenchText(scores: JudgeBenchScore[], previous?: JudgeBenchEntry | null): string {
+  const width = Math.max(...scores.map((s) => s.app.length)) + 2;
+  const head = scores.map((s) => {
+    if (s.error) return `${s.app.padEnd(width)}not measured: ${s.error}`;
+    const n = s.passes.length;
+    const passes = `${n} ${n === 1 ? "pass" : "passes"}${n < s.asked ? ` of ${s.asked} asked` : ""}`;
+    const cost = s.dollars ? `≈ $${num(s.dollars.mean)} a pass` : "cost not measured";
+    return `${s.app.padEnd(width)}${passes}  found ${range(s.found!, `/${s.total}`)}  beyond the list ${range(s.beyond!)}  ${s.flips.length} ${s.flips.length === 1 ? "verdict that changes" : "verdicts that change"}  ${cost}`;
+  });
+  const details = scores
+    .filter((s) => !s.error)
+    .map((s) => {
+      const n = s.passes.length;
+      const column = Math.max(...s.defects.map((d) => d.id.length)) + 2;
+      const lines = s.defects.map((d) => `${d.in === n ? "✓" : d.in ? "◐" : "✗"} ${d.id.padEnd(column)}${`${d.in}/${n}`.padEnd(6)}${d.proof ?? (d.unnamed ? `${d.what} (nothing names it)` : d.what)}`);
+      const more = [
+        ...(s.flips.length ? ["", "Verdicts that change from one pass to another:", ...s.flips.map((f) => `  ${f.what}, ${f.in} of ${n} passes`)] : []),
+        ...(s.beyondList.length ? ["", "Beyond the defects noted, to add to the list or reject:", ...s.beyondList.map((b) => `  ${b.what} (${b.in} of ${n})`)] : []),
+      ];
+      return [`${s.app}, ${s.passes.map((p) => p.run).join(", ")}:`, ...lines, ...more].join("\n");
+    });
+  const since =
+    previous === null
+      ? ["No earlier judge bench to compare with: this one is the first."]
+      : previous
+        ? [
+            `Since the judge bench of ${previous.at.slice(0, 10)} (AEOM ${previous.aeom || "version unknown"}):`,
+            ...judgeBenchEntry(scores, { at: "", aeom: "" }).apps.map((a) => {
+              const was = previous.apps.find((p) => p.app === a.app);
+              if (!was) return `  ${a.app.padEnd(width)}not in the bench before`;
+              const cost = a.dollars !== null && was.dollars !== null ? `  cost ${moved(a.dollars - was.dollars)}` : "";
+              return `  ${a.app.padEnd(width)}found ${moved(a.found - was.found)}  beyond the list ${moved(a.beyond - was.beyond)}  verdicts that change ${moved(a.flips - was.flips)}${cost}`;
+            }),
+          ]
+        : [];
+  return [head.join("\n"), ...details, ...(since.length ? [since.join("\n")] : [])].join("\n\n");
+}

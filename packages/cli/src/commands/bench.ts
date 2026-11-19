@@ -1,12 +1,12 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { copyFile, cp, mkdir, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { appendFile, copyFile, cp, mkdir, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
-import { benchText, guardJourneys, readRun, scoreRun, startApp, unscored, type AppScore, type DefectList, type JourneyReport } from "@aeom/core";
+import { benchText, guardJourneys, judgeBenchEntry, judgeBenchText, readRun, scoreJudgePasses, scoreRun, startApp, unscored, type AppScore, type DefectList, type JourneyReport, type JudgeBenchEntry, type JudgeBenchScore, type JudgePass } from "@aeom/core";
 
-export const BENCH_HELP = `Usage: aeom bench prepare <folder> | aeom bench score <folder> [--json]
+export const BENCH_HELP = `Usage: aeom bench prepare <folder> | aeom bench score <folder> [--judge [--passes <n>]] [--json]
 
 The bench: apps whose defects were noted by hand, each run through /aeom, and
 what the run found and fixed of them.
@@ -22,8 +22,19 @@ what the run found and fixed of them.
                     against its defects: found and fixed, with the failure that
                     proves each; regressions; hidden features the guard refuses;
                     what aeom cost measured. Written to <folder>/benchmark.json.
+                    A pass of /aeom judge is never taken for a run.
+  score <folder> --judge
+                    The judge alone: in each app, the last passes of
+                    /aeom judge --autonome (three by default), each defect with
+                    how many passes found it, what they found beyond the list,
+                    the verdicts that change from one pass to another, the cost
+                    of a pass, and how far each mean moved since the judge
+                    bench before. Written to <folder>/benchmark-judge.json, and
+                    kept with its date and AEOM's version in
+                    <folder>/history.jsonl.
 
   --bench <folder>  The bench's apps (default: bench/ in AEOM's repository)
+  --passes <n>      With --judge, how many of the last passes to count (default 3)
   --json            With score, write the scores as JSON`;
 
 const BENCH = fileURLToPath(new URL("../../../../bench/", import.meta.url));
@@ -37,7 +48,7 @@ async function apps(bench: string): Promise<string[]> {
 }
 
 export async function runBench(argv: string[]): Promise<number> {
-  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { bench: { type: "string" }, json: { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { bench: { type: "string" }, json: { type: "boolean" }, judge: { type: "boolean" }, passes: { type: "string", default: "3" }, help: { type: "boolean", short: "h" } } });
   const [verb, folder] = positionals;
   if (values.help || !verb) {
     console.log(BENCH_HELP);
@@ -53,7 +64,14 @@ export async function runBench(argv: string[]): Promise<number> {
     console.error(`No bench app in ${bench}: each is a folder with app/, aeom/ and defects.json.`);
     return 1;
   }
-  return verb === "prepare" ? prepare(bench, names, resolve(folder)) : score(bench, names, resolve(folder), Boolean(values.json));
+  if (verb === "prepare") return prepare(bench, names, resolve(folder));
+  if (!values.judge) return score(bench, names, resolve(folder), Boolean(values.json));
+  const passes = Number(values.passes);
+  if (!Number.isInteger(passes) || passes < 1) {
+    console.error(`--passes is a whole number, 1 or more.`);
+    return 1;
+  }
+  return scoreJudge(bench, names, resolve(folder), passes, Boolean(values.json));
 }
 
 /** The app's files as git tracks them, its links followed: no local data, no dependencies, nothing ignored. */
@@ -111,13 +129,24 @@ async function prepare(bench: string, names: string[], out: string): Promise<num
       failed++;
     }
   }
-  console.log(`${rows.join("\n")}\n\nIn each, open a Claude Code session and run /aeom --autonome --sans-pr; then aeom bench score ${out}.`);
+  console.log(`${rows.join("\n")}\n\nIn each, open a Claude Code session and run /aeom --autonome --sans-pr; then aeom bench score ${out}. For the judge alone, run /aeom judge --autonome three times in each; then aeom bench score ${out} --judge.`);
   return failed === names.length ? 1 : 0;
 }
 
-/** The last run of a project, by its name: run-YYYYMMDD-HHMM sorts by time. */
-const lastRun = async (project: string) => (await readdir(join(project, ".aeom", "runs")).catch(() => [] as string[])).filter((n) => n.startsWith("run-")).sort().at(-1);
+/** A project's runs, by their names: run-YYYYMMDD-HHMM sorts by time. Each says whether it only judged (/aeom judge). */
+async function runsOf(project: string): Promise<{ name: string; judged: boolean }[]> {
+  const names = (await readdir(join(project, ".aeom", "runs")).catch(() => [] as string[])).filter((n) => n.startsWith("run-")).sort();
+  return Promise.all(names.map(async (name) => ({ name, judged: await readRun(join(project, ".aeom", "runs", name), name).then((p) => p.judged === true, () => false) })));
+}
+/** The last run of a project that is not a pass of /aeom judge: a judgement redoes nothing, so it scores no fix. */
+const lastRun = async (project: string) => (await runsOf(project)).filter((r) => !r.judged).at(-1)?.name;
 const json = async <T>(file: string): Promise<T | null> => readFile(file, "utf8").then((t) => JSON.parse(t) as T, () => null);
+
+/** What a run cost, as aeom cost measured it from this machine's transcripts: measured once, then kept in the run. */
+async function costOf(project: string, dir: string, run: string) {
+  if (!existsSync(join(dir, "cost.json"))) await promisify(execFile)(process.execPath, [process.argv[1]!, "cost", join(".aeom", "runs", run)], { cwd: project, env: process.env }).catch(() => undefined);
+  return json<{ total?: { dollars?: number | null; unpriced?: number }; roles?: { read?: number; written?: number; output?: number }[] }>(join(dir, "cost.json"));
+}
 
 /** One app's last run against its defects; what keeps it from being scored is said in its row. */
 async function scoreApp(bench: string, out: string, name: string): Promise<AppScore> {
@@ -145,8 +174,7 @@ async function scoreApp(bench: string, out: string, name: string): Promise<AppSc
     const config = await json<{ protected?: string[] }>(join(project, ".aeom", "config.json"));
     const refused = before && after && !rewritten.length ? guardJourneys({ before, after, changed, protectedFiles: config?.protected ?? [] }).refused : [];
     // A run never says what it costs: the bench measures it, from this machine's transcripts.
-    if (!existsSync(join(dir, "cost.json"))) await promisify(execFile)(process.execPath, [process.argv[1]!, "cost", join(".aeom", "runs", run)], { cwd: project, env: process.env }).catch(() => undefined);
-    const cost = await json<{ total?: { dollars?: number | null; unpriced?: number }; roles?: { read?: number; written?: number; output?: number }[] }>(join(dir, "cost.json"));
+    const cost = await costOf(project, dir, run);
     const tokens = cost?.roles?.length ? cost.roles.reduce((t, r) => t + (r.read ?? 0) + (r.written ?? 0) + (r.output ?? 0), 0) : null;
     return scoreRun({
       defects,
@@ -172,5 +200,49 @@ async function score(bench: string, names: string[], out: string, asJson: boolea
   for (const name of names) scores.push(await scoreApp(bench, out, name));
   await writeFile(join(out, "benchmark.json"), `${JSON.stringify({ scored: new Date().toISOString(), apps: scores }, null, 2)}\n`);
   console.log(asJson ? JSON.stringify(scores, null, 2) : `${benchText(scores)}\n\nWritten to ${join(out, "benchmark.json")}.`);
+  return scores.every((s) => s.error) ? 1 : 0;
+}
+
+/** AEOM's version, the commit it runs from: what a judge bench is kept with. */
+const AEOM_VERSION = () => git(fileURLToPath(new URL("../../../../", import.meta.url)), "rev-parse", "--short", "HEAD").then((r) => r.stdout.trim(), () => "");
+
+/** One app's last passes of /aeom judge against its defects; what keeps it from being scored is said in its row. */
+async function scoreJudgeApp(bench: string, out: string, name: string, asked: number): Promise<JudgeBenchScore> {
+  let defects: DefectList;
+  try {
+    defects = JSON.parse(await readFile(join(bench, name, "defects.json"), "utf8")) as DefectList;
+    if (!Array.isArray(defects.defects)) throw new Error("no list of defects");
+  } catch (error) {
+    return { ...scoreJudgePasses({ defects: { app: name, noted: "", defects: [] }, passes: [], asked }), error: `${join(bench, name, "defects.json")} cannot be read: ${message(error)}` };
+  }
+  const project = join(out, name);
+  const passes: JudgePass[] = [];
+  for (const { name: run } of (await runsOf(project)).filter((r) => r.judged).slice(-asked)) {
+    const dir = join(project, ".aeom", "runs", run);
+    // A pass that stopped before its verdict judged nothing: it is not one.
+    const page = await readRun(dir, run).catch(() => null);
+    if (!page?.verdict) continue;
+    const cost = await costOf(project, dir, run);
+    passes.push({ run, failures: page.verdict.failures, dollars: typeof cost?.total?.dollars === "number" ? cost.total.dollars : null });
+  }
+  return scoreJudgePasses({ defects, passes, asked });
+}
+
+async function scoreJudge(bench: string, names: string[], out: string, asked: number, asJson: boolean): Promise<number> {
+  if (!existsSync(out)) {
+    console.error(`${out} does not exist: aeom bench prepare ${out} first.`);
+    return 1;
+  }
+  const scores: JudgeBenchScore[] = [];
+  for (const name of names) scores.push(await scoreJudgeApp(bench, out, name, asked));
+  const at = new Date().toISOString();
+  const aeom = await AEOM_VERSION();
+  // The judge bench before, as history.jsonl kept it: a line that is not one is skipped.
+  const history = join(out, "history.jsonl");
+  const lines = (await readFile(history, "utf8").catch(() => "")).split("\n").filter((l) => l.trim());
+  const previous = lines.map((l) => { try { return JSON.parse(l) as JudgeBenchEntry; } catch { return null; } }).filter((e): e is JudgeBenchEntry => e?.mode === "judge" && Array.isArray(e.apps)).at(-1) ?? null;
+  await writeFile(join(out, "benchmark-judge.json"), `${JSON.stringify({ scored: at, aeom, passes: asked, apps: scores }, null, 2)}\n`);
+  if (scores.some((s) => !s.error)) await appendFile(history, `${JSON.stringify(judgeBenchEntry(scores, { at, aeom }))}\n`);
+  console.log(asJson ? JSON.stringify(scores, null, 2) : `${judgeBenchText(scores, previous)}\n\nWritten to ${join(out, "benchmark-judge.json")}, kept in ${history}.`);
   return scores.every((s) => s.error) ? 1 : 0;
 }

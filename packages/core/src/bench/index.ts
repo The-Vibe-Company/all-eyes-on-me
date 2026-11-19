@@ -1,1 +1,1 @@
-export { benchText, scoreRun, unscored, type AppScore, type Defect, type DefectList, type DefectScore } from "./bench.js";
+export { benchText, judgeBenchEntry, judgeBenchText, scoreJudgePasses, scoreRun, unscored, type AppScore, type Defect, type DefectList, type DefectScore, type JudgeBenchEntry, type JudgeBenchScore, type JudgePass, type Spread } from "./bench.js";

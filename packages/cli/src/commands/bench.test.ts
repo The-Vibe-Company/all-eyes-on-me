@@ -96,3 +96,57 @@ test("aeom bench prepares each app as a repository of its own, its defects kept 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("aeom bench score --judge counts the last passes of /aeom judge of each app, the verdicts that change, and how far it moved since the bench before; the score of a full run never takes a pass", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "aeom-bench-judge-")));
+  const env = { ...process.env, AEOM_HOME: join(root, ".home"), AEOM_TELEMETRY: "0" };
+  const run = (args: string[]) => promisify(execFile)("node", [AEOM, ...args], { cwd: root, env }).then((r) => ({ code: 0, out: r.stdout + r.stderr }), (e: { code: number; stdout: string; stderr: string }) => ({ code: e.code, out: e.stdout + e.stderr }));
+  try {
+    const bench = join(root, "bench");
+    for (const app of ["boutique", "atelier"]) {
+      await mkdir(join(bench, app, "app"), { recursive: true });
+      await mkdir(join(bench, app, "aeom"), { recursive: true });
+      await writeFile(join(bench, app, "defects.json"), JSON.stringify({ app, noted: "by hand", defects: [{ id: "faint", where: "/", what: "faint text", match: ["contrast"] }, { id: "empty", where: "/panier", what: "an empty cart says nothing", match: ["states"] }] }));
+    }
+    const out = join(root, "runs");
+    const runOf = async (name: string, { judged, failures }: { judged: boolean; failures: { kind: string; where: string; what: string }[] }) => {
+      const dir = join(out, "boutique", ".aeom", "runs", name);
+      await mkdir(join(dir, "before", "captures"), { recursive: true });
+      await writeFile(join(dir, "before", "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [390, 1280], pages: [], errors: [] }));
+      await writeFile(join(dir, "verdict.json"), JSON.stringify({ nothingToRedo: false, line: "Measured: 2 screens.", failures }));
+      await writeFile(join(dir, "cost.json"), JSON.stringify({ total: { dollars: judged ? 1.5 : 20, unpriced: 0 }, roles: [] }));
+      await writeFile(join(dir, "state.json"), JSON.stringify({ run: name, options: judged ? ["juger", "autonome"] : [], phase: "done" }));
+      if (!judged) await writeFile(join(dir, "base"), "main\n");
+    };
+    const faint = { kind: "check", where: "/", what: "contrast: h1 is 2.1:1, needs 4.5:1" };
+    // A full run first, then three passes of /aeom judge: the cart's empty state is found once in three.
+    await runOf("run-20261119-0800", { judged: false, failures: [faint, { kind: "principle", where: "/", what: "grid: edges drift" }] });
+    await runOf("run-20261119-0900", { judged: true, failures: [faint, { kind: "principle", where: "/panier", what: "states: the cart is blank" }] });
+    await runOf("run-20261119-1000", { judged: true, failures: [faint, { kind: "principle", where: "/", what: "hierarchy: nothing leads" }] });
+    await runOf("run-20261119-1100", { judged: true, failures: [faint] });
+
+    const first = await run(["bench", "score", out, "--bench", bench, "--judge"]);
+    assert.equal(first.code, 0, first.out);
+    assert.match(first.out, /atelier +not measured: no \/aeom judge run/);
+    assert.match(first.out, /boutique +3 passes +found 1\.3\/2 \(1–2\) +beyond the list 0\.3 \(0–1\) +2 verdicts that change +≈ \$1\.5 a pass/);
+    assert.match(first.out, /◐ empty +1\/3 +\/panier: states: the cart is blank/);
+    assert.match(first.out, /Verdicts that change from one pass to another:\n +\/panier: states, 1 of 3 passes\n +\/: hierarchy, 1 of 3 passes/);
+    assert.doesNotMatch(first.out, /grid: edges drift/, "the full run is not a pass");
+    assert.match(first.out, /No earlier judge bench to compare with: this one is the first\./);
+    const kept = JSON.parse(readFileSync(join(out, "benchmark-judge.json"), "utf8")) as { aeom: string; apps: { app: string; passes: { run: string }[] }[] };
+    assert.deepEqual(kept.apps.find((a) => a.app === "boutique")!.passes.map((p) => p.run), ["run-20261119-0900", "run-20261119-1000", "run-20261119-1100"]);
+
+    // Two passes asked: the last two. The bench before is the first one, kept with its version.
+    const second = await run(["bench", "score", out, "--bench", bench, "--judge", "--passes", "2"]);
+    assert.match(second.out, /boutique +2 passes +found 1\/2 +beyond the list 0\.5 \(0–1\) +1 verdict that changes/);
+    assert.match(second.out, /Since the judge bench of \d{4}-\d{2}-\d{2} \(AEOM [0-9a-f]{7,}\):\n +boutique +found −0\.3 +beyond the list \+0\.2 +verdicts that change −1 +cost ±0/);
+    assert.equal(readFileSync(join(out, "history.jsonl"), "utf8").trim().split("\n").length, 2, "each judge bench kept");
+
+    // The score of a full run takes the last run that is not a pass of /aeom judge.
+    const full = await run(["bench", "score", out, "--bench", bench]);
+    assert.match(full.out, /boutique, run-20261119-0800:/);
+    assert.doesNotMatch(full.out, /run-20261119-1100/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
