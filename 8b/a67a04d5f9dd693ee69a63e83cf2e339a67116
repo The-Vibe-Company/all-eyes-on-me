@@ -18,6 +18,7 @@ packages/core/src/state/state.test.ts
   s_17f34effcc8bd8::t_cc8bc83d5f1939 3,78-106
 packages/cli/src/commands/pr.ts
   s_17f34effcc8bd8::t_12ca866f995407 210-212
+  s_17f34effcc8bd8::t_7479f589d5e742 7
 ---
 {
   "schema_version": "authorship/3.0.0",
