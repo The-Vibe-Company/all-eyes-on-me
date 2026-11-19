@@ -8,5 +8,10 @@
     "kind": "waiting-human",
     "reason": "Prêt, mais coûteux : trois /aeom complets (environ trois heures, quelque 180 sous-agents), puis trois fois plus pour le 09. Attend le go d'Antoine, et de savoir qui note les défauts à la main.",
     "pr": ""
+  },
+  "04-garder-a-chaque-pr/10": {
+    "kind": "waiting-human",
+    "reason": "Le cache du check ne se prouve que sur un vrai run GitHub : installer le check sur un projet, merger son workflow, puis deux PR. PR ouverte et verte.",
+    "pr": ""
   }
 }

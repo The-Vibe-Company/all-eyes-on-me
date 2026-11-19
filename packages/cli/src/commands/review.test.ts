@@ -213,6 +213,16 @@ test("aeom review --install-check writes the GitHub workflow that holds every PR
     assert.match(workflow, /pnpm install --frozen-lockfile/);
     assert.match(workflow, /fetch -q --depth 1 https:\/\/github\.com\/The-Vibe-Company\/all-eyes-on-me [0-9a-f]{40}\n/, "AEOM pinned to the very commit that wrote the check, never a moving branch");
     assert.match(workflow, /playwright install --with-deps chromium/);
+    // AEOM pinned to a commit, built and with its browser, comes from GitHub's cache from the second PR on.
+    const sha = workflow.match(/all-eyes-on-me ([0-9a-f]{40})\n/)![1]!;
+    assert.match(workflow, /on:\n  pull_request:\n  push:\n    branches: \["main"\]\n/, "a push to the default branch keeps the cache every pull request reads");
+    assert.match(workflow, /      - name: Install the project\n        if: github\.event_name == 'pull_request'\n/);
+    assert.match(workflow, /      - name: Hold the pull request to the standard\n        if: github\.event_name == 'pull_request'\n/);
+    assert.match(workflow, new RegExp(`      - name: Restore AEOM from the cache\\n        id: aeom\\n        uses: actions/cache/restore@v4\\n        with:\\n          path: \\|\\n            \\$\\{\\{ runner\\.temp \\}\\}/aeom\\n            ~/\\.cache/ms-playwright\\n          key: aeom-\\$\\{\\{ runner\\.os \\}\\}-\\$\\{\\{ runner\\.arch \\}\\}-${sha}\\n`));
+    assert.match(workflow, /      - name: Install AEOM\n        if: steps\.aeom\.outputs\.cache-hit != 'true'\n/);
+    assert.match(workflow, /      - name: Keep AEOM in the cache\n        if: github\.event_name == 'push' && steps\.aeom\.outputs\.cache-hit != 'true'\n        uses: actions\/cache\/save@v4\n        with:\n          path: \|\n            \$\{\{ runner\.temp \}\}\/aeom\n            ~\/\.cache\/ms-playwright\n          key: \$\{\{ steps\.aeom\.outputs\.cache-primary-key \}\}\n/, "saved from the default branch, as soon as it is built");
+    assert.match(workflow, /      - name: Install the browser's system packages\n        if: github\.event_name == 'pull_request' && steps\.aeom\.outputs\.cache-hit == 'true'\n        run: cd "\$RUNNER_TEMP\/aeom\/packages\/core" && npx playwright install-deps chromium\n/);
+    assert.ok(workflow.indexOf("Restore AEOM from the cache") < workflow.indexOf("- name: Install AEOM") && workflow.indexOf("- name: Install AEOM") < workflow.indexOf("Keep AEOM in the cache") && workflow.indexOf("Keep AEOM in the cache") < workflow.indexOf("system packages") && workflow.indexOf("system packages") < workflow.indexOf("Hold the pull request"), "restored, installed on a miss, its system packages on a hit, then the review");
     assert.match(workflow, /review --base "origin\/\$\{\{ github\.base_ref \}\}" --summary "\$GITHUB_STEP_SUMMARY"/);
     assert.doesNotMatch(workflow, /ANTHROPIC|OPENAI|api[_-]?key/i, "no model, no key");
     assert.match((await inRepo(["review", "--install-check"])).out, /already holds this check/);
@@ -221,7 +231,9 @@ test("aeom review --install-check writes the GitHub workflow that holds every PR
     assert.equal(other.code, 1);
     assert.match(other.out, /\.github\/workflows\/aeom\.yml is someone else's: run again with --force to replace it/);
     assert.equal((await inRepo(["review", "--install-check", "--force", "--aeom-ref", "v1.2.0"])).code, 0);
-    assert.match((await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8"), /all-eyes-on-me v1\.2\.0\n/);
+    const tagged = (await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8");
+    assert.match(tagged, /all-eyes-on-me v1\.2\.0\n/);
+    assert.doesNotMatch(tagged, /actions\/cache|cache-hit|push:|event_name/, "a name that can move, a branch or a tag, is never cached: the cache would keep an old AEOM");
     await rm(join(repo, "pnpm-lock.yaml"));
     await writeFile(join(repo, "package-lock.json"), "{}");
     await inRepo(["review", "--install-check", "--force"]);
@@ -314,8 +326,8 @@ test("in a monorepo, the check is written at the repository's root, installs whe
     const { stdout } = await promisify(execFile)("node", [AEOM, "review", "--install-check"], { cwd: join(repo, "apps", "web"), env: { ...process.env, AEOM_TELEMETRY: "0", AEOM_HOME: join(repo, ".home") } });
     assert.match(stdout, /Wrote \.github\/workflows\/aeom\.yml/);
     const workflow = (await import("node:fs")).readFileSync(join(repo, ".github", "workflows", "aeom.yml"), "utf8");
-    assert.match(workflow, /- name: Install the project\n        run: pnpm install --frozen-lockfile\n/, "at the root, where the lockfile is");
-    assert.match(workflow, /- name: Hold the pull request to the standard\n        working-directory: apps\/web\n/);
+    assert.match(workflow, /- name: Install the project\n        if: github\.event_name == 'pull_request'\n        run: pnpm install --frozen-lockfile\n/, "at the root, where the lockfile is");
+    assert.match(workflow, /- name: Hold the pull request to the standard\n        if: github\.event_name == 'pull_request'\n        working-directory: apps\/web\n/);
   } finally {
     await rm(repo, { recursive: true, force: true });
   }
