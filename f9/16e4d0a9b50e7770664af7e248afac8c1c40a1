@@ -1,0 +1,20 @@
+packages/core/src/run/judgement.ts
+  s_808a4b1b84e088::t_a91acf1f1166a9 540-547
+  s_808a4b1b84e088::t_13d945f29101d7 481-482,484-491
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f916e4d0a9b50e7770664af7e248afac8c1c40a1",
+  "prompts": {},
+  "sessions": {
+    "s_808a4b1b84e088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9a862a74-1e23-43c1-8490-d17cd8e2626b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
