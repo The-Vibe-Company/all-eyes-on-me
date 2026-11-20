@@ -212,9 +212,10 @@ async function stepsLeft(runDir: string, page: ResultPage): Promise<string[]> {
   const went = phasesWent(state, { fromWorkers: !page.built });
   const has = (path: string) => existsSync(join(runDir, path));
   const left: string[] = [];
-  if (!page.asked && went.has("pages") && !has(join("after", "compare.json"))) left.push("the pages were not measured after their wave (no after/compare.json): aeom compare, section 5, phase measure");
+  // A front built from scratch, or what was asked, has no before to compare its screens with: a redo's measures are not its.
+  if (!page.asked && !page.built && went.has("pages") && !has(join("after", "compare.json"))) left.push("the pages were not measured after their wave (no after/compare.json): aeom compare, section 5, phase measure");
   if (!page.asked && went.has("journeys") && !has(join("journeys-end", "report.json")) && !has(join("journeys-after", "report.json"))) left.push("the key journeys were not replayed at the end (no journeys-end nor journeys-after): phase journeys");
-  if (!page.asked && went.has("pages") && has(join("journeys-end", "report.json")) && !has(join("end", "compare.json"))) left.push("the screens were not measured again after the journey wave (no end/compare.json): step 7, phase remeasure");
+  if (!page.asked && !page.built && went.has("pages") && has(join("journeys-end", "report.json")) && !has(join("end", "compare.json"))) left.push("the screens were not measured again after the journey wave (no end/compare.json): step 7, phase remeasure");
   // What was asked is built inside the standard, not written into it: its PR rests on the review that holds it there,
   // a review that went through, whatever phase its steps were marked with.
   if (page.asked) {

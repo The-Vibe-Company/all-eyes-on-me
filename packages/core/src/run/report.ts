@@ -122,6 +122,61 @@ export interface Review {
   passed: boolean;
   verdict: string;
   lines: string[];
+  /** What it listed that the run's `before` already held: the app's, said apart, never this branch's doing. */
+  already?: string[];
+  /** What it listed on a screen the run's `before` never measured: whether it was there is not known, said apart. */
+  unmeasured?: string[];
+}
+
+/**
+ * What a check says, the selector of its element left out: from its first quote on, the text it quotes and the rest,
+ * so the same check on the same text matches when the page around it moved. Without a quote, as it is.
+ */
+const quoted = (said: string) => {
+  const text = said.replace(/\s*\n\s*/g, " ").trim();
+  const at = text.indexOf('"');
+  return at === -1 ? text : text.slice(at);
+};
+
+/** A route as `before` and the review both name it: its query and its fragment left out. */
+const bare = (where: string) => where.replace(/[?#].*$/, "") || "/";
+
+/**
+ * The review's lines that `before` already held, by route, check and what the check quotes, counted: a finding is the
+ * app's only while `before` held as many distinct elements with it, so a second element with the same text and the
+ * same defect is the branch's. A line on a screen `before` never measured is said apart; a line of the code (a file and
+ * its line), a journey's, a note, is the branch's.
+ */
+function splitAlready(review: Review, before: CheckReport): Review {
+  const measured = new Set((before.pages ?? []).map((url) => bare(route(url))));
+  const held = new Map<string, Set<string>>();
+  for (const f of before.findings) {
+    const key = `${bare(route(f.url))} ${f.check}: ${quoted(f.element ? `${f.element}: ${f.message}` : f.message)}`;
+    held.set(key, (held.get(key) ?? new Set<string>()).add(f.element ?? ""));
+  }
+  const used = new Map<string, number>();
+  const lines: string[] = [];
+  const already: string[] = [];
+  const unmeasured: string[] = [];
+  for (const line of review.lines) {
+    const m = line.match(/^(\/\S*) ([a-z][a-z-]*): ([\s\S]*)$/);
+    if (!m) {
+      lines.push(line);
+      continue;
+    }
+    const where = bare(m[1]!);
+    if (!measured.has(where)) {
+      unmeasured.push(line);
+      continue;
+    }
+    const key = `${where} ${m[2]}: ${quoted(m[3]!)}`;
+    const count = used.get(key) ?? 0;
+    if (count < (held.get(key)?.size ?? 0)) {
+      used.set(key, count + 1);
+      already.push(line);
+    } else lines.push(line);
+  }
+  return { ...review, lines, ...(already.length ? { already } : {}), ...(unmeasured.length ? { unmeasured } : {}) };
 }
 
 /**
@@ -250,6 +305,8 @@ export async function readRun(runDir: string, run: string): Promise<ResultPage> 
   // A run that built what was asked judges nothing: a judge report beside its checks is an older run's, copied by the snapshot.
   const reports = async (dir: string) => ({ check: (await json<CheckReport>(join(runDir, dir, "reports", "check.json"))) ?? undefined, judge: asked ? undefined : ((await json<JudgeReport>(join(runDir, dir, "reports", "judge.json"))) ?? undefined) });
   const was = await reports("before");
+  // What the review lists that the before already held is the app's: the branch is held to what it brought.
+  if (asked?.review && was.check) asked.review = splitAlready(asked.review, was.check);
   const now = last ? await reports(last) : null;
   const ignore = keepStyle ? [...STYLE_PRINCIPLES, ...STYLE_CHECKS] : [];
   const comparison = now ? comparePages(scorePages(was.check, was.judge, ignore), scorePages(now.check, now.judge, ignore)) : [];
@@ -422,7 +479,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 const WORDS = {
   en: {
-    replug: "The front, on its API", built: "What the run built", asked: "What you asked", review: "The review of the standard", notReviewed: "Not reviewed against the standard yet.", reviewSaid: (said: string) => said, nothing: "Nothing to redo", gave: "What the run gave", directions: "Directions", judged: "What fails",
+    replug: "The front, on its API", built: "What the run built", asked: "What you asked", review: "The review of the standard", notReviewed: "Not reviewed against the standard yet.", alreadyThere: (n: number) => `Already there before this run: ${n}`, unmeasuredBefore: (n: number) => `Not measured before this run: ${n}`, reviewSaid: (said: string) => said, nothing: "Nothing to redo", gave: "What the run gave", directions: "Directions", judged: "What fails",
     beforeRun: "Before the run. ", judgedBy: (m: string, p: string) => `Judged by ${m}, on ${p}.`, unnamed: "a model the voters did not name",
     feedbackNote: "To say whether you agree with each verdict, open this page with <code>aeom report --serve</code>.",
     direction: "Direction", screens: "Screens", journeys: "Journeys", features: "Missing features", still: "Still failing",
@@ -472,7 +529,7 @@ const WORDS = {
     } as Record<string, string>,
   },
   fr: {
-    replug: "Le front, sur son API", built: "Ce que le run a construit", asked: "Ce que vous avez demandé", review: "La relecture du standard", notReviewed: "Pas encore relu au regard du standard.",
+    replug: "Le front, sur son API", built: "Ce que le run a construit", asked: "Ce que vous avez demandé", review: "La relecture du standard", notReviewed: "Pas encore relu au regard du standard.", alreadyThere: (n: number) => `Déjà là avant ce run : ${n}`, unmeasuredBefore: (n: number) => `Pas mesuré avant ce run : ${n}`,
     // aeom review speaks English: its last line, in the page's words when it is one of the four it writes.
     reviewSaid: (said: string) =>
       said === "Nothing outside the standard." ? "Rien hors du standard."
@@ -917,7 +974,7 @@ export function resultHtml(r: ResultPage, { rates, lang: asked }: { rates?: Reco
   // What a run that built what was asked measures is the review of the standard: what it said last, and what it listed.
   const review = r.asked?.review;
   const reviewSection = r.asked
-    ? `<section id="review"><div class="wrap"><h2>${w.review}</h2>${review ? `<p><b class="${review.passed ? "ok" : "bad"}">${escape(w.reviewSaid(review.verdict))}</b></p>${review.lines.length ? `<ul class="plain">${review.lines.map((l) => `<li>${escape(l)}</li>`).join("")}</ul>` : ""}` : `<p class="muted">${w.notReviewed}</p>`}</div></section>`
+    ? `<section id="review"><div class="wrap"><h2>${w.review}</h2>${review ? `<p><b class="${review.passed ? "ok" : "bad"}">${escape(w.reviewSaid(review.verdict))}</b></p>${review.lines.length ? `<ul class="plain">${review.lines.map((l) => `<li>${escape(l)}</li>`).join("")}</ul>` : ""}${review.already?.length ? `<details><summary>${w.alreadyThere(review.already.length)}</summary><ul class="plain">${review.already.map((l) => `<li>${escape(l)}</li>`).join("")}</ul></details>` : ""}${review.unmeasured?.length ? `<details><summary>${w.unmeasuredBefore(review.unmeasured.length)}</summary><ul class="plain">${review.unmeasured.map((l) => `<li>${escape(l)}</li>`).join("")}</ul></details>` : ""}` : `<p class="muted">${w.notReviewed}</p>`}</div></section>`
     : "";
   const body = onlyDirections
     ? `${direction}${directions}`

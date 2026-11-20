@@ -106,6 +106,24 @@ test("every worker writes only the product's own words, and the checks that name
   assert.match(read("phase-build.md").split("**Screen brief.**")[1] ?? "", /no sentence about the interface or the demo, no hole to fill, no hollow word/);
 });
 
+test("what the pilot of /aeom build found is written: the worker checks its own screens, what was there before is the app's, the kit's defects are said, journeys are checked at once, the choice stays the run's", () => {
+  const build = read("phase-build.md");
+  const asked = build.split("## 2f.")[1] ?? "";
+  const brief = asked.split("**Asked brief.**")[1] ?? "";
+  assert.match(brief, /capture the plan's screens on your own port, `aeom capture --pages <the routes of the plan, as the request opens them>`, so that `aeom review --base <the commit you started from>` measures them alone/, "in a fresh worktree aeom review knows no captured screen and measures them all");
+  assert.match(brief, /the journey with `--api <url>` when it reads one/);
+  assert.match(brief, /a finding on what you did not touch, that the kit's own styles cause, or that `\$MAIN\/\.aeom\/product\.md` accepts, is not yours: name it in your reply, never work around it in the page/);
+  assert.match(asked, /but for what the review lists that `before` already held, the same check on the same text: that is the app's, said apart on the result page, never sent back/);
+  assert.match(asked, /A defect of the kit that the new screen shows, its class drawn as the kit draws it, is the kit's: said, never worked around in the page/);
+  assert.match(asked, /as the request opens them, their query included/);
+  const scratch = build.split("## 2e.")[1]?.split("## 2f.")[0] ?? "";
+  assert.match(scratch, /One gesture keeps one name across a journey/);
+  assert.match(scratch, /`mkdir -p front && aeom journey --dir front --journeys \.aeom\/journeys --widths 1280 --out \.aeom\/runs\/\$RUN\/journeys-check`, at one width since only the files are read: it refuses, before any browser opens, a file it cannot replay/, "the widths are not known yet at that point");
+  assert.match(scratch, /The choice is the run's, recorded by `aeom tournament decide` with the person's words, or with `--autonome` the knockout's champion: it is not kept in `\.aeom\/direction\/`/);
+  assert.match(scratch, /A principle that fails on what the person chose of the direction, such as its signature on a screen the kit ported, is said apart, as their choice, never sent back/);
+  assert.match(scratch.split("**Screen brief.**")[1] ?? "", /a layout of its own, its grid and its gaps, is written in the page with the kit's tokens alone/);
+});
+
 test("/aeom build --from-scratch ports the screens of the direction chosen onto the kit, instead of building them again", () => {
   const scratch = read("phase-build.md").split("## 2e.")[1]?.split("## 2f.")[0] ?? "";
   assert.match(scratch, /the landing one is `index\.html` whatever its route, the densest is named as its route's file \(`voies\.html` for `\/voies\.html`\)/, "the direction draws the screens under the names the front will give them");
@@ -140,7 +158,7 @@ test("/aeom build builds what a sentence asks, inside the standard: it says firs
   assert.match(asked, /what the guard still refuses, a call or a journey that no longer reaches its end, stops the run before its PR/);
   assert.match(asked, /aeom guard \.aeom\/runs\/\$RUN\/journeys-before \.aeom\/runs\/\$RUN\/journeys-end --base \$BASE`/, "an app: no call it did not make before");
   assert.match(asked, /aeom guard --from-scratch \.aeom\/runs\/\$RUN\/journeys-end --base \$BASE`, with `--api <url>`/, "a front built from scratch: no call but its API's");
-  assert.match(asked, /aeom review --base \$BASE --summary \.aeom\/runs\/\$RUN\/review\.md/);
+  assert.match(asked, /aeom review --base \$BASE --lang \$AEOM_LANG --summary \.aeom\/runs\/\$RUN\/review\.md/, "the review in the person's language");
   assert.match(asked, /--phase build/);
   assert.match(asked, /--phase review/);
   const brief = asked.split("**Asked brief.**")[1] ?? "";

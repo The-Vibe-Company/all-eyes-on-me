@@ -54,6 +54,10 @@ const WORDS = {
     asked: "Asked",
     review: "Review of the standard",
     notReviewed: "Not reviewed against the standard yet.",
+    alreadyThere: (n: number, brought: boolean) =>
+      brought ? `${n} more ${n === 1 ? "was" : "were"} already there before this run: see the result page.`
+      : n === 1 ? "It was already there before this run: the branch brought none." : `All ${n} were already there before this run: the branch brought none.`,
+    unmeasured: (n: number) => `${n} on ${n === 1 ? "a screen" : "screens"} this run did not measure before: whether ${n === 1 ? "it was" : "they were"} there is not known, see the result page.`,
     features: "Missing features",
     featuresText: "What a key journey would need to reach its end. AEOM built none of it.",
     blocks: (name: string, step: number, missing: string) => `**${name}**, blocks at step ${step}: ${missing}`,
@@ -113,6 +117,10 @@ const WORDS = {
     asked: "Demandé",
     review: "Relecture du standard",
     notReviewed: "Pas encore relu au regard du standard.",
+    alreadyThere: (n: number, brought: boolean) =>
+      brought ? `${n} ${n === 1 ? "autre était" : "autres étaient"} déjà là avant ce run : voir la page de résultat.`
+      : n === 1 ? "Il était déjà là avant ce run : la branche n'en a apporté aucun." : `Les ${n} étaient déjà là avant ce run : la branche n'en a apporté aucun.`,
+    unmeasured: (n: number) => `${n} sur ${n === 1 ? "un écran" : "des écrans"} que ce run n'avait pas ${n === 1 ? "mesuré" : "mesurés"} avant : on ne sait pas ${n === 1 ? "s'il était" : "s'ils étaient"} là, voir la page de résultat.`,
     features: "Fonctions manquantes",
     featuresText: "Ce qu'il faudrait à un parcours clé pour aller au bout. AEOM n'en a rien construit.",
     blocks: (name: string, step: number, missing: string) => `**${name}**, bloque à l'étape ${step} : ${missing}`,
@@ -271,7 +279,7 @@ export function prBody(page: ResultPage, reportPath: string, lang: PageLang = "e
   // What a run that built what was asked measures is the review of the standard, not a verdict of judges.
   if (page.asked) {
     const review = page.asked.review;
-    lines.push(`## ${w.review}`, "", ...(review ? [`**${words(w.said(review.verdict))}**`, "", ...(review.lines.length ? [...capped(review.lines.map((l) => `- ${words(l)}`), w), ""] : [])] : [w.notReviewed, ""]));
+    lines.push(`## ${w.review}`, "", ...(review ? [`**${words(w.said(review.verdict))}**`, "", ...(review.lines.length ? [...capped(review.lines.map((l) => `- ${words(l)}`), w), ""] : []), ...(review.already?.length ? [w.alreadyThere(review.already.length, review.lines.some((l) => !/^[✓⚠]/.test(l))), ""] : []), ...(review.unmeasured?.length ? [w.unmeasured(review.unmeasured.length), ""] : [])] : [w.notReviewed, ""]));
     return { title, body: fit(lines.join("\n") + "\n", report, w) };
   }
   lines.push(`## ${w.stillFailing}`, "");

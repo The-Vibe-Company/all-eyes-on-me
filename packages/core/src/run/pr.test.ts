@@ -191,6 +191,19 @@ test("each missing feature says in the PR whether the front alone builds it, wit
   assert.match(fr, /A way to pay\. Demande aussi du back : A payment route\./);
 });
 
+test("an asked run's PR lists what the branch brought, and counts apart what was already there before it", () => {
+  const asked: ResultPage = { ...page, verdict: null, direction: null, features: null, journeys: [], stillFailing: [], screens: [], asked: { request: "Une recherche", plan: null, review: { passed: false, verdict: "4 things outside the standard.", lines: ["public/factures.html:34 a colour written in hard"], already: ["/factures finish: no skip link", "/factures contrast: .sub"] } } };
+  const { body } = prBody(asked, "r.html");
+  assert.match(body, /- public\/factures\.html:34 a colour written in hard\n\n2 more were already there before this run: see the result page\./);
+  assert.doesNotMatch(body, /no skip link/, "what was already there is counted, not listed");
+  assert.match(prBody(asked, "r.html", "fr").body, /2 autres étaient déjà là avant ce run : voir la page de résultat\./);
+  // Nothing the branch brought: the PR says so, rather than « more » after nothing.
+  const none = prBody({ ...asked, asked: { ...asked.asked!, review: { ...asked.asked!.review!, lines: ["✓ See my orders still reaches its end"], unmeasured: ["/clients finish: no skip link"] } } }, "r.html").body;
+  assert.match(none, /All 2 were already there before this run: the branch brought none\./);
+  assert.match(none, /1 on a screen this run did not measure before: whether it was there is not known, see the result page\./);
+  assert.match(prBody({ ...asked, asked: { ...asked.asked!, review: { ...asked.asked!.review!, lines: [] } } }, "r.html", "fr").body, /Les 2 étaient déjà là avant ce run : la branche n'en a apporté aucun\./);
+});
+
 test("in French, every kind of run has its own title and its own words", () => {
   const fr = (p: ResultPage) => prBody(p, ".aeom/runs/run-1/report.html", "fr");
   const kept = fr({ ...page, direction: null, verdict: { ...page.verdict!, keepStyle: true } });
