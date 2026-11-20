@@ -236,6 +236,64 @@ test("a run that built what was asked in a sentence shows the request, what AEOM
   }
 });
 
+test("an asked run's review says apart what was already there before it, matched by the text a check quotes, not by its selector", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-already-"));
+  try {
+    const shot = { url: "http://x/factures", path: "/factures", files: [{ width: 1280, file: "factures@1280.png" }] };
+    const finding = (check: string, element: string | undefined, message: string) => ({ check, url: "http://x/factures", width: 1280, ...(element ? { element } : {}), message });
+    for (const snap of ["before", "end"]) {
+      await mkdir(join(dir, snap, "captures"), { recursive: true });
+      await writeFile(join(dir, snap, "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [1280], pages: [shot], errors: [] }));
+    }
+    await mkdir(join(dir, "before", "reports"), { recursive: true });
+    await writeFile(join(dir, "before", "reports", "check.json"), JSON.stringify({ url: "http://x", checkedAt: "", widths: [1280], checks: ["contrast", "finish"], pages: ["http://x/factures"], errors: [], findings: [finding("contrast", '.page-head > div > p "Toutes vos factures"', "text contrast is 3.73:1, needs 4.5:1"), finding("finish", undefined, "no skip link")] }));
+    await writeFile(join(dir, "request"), "Une recherche dans la liste des factures\n");
+    await writeFile(join(dir, "review.md"), ["## aeom review", "", "`aeom/run-5` face à `main`, tenue à `.aeom/standard.md` : 1 commit d'avance.", "",
+      "- `public/factures.html:34` a colour written in hard: #c0392b",
+      '- `/factures` font-size: input#search "Numéro ou nom du client": its text is 15 px',
+      '- `/factures` contrast: .page-head &gt; div &gt; .sub "Toutes vos factures": text contrast is 3.73:1, needs 4.5:1',
+      "- `/factures` finish: no skip link",
+      "", "**4 écarts au standard.**", ""].join("\n"));
+    const page = await readRun(dir, "run-5");
+    assert.deepEqual(page.asked?.review?.lines, ["public/factures.html:34 a colour written in hard: #c0392b", '/factures font-size: input#search "Numéro ou nom du client": its text is 15 px'], "what the branch brought");
+    assert.deepEqual(page.asked?.review?.already, ['/factures contrast: .page-head > div > .sub "Toutes vos factures": text contrast is 3.73:1, needs 4.5:1', "/factures finish: no skip link"], "the same check on the same text, its selector changed: already there");
+    const fr = resultHtml(page, { lang: "fr" });
+    assert.match(fr, /<details><summary>Déjà là avant ce run : 2<\/summary>/);
+    assert.match(resultHtml(page), /<details><summary>Already there before this run: 2<\/summary>/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("the review is split as a count: a second element with the same text and the same defect is the branch's, a route keeps its findings with or without its query, and a screen the before never measured is said apart", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-report-count-"));
+  try {
+    const at = (path: string) => ({ url: `http://x${path}`, path, files: [{ width: 1280, file: "x@1280.png" }] });
+    for (const snap of ["before", "end"]) {
+      await mkdir(join(dir, snap, "captures"), { recursive: true });
+      await writeFile(join(dir, snap, "captures", "manifest.json"), JSON.stringify({ url: "http://x", capturedAt: "", widths: [390, 1280], pages: [at("/factures")], errors: [] }));
+    }
+    await mkdir(join(dir, "before", "reports"), { recursive: true });
+    const tap = (element: string, width: number) => ({ check: "tap-size", url: "http://x/factures?statut=late", width, element, message: "24×20 px, 44 at least" });
+    // One button held the defect before, at two widths: one element.
+    await writeFile(join(dir, "before", "reports", "check.json"), JSON.stringify({ url: "http://x", checkedAt: "", widths: [390, 1280], checks: ["tap-size"], pages: ["http://x/factures?statut=late"], errors: [], findings: [tap('tr:nth-child(1) > a.btn "Voir"', 390), tap('tr:nth-child(1) > a.btn "Voir"', 1280)] }));
+    await writeFile(join(dir, "request"), "Un panneau des factures en retard\n");
+    await writeFile(join(dir, "review.md"), ["## aeom review", "", "**3 things outside the standard.**", ""].join("\n").replace("**3", [
+      '- `/factures` tap-size: tr:nth-child(1) > a.btn "Voir": 24×20 px, 44 at least',
+      '- `/factures` tap-size: .panel > a.btn "Voir": 24×20 px, 44 at least',
+      '- `/clients` tap-size: a.btn "Voir": 24×20 px, 44 at least',
+      "", "**3"].join("\n")));
+    const review = (await readRun(dir, "run-6")).asked?.review;
+    assert.deepEqual(review?.already, ['/factures tap-size: tr:nth-child(1) > a.btn "Voir": 24×20 px, 44 at least'], "the one button the before held, its query aside");
+    assert.deepEqual(review?.lines, ['/factures tap-size: .panel > a.btn "Voir": 24×20 px, 44 at least'], "a second « Voir » with the same defect is new");
+    assert.deepEqual(review?.unmeasured, ['/clients tap-size: a.btn "Voir": 24×20 px, 44 at least'], "a screen the before never measured: not known, said apart");
+    const html = resultHtml((await readRun(dir, "run-6")), { lang: "fr" });
+    assert.match(html, /<details><summary>Pas mesuré avant ce run : 1<\/summary>/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("a run that built a missing feature shows the journey that blocked now reaching its end, and none of the journeys that only open a screen of the plan", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-report-feature-"));
   try {

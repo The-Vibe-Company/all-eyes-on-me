@@ -221,6 +221,24 @@ test("nothing to redo, or nothing kept: no PR", async () => {
   assert.match(sentBack.out, /Nothing kept: no PR\./);
 });
 
+test("a front built from scratch is held to its standard, never to a redo's measures, whatever phases its steps were marked with", async () => {
+  const { dir, R } = await project();
+  // Built from nothing: no before, the end measured, the key journeys replayed at the end.
+  await rm(join(R, "before"), { recursive: true });
+  await rm(join(R, "after"), { recursive: true });
+  await put(join(R, "journeys-end", "report.json"), { url: "http://x", replayedAt: "", widths: [1280], warnings: [], journeys: [] });
+  const state = (phases: string[]) => put(join(R, "state.json"), { run: "run-1", started: "", options: ["from-scratch"], phase: phases.at(-1), step: null, vars: {}, branchAt: null, agents: [], history: phases.map((phase) => ({ phase, step: null, at: "" })) });
+  await state(["understand", "directions", "choice", "kit", "pages", "measure", "journeys", "remeasure"]);
+  const unreached = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(unreached.code, 1, unreached.out);
+  assert.match(unreached.out, /the standard of the front was not reached/);
+  assert.doesNotMatch(unreached.out, /after\/compare\.json|end\/compare\.json/, "a front built from scratch has no before to compare with");
+  await state(["understand", "directions", "choice", "kit", "pages", "measure", "journeys", "remeasure", "standard"]);
+  const held = await run(dir, ["pr", R, "--dry-run"]);
+  assert.equal(held.code, 0, held.out);
+  assert.doesNotMatch(held.out, /skipped/);
+});
+
 test("a run that built what was asked gets its PR once reviewed against the standard, and is told when it was not", async () => {
   const { dir, R } = await project({ compare: "worse" });
   await put(join(R, "request"), "Un filtre par niveau sur la liste des voies\n");
