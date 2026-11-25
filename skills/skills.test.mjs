@@ -302,6 +302,35 @@ test("/aeom directions --tender sells: its kind at a glance, every requirement i
   assert.match(mockups, /\*\*A spec beside the front\*\*/, "a tender on a skeleton reads both its screens and its spec");
 });
 
+test("/aeom directions --tender comes out finished: the register of its kind, one mark, real pictures or none, a screen that informs", () => {
+  const directions = read("directions.md");
+  const tender = directions.split("## For a tender")[1]?.split("\n## ")[0] ?? "";
+  for (const part of ["**The register of its kind.**", "**One mark, where it serves.**", "**Pictures of the real world, or none**"]) assert.ok(tender.includes(part), part);
+  assert.match(tender, /is \*\*calm\*\*: neutrals, one accent/, "a work tool is sober");
+  assert.match(tender, /is \*\*lively\*\*, and its life comes from its data and its real world/, "a living subject is alive through its data");
+  assert.match(tender, /it never buys a tool in costume, nor a dull weather/);
+  assert.match(tender, /Repeated on every button, every row, every heading or the edge of every block, it is ornament/);
+  assert.match(tender, /never by quoting the spec: no article number, no « CCTP » or « RC » on a screen/);
+  assert.match(tender, /The screen informs; the written answer argues\./);
+  assert.match(tender, /never a slashed or dotted zero outside code/);
+  const pictures = directions.split("## Pictures")[1]?.split("\n## ")[0] ?? "";
+  assert.match(pictures, /a photograph of it under a free licence, from Wikimedia Commons/);
+  assert.match(pictures, /Its author and its licence are written beside it on the screen/);
+  assert.match(pictures, /Never a picture drawn in CSS or SVG, never a landscape in flat shapes, never a generated image of a real place/);
+  assert.match(pictures, /a kind that shows none, such as a weather home that leads with the weather or a work tool, has none/);
+  const mockupBrief = read("phase-mockups.md").split("**Mockup brief.**")[1] ?? "";
+  assert.doesNotMatch(mockupBrief, /Otherwise draw with CSS or inline SVG/, "a mockup never draws a picture");
+  assert.doesNotMatch(mockupBrief, /no picture from the web/, "a real place is a real photograph");
+  assert.match(mockupBrief, /listed with its address in `<your folder>\/img\/credits\.md`/);
+  assert.match(mockupBrief, /CSS and SVG draw icons, charts and maps of data only/);
+  const mockups = read("phase-mockups.md");
+  assert.match(mockups, /the register of the kind, calm or lively, decided once as that section says/);
+  assert.match(mockups, /one that pleads instead of informing .*repeats its mark on every element, is out of the kind's register, or draws a picture in CSS or SVG/);
+  assert.match(read("phase-wave.md"), /\*\*Pictures of the real world\*\* first, as directions\.md's \*\*Pictures\*\* says/);
+  assert.doesNotMatch(read("phase-wave.md"), /Images off: CSS and SVG\./);
+  assert.match(read("SKILL.md"), /the run generates no image \(directions\.md's \*\*Pictures\*\*\)/);
+});
+
 test("the screening judge reads each direction's own image, never a sheet of several, and the person sees them three to a sheet", () => {
   const screening = read("phase-directions.md").split("**Screening brief.**")[1]?.split("**Duel brief.**")[0] ?? "";
   assert.match(screening, /each direction's own image, never a sheet of several: a model shrinks a tall sheet until it reads nothing on it/);
