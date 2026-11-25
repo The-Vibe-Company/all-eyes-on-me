@@ -1,0 +1,21 @@
+skills/aeom/SKILL.md
+  s_17f34effcc8bd8::t_8eed9348c59576 132
+skills/skills.test.mjs
+  s_17f34effcc8bd8::t_8eed9348c59576 344-346,351,354-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "51b14e711c3aa2c70c3cd240e2f17bd4573f24f4",
+  "prompts": {},
+  "sessions": {
+    "s_17f34effcc8bd8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91514880-29b8-4cbf-a24e-e1cd6102ccb7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Zewed <dewez.antoine2@gmail.com>"
+    }
+  }
+}
