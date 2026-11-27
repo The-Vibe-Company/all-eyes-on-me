@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { after, before, describe, test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { join } from "node:path";
 import { chromium, type Browser, type Page } from "playwright";
 import { readFileSync } from "node:fs";
 import { signIn, startApp, type RunningApp } from "../capture/index.js";
-import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce, checkPlaceholder, checkAiText, checkHollowWords, checkNestedRadius, checkOrphan, checkMotion, checkFinish } from "./index.js";
+import { checkClipped, checkContrast, checkCursor, checkFocus, checkFontSize, checkHeader, checkImages, checkLabels, checkLayoutShift, checkLineLength, checkOverflow, checkPages, checkSite, checkTapSize, checkUneven, checkWrap, checkZoom, watchConsole, checkGradientText, checkSideStripe, checkNestedCard, checkBounce, checkPlaceholder, checkAiText, checkHollowWords, checkNestedRadius, checkOrphan, checkMotion, checkFinish, checkLayers, LAYERS_FRAMES, LAYERS_SMALL, LAYERS_WORDS, checksFor } from "./index.js";
 
 const UGLY_APP = fileURLToPath(new URL("../../../../examples/ugly-app/server.mjs", import.meta.url));
 
@@ -524,6 +525,120 @@ describe("side-stripe", () => {
     const issues = await checkSideStripe(page);
     assert.deepEqual(issues.map((i) => i.element), ['div.callout "Heads up"', 'li.item "Right stripe"', 'div.note "A dark grey stands out"']);
     assert.match(issues[0]!.message, /a 4 px coloured border on its left side only/);
+  });
+});
+
+describe("side-stripe, along the top and by other means", () => {
+  test("flags an accent bar along the top of a rounded card, a stripe drawn by an inset shadow, and one laid by a pseudo-element", async () => {
+    const page = await pageWith(`
+      <style>.flag { position: relative; background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.1) } .flag::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #7c3aed }</style>
+      <main style="background:#f3f4f6;padding:24px;width:900px">
+        <section class="incident" style="background:#fff;border-radius:10px;border-top:5px solid #b45309;padding:22px">Incident en cours</section>
+        <div class="row" style="background:#fff;box-shadow:inset 4px 0 0 #2563eb;padding:12px">Selected row</div>
+        <div class="flag">Laid by a pseudo-element</div>
+      </main>`);
+    const issues = await checkSideStripe(page);
+    assert.deepEqual(issues.map((i) => i.element), ['section.incident "Incident en cours"', 'div.row "Selected row"', 'div.flag "Laid by a pseudo-element"']);
+    assert.match(issues[0]!.message, /^a 5 px coloured bar along its top only \(border\), an accent bar/);
+    assert.match(issues[1]!.message, /^a 4 px coloured bar \(inset shadow\) on its left side only/);
+    assert.match(issues[2]!.message, /along its top only \(::before bar\)/);
+  });
+
+  test("a section's rule above its title, a band as wide as the page, a tab underlined by an inset shadow, a timeline's rail and a highlight on a button are no accent bar", async () => {
+    const page = await pageWith(`
+      <style>.step { position: relative; padding-left: 24px; background: #fafafa; border-radius: 6px } .step::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: #2563eb }</style>
+      <section class="level" style="border-top:2px solid #111;padding-top:24px;width:800px"><h2>Attend le Parc</h2><p>Deux demandes</p></section>
+      <section class="level" style="border-top:2px solid #111;background:#fff;padding-top:24px;width:800px"><h2>Même fond que la page</h2></section>
+      <header style="background:#0f172a;color:#fff;border-top:4px solid #f59e0b;padding:16px">A band as wide as the page</header>
+      <nav><a href="/a" style="display:inline-block;box-shadow:inset 0 -3px 0 #2563eb;padding:8px">Active tab</a></nav>
+      <ol style="width:400px"><li class="step">Déclaré</li><li class="step">Pris en compte</li></ol>
+      <button style="background:#1e293b;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);padding:8px 16px">Valider</button>`);
+    assert.deepEqual(await checkSideStripe(page), []);
+  });
+});
+
+describe("layers", () => {
+  const line = (n: number) => `<p style="font-size:16px">Demande ${n} sur le site du Parc, prise en charge hier, résolue ce matin par l'équipe.</p>`;
+  const rows = (count: number) => Array.from({ length: count }, (_, i) => line(i + 1)).join("");
+  test("flags a page that shows everything at once, and says nothing folds", async () => {
+    const page = await pageWith(`<main>${rows(40)}</main>`);
+    const issues = await checkLayers(page);
+    assert.equal(issues.length, 1);
+    assert.match(issues[0]!.message, new RegExp(`^\\d+ words shown before anything is opened, more than ${LAYERS_WORDS}: nothing folds`));
+  });
+
+  test("passes the same words with a summary line each and the detail folded in a details, a popover or a tooltip", async () => {
+    const folded = Array.from({ length: 10 }, (_, i) => `<details><summary>Bloc ${i + 1} : normal · 4 demandes</summary>${rows(4)}</details>`).join("");
+    const page = await pageWith(`<main><h1>Tout fonctionne</h1>${folded}<button popovertarget="p">Détails</button><div id="p" popover>${rows(3)}</div><span tabindex="0" aria-describedby="t">Bloquant</span><span id="t" role="tooltip" style="opacity:0">${rows(1)}</span></main>`);
+    assert.deepEqual(await checkLayers(page), []);
+  });
+
+  test("flags a first screen set mostly in small text, and one framed block after another", async () => {
+    const small = await pageWith(`<main style="font-size:12px">${Array.from({ length: 8 }, () => "<p>Une ligne de texte écrite petit, serrée et grise.</p>").join("")}</main>`);
+    assert.match((await checkLayers(small))[0]!.message, /^100% of the first screen's words are under 14 px/);
+    const card = "border:1px solid #ddd;border-radius:8px;padding:16px;margin:8px;width:300px;height:60px";
+    const framed = await pageWith(`<main><div class="card" style="${card}">Un</div><div class="card" style="${card}">Deux</div><div class="card" style="${card}">Trois</div></main>`);
+    const issues = await checkLayers(framed);
+    assert.equal(issues.length, 1);
+    assert.match(issues[0]!.message, /^3 blocks framed all around on the first screen, more than 2/);
+    assert.equal(issues[0]!.element, "div.card, div.card, div.card");
+  });
+
+  test("is asked of mockups served from a folder, never of a site", () => {
+    assert.ok(checksFor(true).includes("layers") && !checksFor(true).includes("finish"));
+    assert.ok(!checksFor(false).includes("layers") && checksFor(false).includes("finish"));
+  });
+});
+
+describe("layers and side-stripe, on the rounds of directions a person judged", () => {
+  const BENCH = fileURLToPath(new URL("../../../../bench/", import.meta.url));
+  /** A page of a round, opened as a file at 1280 × 800, its web fonts left out: what is measured does not wait on them. */
+  const open = async (file: string) => {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const page = await context.newPage();
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.goto(pathToFileURL(file).href);
+    return page;
+  };
+
+  test("a tender's two rounds, as measured: every direction of the round refused fails on a page, no page of the round kept does", () => {
+    type Measure = { round: number; direction: string; page: string; wordsShown: number; firstScreenWords: number; firstScreenUnder14px: number; framedOnFirstScreen: number };
+    const { pages } = JSON.parse(readFileSync(join(BENCH, "tender-service-status", "measures.json"), "utf8")) as { pages: Measure[] };
+    const fails = (p: Measure) => p.wordsShown > LAYERS_WORDS || (p.firstScreenWords >= 40 && p.firstScreenUnder14px > LAYERS_SMALL) || p.framedOnFirstScreen > LAYERS_FRAMES;
+    const refused = [...new Set(pages.filter((p) => p.round === 1).map((p) => p.direction))];
+    assert.equal(refused.length, 6);
+    for (const d of refused) assert.ok(pages.some((p) => p.direction === d && fails(p)), `${d}, refused, passes`);
+    for (const p of pages.filter((p) => p.round === 2)) assert.ok(!fails(p), `${p.direction}/${p.page}, kept, fails`);
+  });
+
+  test("a round refused whole fails layers in every direction, and its accent bars are named", async () => {
+    const round = join(BENCH, "tender-park-tracking", "round-1");
+    for (const slug of ["classique", "sapins", "myrtilles", "faisses", "moulinage", "lauze"]) {
+      const failing: string[] = [];
+      for (const file of ["index.html", "compte-rendu.html"]) {
+        const page = await open(join(round, slug, file));
+        if ((await checkLayers(page)).length) failing.push(file);
+        await page.context().close();
+      }
+      assert.deepEqual(failing, ["index.html", "compte-rendu.html"], `${slug}: everything shown at once`);
+    }
+    const lauze = await open(join(round, "lauze", "index.html"));
+    assert.match((await checkSideStripe(lauze)).map((i) => `${i.element}: ${i.message}`).join("\n"), /^section#PNR-2027-041\.incident "[^"]*": a 5 px coloured bar along its top only \(border\)/);
+    await lauze.context().close();
+    const moulinage = await open(join(round, "moulinage", "index.html"));
+    assert.match((await checkSideStripe(moulinage))[0]?.message ?? "", /^a 4 px coloured border on its left side only/);
+    await moulinage.context().close();
+  });
+
+  test("the same spec drawn again on the skill that reads in layers passes layers and side-stripe on every page", async () => {
+    const round = join(BENCH, "tender-park-tracking", "after-fix");
+    for (const slug of ["classique", "granit", "chataigne", "riviere", "genet", "bruyere"]) {
+      for (const file of ["index.html", "compte-rendu.html"]) {
+        const page = await open(join(round, slug, file));
+        assert.deepEqual([...(await checkLayers(page)), ...(await checkSideStripe(page))], [], `${slug}/${file}`);
+        await page.context().close();
+      }
+    }
   });
 });
 

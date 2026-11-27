@@ -1,0 +1,39 @@
+{
+  "out": {},
+  "compare": {
+    "classique": {
+      "strong": "Console sobre et très finie : alerte du catalogue, disponibilité de mars avec le seuil de 96 % et un jour par case, tout le cahier des charges visible sur les deux écrans.",
+      "weak": "Aucune signature, tout se lit à peu près à la même échelle et le texte est petit ; la fiche demande de la lecture avant de livrer ses deux délais.",
+      "fit": "Très bonne adéquation au suivi de service pour l'administratrice et l'équipe du titulaire, reconnaissable d'emblée comme outil de travail."
+    },
+    "vigilance": {
+      "strong": "Une bande rouge pleine largeur dit « Bloquant » en énorme avec le temps restant : on sait en une seconde que la plateforme est touchée, et la fiche reprend le même geste.",
+      "weak": "Le rouge plein est le seul parti pris, le reste est un tableau de bord gris classique ; la bande est un peu criarde pour le registre calme.",
+      "fit": "Colle au premier besoin (savoir d'un coup d'œil si la plateforme tient) et à la boucle d'incident, avec toutes les exigences visibles."
+    },
+    "rampe": {
+      "strong": "La matrice services par jours ouvrés, teintée d'une seule teinte vert-bleu avec légende des seuils, est une vraie signature qui porte la disponibilité du mois et le service touché.",
+      "weak": "Les textes de la matrice et de la fiche sont très petits et serrés, l'écran est dense, et la fiche est moins évidente que l'accueil.",
+      "fit": "Sert bien l'engagement de 96 % et la lecture de la disponibilité, moins directement la déclaration et le suivi de l'incident."
+    },
+    "suivi": {
+      "strong": "Chaque incident se lit comme un suivi par étapes avec l'heure de chaque étape et le temps restant en énorme sur une bande aubergine ; la fiche est claire et complète.",
+      "weak": "Colonne unique très longue, services et ressources reléguées en bas en blocs sages, et la couleur ne tient que dans la bande du haut.",
+      "fit": "Bien ajusté au suivi d'un incident jusqu'à sa qualification signée, un peu moins à la surveillance d'ensemble."
+    },
+    "departs": {
+      "strong": "Tableau des échéances trié par heure avec l'heure locale en grand : tous les délais, changement et sauvegarde se lisent d'un regard, et la fiche déplie la ligne.",
+      "weak": "Les deux grandes bandes marine identiques et les tableaux denses donnent un air un peu administratif, avec du petit texte dans les lignes.",
+      "fit": "Très pertinent pour des délais en heures ouvrées à tenir, reconnaissable comme outil de suivi."
+    },
+    "parapheur": {
+      "strong": "La pile « À traiter » bordeaux, triée par échéance, à côté de la pièce ouverte, met en avant ce que l'administratrice doit valider ou signer elle-même.",
+      "weak": "Sur la capture, le volet bordeaux est coupé en bas et la barre d'actions de la fiche flotte sur le texte, ce qui fait moins fini ; le volet pèse sur la lecture de l'état.",
+      "fit": "Bien ajusté à la validation, la signature et l'acceptation, la surveillance du service passe au second plan."
+    }
+  },
+  "start": {
+    "source": "vigilance",
+    "why": "Elle répond le plus vite à la première question de l'outil, la plateforme tient-elle, avec un niveau écrit et coloré en grand, un écran d'accueil et une fiche cohérents, toutes les exigences visibles et un rendu fini."
+  }
+}

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compte rendu de février 2027 · Parc naturel régional des Hautes-Combes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="org"><b>Parc naturel régional des Hautes-Combes</b><span>Suivi web 2027</span></div>
+    <nav aria-label="Navigation principale">
+      <ul class="nav">
+      <li><a href="index.html"><img class="ic" src="icons/inbox.svg" alt="">Tableau de suivi</a></li>
+      <li><a href="demandes/nouvelle.html"><img class="ic" src="icons/plus.svg" alt="">Déposer une demande</a></li>
+      <li><a href="parc.html"><img class="ic" src="icons/server.svg" alt="">État du parc</a></li>
+      <li><a href="feuilles-de-route.html"><img class="ic" src="icons/map.svg" alt="">Feuilles de route</a></li>
+      <li><a href="compte-rendu.html" aria-current="page"><img class="ic" src="icons/file-text.svg" alt="">Comptes rendus</a></li>
+      <li><a href="documentation.html"><img class="ic" src="icons/book-open.svg" alt="">Documentation</a></li>
+      </ul>
+    </nav>
+    <div class="rail-foot">Hélène Garnier<br>Responsable de la communication</div>
+  </aside>
+  <main class="main">
+    <header class="head">
+      <div>
+        <h1>Compte rendu de février 2027</h1>
+        <p class="sub">Remis le 3 mars 2027 par Claire Martin, cheffe de projet</p>
+      </div>
+      <div class="head-actions">
+        <a class="btn" href="index.html"><img class="ic" src="icons/inbox.svg" alt="">Tableau de suivi</a>
+      </div>
+    </header>
+
+    <p class="state">Février est clos sans incident ouvert. <span class="muted">Une décision du Parc est attendue sur Geotrek-admin.</span></p>
+
+    <dl class="kpis">
+      <div class="kpi"><dt>Demandes reçues</dt><dd class="k-num" style="margin:0">23</dd></div>
+      <div class="kpi"><dt>Demandes traitées</dt><dd class="k-num" style="margin:0">21</dd></div>
+      <div class="kpi"><dt>Temps consacré</dt><dd class="k-num" style="margin:0">6,5 j</dd></div>
+    </dl>
+
+    <section class="decision" aria-labelledby="t-arb" style="margin-top:40px">
+      <p class="eyebrow">Arbitrage · réponse attendue avant le 12 mars</p>
+      <h2 id="t-arb">Passer Geotrek-admin en version 2.11 avant l'ouverture de la saison, ou attendre octobre ?</h2>
+      <p>La 2.11 est demandée par Haut-Val pour la synchronisation du Grand Mont. Elle change l'import des itinéraires des quatre portails partenaires.</p>
+      <div class="options">
+        <div class="option"><b>A · Passer en 2.11 le 24 mars</b><span>Synchronisation avec Haut-Val possible en avril. Portails fermés une demi-journée, 1,5 j de travail.</span></div>
+        <div class="option"><b>B · Attendre octobre</b><span>Aucune coupure en saison. Synchronisation avec Haut-Val reportée à l'automne.</span></div>
+      </div>
+      <div class="decision-foot">
+        <span class="sub">Le prestataire recommande l'option A.</span>
+        <span style="display:flex;gap:8px"><button class="btn btn-sm" popovertarget="optb">Retenir B</button><button class="btn btn-sm btn-primary" popovertarget="opta">Retenir A</button></span>
+      </div>
+      <div popover id="opta"><h3>Retenir l'option A</h3><p>Geotrek-admin passera en 2.11 le 24 mars. Les partenaires Geotrek seront prévenus de la coupure une semaine avant.</p><div class="pop-actions"><button class="btn btn-sm" popovertarget="opta" popovertargetaction="hide">Annuler</button><button class="btn btn-sm btn-primary" popovertarget="opta" popovertargetaction="hide">Confirmer</button></div></div>
+      <div popover id="optb"><h3>Retenir l'option B</h3><p>Geotrek-admin reste en 2.10 jusqu'en octobre. La synchronisation avec Haut-Val est reportée.</p><div class="pop-actions"><button class="btn btn-sm" popovertarget="optb" popovertargetaction="hide">Annuler</button><button class="btn btn-sm btn-primary" popovertarget="optb" popovertargetaction="hide">Confirmer</button></div></div>
+    </section>
+
+    <section aria-labelledby="t-detail">
+      <div class="sec-head"><h2 id="t-detail">Le mois en détail</h2></div>
+      <div class="report">
+      <details>
+        <summary><img class="ic" src="icons/inbox.svg" alt=""><span class="label">Demandes</span><span class="sum">11 restent ouvertes au 28 février, dont 4 évolutions</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Nature</th><th class="r">Reçues</th><th class="r">Traitées</th><th class="r">Ouvertes au 28 février</th></tr></thead><tbody>
+<tr><td>Anomalie</td><td class="r">8</td><td class="r">9</td><td class="r">3</td></tr>
+<tr><td>Mise à jour de contenu</td><td class="r">7</td><td class="r">7</td><td class="r">2</td></tr>
+<tr><td>Évolution</td><td class="r">4</td><td class="r">2</td><td class="r">4</td></tr>
+<tr><td>Question</td><td class="r">3</td><td class="r">3</td><td class="r">1</td></tr>
+<tr><td>Formation</td><td class="r">1</td><td class="r">0</td><td class="r">1</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/clock.svg" alt=""><span class="label">Délais de prise en charge</span><span class="sum">Toutes qualifiées sous 48 heures ouvrées · 6 h ouvrées en moyenne</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Priorité</th><th class="r">Demandes</th><th class="r">Délai moyen</th><th class="r">Délai le plus long</th></tr></thead><tbody>
+<tr><td>Bloquante</td><td class="r">1</td><td class="r">35 min</td><td class="r">35 min</td></tr>
+<tr><td>Haute</td><td class="r">5</td><td class="r">3 h</td><td class="r">7 h</td></tr>
+<tr><td>Normale</td><td class="r">13</td><td class="r">6 h</td><td class="r">19 h</td></tr>
+<tr><td>Basse</td><td class="r">4</td><td class="r">11 h</td><td class="r">26 h</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/triangle-alert.svg" alt=""><span class="label">Incidents</span><span class="sum">1 incident, résolu en 5 h</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Date</th><th>Service</th><th>Cause</th><th class="r">Durée</th></tr></thead><tbody>
+<tr><td>11 février</td><td>Site du Parc, formulaire de contact</td><td>Extension de formulaire en erreur après mise à jour de PHP</td><td class="r">5 h</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/refresh-cw.svg" alt=""><span class="label">Mises à jour réalisées</span><span class="sum">WordPress 6.7.2 sur les six sites · 31 extensions</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Site ou outil</th><th>Ce qui a été mis à jour</th><th>Date</th></tr></thead><tbody>
+<tr><td>Six sites WordPress</td><td>WordPress 6.7.1 vers 6.7.2</td><td>6 février</td></tr>
+<tr><td>Six sites WordPress</td><td>31 extensions, dont 4 correctifs de sécurité</td><td>6 et 20 février</td></tr>
+<tr><td>Geotrek-admin</td><td>2.10.2 vers 2.10.3</td><td>13 février</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/rocket.svg" alt=""><span class="label">Mises en production</span><span class="sum">4 mises en production, toutes validées par le Parc</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Date</th><th>Site ou outil</th><th>Évolution</th></tr></thead><tbody>
+<tr><td>5 février</td><td>Site du Parc</td><td>Agenda des réunions publiques</td></tr>
+<tr><td>12 février</td><td>Destination</td><td>Filtre des hébergements labellisés</td></tr>
+<tr><td>19 février</td><td>Patrimoines</td><td>Envoi de photos par les contributeurs</td></tr>
+<tr><td>26 février</td><td>Application Rando Hautes-Combes</td><td>Version 3.4.1, signalement d'un problème sur le sentier</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/shield-check.svg" alt=""><span class="label">Actions de sécurité</span><span class="sum">4 correctifs appliqués · certificats valides jusqu'au 9 mai au plus tôt</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Action</th><th>Site ou outil</th><th>Date</th></tr></thead><tbody>
+<tr><td>Correctifs de sécurité de 4 extensions</td><td>Noiseraies, Patrimoines, Destination</td><td>6 février</td></tr>
+<tr><td>Revue des comptes administrateurs, 3 comptes fermés</td><td>Six sites WordPress</td><td>18 février</td></tr>
+<tr><td>Renouvellement du certificat</td><td>reseau-geoparcs.fr</td><td>21 février</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/hard-drive-download.svg" alt=""><span class="label">Sauvegardes</span><span class="sum">Réussies chaque nuit · restauration testée le 17 février</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <p style="margin:0">28 sauvegardes nocturnes réussies sur 28 pour chaque site et pour Geotrek-admin, copie hors site chez un second hébergeur. Test de restauration complet de Patrimoines le 17 février, 42 min.</p>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/list-checks.svg" alt=""><span class="label">Évolutions en cours</span><span class="sum">4 évolutions, 2 en recette</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Demande</th><th>Évolution</th><th>Avancement</th></tr></thead><tbody>
+<tr><td>D-2027-038</td><td>Contenus audio de la Grande Traversée</td><td>En recette</td></tr>
+<tr><td>D-2027-044</td><td>Formulaire d'inscription des exposants, Noiseraies</td><td>En recette</td></tr>
+<tr><td>D-2027-033</td><td>Synchronisation avec l'instance de Haut-Val</td><td>En cours, accès API attendu</td></tr>
+<tr><td>D-2027-047</td><td>Pages des œuvres 2027, La Ligne de Crête</td><td>En attente des textes</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <details open>
+        <summary><img class="ic" src="icons/timer.svg" alt=""><span class="label">Temps consacré</span><span class="sum">Destination en tête, devant Geotrek</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <div class="bars">
+          <span class="n">Destination</span><span class="bar"><i style="width:100%"></i></span><span class="v">1,75 j</span>
+          <span class="n">Geotrek-admin et portails</span><span class="bar"><i style="width:86%"></i></span><span class="v">1,5 j</span>
+          <span class="n">Site du Parc</span><span class="bar"><i style="width:71%"></i></span><span class="v">1,25 j</span>
+          <span class="n">Application Rando Hautes-Combes</span><span class="bar"><i style="width:29%"></i></span><span class="v">0,5 j</span>
+          <span class="n">Noiseraies</span><span class="bar"><i style="width:29%"></i></span><span class="v">0,5 j</span>
+          <span class="n">Patrimoines</span><span class="bar"><i style="width:29%"></i></span><span class="v">0,5 j</span>
+          <span class="n">La Ligne de Crête</span><span class="bar"><i style="width:14%"></i></span><span class="v">0,25 j</span>
+          <span class="n">Réseau des Géoparcs</span><span class="bar"><i style="width:14%"></i></span><span class="v">0,25 j</span>
+          <span class="n">Brevo, réservation, audience</span><span class="bar"><i style="width:0%"></i></span><span class="v">0 j</span>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary><img class="ic" src="icons/calendar-clock.svg" alt=""><span class="label">Prévu en mars</span><span class="sum">Mise en ligne des audios · Geotrek-admin 2.11 selon votre décision</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <div class="body">
+          <table><thead><tr><th>Action</th><th>Site ou outil</th><th>Date prévue</th></tr></thead><tbody>
+<tr><td>Mise en ligne des contenus audio de la Grande Traversée</td><td>Geotrek-rando et application</td><td>10 mars</td></tr>
+<tr><td>Lettre d'information de printemps</td><td>Brevo</td><td>18 mars</td></tr>
+<tr><td>Passage en Geotrek-admin 2.11, si l'option A est retenue</td><td>Geotrek-admin</td><td>24 mars</td></tr>
+<tr><td>Test de restauration de Destination</td><td>Destination</td><td>17 mars</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      </div>
+    </section>
+
+    <p class="archive">Comptes rendus précédents <a href="comptes-rendus/2027-01.html">Janvier 2027</a></p>
+  </main>
+</div>
+</body>
+</html>

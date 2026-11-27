@@ -7,6 +7,8 @@ import { APP_OPTIONS, APP_OPTIONS_HELP, parseWidths, plural, servingFolder, shee
 export const CHECK_HELP = `Usage: aeom check [--url <url>] [--start "<command>"] [options]
 
 Runs the measurable checks on every page of a web app: ${CHECKS.join(", ")}.
+finish is asked of an app alone; layers, a page read in layers rather than shown
+all at once, of a folder of mockups (--dir) alone.
 Exits with 1 when any check fails.
 
 Options:

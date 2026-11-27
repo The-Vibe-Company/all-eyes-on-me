@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compte rendu de février 2027 · Parc naturel régional des Hautes-Combes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html">Parc naturel régional des Hautes-Combes</a>
+  <nav class="nav" aria-label="Espace de suivi">
+    <a href="index.html">Tableau de suivi</a>
+    <a href="parc.html">État du parc</a>
+    <a href="feuilles-de-route.html">Feuilles de route</a>
+    <a href="compte-rendu.html" aria-current="page">Comptes rendus</a>
+    <a href="documentation.html">Documentation</a>
+  </nav>
+</header>
+
+<div class="desk cr">
+  <aside class="toc">
+    <nav aria-label="Sommaire du compte rendu">
+      <h2>Février 2027</h2>
+      <a href="#arbitrage" aria-current="true">Décision attendue</a>
+      <a href="#demandes">Demandes</a>
+      <a href="#delais">Délais</a>
+      <a href="#incidents">Incidents</a>
+      <a href="#maj">Mises à jour</a>
+      <a href="#prod">Mises en production</a>
+      <a href="#securite">Sécurité</a>
+      <a href="#sauvegardes">Sauvegardes</a>
+      <a href="#evolutions">Évolutions</a>
+      <a href="#temps">Temps consacré</a>
+      <a href="#mars">Prévu en mars</a>
+      <div class="prev">
+        <h2>Comptes rendus précédents</h2>
+        <a href="comptes-rendus/2027-01.html">Janvier 2027</a>
+      </div>
+    </nav>
+  </aside>
+  <main class="read">
+    <p class="eyebrow">Compte rendu de février 2027, remis le 3 mars par Julien Marchal</p>
+    <h1>Un mois tenu, un incident résolu. Une décision sur Geotrek vous attend avant le 15 mars.</h1>
+    <div class="figures">
+      <p class="fig"><b>27</b>demandes reçues</p>
+      <p class="fig"><b>24</b>traitées</p>
+      <p class="fig"><b>7</b>restant ouvertes</p>
+    </div>
+
+    <details class="arb" id="arbitrage" open>
+      <summary><h2>Mise à jour de Geotrek-admin : avant ou après l'ouverture de la saison ?</h2><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <p class="q">La version 2.112 ne reçoit plus de correctifs de sécurité après juin. Passer en 2.115 coupe la saisie des partenaires deux heures.</p>
+      <form action="compte-rendu.html" method="get">
+        <div class="opts">
+          <label class="opt"><input type="radio" name="geotrek" value="mars" checked><b>Le 24 mars, avant la saison</b>
+            <p>1,5 jour ; partenaires prévenus le 17 mars. Notre conseil.</p></label>
+          <label class="opt"><input type="radio" name="geotrek" value="octobre"><b>En octobre, après la saison</b>
+            <p>Saison sans coupure ; quatre mois sans correctif de sécurité.</p></label>
+        </div>
+        <div class="send"><button class="btn" type="submit"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 6 9 17l-5-5" /> </svg>Transmettre la décision</button>
+          <p>Votre choix est repris dans la feuille de route Geotrek</p></div>
+      </form>
+    </details>
+
+    <section class="slats" aria-labelledby="fait">
+      <h2 id="fait">Ce qui a été fait</h2>
+      <details class="fold" id="demandes"><summary><span class="lab">Demandes</span><span class="sum"><span class="word-ok">Stables</span> : 9 anomalies, 8 contenus, 5 évolutions, 5 autres</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Reçues : 9 anomalies, 8 mises à jour de contenu, 5 évolutions, 4 questions, 1 formation</li><li>Traitées : 24, dont 6 reçues en janvier</li><li>Restant ouvertes au 28 février : D-27-031, D-27-036, D-27-041, D-27-044, D-27-045, D-27-046, D-27-047</li></ul></div></details><details class="fold" id="delais"><summary><span class="lab">Délais de prise en charge</span><span class="sum"><span class="word-ok">Tenus</span> pour 26 demandes sur 27, en 5 h 40 en moyenne</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Qualifiées sous 48 heures ouvrées : 26 sur 27</li><li>D-27-038, reçue le 19 février, qualifiée en 52 heures ouvrées pendant les vacances d'hiver</li><li>Incident : pris en charge en 20 minutes</li></ul></div></details><details class="fold" id="incidents"><summary><span class="lab">Incidents</span><span class="sum"><span class="word-ok">Résolu</span> : réservation hors service 3 h 20 le 12 février</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Outil de réservation : paiement refusé de 11 h 30 à 14 h 50 après la mise à jour du module de paiement</li><li>Contournement : réservations prises par téléphone à la Maison du Parc</li><li>Correctif : retour à la version 4.1.3, puis 4.2 corrigée le 14 février ; un test de paiement est ajouté à chaque recette</li></ul></div></details><details class="fold" id="maj"><summary><span class="lab">Mises à jour</span><span class="sum"><span class="word-ok">Faites</span> : 6 sites WordPress, 23 extensions, Geotrek-admin</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>WordPress 6.7.2 sur les six sites, le 11 février</li><li>23 extensions mises à jour ; 1 en attente sur La Ligne de Crête, incompatible</li><li>Geotrek-admin 2.111 vers 2.112, le 19 février</li><li>Rando Hautes-Combes 3.4.1 publiée le 24 février</li></ul></div></details><details class="fold" id="prod"><summary><span class="lab">Mises en production</span><span class="sum"><span class="word-ok">4 mises en ligne</span>, aucune annulée</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>5 février : agenda 2027 des Noiseraies</li><li>13 février : carte des lavoirs sur Patrimoines</li><li>20 février : inscription à la lettre en double confirmation, Brevo</li><li>26 février : 11 nouvelles boucles sur le portail de Haut-Val</li></ul></div></details><details class="fold" id="securite"><summary><span class="lab">Actions de sécurité</span><span class="sum"><span class="word-ok">3 actions</span>, aucune intrusion</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Double authentification activée pour les 9 comptes administrateurs</li><li>412 tentatives de connexion bloquées, dont 380 sur le site du Parc</li><li>Certificat de reseau-geoparcs.fr renouvelé, prochaine échéance le 2 avril</li></ul></div></details><details class="fold" id="sauvegardes"><summary><span class="lab">Sauvegardes</span><span class="sum"><span class="word-ok">Réussies</span> 28 nuits sur 28, restauration testée</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Sauvegarde chaque nuit des six sites, de Geotrek-admin et de l'outil de réservation</li><li>Test de restauration le 17 février sur Patrimoines : réussi en 22 minutes</li><li>Copies gardées 30 jours chez l'hébergeur et 90 jours hors site</li></ul></div></details><details class="fold" id="evolutions"><summary><span class="lab">Évolutions en cours</span><span class="sum"><span class="word-act">3 en cours</span>, dont 2 en recette chez vous</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Agenda filtrable par commune, site du Parc : en recette depuis le 4 mars</li><li>Étapes géolocalisées de la Grande Traversée : en recette depuis le 8 mars</li><li>Coopération avec l'instance Geotrek de Haut-Val : cadrage, réunion le 23 mars</li></ul></div></details><details class="fold" id="temps"><summary><span class="lab">Temps consacré</span><span class="sum">9,25 jours, dont 2,25 sur Geotrek</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul class="bars"><li><span>Geotrek-admin et portails</span><span class="bar"><i style="width:100%"></i></span><span class="v">2,25 j</span></li><li><span>Site du Parc</span><span class="bar"><i style="width:89%"></i></span><span class="v">2 j</span></li><li><span>Destination</span><span class="bar"><i style="width:78%"></i></span><span class="v">1,75 j</span></li><li><span>Rando Hautes-Combes</span><span class="bar"><i style="width:44%"></i></span><span class="v">1 j</span></li><li><span>Patrimoines</span><span class="bar"><i style="width:33%"></i></span><span class="v">0,75 j</span></li><li><span>Noiseraies</span><span class="bar"><i style="width:22%"></i></span><span class="v">0,5 j</span></li><li><span>La Ligne de Crête</span><span class="bar"><i style="width:11%"></i></span><span class="v">0,25 j</span></li><li><span>Réseau des Géoparcs</span><span class="bar"><i style="width:11%"></i></span><span class="v">0,25 j</span></li><li><span>Brevo</span><span class="bar"><i style="width:11%"></i></span><span class="v">0,25 j</span></li><li><span>Outil de réservation</span><span class="bar"><i style="width:11%"></i></span><span class="v">0,25 j</span></li></ul></div></details>
+    </section>
+
+    <section class="slats next-month" aria-labelledby="mars">
+      <h2 id="mars">Prévu en mars</h2>
+      <details class="fold" id="mars-actions"><summary><span class="lab">Actions prévues</span><span class="sum">4 actions, dont le rétablissement du flux APIDAE</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Rétablir le flux APIDAE et ajouter une alerte avant l'expiration de la clé</li><li>Mettre en ligne l'agenda filtrable et les étapes de la Grande Traversée après validation</li><li>Former deux médiatrices de La Ligne de Crête, le 18 mars</li><li>Mettre à jour Geotrek-admin selon votre décision</li></ul></div></details>
+    </section>
+  </main>
+</div>
+</body>
+</html>

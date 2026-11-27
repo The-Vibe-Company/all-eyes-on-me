@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de suivi · Parc naturel régional des Hautes-Combes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="org"><b>Parc naturel régional des Hautes-Combes</b><span>Suivi web 2027</span></div>
+    <nav aria-label="Navigation principale">
+      <ul class="nav">
+      <li><a href="index.html" aria-current="page"><img class="ic" src="icons/inbox.svg" alt="">Tableau de suivi</a></li>
+      <li><a href="demandes/nouvelle.html"><img class="ic" src="icons/plus.svg" alt="">Déposer une demande</a></li>
+      <li><a href="parc.html"><img class="ic" src="icons/server.svg" alt="">État du parc</a></li>
+      <li><a href="feuilles-de-route.html"><img class="ic" src="icons/map.svg" alt="">Feuilles de route</a></li>
+      <li><a href="compte-rendu.html"><img class="ic" src="icons/file-text.svg" alt="">Comptes rendus</a></li>
+      <li><a href="documentation.html"><img class="ic" src="icons/book-open.svg" alt="">Documentation</a></li>
+      </ul>
+    </nav>
+    <div class="rail-foot">Hélène Garnier<br>Responsable de la communication</div>
+  </aside>
+  <main class="main">
+    <header class="head">
+      <div>
+        <h1>Tableau de suivi</h1>
+        <p class="sub">Jeudi 4 mars 2027, 10 h 20</p>
+      </div>
+      <div class="head-actions">
+        <a class="btn btn-primary" href="demandes/nouvelle.html"><img class="ic" src="icons/plus.svg" alt="">Déposer une demande</a>
+        <span class="note48">Qualifiée sous
+          <span class="tip"><button type="button" class="tip-trigger" aria-describedby="tip48">48 heures ouvrées</button><span role="tooltip" id="tip48">Du lundi au vendredi, de 9 h à 18 h, hors jours fériés. Le numéro et l'heure de dépôt sont envoyés dès l'envoi.</span></span>
+        </span>
+      </div>
+    </header>
+
+    <p class="state">Un incident est en cours sur Destination, rétablissement prévu aujourd'hui à 16 h. <span class="muted">Deux évolutions attendent votre validation.</span></p>
+
+    <dl class="kpis">
+      <div class="kpi"><dt>Demandes en cours</dt><dd class="k-num" style="margin:0">14</dd></div>
+      <div class="kpi"><dt>À valider par le Parc</dt><dd class="k-num" style="margin:0">2</dd></div>
+      <div class="kpi"><dt>Bloquées</dt><dd class="k-num" style="margin:0">3</dd></div>
+    </dl>
+
+    <details class="incident">
+      <summary class="line">
+        <img class="ic" src="icons/triangle-alert.svg" alt="">
+        <span class="grow"><span class="tag">Incident en cours</span> · Fiches APIDAE figées sur Destination · Rétablissement prévu jeudi 4 mars, 16 h</span>
+        <span class="more">Détails <img class="ic chev" src="icons/chevron-down.svg" alt=""></span>
+      </summary>
+      <div class="incident-body">
+        <dl class="fields">
+          <div class="wide"><dt>Diagnostic</dt><dd>La clé d'accès au flux APIDAE a expiré le 3 mars à 0 h. Le connecteur ne reçoit plus de fiches.</dd></div>
+          <div class="wide"><dt>Conséquences</dt><dd>Les fiches hébergements et activités de Destination restent sur leur état du 2 mars. Les fiches Geotrek ne sont pas touchées.</dd></div>
+          <div class="wide"><dt>Contournement</dt><dd>Les deux fermetures signalées par l'office de tourisme ont été masquées à la main le 3 mars à 11 h.</dd></div>
+          <div class="wide"><dt>Responsable</dt><dd>Julien Roux, demande D-2027-052</dd></div>
+        </dl>
+        <ol class="steps">
+          <li><span class="t">3 mars, 7 h 40</span><span class="done">Fait</span><span>Incident qualifié, diagnostic posé</span></li>
+          <li><span class="t">3 mars, 14 h 00</span><span class="done">Fait</span><span>Nouvelle clé demandée à APIDAE</span></li>
+          <li><span class="t">4 mars, 16 h 00</span><span>Prévu</span><span>Clé installée, synchronisation complète des fiches</span></li>
+        </ol>
+      </div>
+    </details>
+
+    <section aria-labelledby="t-valider">
+      <div class="sec-head"><h2 id="t-valider">À valider avant mise en ligne</h2></div>
+      <ul class="rows">
+        <li class="val">
+          <span class="num">D-2027-038</span>
+          <span style="min-width:0"><span class="title" style="display:block">Contenus audio de la Grande Traversée</span><span class="meta" style="display:block">Geotrek-rando, application · en recette depuis le 1er mars</span></span>
+          <span class="meta">Visée le 10 mars</span>
+          <span class="actions"><a class="btn btn-sm" href="https://recette.rando-hautes-combes.fr">Ouvrir la recette</a><button class="btn btn-sm btn-primary" popovertarget="v038"><img class="ic" src="icons/check.svg" alt="">Valider</button></span>
+        </li>
+        <li class="val">
+          <span class="num">D-2027-044</span>
+          <span style="min-width:0"><span class="title" style="display:block">Formulaire d'inscription des exposants</span><span class="meta" style="display:block">Noiseraies · en recette depuis le 3 mars</span></span>
+          <span class="meta">Visée le 8 mars</span>
+          <span class="actions"><a class="btn btn-sm" href="https://recette.noiseraies.fr">Ouvrir la recette</a><button class="btn btn-sm btn-primary" popovertarget="v044"><img class="ic" src="icons/check.svg" alt="">Valider</button></span>
+        </li>
+      </ul>
+      <div popover id="v038"><h3>Valider D-2027-038</h3><p>Les contenus audio de la Grande Traversée seront mis en ligne sur Geotrek-rando et dans l'application le 10 mars.</p><div class="pop-actions"><button class="btn btn-sm" popovertarget="v038" popovertargetaction="hide">Annuler</button><button class="btn btn-sm btn-primary" popovertarget="v038" popovertargetaction="hide">Valider la mise en ligne</button></div></div>
+      <div popover id="v044"><h3>Valider D-2027-044</h3><p>Le formulaire d'inscription des exposants sera mis en ligne sur noiseraies.fr le 8 mars.</p><div class="pop-actions"><button class="btn btn-sm" popovertarget="v044" popovertargetaction="hide">Annuler</button><button class="btn btn-sm btn-primary" popovertarget="v044" popovertargetaction="hide">Valider la mise en ligne</button></div></div>
+    </section>
+
+    <section aria-labelledby="t-demandes">
+      <div class="sec-head"><h2 id="t-demandes">Demandes</h2></div>
+      <nav class="tabs" aria-label="Filtrer les demandes">
+        <a href="index.html" aria-current="true">En cours</a>
+        <a href="index.html">Résolues en mars 2</a>
+        <a href="index.html">Toutes en 2027 61</a>
+      </nav>
+      <div class="req-grid req-headrow" aria-hidden="true"><span>Numéro</span><span>Demande</span><span>Priorité</span><span>Statut</span><span>Responsable</span><span>Blocage</span><span></span></div>
+      <ul class="rows" style="border-top:0">
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-052</span>
+            <span class="cell what"><b>Fiches APIDAE figées</b><span>Destination · Anomalie</span></span>
+            <span class="cell prio-bloquante">Bloquante</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Julien Roux</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>3 mars, 7 h 05</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>3 mars, 7 h 40</dd></div>
+              <div><dt>Résolution</dt><dd>Prévue le 4 mars, 16 h</dd></div>
+              <div><dt>Outil</dt><dd>Destination</dd></div>
+              <div><dt>Nature</dt><dd>Anomalie</dd></div>
+              <div><dt>Temps consacré</dt><dd>4 h 30</dd></div>
+              <div><dt>Responsable</dt><dd>Julien Roux</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Diagnostic du connecteur, purge du cache, demande de nouvelle clé à APIDAE.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-038</span>
+            <span class="cell what"><b>Audios de la Grande Traversée</b><span>Geotrek-rando et application · Évolution</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">En recette</span>
+            <span class="cell">Sofia Benali</span>
+            <span class="cell"><span class="block">Attend votre validation</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>8 février, 10 h 12</dd></div>
+              <div><dt>Demandeur</dt><dd>Marc Duval</dd></div>
+              <div><dt>Prise en charge</dt><dd>9 février, 9 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Geotrek-rando et application</dd></div>
+              <div><dt>Nature</dt><dd>Évolution</dd></div>
+              <div><dt>Temps consacré</dt><dd>2 j</dd></div>
+              <div><dt>Responsable</dt><dd>Sofia Benali</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Import des 14 pistes audio, lecture hors ligne testée sur Android et iOS.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Attend votre validation</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-044</span>
+            <span class="cell what"><b>Inscription des exposants</b><span>Noiseraies · Évolution</span></span>
+            <span class="cell prio-haute">Haute</span>
+            <span class="cell">En recette</span>
+            <span class="cell">Thomas Lefèvre</span>
+            <span class="cell"><span class="block">Attend votre validation</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>15 février, 14 h 30</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>16 février, 9 h 15</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Noiseraies</dd></div>
+              <div><dt>Nature</dt><dd>Évolution</dd></div>
+              <div><dt>Temps consacré</dt><dd>1 j</dd></div>
+              <div><dt>Responsable</dt><dd>Thomas Lefèvre</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Formulaire créé, envoi vers Brevo, recette sur la préproduction.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Attend votre validation</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req" open>
+          <summary class="req-grid">
+            <span class="cell num">D-2027-049</span>
+            <span class="cell what"><b>Doublons de contributeurs</b><span>Patrimoines · Anomalie</span></span>
+            <span class="cell prio-haute">Haute</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Thomas Lefèvre</span>
+            <span class="cell"><span class="block">Export des comptes</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>24 février, 11 h 02</dd></div>
+              <div><dt>Demandeur</dt><dd>Lucas Perrin</dd></div>
+              <div><dt>Prise en charge</dt><dd>24 février, 15 h 20</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Patrimoines</dd></div>
+              <div><dt>Nature</dt><dd>Anomalie</dd></div>
+              <div><dt>Temps consacré</dt><dd>3 h</dd></div>
+              <div><dt>Responsable</dt><dd>Thomas Lefèvre</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Doublons repérés sur 37 comptes, script de fusion prêt.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Export des comptes</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-047</span>
+            <span class="cell what"><b>Pages des œuvres 2027</b><span>La Ligne de Crête · Évolution</span></span>
+            <span class="cell ">Basse</span>
+            <span class="cell">En attente</span>
+            <span class="cell">Julien Roux</span>
+            <span class="cell"><span class="block">Textes attendus du Parc</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>22 février, 9 h 48</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>23 février, 10 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>La Ligne de Crête</dd></div>
+              <div><dt>Nature</dt><dd>Évolution</dd></div>
+              <div><dt>Temps consacré</dt><dd>2 h</dd></div>
+              <div><dt>Responsable</dt><dd>Julien Roux</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Gabarit des pages œuvres livré.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Textes attendus du Parc</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-033</span>
+            <span class="cell what"><b>Synchronisation Haut-Val</b><span>Geotrek-admin · Évolution</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Sofia Benali</span>
+            <span class="cell"><span class="block">Accès API de Haut-Val</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>1er février, 16 h 10</dd></div>
+              <div><dt>Demandeur</dt><dd>Marc Duval</dd></div>
+              <div><dt>Prise en charge</dt><dd>2 février, 9 h 30</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Geotrek-admin</dd></div>
+              <div><dt>Nature</dt><dd>Évolution</dd></div>
+              <div><dt>Temps consacré</dt><dd>1,5 j</dd></div>
+              <div><dt>Responsable</dt><dd>Sofia Benali</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Correspondance des catégories établie, essai sur 12 itinéraires du Grand Mont.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Accès API de Haut-Val</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-051</span>
+            <span class="cell what"><b>Appel à projets Agriculture 2027</b><span>Site du Parc · Mise à jour de contenu</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Claire Martin</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>2 mars, 15 h 26</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>3 mars, 9 h 10</dd></div>
+              <div><dt>Résolution</dt><dd>Prévue le 5 mars</dd></div>
+              <div><dt>Outil</dt><dd>Site du Parc</dd></div>
+              <div><dt>Nature</dt><dd>Mise à jour de contenu</dd></div>
+              <div><dt>Temps consacré</dt><dd>1 h</dd></div>
+              <div><dt>Responsable</dt><dd>Claire Martin</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Page créée, pièces jointes en ligne, relecture demandée.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-053</span>
+            <span class="cell what"><b>Carte des géosites vide sur mobile</b><span>Réseau des Géoparcs · Anomalie</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">Nouvelle</span>
+            <span class="cell">Claire Martin</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>4 mars, 8 h 40</dd></div>
+              <div><dt>Demandeur</dt><dd>Nadia Faure</dd></div>
+              <div><dt>Prise en charge</dt><dd>À qualifier avant le 8 mars, 8 h 40</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Réseau des Géoparcs</dd></div>
+              <div><dt>Nature</dt><dd>Anomalie</dd></div>
+              <div><dt>Temps consacré</dt><dd>0 h</dd></div>
+              <div><dt>Responsable</dt><dd>Claire Martin</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Aucune pour l'instant.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+      </ul>
+      <details class="rest">
+        <summary class="line"><span class="grow">Afficher les 6 autres demandes en cours</span><img class="ic chev" src="icons/chevron-down.svg" alt=""></summary>
+        <ul class="rows">
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-042</span>
+            <span class="cell what"><b>Crêt de la Neige absent hors ligne</b><span>Application Rando · Anomalie</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Sofia Benali</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>19 février, 8 h 55</dd></div>
+              <div><dt>Demandeur</dt><dd>Marc Duval</dd></div>
+              <div><dt>Prise en charge</dt><dd>19 février, 14 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Application Rando</dd></div>
+              <div><dt>Nature</dt><dd>Anomalie</dd></div>
+              <div><dt>Temps consacré</dt><dd>3 h</dd></div>
+              <div><dt>Responsable</dt><dd>Sofia Benali</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Cause trouvée dans le poids des photos, nouvelle version de l'application en préparation.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-048</span>
+            <span class="cell what"><b>Lien cassé vers la carte</b><span>Site du Parc · Anomalie</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Julien Roux</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>23 février, 17 h 02</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>24 février, 9 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Site du Parc</dd></div>
+              <div><dt>Nature</dt><dd>Anomalie</dd></div>
+              <div><dt>Temps consacré</dt><dd>30 min</dd></div>
+              <div><dt>Responsable</dt><dd>Julien Roux</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Redirection posée, vérification des autres liens en cours.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-045</span>
+            <span class="cell what"><b>Tarifs 2027 des sorties nature</b><span>Outil de réservation · Mise à jour de contenu</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">En cours</span>
+            <span class="cell">Thomas Lefèvre</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>17 février, 10 h 40</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>17 février, 16 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Outil de réservation</dd></div>
+              <div><dt>Nature</dt><dd>Mise à jour de contenu</dd></div>
+              <div><dt>Temps consacré</dt><dd>2 h</dd></div>
+              <div><dt>Responsable</dt><dd>Thomas Lefèvre</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>18 sorties sur 26 mises à jour.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-050</span>
+            <span class="cell what"><b>Droits du Val d'Amont</b><span>Geotrek-admin · Question</span></span>
+            <span class="cell ">Normale</span>
+            <span class="cell">Qualifiée</span>
+            <span class="cell">Sofia Benali</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>26 février, 11 h 30</dd></div>
+              <div><dt>Demandeur</dt><dd>Marc Duval</dd></div>
+              <div><dt>Prise en charge</dt><dd>1er mars, 9 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Geotrek-admin</dd></div>
+              <div><dt>Nature</dt><dd>Question</dd></div>
+              <div><dt>Temps consacré</dt><dd>15 min</dd></div>
+              <div><dt>Responsable</dt><dd>Sofia Benali</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Question qualifiée, réponse prévue le 5 mars.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-040</span>
+            <span class="cell what"><b>Modèle de la lettre de printemps</b><span>Brevo · Question</span></span>
+            <span class="cell ">Basse</span>
+            <span class="cell">Qualifiée</span>
+            <span class="cell">Claire Martin</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>12 février, 9 h 20</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Garnier</dd></div>
+              <div><dt>Prise en charge</dt><dd>13 février, 10 h 00</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Brevo</dd></div>
+              <div><dt>Nature</dt><dd>Question</dd></div>
+              <div><dt>Temps consacré</dt><dd>30 min</dd></div>
+              <div><dt>Responsable</dt><dd>Claire Martin</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Deux modèles existants comparés.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        <li><details class="req">
+          <summary class="req-grid">
+            <span class="cell num">D-2027-046</span>
+            <span class="cell what"><b>Tableaux de bord</b><span>Mesure d'audience · Formation</span></span>
+            <span class="cell ">Basse</span>
+            <span class="cell">Qualifiée</span>
+            <span class="cell">Claire Martin</span>
+            <span class="cell"><span class="none">Aucun blocage</span></span>
+            <img class="ic chev" src="icons/chevron-down.svg" alt="">
+          </summary>
+          <div class="req-body">
+            <dl class="fields">
+              <div><dt>Reçue le</dt><dd>18 février, 15 h 00</dd></div>
+              <div><dt>Demandeur</dt><dd>Lucas Perrin</dd></div>
+              <div><dt>Prise en charge</dt><dd>19 février, 9 h 30</dd></div>
+              <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+              <div><dt>Outil</dt><dd>Mesure d'audience</dd></div>
+              <div><dt>Nature</dt><dd>Formation</dd></div>
+              <div><dt>Temps consacré</dt><dd>0 h</dd></div>
+              <div><dt>Responsable</dt><dd>Claire Martin</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Séance d'une heure proposée le 11 mars.</dd></div>
+              <div class="wide"><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details></li>
+        </ul>
+      </details>
+    </section>
+
+    <section aria-labelledby="t-parc">
+      <details class="fold">
+        <summary class="line">
+          <img class="ic" src="icons/shield-check.svg" alt="">
+          <span class="grow"><b id="t-parc" style="font-weight:600">État du parc</b> · 7 sites et outils sur 9 à jour · sauvegardes réussies cette nuit</span>
+          <span class="more">Détails <img class="ic chev" src="icons/chevron-down.svg" alt=""></span>
+        </summary>
+        <div class="sites">
+        <div class="h">Site ou outil</div><div class="h">Mises à jour</div><div class="h">Dernière sauvegarde</div>
+        <div>Site du Parc <span class="num">· parc-hautes-combes.fr</span></div><div class="okw">À jour</div><div>Cette nuit, 2 h 10</div>
+        <div>Noiseraies <span class="num">· noiseraies.fr</span></div><div class="okw">À jour</div><div>Cette nuit, 2 h 14</div>
+        <div>La Ligne de Crête <span class="num">· lalignedecrete.fr</span></div><div class="okw">À jour</div><div>Cette nuit, 2 h 17</div>
+        <div>Destination Parc des Hautes-Combes <span class="num">· destination-parc-hautes-combes.fr</span></div><div class="pend">1 mise à jour en attente</div><div>Cette nuit, 2 h 22</div>
+        <div>Patrimoines <span class="num">· patrimoines.parc-hautes-combes.fr</span></div><div class="okw">À jour</div><div>Cette nuit, 2 h 31</div>
+        <div>Réseau des Géoparcs <span class="num">· reseau-geoparcs.fr</span></div><div class="pend">1 mise à jour en attente</div><div>Cette nuit, 2 h 35</div>
+        <div>Geotrek-admin <span class="num">· version 2.10.3</span></div><div class="okw">À jour</div><div>Cette nuit, 3 h 00</div>
+        <div>Portails Geotrek-rando <span class="num">· 4 portails partenaires</span></div><div class="okw">À jour</div><div>Cette nuit, 3 h 12</div>
+        <div>Application Rando Hautes-Combes <span class="num">· version 3.4.1</span></div><div class="okw">À jour</div><div>Sans objet, publiée sur les magasins</div>
+        </div>
+        <p class="sub" style="margin-top:12px"><a href="parc.html">Versions, certificats et tests de restauration dans État du parc</a></p>
+      </details>
+    </section>
+  </main>
+</div>
+</body>
+</html>

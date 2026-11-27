@@ -24,6 +24,7 @@ import { checkMotion } from "./motion.js";
 import { checkNestedRadius } from "./nested-radius.js";
 import { checkOrphan } from "./orphan.js";
 import { checkSideStripe } from "./side-stripe.js";
+import { checkLayers } from "./layers.js";
 import { checkImages } from "./images.js";
 import { checkLabels } from "./labels.js";
 import { checkLayoutShift } from "./layout-shift.js";
@@ -37,7 +38,13 @@ import { checkUneven } from "./uneven.js";
 import { checkWrap } from "./wrap.js";
 import type { CheckName, Finding, Issue } from "./types.js";
 
-export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce", "placeholder", "ai-text", "hollow-words", "nested-radius", "orphan", "motion", "finish"];
+export const CHECKS: CheckName[] = ["cursor", "overflow", "contrast", "console", "header", "wrap", "uneven", "clipped", "tap-size", "font-size", "line-length", "zoom", "images", "labels", "focus", "layout-shift", "gradient-text", "side-stripe", "nested-card", "bounce", "placeholder", "ai-text", "hollow-words", "nested-radius", "orphan", "motion", "finish", "layers"];
+
+/** What only a site has, never asked of a folder of mockups; and what only mockups are held to, a round of directions to choose from. */
+const SITE_ONLY: CheckName[] = ["finish"];
+const FOLDER_ONLY: CheckName[] = ["layers"];
+/** The checks run on a site, or on a folder of pages served as they are. */
+export const checksFor = (folder: boolean) => CHECKS.filter((c) => !(folder ? SITE_ONLY : FOLDER_ONLY).includes(c));
 
 /** The routes where a check does not apply, by check, as the config says: a landing page whose header scrolls away on purpose. */
 export type CheckExceptions = Partial<Record<CheckName, string[]>>;
@@ -114,6 +121,8 @@ export async function checkPages(browser: Browser, urls: string[], widths: numbe
           await add("motion", () => checkMotion(page));
           // What a finished page has, a page anyone can open more: never asked of a mockup, which is no site.
           if (!folder) await add("finish", () => checkFinish(page, { public: !signedIn }));
+          // A page read in layers, not as a mass: asked of mockups, which a person or a jury compares at a glance.
+          if (folder) await add("layers", () => checkLayers(page));
           // Last: it walks the page with the keyboard.
           await add("focus", () => checkFocus(page));
         }
@@ -150,7 +159,7 @@ export async function checkSite({ url, widths = DEFAULT_WIDTHS, signedIn, paths,
     const kept = findings.filter((f) => !left(f));
     const accept = (f: Finding) => acceptedOnPage(accepted, f.check, route(f.url));
     const said = kept.filter(accept).map((f) => ({ ...f, why: accept(f)!.why, source: accept(f)!.source }));
-    return { url, checkedAt: new Date().toISOString(), widths, checks: folder ? CHECKS.filter((c) => c !== "finish") : CHECKS, pages, errors: found.errors, findings: kept.filter((f) => !accept(f)), ...(said.length ? { accepted: said } : {}) };
+    return { url, checkedAt: new Date().toISOString(), widths, checks: checksFor(folder), pages, errors: found.errors, findings: kept.filter((f) => !accept(f)), ...(said.length ? { accepted: said } : {}) };
   } finally {
     await browser.close();
   }

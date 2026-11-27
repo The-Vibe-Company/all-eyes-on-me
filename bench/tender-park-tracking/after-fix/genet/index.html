@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de suivi · Parc naturel régional des Hautes-Combes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Parc naturel régional des Hautes-Combes<span>Suivi 2027</span></div>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="index.html" aria-current="page">Tableau de suivi</a>
+      <a href="parc.html">État du parc</a>
+      <a href="feuilles-de-route.html">Feuilles de route</a>
+      <a href="compte-rendu.html">Comptes rendus</a>
+      <a href="documentation.html">Documentation</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="head">
+    <div>
+      <h1>Un incident touche le site Destination ; deux évolutions attendent votre validation.</h1>
+      <ul class="figures">
+        <li class="figure"><b>11</b><span>demandes en cours</span></li>
+        <li class="figure"><b>1</b><span>point de blocage</span></li>
+        <li class="figure"><b>6 h</b><span>de qualification en moyenne</span></li>
+      </ul>
+    </div>
+    <div class="act">
+      <a class="button" href="demandes/nouvelle.html"><img class="ico" src="icons/plus.svg" alt="">Déposer une demande</a>
+      <p class="small muted">Qualifiée sous <span class="tip" tabindex="0" aria-describedby="tip-48">48 heures ouvrées<span role="tooltip" id="tip-48">Du lundi au vendredi, de 9 h à 18 h, hors jours fériés. Une demande déposée mercredi à 9 h est qualifiée au plus tard vendredi à 9 h.</span></span></p>
+    </div>
+  </section>
+
+  <details class="incident">
+    <summary class="line">
+      <img class="ico" src="icons/triangle-alert.svg" alt="">
+      <span class="word">Incident en cours</span>
+      <span class="what">Destination : fiches APIDAE absentes depuis le 2 mars, 18 h 40</span>
+      <span class="when">Rétablissement prévu jeudi 4 mars, 12 h</span>
+      <span class="more">Détails <img class="chev" src="icons/chevron-down.svg" alt=""></span>
+    </summary>
+    <div class="body">
+      <div><h3>Diagnostic</h3><p>Le jeton d'accès à l'API APIDAE a expiré ; la synchronisation de 18 h 40 a échoué.</p></div>
+      <div><h3>Conséquences</h3><p>Hébergements et restaurants absents des pages Séjourner ; les randonnées Geotrek restent affichées.</p></div>
+      <div><h3>Contournement</h3><p>Un message renvoie vers l'office de tourisme et son numéro, le 03 84 41 20 00.</p></div>
+      <div><h3>Avancement</h3><p>Nouveau jeton demandé à APIDAE le 3 mars à 9 h ; reprise des fiches à sa réception.</p></div>
+    </div>
+  </details>
+
+  <details class="status">
+    <summary class="line">
+      <img class="ico" src="icons/check.svg" alt="">
+      <span class="what"><b>État du parc</b> · 9 sites et outils sur 10 à jour · sauvegardes réussies cette nuit à 2 h 10 · certificats valides</span>
+      <span class="more">Détails <img class="chev" src="icons/chevron-down.svg" alt=""></span>
+    </summary>
+    <table>
+      <thead><tr><th>Site ou outil</th><th>Version</th><th>Mises à jour</th><th>Dernière sauvegarde</th><th>Certificat</th></tr></thead>
+      <tbody>
+        <tr><td>Site du Parc</td><td>WordPress 6.7.2</td><td>À jour</td><td>3 mars, 2 h 10</td><td>Jusqu'au 14 mai</td></tr>
+        <tr><td>Noiseraies</td><td>WordPress 6.7.2</td><td>À jour</td><td>3 mars, 2 h 14</td><td>Jusqu'au 14 mai</td></tr>
+        <tr><td>La Ligne de Crête</td><td>WordPress 6.7.2</td><td>À jour</td><td>3 mars, 2 h 18</td><td>Jusqu'au 2 juin</td></tr>
+        <tr><td>Destination Parc des Hautes-Combes</td><td>WordPress 6.7.2</td><td>À jour</td><td>3 mars, 2 h 22</td><td>Jusqu'au 2 juin</td></tr>
+        <tr><td>Patrimoines</td><td>WordPress 6.7.2</td><td class="no">1 extension en attente</td><td>3 mars, 2 h 26</td><td>Jusqu'au 14 mai</td></tr>
+        <tr><td>Réseau des Géoparcs</td><td>WordPress 6.7.2</td><td>À jour</td><td>3 mars, 2 h 30</td><td>Jusqu'au 9 avril</td></tr>
+        <tr><td>Geotrek-admin</td><td>2.112.0</td><td>À jour</td><td>3 mars, 3 h 00</td><td>Jusqu'au 21 juillet</td></tr>
+        <tr><td>Portails Geotrek-rando</td><td>3.21.1</td><td>À jour</td><td>3 mars, 3 h 05</td><td>Jusqu'au 21 juillet</td></tr>
+        <tr><td>Application Rando Hautes-Combes</td><td>3.4.1</td><td>À jour</td><td>Sans objet</td><td>Sans objet</td></tr>
+        <tr><td>Brevo, réservation, audience</td><td>Services en ligne</td><td>À jour</td><td>Export du 1er mars</td><td>Sans objet</td></tr>
+      </tbody>
+    </table>
+  </details>
+
+  <div class="board-head">
+    <h2>Demandes en cours</h2>
+    <span class="muted">Du dépôt à la résolution</span>
+  </div>
+
+  <div class="board">
+    <section class="col" aria-label="Reçue">
+      <header><b>Reçue</b><span>2</span></header>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-052 · Question</span></div>
+          <div class="t">Export des contributions de février</div>
+          <div class="meta">Patrimoines</div>
+          <div class="meta">Priorité normale</div>
+          <div class="meta">Qualifiée d'ici le 5 mars</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>3 mars, 9 h 12</dd>
+            <dt>Demandeur</dt><dd>Hugo Lefèvre</dd>
+            <dt>Responsable</dt><dd>À attribuer</dd>
+            <dt>Temps</dt><dd>0 j</dd>
+          </dl>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-051 · Contenu</span></div>
+          <div class="t">Page de présentation du Géoparc des Causses</div>
+          <div class="meta">Géoparcs</div>
+          <div class="meta">Priorité normale</div>
+          <div class="meta">Qualifiée d'ici le 4 mars</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>2 mars, 16 h 30</dd>
+            <dt>Demandeur</dt><dd>Administrateurs du Géoparc des Causses</dd>
+            <dt>Responsable</dt><dd>À attribuer</dd>
+            <dt>Temps</dt><dd>0 j</dd>
+          </dl>
+        </div>
+      </details>
+    </section>
+
+    <section class="col" aria-label="Qualifiée">
+      <header><b>Qualifiée</b><span>3</span></header>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-049 · Anomalie</span></div>
+          <div class="t">Carte vide sur mobile, portail du Val d'Aube</div>
+          <div class="meta">Geotrek-rando</div>
+          <div class="meta"><span class="prio-h">Priorité haute</span></div>
+          <div class="meta">Thomas Rey</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>1er mars, 11 h 05</dd>
+            <dt>Demandeur</dt><dd>Julien Mercier</dd>
+            <dt>Qualifiée</dt><dd>1er mars, 15 h 20</dd>
+            <dt>Temps</dt><dd>0,25 j</dd>
+          </dl>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-048 · Évolution</span></div>
+          <div class="t">Programme 2027 : filtrer par date</div>
+          <div class="meta">Noiseraies</div>
+          <div class="meta">Priorité normale</div>
+          <div class="meta">Inès Garnier</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>26 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Qualifiée</dt><dd>1er mars, 10 h</dd>
+            <dt>Temps</dt><dd>0,5 j</dd>
+          </dl>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-046 · Formation</span></div>
+          <div class="t">Prise en main des modèles de lettre</div>
+          <div class="meta">Brevo</div>
+          <div class="meta">Priorité basse</div>
+          <div class="meta">Léa Marchand</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>24 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Qualifiée</dt><dd>25 février, 9 h 40</dd>
+            <dt>Temps</dt><dd>0 j</dd>
+          </dl>
+          <p>Séance prévue le 11 mars à 14 h, à Saint-Aubin.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="col" aria-label="En traitement">
+      <header><b>En traitement</b><span>4</span></header>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-050 · Anomalie</span></div>
+          <div class="t">Fiches APIDAE absentes du site</div>
+          <div class="meta">Destination</div>
+          <div class="meta"><span class="prio-b">Priorité bloquante</span></div>
+          <div class="meta">Thomas Rey</div>
+          <div class="block"><img class="ico" src="icons/circle-pause.svg" alt="">Bloquée : jeton APIDAE attendu</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>2 mars, 18 h 52</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Prise en charge</dt><dd>2 mars, 19 h 10</dd>
+            <dt>Temps</dt><dd>0,5 j</dd>
+          </dl>
+          <p>Synchronisation suspendue, message de contournement publié.</p>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-045 · Anomalie</span></div>
+          <div class="t">Tracés GPS décalés sur Android</div>
+          <div class="meta">Application</div>
+          <div class="meta"><span class="prio-h">Priorité haute</span></div>
+          <div class="meta">Paul Vidal</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>22 février</dd>
+            <dt>Demandeur</dt><dd>Julien Mercier</dd>
+            <dt>Prise en charge</dt><dd>22 février, 14 h</dd>
+            <dt>Temps</dt><dd>1,5 j</dd>
+          </dl>
+          <p>Cause trouvée dans la projection des tracés ; correctif en test.</p>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-043 · Évolution</span></div>
+          <div class="t">Grande Traversée : étapes géolocalisées</div>
+          <div class="meta">Geotrek-admin</div>
+          <div class="meta">Priorité normale</div>
+          <div class="meta">Inès Garnier</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>15 février</dd>
+            <dt>Demandeur</dt><dd>Julien Mercier</dd>
+            <dt>Prise en charge</dt><dd>16 février</dd>
+            <dt>Temps</dt><dd>3 j</dd>
+          </dl>
+          <p>12 étapes sur 18 saisies, contenus audio à venir.</p>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-041 · Contenu</span></div>
+          <div class="t">Nouvelle rubrique Marchés publics</div>
+          <div class="meta">Site du Parc</div>
+          <div class="meta">Priorité normale</div>
+          <div class="meta">Léa Marchand</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>12 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Prise en charge</dt><dd>13 février</dd>
+            <dt>Temps</dt><dd>0,5 j</dd>
+          </dl>
+        </div>
+      </details>
+    </section>
+
+    <section class="col wait" aria-label="En recette, à valider par le Parc">
+      <header><b>En recette · à valider</b><span>2</span></header>
+      <details class="card" open>
+        <summary>
+          <div class="id"><span>D-039 · Évolution</span></div>
+          <div class="t">Plan interactif des œuvres</div>
+          <div class="meta">La Ligne de Crête</div>
+          <div class="meta">Priorité normale</div>
+          <div class="meta">Paul Vidal</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>4 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Prise en charge</dt><dd>5 février</dd>
+            <dt>Temps</dt><dd>2,5 j</dd>
+          </dl>
+          <p>En recette depuis le 1er mars, testé sur ordinateur et mobile.</p>
+          <div class="acts">
+            <a class="button" href="demandes/d-039.html"><img class="ico" src="icons/check.svg" alt="">Valider la mise en ligne</a>
+            <a class="button quiet" href="demandes/d-039.html">Demander une correction</a>
+          </div>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-037 · Évolution</span></div>
+          <div class="t">Formulaire de contact accessible</div>
+          <div class="meta">Site du Parc</div>
+          <div class="meta"><span class="prio-h">Priorité haute</span></div>
+          <div class="meta">Thomas Rey</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>2 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Prise en charge</dt><dd>3 février</dd>
+            <dt>Temps</dt><dd>1,5 j</dd>
+          </dl>
+          <p>En recette depuis le 26 février.</p>
+          <div class="acts">
+            <a class="button" href="demandes/d-037.html"><img class="ico" src="icons/check.svg" alt="">Valider la mise en ligne</a>
+            <a class="button quiet" href="demandes/d-037.html">Demander une correction</a>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="col done" aria-label="Résolue">
+      <header><b>Résolue</b><span>cette semaine</span></header>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-044 · Anomalie</span></div>
+          <div class="t">E-mail de réservation non envoyé</div>
+          <div class="meta">Destination</div>
+          <div class="meta"><span class="prio-h">Priorité haute</span></div>
+          <div class="meta">Résolue le 2 mars</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>19 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Responsable</dt><dd>Thomas Rey</dd>
+            <dt>Prise en charge</dt><dd>19 février</dd>
+            <dt>Temps</dt><dd>1 j</dd>
+          </dl>
+          <p>Réglage SMTP de l'outil de réservation corrigé, envoi vérifié.</p>
+        </div>
+      </details>
+      <details class="card">
+        <summary>
+          <div class="id"><span>D-042 · Question</span></div>
+          <div class="t">Audience de janvier</div>
+          <div class="meta">Site du Parc</div>
+          <div class="meta">Priorité basse</div>
+          <div class="meta">Résolue le 1er mars</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Reçue</dt><dd>12 février</dd>
+            <dt>Demandeur</dt><dd>Claire Fontaine</dd>
+            <dt>Responsable</dt><dd>Léa Marchand</dd>
+            <dt>Prise en charge</dt><dd>13 février</dd>
+            <dt>Temps</dt><dd>0,25 j</dd>
+          </dl>
+          <p>Tableau d'audience envoyé par courriel.</p>
+        </div>
+      </details>
+      <p class="more-done small"><a href="compte-rendu.html">Résolues en février</a></p>
+    </section>
+  </div>
+
+  <footer class="foot small" style="margin-top:24px">
+    <span>Prestataire de maintenance · 4 personnes · lundi au vendredi, 9 h à 18 h</span>
+    <a href="compte-rendu.html">Compte rendu de février 2027</a>
+  </footer>
+</main>
+</body>
+</html>

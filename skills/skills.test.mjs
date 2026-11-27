@@ -282,9 +282,10 @@ test("every direction but the classic dares, and the screening names a timid one
   assert.match(read("phase-mockups.md"), /never named for looking conventional, nor for being timid/);
 });
 
-test("/aeom directions --tender sells: its kind at a glance, every requirement in sight, and no ornament anywhere", () => {
+test("/aeom directions --tender sells: its kind at a glance, every requirement within reach, and no ornament anywhere", () => {
   const tender = read("directions.md").split("## For a tender")[1]?.split("\n## ")[0] ?? "";
-  for (const part of ["**Its kind at a glance.**", "**Every requirement in sight.**", "**Real and finished**"]) assert.ok(tender.includes(part), part);
+  for (const part of ["**Its kind at a glance.**", "**Every requirement within reach.**", "**Real and finished**"]) assert.ok(tender.includes(part), part);
+  assert.doesNotMatch(tender, /Every requirement in sight/, "in sight pushed every worker to show everything at once");
   assert.match(tender, /A weather site looks like a weather site/);
   assert.match(tender, /never a radial page, a hidden main menu or a layout that must be learnt/);
   const dares = read("directions.md").split("## A direction that dares")[1]?.split("\n## ")[0] ?? "";
@@ -300,6 +301,48 @@ test("/aeom directions --tender sells: its kind at a glance, every requirement i
   assert.match(mockups, /keeps a capture of each in `\.aeom\/runs\/\$RUN\/references\/`, never in the project/);
   assert.match(mockups, /With `--tender`, six by default/);
   assert.match(mockups, /\*\*A spec beside the front\*\*/, "a tender on a skeleton reads both its screens and its spec");
+});
+
+test("/aeom directions --tender reads in layers from the first round: a summary first, the detail folded without a script, one strong gesture, and a worker who looks at its own work", () => {
+  const directions = read("directions.md");
+  const tender = directions.split("## For a tender")[1]?.split("\n## ")[0] ?? "";
+  for (const part of ["**Layered reading.**", "**Pared down, never coarse.**"]) assert.ok(tender.includes(part), part);
+  assert.match(tender, /a sentence of state, two or three key figures, what waits for the user and the main action/);
+  assert.match(tender, /Every requirement of the spec keeps one summary line in sight, a word of state and a figure/);
+  assert.match(tender, /`<details>` and `<summary>`[^.]*the `popover` attribute with a `popovertarget` button[^.]*`:hover`, `:focus-visible` and `:focus-within`/);
+  assert.match(tender, /One fold only is open by default on each page/);
+  assert.match(tender, /keeps its summary line in sight, and its detail one click or one hover away/);
+  assert.match(tender, /at least 20 px between two rows of a list and 48 to 64 px between two sections/);
+  assert.match(tender, /Running text at 15 or 16 px, in two sizes at most/);
+  assert.match(tender, /never a border around each block/);
+  assert.match(tender, /secondary text in a grey of 4\.5:1 at least/);
+  assert.match(tender, /one or two very finished product interfaces of any kind, for their finish alone/);
+  assert.match(tender, /the spec comes first, then the person's taste and the register of the kind, then daring/);
+  const dares = directions.split("## A direction that dares")[1]?.split("\n## ")[0] ?? "";
+  assert.match(dares, /\*\*In the calm register, one strong gesture\.\*\*/);
+  assert.match(dares, /In the calm register, one band at most, tinted rather than saturated/);
+  assert.match(dares, /One figure per screen: when every number is huge, none is/);
+  assert.match(dares, /\*\*What comes first\*\*, when they pull apart: the spec, then the person's taste and the register of the kind, then this section/);
+  const banned = directions.split("## The banned looks")[1]?.split("\n## ")[0] ?? "";
+  assert.match(banned, /a coloured bar along one side or along its top, the rounded corners bending it at both ends/, "the accent bar is a banned look");
+  const mockups = read("phase-mockups.md");
+  const brief = mockups.split("**Mockup brief.**")[1] ?? "";
+  assert.doesNotMatch(brief, /no script the pages need: a browser opens them as files\. Fonts/, "no script never meant nothing that opens");
+  assert.match(brief, /It folds without a script: `<details>` and `<summary>`/);
+  assert.match(brief, /A page shows 400 words at most before anything is opened/);
+  assert.match(brief, /in `<your folder>\/\.work\/`, never in a shared folder/);
+  assert.match(brief, /would a serious agency deliver it as it is\? Is there still a mass/);
+  assert.match(brief, /`aeom check --dir <your folder> --pages \/index\.html,\/<dense>\.html --widths <the widths> --out <your folder>\/\.work\/check`/);
+  assert.match(brief, /what `aeom check` still finds and why it stays, what folds on each page and what stays in sight/);
+  assert.match(mockups, /and at one or two very finished product interfaces of any kind, keeps a capture of each/);
+  assert.match(mockups, /the finished ones noted « the level, never the look »/);
+  assert.match(mockups, /the exact names of this round's directions as its keys/);
+  const screening = read("phase-directions.md").split("**Screening brief.**")[1]?.split("**Duel brief.**")[0] ?? "";
+  assert.match(screening, /it is still a mass: everything shown at once, small and tight/);
+  assert.match(screening, /its finish is below a serious agency's/);
+  assert.match(screening, /open each one's pages: see what folds and what stays in sight, and that no requirement of the brief lost its summary line/);
+  assert.match(screening, /each key exactly one of the names you were given, as it is written/);
+  assert.match(screening, /Never advise one you name\./);
 });
 
 test("/aeom directions --tender comes out finished: the register of its kind, one mark, real pictures or none, a screen that informs", () => {

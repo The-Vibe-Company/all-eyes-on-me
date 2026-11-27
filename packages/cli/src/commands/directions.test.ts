@@ -192,6 +192,31 @@ test("what the screening names goes beside its direction, kept in the comparison
   }
 });
 
+test("a second round's directions are named by the judge without their suffix: each name that matches one alone is taken for it, and one that matches none is said with the names expected", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "aeom-compare-suffix-"));
+  const D = join(dir, ".aeom", "runs", "run-1", "directions");
+  try {
+    await mkdir(D, { recursive: true });
+    for (const name of ["classique-2", "vigilance-2", "parapheur-2"]) await writeFile(join(D, `${name}.png`), "");
+    await writeFile(join(D, "sheet.json"), JSON.stringify([{ label: "now", note: "The front as it is today." }, { label: "classique-2" }, { label: "vigilance-2" }, { label: "parapheur-2" }]));
+    const said = (slug: string) => ({ strong: `${slug}: one status line, then what waits.`, weak: `${slug}: the secondary text is pale.`, fit: `${slug}: a service console, as the spec asks.` });
+    const answer = (body: unknown) => writeFile(join(D, "screening-2.json"), JSON.stringify(body));
+    await answer({ out: { vigilance: "A pink field and a huge red word: loud for a calm tool." }, compare: { classique: said("classique"), vigilance: said("vigilance"), parapheur: said("parapheur") }, start: { source: "parapheur", why: "the pile of what to sign beside the state of the service." } });
+    const ok = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-2.json")]);
+    assert.equal(ok.code, 0, ok.out);
+    const kept = JSON.parse(await readFile(join(D, "compare.json"), "utf8")) as { directions: { slug: string; named?: string }[]; start: { slug: string } };
+    assert.deepEqual(kept.directions.map((d) => d.slug), ["classique-2", "vigilance-2", "parapheur-2"]);
+    assert.equal(kept.directions[1]!.named, "A pink field and a huge red word: loud for a calm tool.");
+    assert.equal(kept.start.slug, "parapheur-2");
+    await answer({ out: {}, compare: { classique: said("classique"), vigil: said("vigil"), parapheur: said("parapheur") }, start: { source: "parapheur", why: "x" } });
+    const wrong = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-2.json")]);
+    assert.equal(wrong.code, 1);
+    assert.match(wrong.out, /The comparison names vigil, which the sheet does not show: the names to use are classique-2, vigilance-2, parapheur-2\./);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("aeom tournament compare checks the screening's comparison, keeps it and says it in words; the decision notes whether the person followed its advice", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aeom-compare-dirs-"));
   const home = await mkdtemp(join(tmpdir(), "aeom-home-"));
@@ -206,11 +231,11 @@ test("aeom tournament compare checks the screening's comparison, keeps it and sa
     await answer({ lutrin: said("lutrin"), verriere: said("verriere") }, { source: "lutrin", why: "x" });
     const missing = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);
     assert.equal(missing.code, 1);
-    assert.match(missing.out, /The comparison leaves out guichet/);
+    assert.match(missing.out, /The comparison leaves out guichet: every direction on the sheet is compared, none left aside; the names to use are lutrin, verriere, guichet\./);
     await answer({ lutrin: said("lutrin"), verriere: said("verriere"), guichet: { ...said("guichet"), weak: "" } }, { source: "plage", why: "x" });
     const wrong = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);
     assert.match(wrong.out, /guichet has no weak point/);
-    assert.match(wrong.out, /It would start from plage, which is not on the sheet/);
+    assert.match(wrong.out, /It would start from plage, which is not on the sheet: the names to use are lutrin, verriere, guichet\./);
 
     await answer({ lutrin: said("lutrin"), verriere: said("verriere"), guichet: said("guichet") }, { source: "verriere", why: "its glass panes keep the density and add the light the town hall lacks." });
     const ok = await run(dir, ["tournament", "compare", "--dir", D, "--from", join(D, "screening-1.json")]);

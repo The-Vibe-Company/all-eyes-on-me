@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de suivi · Parc naturel régional des Hautes-Combes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html">Parc naturel régional des Hautes-Combes<span>Suivi 2027</span></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="index.html" aria-current="page">Tableau de suivi</a>
+      <a href="parc.html">État du parc</a>
+      <a href="feuilles-de-route.html">Feuilles de route</a>
+      <a href="compte-rendu.html">Comptes rendus</a>
+      <a href="documentation.html">Documentation</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="head">
+  <div class="wrap">
+    <div>
+      <p class="date">Mercredi 3 mars 2027</p>
+      <h1>Un incident touche le site Destination ; le reste du parc fonctionne.</h1>
+      <div class="figs">
+        <p class="fig"><b>7</b><span>demandes en cours</span></p>
+        <p class="fig"><b>2</b><span>évolutions à valider</span></p>
+        <p class="fig"><b>1</b><span>demande à qualifier</span></p>
+      </div>
+    </div>
+    <div class="act">
+      <a class="btn main" href="demandes/nouvelle.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>Déposer une demande</a>
+      <p>Prise en compte et qualification sous
+        <span class="def"><button type="button" aria-describedby="def-48">48 heures ouvrées</button><span role="tooltip" id="def-48">Du lundi au vendredi, de 9 h à 18 h, hors jours fériés. Une demande déposée le vendredi à 16 h est qualifiée au plus tard le mardi à 16 h.</span></span></p>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <details class="incident">
+    <summary>
+      <span class="lvl"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>Incident en cours</span>
+      <span class="what">Destination Parc des Hautes-Combes : fiches APIDAE absentes depuis mardi 22 h</span>
+      <span class="eta">Rétablissement prévu <b>jeudi 4 mars, 12 h</b></span>
+      <span class="more">Détails <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+    </summary>
+    <dl class="body">
+      <div><dt>Diagnostic</dt><dd>APIDAE a changé le format de ses réponses mardi soir ; le connecteur rejette les fiches.</dd></div>
+      <div><dt>Conséquences</dt><dd>Pages Hébergements et Restaurants vides, environ 1 400 fiches. Les itinéraires Geotrek ne sont pas touchés.</dd></div>
+      <div><dt>Contournement</dt><dd>La copie du 2 mars à 18 h est affichée depuis ce matin, 9 h 30.</dd></div>
+      <div><dt>Avancement</dt><dd><ul class="steps">
+        <li><span class="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg></span>Diagnostic posé, mardi 23 h 40</li>
+        <li><span class="done"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg></span>Contournement en place, mercredi 9 h 30</li>
+        <li><span class="muted"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /> <polyline points="12 6 12 12 16 14" /></svg></span>Correctif du connecteur en test, Julien Marchal</li>
+      </ul></dd></div>
+    </dl>
+  </details>
+</div>
+
+<section class="week" aria-labelledby="w-t">
+  <div class="wrap">
+    <div class="week-head">
+      <h2 id="w-t">Échéances de la semaine</h2>
+      <p class="muted">Du lundi 1er au vendredi 5 mars</p>
+    </div>
+    <ol class="days">
+      <li class="day past">
+        <p class="dname"><span><b>1</b>lundi</span></p>
+        <ul class="ev"><li><span class="t"><strong>17 h</strong>Remis</span><a class="s" href="compte-rendu.html">Compte rendu de février</a></li></ul>
+      </li>
+      <li class="day past">
+        <p class="dname"><span><b>2</b>mardi</span></p>
+        <ul class="ev"><li><span class="t"><strong>10 h</strong>Reçue</span><span class="s">2027-047, application</span></li>
+        <li><span class="t"><strong>22 h</strong>Incident déclaré</span><span class="s">Destination</span></li></ul>
+      </li>
+      <li class="day today">
+        <p class="dname"><span><b>3</b>mercredi</span><em>Aujourd'hui</em></p>
+        <ul class="ev"><li><span class="t"><strong>Recette</strong>à valider</span><span class="s">Noiseraies, billetterie</span>
+          <button class="btn main small" type="button" popovertarget="rec-042">Valider</button></li></ul>
+      </li>
+      <li class="day">
+        <p class="dname"><span><b>4</b>jeudi</span></p>
+        <ul class="ev"><li><span class="t"><strong>10 h</strong>Prise en charge</span><span class="s">2027-047, application</span></li>
+        <li><span class="t"><strong>12 h</strong><span class="warn">Rétablissement</span></span><span class="s">Destination, flux APIDAE</span></li></ul>
+      </li>
+      <li class="day">
+        <p class="dname"><span><b>5</b>vendredi</span></p>
+        <ul class="ev"><li><span class="t"><strong>14 h</strong>Formation</span><span class="s">Brevo, agents du Parc</span></li>
+        <li><span class="t"><strong>17 h</strong>Recette à valider</span><span class="s">2027-043, Patrimoines</span>
+          <button class="btn small" type="button" popovertarget="rec-043">Valider</button></li></ul>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<div class="wrap">
+  <section class="sec" aria-labelledby="d-t">
+    <div class="sec-head">
+      <h2 id="d-t">Demandes en cours</h2>
+      <a class="muted" href="compte-rendu.html">Résolues en février</a>
+    </div>
+    <div class="cols" aria-hidden="true"><span>Numéro</span><span>Demande et outil</span><span>Priorité</span><span>Statut</span><span>Responsable</span><span>Blocage</span><span></span></div>
+    <details class="req">
+  <summary>
+    <span class="num">2027-046</span>
+    <span><span class="ti">Fiches APIDAE absentes</span><span class="sub">Anomalie · Destination Parc des Hautes-Combes</span></span>
+    <span class="prio bloquante">Bloquante</span>
+    <span class="stat ">En cours</span>
+    <span class="resp">Julien Marchal</span>
+    <span class="none">Aucun</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Mardi 2 mars, 22 h 05</dd></div>
+    <div><dt>Demandeur</dt><dd>Sophie Garnier, communication</dd></div>
+    <div><dt>Prise en charge</dt><dd>Mardi 2 mars, 22 h 40</dd></div>
+    <div><dt>Résolution</dt><dd>Prévue jeudi 4 mars, 12 h</dd></div>
+    <div><dt>Temps consacré</dt><dd>0,75 jour</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>Cause trouvée : nouveau format de réponse de l'API APIDAE</li><li>Copie du 2 mars affichée en attendant</li><li>Correctif du connecteur en test</li></ul></dd></div>
+    <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+  </dl>
+</details><details class="req" open>
+  <summary>
+    <span class="num">2027-044</span>
+    <span><span class="ti">Audio de la Grande Traversée</span><span class="sub">Évolution · Geotrek-admin</span></span>
+    <span class="prio ">Haute</span>
+    <span class="stat bloquee">Bloquée</span>
+    <span class="resp">Inès Robert</span>
+    <span class="blk">Audio des étapes 4 à 7 attendu</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Lundi 8 février, 10 h 12</dd></div>
+    <div><dt>Demandeur</dt><dd>Marc Delorme, référent Geotrek</dd></div>
+    <div><dt>Prise en charge</dt><dd>Lundi 8 février, 15 h 40</dd></div>
+    <div><dt>Résolution</dt><dd>Non résolue, ouverture prévue le 15 avril</dd></div>
+    <div><dt>Temps consacré</dt><dd>3,5 jours</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>Champ audio ajouté aux étapes dans Geotrek-admin</li><li>Lecteur intégré au portail et à l'application</li><li>Étapes 1 à 3 publiées en recette</li></ul></dd></div>
+    <div class="wide"><dt>Point de blocage</dt><dd class="blk" style="white-space:normal">Fichiers audio des étapes 4 à 7 attendus du Parc, relance envoyée le 22 février</dd></div>
+  </dl>
+</details><details class="req">
+  <summary>
+    <span class="num">2027-047</span>
+    <span><span class="ti">Carte hors ligne vide sur Android 15</span><span class="sub">Anomalie · Application Rando Hautes-Combes</span></span>
+    <span class="prio ">Haute</span>
+    <span class="stat ">À qualifier</span>
+    <span class="resp">Non attribuée</span>
+    <span class="none">Aucun</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Mardi 2 mars, 10 h 00</dd></div>
+    <div><dt>Demandeur</dt><dd>Marc Delorme, référent Geotrek</dd></div>
+    <div><dt>Prise en charge</dt><dd>À faire avant jeudi 4 mars, 10 h</dd></div>
+    <div><dt>Résolution</dt><dd>Non résolue</dd></div>
+    <div><dt>Temps consacré</dt><dd>0 jour</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>Aucune action pour l'instant</li></ul></dd></div>
+    <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+  </dl>
+</details><details class="req">
+  <summary>
+    <span class="num">2027-042</span>
+    <span><span class="ti">Billetterie du programme 2027</span><span class="sub">Évolution · Noiseraies</span></span>
+    <span class="prio ">Normale</span>
+    <span class="stat recette">En recette</span>
+    <span class="resp">Julien Marchal</span>
+    <span class="none">Aucun</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Jeudi 14 janvier, 9 h 30</dd></div>
+    <div><dt>Demandeur</dt><dd>Sophie Garnier, communication</dd></div>
+    <div><dt>Prise en charge</dt><dd>Jeudi 14 janvier, 14 h 10</dd></div>
+    <div><dt>Résolution</dt><dd>Mise en ligne après votre validation</dd></div>
+    <div><dt>Temps consacré</dt><dd>2 jours</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>Outil de réservation relié aux fiches des soirées</li><li>Recette ouverte le 26 février</li></ul></dd></div>
+    <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+  </dl>
+</details><details class="req">
+  <summary>
+    <span class="num">2027-043</span>
+    <span><span class="ti">Contribution avec photos</span><span class="sub">Évolution · Patrimoines</span></span>
+    <span class="prio ">Normale</span>
+    <span class="stat recette">En recette</span>
+    <span class="resp">Inès Robert</span>
+    <span class="none">Aucun</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Mardi 2 février, 11 h 20</dd></div>
+    <div><dt>Demandeur</dt><dd>Hugo Perrin, mission culture</dd></div>
+    <div><dt>Prise en charge</dt><dd>Mardi 2 février, 16 h 00</dd></div>
+    <div><dt>Résolution</dt><dd>Mise en ligne après votre validation</dd></div>
+    <div><dt>Temps consacré</dt><dd>1,5 jour</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>Envoi de cinq photos par contribution</li><li>Modération par le chargé de mission</li><li>Recette ouverte le 1er mars</li></ul></dd></div>
+    <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+  </dl>
+</details><details class="req">
+  <summary>
+    <span class="num">2027-040</span>
+    <span><span class="ti">Pages des géosites</span><span class="sub">Mise à jour de contenu · Réseau des Géoparcs</span></span>
+    <span class="prio ">Normale</span>
+    <span class="stat ">En cours</span>
+    <span class="resp">Claire Vasseur</span>
+    <span class="none">Aucun</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Mercredi 24 février, 15 h 45</dd></div>
+    <div><dt>Demandeur</dt><dd>Lucie Fabre, Géoparc des Causses</dd></div>
+    <div><dt>Prise en charge</dt><dd>Jeudi 25 février, 9 h 15</dd></div>
+    <div><dt>Résolution</dt><dd>Prévue vendredi 12 mars</dd></div>
+    <div><dt>Temps consacré</dt><dd>0,5 jour</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>12 fiches sur 18 reprises</li></ul></dd></div>
+    <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+  </dl>
+</details><details class="req">
+  <summary>
+    <span class="num">2027-045</span>
+    <span><span class="ti">Formation des agents</span><span class="sub">Formation · Brevo</span></span>
+    <span class="prio basse">Basse</span>
+    <span class="stat ">Planifiée</span>
+    <span class="resp">Claire Vasseur</span>
+    <span class="none">Aucun</span>
+    <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  </summary>
+  <dl class="body">
+    <div><dt>Reçue le</dt><dd>Vendredi 26 février, 10 h 05</dd></div>
+    <div><dt>Demandeur</dt><dd>Sophie Garnier, communication</dd></div>
+    <div><dt>Prise en charge</dt><dd>Vendredi 26 février, 11 h 30</dd></div>
+    <div><dt>Résolution</dt><dd>Prévue vendredi 5 mars, 14 h</dd></div>
+    <div><dt>Temps consacré</dt><dd>0,25 jour</dd></div>
+    <div class="wide"><dt>Actions réalisées</dt><dd><ul class="acts"><li>Support de formation envoyé</li><li>Salle du conseil réservée à Saint-Aubin</li></ul></dd></div>
+    <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+  </dl>
+</details>
+  </section>
+
+  <section class="sec" aria-label="État du parc">
+    <details class="line">
+      <summary>
+        <span class="lab"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /></svg>État du parc</span>
+        <span class="st">10 outils sur 12 à jour, une mise à jour en attente · sauvegardes réussies cette nuit à 2 h 10</span>
+        <span class="more">Détails <svg class="ico chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+      </summary>
+      <div class="body">
+        <table>
+          <thead><tr><th>Site ou outil</th><th>État</th><th>Version</th><th>Dernière sauvegarde</th></tr></thead>
+          <tbody><tr><td>Site du Parc</td><td>À jour</td><td>WordPress 6.7.2</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Noiseraies</td><td>À jour</td><td>WordPress 6.7.2</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>La Ligne de Crête</td><td>À jour</td><td>WordPress 6.7.2</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Destination Parc des Hautes-Combes</td><td>À jour</td><td>WordPress 6.7.2</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Patrimoines</td><td>À jour</td><td>WordPress 6.7.2</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Réseau des Géoparcs</td><td>À jour</td><td>WordPress 6.7.2</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Geotrek-admin</td><td class="stat recette">Mise à jour en attente</td><td>2.111, la 2.112 attend la migration</td><td>Cette nuit, 2 h 30</td></tr>
+<tr><td>Portails Geotrek-rando</td><td>À jour</td><td>Geotrek-rando 3.18</td><td>Cette nuit, 2 h 30</td></tr>
+<tr><td>Application Rando Hautes-Combes</td><td>À jour</td><td>3.4.1</td><td>Lundi 1er mars</td></tr>
+<tr><td>Flux APIDAE</td><td class="blk">Incident en cours</td><td>Connecteur 2.3</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Outil de réservation</td><td>À jour</td><td>4.9</td><td>Cette nuit, 2 h 10</td></tr>
+<tr><td>Mesure d'audience</td><td>À jour</td><td>Matomo 5.2</td><td>Cette nuit, 2 h 40</td></tr></tbody>
+        </table>
+        <p style="margin-top:16px"><a href="parc.html">Certificats, hébergeurs et tests de restauration</a></p>
+      </div>
+    </details>
+  </section>
+</div>
+</main>
+
+<div popover id="rec-042">
+  <h3>Billetterie du programme 2027</h3>
+  <p class="muted">Noiseraies · demande 2027-042 · recette ouverte le 26 février</p>
+  <ul class="list">
+    <li><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Réservation d'une soirée depuis sa fiche</li>
+    <li><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Courriel de confirmation envoyé par Brevo</li>
+    <li><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Places restantes à jour en moins d'une minute</li>
+  </ul>
+  <p>Après validation, mise en ligne jeudi 4 mars à 8 h.</p>
+  <div class="row" style="margin-top:20px">
+    <button class="btn" type="button" popovertarget="rec-042" popovertargetaction="hide">Demander une correction</button>
+    <button class="btn main" type="button" popovertarget="rec-042" popovertargetaction="hide">Valider la mise en ligne</button>
+  </div>
+</div>
+<div popover id="rec-043">
+  <h3>Formulaire de contribution avec photos</h3>
+  <p class="muted">Patrimoines · demande 2027-043 · recette ouverte le 1er mars</p>
+  <ul class="list">
+    <li><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Envoi de cinq photos par contribution</li>
+    <li><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Modération avant publication</li>
+    <li><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Mention de l'auteur sous chaque photo</li>
+  </ul>
+  <p>Après validation, mise en ligne lundi 8 mars à 8 h.</p>
+  <div class="row" style="margin-top:20px">
+    <button class="btn" type="button" popovertarget="rec-043" popovertargetaction="hide">Demander une correction</button>
+    <button class="btn main" type="button" popovertarget="rec-043" popovertargetaction="hide">Valider la mise en ligne</button>
+  </div>
+</div>
+<footer class="foot"><div class="wrap">Prestataire de maintenance 2027 · Claire Vasseur, cheffe de projet · <a href="documentation.html">Documentation</a></div></footer>
+</body>
+</html>

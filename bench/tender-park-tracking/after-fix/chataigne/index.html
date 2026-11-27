@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de suivi · Parc naturel régional des Hautes-Combes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+body:has(#f044:target) .row[href="#f044"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f044:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f031:target) .row[href="#f031"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f031:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f049:target) .row[href="#f049"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f049:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f050:target) .row[href="#f050"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f050:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f047:target) .row[href="#f047"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f047:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f053:target) .row[href="#f053"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f053:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f045:target) .row[href="#f045"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f045:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+body:has(#f041:target) .row[href="#f041"] { background: var(--paper); border-top-color: transparent; }
+body:has(#f041:target) .row[href="#f052"] { background: transparent; border-top-color: var(--band-line); }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html">Parc naturel régional des Hautes-Combes</a>
+  <nav class="nav" aria-label="Espace de suivi">
+    <a href="index.html" aria-current="page">Tableau de suivi</a>
+    <a href="parc.html">État du parc</a>
+    <a href="feuilles-de-route.html">Feuilles de route</a>
+    <a href="compte-rendu.html">Comptes rendus</a>
+    <a href="documentation.html">Documentation</a>
+  </nav>
+</header>
+
+<main>
+<section class="state" aria-labelledby="etat">
+  <div>
+    <p class="date">Mardi 9 mars 2027, 10 h 40</p>
+    <h1 id="etat">Un incident bloque les fiches du site Destination. Deux évolutions attendent votre validation.</h1>
+    <div class="figures">
+      <p class="fig alert"><b>1</b>incident en cours</p>
+      <p class="fig"><b>2</b>à valider</p>
+      <p class="fig"><b>9</b>demandes ouvertes</p>
+      <p class="parcline"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /> </svg><span>Parc : <span class="ok">11 sur 13 à jour</span>, sauvegardé cette nuit</span>
+        <button class="link" popovertarget="parc">Détails<svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></button></p>
+    </div>
+  </div>
+  <div class="act">
+    <a class="btn" href="demandes/nouvelle.html"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M5 12h14" /> <path d="M12 5v14" /> </svg>Déposer une demande</a>
+    <p>Qualifiée sous 48 heures ouvrées</p>
+  </div>
+</section>
+<div id="parc" popover>
+  <h2>État du parc, ce matin</h2>
+  <table class="ptable">
+    <thead><tr><th>Site ou outil</th><th>Version</th><th>Mises à jour</th><th>Dernière sauvegarde</th></tr></thead>
+    <tbody><tr><td>Site du Parc</td><td class="grey">WordPress 6.7.2</td><td class="">À jour</td><td>9 mars, 2 h 10</td></tr><tr><td>Noiseraies</td><td class="grey">WordPress 6.7.2</td><td class="">À jour</td><td>9 mars, 2 h 10</td></tr><tr><td>La Ligne de Crête</td><td class="grey">WordPress 6.7.2</td><td class="warn">1 extension en attente</td><td>9 mars, 2 h 10</td></tr><tr><td>Destination</td><td class="grey">WordPress 6.7.2</td><td class="">À jour</td><td>9 mars, 2 h 10</td></tr><tr><td>Patrimoines</td><td class="grey">WordPress 6.7.2</td><td class="">À jour</td><td>9 mars, 2 h 15</td></tr><tr><td>Réseau des Géoparcs</td><td class="grey">WordPress 6.7.2</td><td class="">À jour</td><td>9 mars, 2 h 20</td></tr><tr><td>Geotrek-admin</td><td class="grey">2.112.0</td><td class="">À jour</td><td>9 mars, 3 h 00</td></tr><tr><td>Portails Geotrek-rando</td><td class="grey">3.18.1</td><td class="">À jour</td><td>9 mars, 3 h 00</td></tr><tr><td>Rando Hautes-Combes</td><td class="grey">Application 3.4.1</td><td class="">À jour</td><td>Sans objet</td></tr><tr><td>Flux APIDAE</td><td class="grey">Import quotidien</td><td class="warn">En incident</td><td>Dernier import : 8 mars, 6 h</td></tr><tr><td>Brevo</td><td class="grey">Service en ligne</td><td class="">À jour</td><td>Sans objet</td></tr><tr><td>Outil de réservation</td><td class="grey">4.2</td><td class="">À jour</td><td>9 mars, 2 h 30</td></tr><tr><td>Mesure d'audience</td><td class="grey">Matomo 5.2</td><td class="">À jour</td><td>9 mars, 2 h 40</td></tr></tbody>
+  </table>
+  <div class="pfoot"><a class="btn ghost" href="parc.html">Tout l'état du parc</a></div>
+</div>
+<div class="desk">
+  <nav class="casier" aria-label="Demandes en cours, de la plus urgente à la moins urgente">
+    <ul>
+    <li class="group">Incident en cours</li><li><a class="row on" href="#f052">
+      <p class="m">D-27-052 · Destination · Anomalie</p>
+      <p class="ti">Les fiches APIDAE ne s'affichent plus sur Destination</p>
+      <p class="s"><span class="prio-bloq">Priorité bloquante</span> · En cours · Julien Marchal</p><p class="b">Blocage : Nouvelle clé APIDAE attendue de l'office de tourisme</p>
+    </a></li><li class="group">Attend votre validation</li><li><a class="row" href="#f044">
+      <p class="m">D-27-044 · Rando Hautes-Combes · Évolution</p>
+      <p class="ti">Étapes géolocalisées de la Grande Traversée</p>
+      <p class="s">Priorité haute · En recette, à valider · Samir Haddad</p>
+    </a></li><li><a class="row" href="#f031">
+      <p class="m">D-27-031 · Site du Parc · Évolution</p>
+      <p class="ti">Agenda filtrable par commune</p>
+      <p class="s">Priorité normale · En recette, à valider · Léa Perrin</p>
+    </a></li><li class="group">En cours</li><li><a class="row" href="#f049">
+      <p class="m">D-27-049 · Geotrek-admin · Anomalie</p>
+      <p class="ti">Boucles de Haut-Val dédoublées à l'import</p>
+      <p class="s">Priorité haute · En cours · Samir Haddad</p><p class="b">Blocage : Export des tronçons attendu de Haut-Val</p>
+    </a></li><li><a class="row" href="#f050">
+      <p class="m">D-27-050 · Patrimoines · Mise à jour de contenu</p>
+      <p class="ti">Ajouter 14 fiches de lavoirs</p>
+      <p class="s">Priorité normale · Qualifiée · Léa Perrin</p>
+    </a></li><li><a class="row" href="#f047">
+      <p class="m">D-27-047 · Brevo · Question</p>
+      <p class="ti">Segment des partenaires pour la lettre d'avril</p>
+      <p class="s">Priorité basse · En cours · Nadia Vasseur</p>
+    </a></li><li><a class="row" href="#f053">
+      <p class="m">D-27-053 · Réseau des Géoparcs · Anomalie</p>
+      <p class="ti">Carte des géosites vide sur mobile</p>
+      <p class="s">Priorité normale · À qualifier, 11 mars · Non attribuée</p>
+    </a></li><li><a class="row" href="#f045">
+      <p class="m">D-27-045 · La Ligne de Crête · Formation</p>
+      <p class="ti">Prise en main de l'éditeur pour deux médiatrices</p>
+      <p class="s">Priorité basse · Planifiée le 18 mars · Nadia Vasseur</p>
+    </a></li><li class="group">En attente</li><li><a class="row" href="#f041">
+      <p class="m">D-27-041 · Noiseraies · Évolution</p>
+      <p class="ti">Programme 2027 des Noiseraies</p>
+      <p class="s">Priorité normale · En attente du Parc · Léa Perrin</p><p class="b">Blocage : Textes du programme attendus du Parc</p>
+    </a></li>
+    </ul>
+  </nav>
+  <div class="fiches">
+  <article class="fiche default" id="f052" aria-labelledby="f052h">
+    <p class="kicker alert"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /> </svg>D-27-052 · Incident en cours</p>
+    <h2 id="f052h">Les fiches APIDAE ne s'affichent plus sur Destination</h2>
+    <p class="meta">Destination Parc des Hautes-Combes · Anomalie · <span class="prio-bloq">Priorité bloquante</span> · En cours de rétablissement</p>
+    <div class="big"><b>16 h</b><span>Rétablissement prévu aujourd'hui</span></div>
+    <dl class="lines">
+      <dt>Diagnostic</dt><dd>La clé d'accès au flux APIDAE a expiré cette nuit ; l'import de 6 h a échoué.</dd>
+      <dt>Conséquences</dt><dd>Hébergements, restaurants et agenda affichent « Aucun résultat ».</dd>
+      <dt>Contournement</dt><dd>Depuis 9 h 30, la copie du 8 mars est servie en lecture seule.</dd>
+      <dt>Blocage</dt><dd class="alert">Nouvelle clé APIDAE attendue de l'office de tourisme</dd>
+    </dl>
+    <details class="fold" open><summary><span class="lab">Avancement</span><span class="sum">2 étapes sur 4</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ol class="steps">
+        <li><span class="done"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 6 9 17l-5-5" /> </svg></span><time>9 h 05</time><span>Diagnostic posé</span></li>
+        <li><span class="done"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 6 9 17l-5-5" /> </svg></span><time>9 h 30</time><span>Contournement en ligne</span></li>
+        <li><span class="wait"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M5 22h14" /> <path d="M5 2h14" /> <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /> <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /> </svg></span><time>9 h 50</time><span>Nouvelle clé demandée</span></li>
+        <li><span class="next"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /> </svg></span><time>15 h 00</time><span>Import relancé et vérifié</span></li>
+      </ol></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>9 mars, 8 h 12</dd></div><div><dt>Demandeur</dt><dd>Claire Fontanel, Parc</dd></div><div><dt>Responsable</dt><dd>Julien Marchal</dd></div><div><dt>Prise en charge</dt><dd>9 mars, 8 h 40</dd></div><div><dt>Temps consacré</dt><dd>0,4 jour</dd></div><div><dt>Résolution</dt><dd>Prévue aujourd'hui avant 16 h</dd></div></dl>
+  </article>
+  <article class="fiche" id="f044" aria-labelledby="f044h">
+    <p class="kicker">D-27-044 · En recette, à valider</p>
+    <h2 id="f044h">Étapes géolocalisées de la Grande Traversée</h2>
+    <p class="meta">Application Rando Hautes-Combes · Évolution · Priorité haute</p>
+    <div class="valid"><p>Version de recette 3.5.0, disponible depuis le 8 mars. Mise en ligne prévue le 16 mars.</p>
+      <button class="btn" popovertarget="v044"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 6 9 17l-5-5" /> </svg>Valider la mise en ligne</button></div>
+    <div id="v044" popover>
+      <h2>Valider la mise en ligne de D-27-044</h2>
+      <p>Étapes géolocalisées de la Grande Traversée, Application Rando Hautes-Combes. La mise en ligne est faite par Samir Haddad dans les deux jours ouvrés, puis notée au compte rendu de mars.</p>
+      <div class="pfoot"><button class="btn ghost" popovertarget="v044" popovertargetaction="hide">Pas encore</button>
+      <button class="btn" popovertarget="v044" popovertargetaction="hide">Je valide</button></div>
+    </div>
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd>Aucun</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">3 actions</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Douze étapes saisies dans Geotrek-admin avec leurs points audio</li><li>Version 3.5.0 publiée en recette le 8 mars</li><li>Testée sur Android 14 et iOS 18</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>12 février, 10 h 05</dd></div><div><dt>Demandeur</dt><dd>Bastien Roux, Parc</dd></div><div><dt>Responsable</dt><dd>Samir Haddad</dd></div><div><dt>Prise en charge</dt><dd>12 février, 14 h 30</dd></div><div><dt>Temps consacré</dt><dd>3,5 jours</dd></div><div><dt>Résolution</dt><dd>Mise en ligne après validation</dd></div></dl>
+  </article><article class="fiche" id="f031" aria-labelledby="f031h">
+    <p class="kicker">D-27-031 · En recette, à valider</p>
+    <h2 id="f031h">Agenda filtrable par commune</h2>
+    <p class="meta">Site du Parc · Évolution · Priorité normale</p>
+    <div class="valid"><p>Recette ouverte depuis le 4 mars sur recette.parc-hautes-combes.fr.</p>
+      <button class="btn" popovertarget="v031"><svg class="i" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 6 9 17l-5-5" /> </svg>Valider la mise en ligne</button></div>
+    <div id="v031" popover>
+      <h2>Valider la mise en ligne de D-27-031</h2>
+      <p>Agenda filtrable par commune, Site du Parc. La mise en ligne est faite par Léa Perrin dans les deux jours ouvrés, puis notée au compte rendu de mars.</p>
+      <div class="pfoot"><button class="btn ghost" popovertarget="v031" popovertargetaction="hide">Pas encore</button>
+      <button class="btn" popovertarget="v031" popovertargetaction="hide">Je valide</button></div>
+    </div>
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd>Aucun</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">3 actions</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Filtre par commune et par thème ajouté à l'agenda</li><li>Reprise des 86 événements de mars à juin</li><li>Mise en recette le 4 mars</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>27 janvier, 9 h 40</dd></div><div><dt>Demandeur</dt><dd>Claire Fontanel, Parc</dd></div><div><dt>Responsable</dt><dd>Léa Perrin</dd></div><div><dt>Prise en charge</dt><dd>27 janvier, 15 h 10</dd></div><div><dt>Temps consacré</dt><dd>2,25 jours</dd></div><div><dt>Résolution</dt><dd>Mise en ligne après validation</dd></div></dl>
+  </article><article class="fiche" id="f049" aria-labelledby="f049h">
+    <p class="kicker">D-27-049 · En cours</p>
+    <h2 id="f049h">Boucles de Haut-Val dédoublées à l'import</h2>
+    <p class="meta">Geotrek-admin · Anomalie · Priorité haute</p>
+    
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd class="alert">Export des tronçons attendu de Haut-Val</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">2 actions</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Doublons repérés sur 7 boucles du Grand Mont</li><li>Import suspendu pour les partenaires de Haut-Val</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>4 mars, 11 h 20</dd></div><div><dt>Demandeur</dt><dd>Bastien Roux, Parc</dd></div><div><dt>Responsable</dt><dd>Samir Haddad</dd></div><div><dt>Prise en charge</dt><dd>4 mars, 16 h 00</dd></div><div><dt>Temps consacré</dt><dd>0,75 jour</dd></div><div><dt>Résolution</dt><dd>Non résolue</dd></div></dl>
+  </article><article class="fiche" id="f050" aria-labelledby="f050h">
+    <p class="kicker">D-27-050 · Qualifiée</p>
+    <h2 id="f050h">Ajouter 14 fiches de lavoirs</h2>
+    <p class="meta">Patrimoines · Mise à jour de contenu · Priorité normale</p>
+    
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd>Aucun</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">1 action</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Photos et textes des contributeurs vérifiés</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>5 mars, 15 h 45</dd></div><div><dt>Demandeur</dt><dd>Marc Ollier, Parc</dd></div><div><dt>Responsable</dt><dd>Léa Perrin</dd></div><div><dt>Prise en charge</dt><dd>8 mars, 9 h 10</dd></div><div><dt>Temps consacré</dt><dd>0,25 jour</dd></div><div><dt>Résolution</dt><dd>Non résolue</dd></div></dl>
+  </article><article class="fiche" id="f047" aria-labelledby="f047h">
+    <p class="kicker">D-27-047 · En cours</p>
+    <h2 id="f047h">Segment des partenaires pour la lettre d'avril</h2>
+    <p class="meta">Brevo · Question · Priorité basse</p>
+    
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd>Aucun</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">1 action</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Liste de 312 contacts partenaires extraite</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>1er mars, 14 h 00</dd></div><div><dt>Demandeur</dt><dd>Claire Fontanel, Parc</dd></div><div><dt>Responsable</dt><dd>Nadia Vasseur</dd></div><div><dt>Prise en charge</dt><dd>2 mars, 9 h 30</dd></div><div><dt>Temps consacré</dt><dd>0,25 jour</dd></div><div><dt>Résolution</dt><dd>Non résolue</dd></div></dl>
+  </article><article class="fiche" id="f053" aria-labelledby="f053h">
+    <p class="kicker">D-27-053 · À qualifier, 11 mars</p>
+    <h2 id="f053h">Carte des géosites vide sur mobile</h2>
+    <p class="meta">Réseau des Géoparcs · Anomalie · Priorité normale</p>
+    
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd>Aucun</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">0 action</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><p>Aucune action pour l'instant.</p></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>9 mars, 9 h 55</dd></div><div><dt>Demandeur</dt><dd>Hélène Castan, Géoparc des Causses</dd></div><div><dt>Responsable</dt><dd>Non attribuée</dd></div><div><dt>Prise en charge</dt><dd>Non prise en charge</dd></div><div><dt>Temps consacré</dt><dd>0 jour</dd></div><div><dt>Résolution</dt><dd>Non résolue</dd></div></dl>
+  </article><article class="fiche" id="f045" aria-labelledby="f045h">
+    <p class="kicker">D-27-045 · Planifiée le 18 mars</p>
+    <h2 id="f045h">Prise en main de l'éditeur pour deux médiatrices</h2>
+    <p class="meta">La Ligne de Crête · Formation · Priorité basse</p>
+    
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd>Aucun</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">1 action</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Séance de deux heures fixée au 18 mars à Saint-Aubin</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>22 février, 10 h 15</dd></div><div><dt>Demandeur</dt><dd>Marc Ollier, Parc</dd></div><div><dt>Responsable</dt><dd>Nadia Vasseur</dd></div><div><dt>Prise en charge</dt><dd>23 février, 11 h 00</dd></div><div><dt>Temps consacré</dt><dd>0,25 jour</dd></div><div><dt>Résolution</dt><dd>Non résolue</dd></div></dl>
+  </article><article class="fiche" id="f041" aria-labelledby="f041h">
+    <p class="kicker">D-27-041 · En attente du Parc</p>
+    <h2 id="f041h">Programme 2027 des Noiseraies</h2>
+    <p class="meta">Noiseraies · Évolution · Priorité normale</p>
+    
+    <dl class="lines" style="margin-top:28px"><dt>Blocage</dt><dd class="alert">Textes du programme attendus du Parc</dd></dl>
+    <details class="fold"><summary><span class="lab">Actions réalisées</span><span class="sum">2 actions</span><svg class="i chev" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /> </svg></summary>
+      <div class="in"><ul><li>Gabarit des pages concerts et marchés prêt</li><li>Billetterie reliée à l'outil de réservation</li></ul></div></details>
+    <dl class="fields"><div><dt>Reçue le</dt><dd>15 février, 16 h 30</dd></div><div><dt>Demandeur</dt><dd>Claire Fontanel, Parc</dd></div><div><dt>Responsable</dt><dd>Léa Perrin</dd></div><div><dt>Prise en charge</dt><dd>16 février, 9 h 00</dd></div><div><dt>Temps consacré</dt><dd>1 jour</dd></div><div><dt>Résolution</dt><dd>Non résolue</dd></div></dl>
+  </article>
+  </div>
+</div>
+</main>
+</body>
+</html>

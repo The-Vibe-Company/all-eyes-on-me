@@ -1,0 +1,245 @@
+{
+  "measured": "2026-11-27, at 1280 × 800, by the measure `aeom check`'s layers grew from",
+  "pages": [
+    {
+      "round": 1,
+      "direction": "classique",
+      "page": "index.html",
+      "wordsShown": 486,
+      "firstScreenWords": 241,
+      "firstScreenUnder14px": 0.24,
+      "framedOnFirstScreen": 4,
+      "folds": 0
+    },
+    {
+      "round": 1,
+      "direction": "classique",
+      "page": "incident.html",
+      "wordsShown": 593,
+      "firstScreenWords": 294,
+      "firstScreenUnder14px": 0.11,
+      "framedOnFirstScreen": 5,
+      "folds": 0
+    },
+    {
+      "round": 2,
+      "direction": "classique-2",
+      "page": "index.html",
+      "wordsShown": 306,
+      "firstScreenWords": 138,
+      "firstScreenUnder14px": 0.01,
+      "framedOnFirstScreen": 0,
+      "folds": 12
+    },
+    {
+      "round": 2,
+      "direction": "classique-2",
+      "page": "incident.html",
+      "wordsShown": 331,
+      "firstScreenWords": 246,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 1,
+      "folds": 11
+    },
+    {
+      "round": 1,
+      "direction": "vigilance",
+      "page": "index.html",
+      "wordsShown": 439,
+      "firstScreenWords": 195,
+      "firstScreenUnder14px": 0.06,
+      "framedOnFirstScreen": 1,
+      "folds": 0
+    },
+    {
+      "round": 1,
+      "direction": "vigilance",
+      "page": "incident.html",
+      "wordsShown": 469,
+      "firstScreenWords": 225,
+      "firstScreenUnder14px": 0.04,
+      "framedOnFirstScreen": 3,
+      "folds": 0
+    },
+    {
+      "round": 2,
+      "direction": "vigilance-2",
+      "page": "index.html",
+      "wordsShown": 248,
+      "firstScreenWords": 130,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 13
+    },
+    {
+      "round": 2,
+      "direction": "vigilance-2",
+      "page": "incident.html",
+      "wordsShown": 327,
+      "firstScreenWords": 150,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 9
+    },
+    {
+      "round": 1,
+      "direction": "rampe",
+      "page": "index.html",
+      "wordsShown": 1743,
+      "firstScreenWords": 1468,
+      "firstScreenUnder14px": 0.89,
+      "framedOnFirstScreen": 0,
+      "folds": 0
+    },
+    {
+      "round": 1,
+      "direction": "rampe",
+      "page": "incident.html",
+      "wordsShown": 561,
+      "firstScreenWords": 287,
+      "firstScreenUnder14px": 0.28,
+      "framedOnFirstScreen": 1,
+      "folds": 0
+    },
+    {
+      "round": 2,
+      "direction": "rampe-2",
+      "page": "index.html",
+      "wordsShown": 308,
+      "firstScreenWords": 91,
+      "firstScreenUnder14px": 0.1,
+      "framedOnFirstScreen": 0,
+      "folds": 17
+    },
+    {
+      "round": 2,
+      "direction": "rampe-2",
+      "page": "incident.html",
+      "wordsShown": 378,
+      "firstScreenWords": 148,
+      "firstScreenUnder14px": 0.22,
+      "framedOnFirstScreen": 0,
+      "folds": 9
+    },
+    {
+      "round": 1,
+      "direction": "suivi",
+      "page": "index.html",
+      "wordsShown": 542,
+      "firstScreenWords": 128,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 1,
+      "folds": 0
+    },
+    {
+      "round": 1,
+      "direction": "suivi",
+      "page": "incident.html",
+      "wordsShown": 528,
+      "firstScreenWords": 155,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 1,
+      "folds": 0
+    },
+    {
+      "round": 2,
+      "direction": "suivi-2",
+      "page": "index.html",
+      "wordsShown": 304,
+      "firstScreenWords": 125,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 15
+    },
+    {
+      "round": 2,
+      "direction": "suivi-2",
+      "page": "incident.html",
+      "wordsShown": 332,
+      "firstScreenWords": 132,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 10
+    },
+    {
+      "round": 1,
+      "direction": "departs",
+      "page": "index.html",
+      "wordsShown": 448,
+      "firstScreenWords": 193,
+      "firstScreenUnder14px": 0.09,
+      "framedOnFirstScreen": 0,
+      "folds": 0
+    },
+    {
+      "round": 1,
+      "direction": "departs",
+      "page": "incident.html",
+      "wordsShown": 412,
+      "firstScreenWords": 185,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 2,
+      "folds": 0
+    },
+    {
+      "round": 2,
+      "direction": "departs-2",
+      "page": "index.html",
+      "wordsShown": 319,
+      "firstScreenWords": 148,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 14
+    },
+    {
+      "round": 2,
+      "direction": "departs-2",
+      "page": "incident.html",
+      "wordsShown": 295,
+      "firstScreenWords": 140,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 7
+    },
+    {
+      "round": 1,
+      "direction": "parapheur",
+      "page": "index.html",
+      "wordsShown": 582,
+      "firstScreenWords": 283,
+      "firstScreenUnder14px": 0.23,
+      "framedOnFirstScreen": 2,
+      "folds": 0
+    },
+    {
+      "round": 1,
+      "direction": "parapheur",
+      "page": "incident.html",
+      "wordsShown": 568,
+      "firstScreenWords": 323,
+      "firstScreenUnder14px": 0.2,
+      "framedOnFirstScreen": 3,
+      "folds": 0
+    },
+    {
+      "round": 2,
+      "direction": "parapheur-2",
+      "page": "index.html",
+      "wordsShown": 286,
+      "firstScreenWords": 169,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 11
+    },
+    {
+      "round": 2,
+      "direction": "parapheur-2",
+      "page": "incident.html",
+      "wordsShown": 339,
+      "firstScreenWords": 165,
+      "firstScreenUnder14px": 0.0,
+      "framedOnFirstScreen": 0,
+      "folds": 9
+    }
+  ]
+}
