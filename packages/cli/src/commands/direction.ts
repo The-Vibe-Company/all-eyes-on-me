@@ -113,8 +113,9 @@ export async function runDirection(argv: string[]): Promise<number> {
   if (!sentence) return (console.error(`${folder} has no sentence: give --sentence, or write it in its direction.json.`), 1);
   const before = await read();
   await rm(KEPT, { recursive: true, force: true });
-  // The mockup whole, the images generated for it included: its captures are beside its folder, never in it.
-  await cp(from, KEPT, { recursive: true });
+  // The mockup whole, the images generated for it included: its captures are beside its folder, never in it, and
+  // what its worker kept to look at its own work, in .work/, is no part of it.
+  await cp(from, KEPT, { recursive: true, filter: (src) => basename(src) !== ".work" });
   // Its images stay on this machine, should the folder be committed: a run lists the ones it carries into the front.
   await writeFile(join(KEPT, ".gitignore"), "*.png\n*.jpg\n*.jpeg\n*.webp\n*.gif\n");
   // The run it was chosen in, when the folder is a run's: .aeom/runs/<run>/directions/<slug>.

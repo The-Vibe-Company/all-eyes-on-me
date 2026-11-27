@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Tableau de suivi · Suivi de l'écosystème web · Parc naturel régional des Hautes-Combes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div class="shell">
+  <header class="rail">
+    <p class="brand"><a href="index.html">Suivi de l'écosystème web</a><span>Parc naturel régional des Hautes-Combes</span></p>
+    <nav class="nav" aria-label="Navigation principale">
+      <ul>
+          <li><a href="index.html" aria-current="page"><img class="ico" src="icons/gauge.svg" alt="">Tableau de suivi</a></li>
+          <li><a href="#"><img class="ico" src="icons/plus.svg" alt="">Déposer une demande</a></li>
+          <li><a href="#"><img class="ico" src="icons/server.svg" alt="">État du parc</a></li>
+          <li><a href="compte-rendu.html"><img class="ico" src="icons/file-text.svg" alt="">Comptes rendus</a></li>
+          <li><a href="#"><img class="ico" src="icons/map.svg" alt="">Feuilles de route</a></li>
+          <li><a href="#"><img class="ico" src="icons/book-open.svg" alt="">Documentation</a></li>
+      </ul>
+    </nav>
+    <p class="user"><span class="avatar" aria-hidden="true">HR</span><span><b>Hélène Roux</b><small>Responsable de la communication</small></span></p>
+  </header>
+  <div class="main">
+    <main id="contenu" class="content">
+      <div class="page-head">
+        <div>
+          <h1>Tableau de suivi</h1>
+          <p>Mardi 16 mars 2027, 10 h 20</p>
+        </div>
+        <div class="head-actions">
+          <p><a class="btn btn-primary" href="#"><img class="ico" src="icons/plus.svg" alt="">Déposer une demande</a></p>
+        </div>
+      </div>
+
+      <section class="section card incident" aria-labelledby="incident-titre">
+        <div class="incident-top">
+          <div>
+            <p class="incident-label"><img class="ico" src="icons/triangle-alert.svg" alt=""><span id="incident-titre">Incident en cours</span></p>
+            <p class="incident-text"><a class="id" href="#PNR-2027-041">PNR-2027-041</a>, site Destination Parc des Hautes-Combes : les fiches hébergements et restaurants venues d'APIDAE ne se mettent plus à jour depuis le dimanche 14 mars à 3 h.</p>
+          </div>
+          <div class="eta">
+            <small>Délai prévisionnel de rétablissement</small>
+            <strong>Mercredi 17 mars, 12 h</strong>
+            <span>Correctif de l'import en recette ce soir.</span>
+          </div>
+        </div>
+        <dl>
+          <div><dt>Diagnostic</dt><dd>L'import nocturne APIDAE s'arrête sur une fiche au format de date inattendu ; les 1 214 fiches affichées sont celles du samedi 13 mars.</dd></div>
+          <div><dt>Conséquences</dt><dd>Les horaires et ouvertures de 38 fiches modifiées depuis samedi ne sont pas à jour sur le site. Les fiches Geotrek ne sont pas touchées.</dd></div>
+          <div><dt>Contournement</dt><dd>Import relancé à la main ce matin à 9 h 05 en écartant la fiche fautive : 37 fiches sur 38 à jour.</dd></div>
+        </dl>
+        <p class="incident-foot">Dernier point : mardi 16 mars, 9 h 40, par Paul.</p>
+      </section>
+
+      <section class="section" aria-labelledby="valider-titre">
+        <div class="section-head"><h2 id="valider-titre">À valider par le Parc</h2></div>
+        <ul class="validations">
+          <li class="card validation">
+            <div class="validation-top"><span class="validation-tool"><a class="id" href="#PNR-2027-039">PNR-2027-039</a> · Geotrek-rando</span><span class="badge wait">En attente de votre validation</span></div>
+            <p><strong>Bouton « Signaler un problème » relié à Suricate</strong> sur les trois portails partenaires, en recette depuis le lundi 15 mars avec le compte rendu de tests.</p>
+            <div class="validation-foot"><span></span><button class="btn btn-primary" type="button">Valider la mise en ligne</button></div>
+          </li>
+          <li class="card validation">
+            <div class="validation-top"><span class="validation-tool"><a class="id" href="#PNR-2027-040">PNR-2027-040</a> · Brevo</span><span class="badge wait">En attente de votre validation</span></div>
+            <p><strong>Lettre d'information de mars</strong>, envoi prévu le jeudi 18 mars à 10 h.</p>
+            <div class="validation-foot"><span></span><button class="btn btn-primary" type="button">Valider l'envoi</button></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="demandes-titre">
+        <div class="section-head"><h2 id="demandes-titre">Demandes en cours <span class="count">7</span></h2></div>
+        <div class="requests">
+          <div class="req-grid req-head" aria-hidden="true">
+            <span></span><span>Demande</span><span>Outil</span><span>Priorité</span><span>Statut</span><span>Responsable</span><span>Point de blocage</span>
+          </div>
+        <details class="req" id="PNR-2027-041">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Import APIDAE arrêté</b><span class="meta"><a class="id" href="#PNR-2027-041">PNR-2027-041</a> · Incident</span></span>
+            <span class="clamp">Site Destination</span>
+            <span><span class="badge p-bloquante">Bloquante</span></span>
+            <span class="clamp" title="Contournement en place, correctif en cours">Contournement en place, correctif en cours</span>
+            <span class="cell">Paul</span>
+            <span class="clamp block-no" title="Aucun">Aucun</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Dim. 14 mars, 7 h 50 (alerte de supervision)</dd></div>
+              <div><dt>Demandeur</dt><dd>Supervision</dd></div>
+              <div><dt>Prise en charge</dt><dd>Lun. 15 mars, 9 h 00</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">0,5 jour</dd></div>
+              <div><dt>Résolution</dt><dd>Prévue mer. 17 mars, 12 h</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Diagnostic de l&#x27;import, fiche fautive écartée, import relancé à la main à 9 h 05 (37 fiches sur 38 à jour)</dd></div>
+              <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details>
+        <details class="req" id="PNR-2027-040">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Lettre d&#x27;information de mars</b><span class="meta"><a class="id" href="#PNR-2027-040">PNR-2027-040</a> · Contenu</span></span>
+            <span class="clamp">Brevo</span>
+            <span><span class="badge p-haute">Haute</span></span>
+            <span class="clamp" title="Lettre à valider par le Parc">Lettre à valider par le Parc</span>
+            <span class="cell">Lucas</span>
+            <span class="clamp block-yes" title="Photo de couverture à fournir par le Parc">Photo de couverture à fournir par le Parc</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Ven. 12 mars, 11 h 15</dd></div>
+              <div><dt>Demandeur</dt><dd>Hélène Roux</dd></div>
+              <div><dt>Prise en charge</dt><dd>Ven. 12 mars, 14 h 30</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">0,5 jour</dd></div>
+              <div><dt>Résolution</dt><dd>Envoi prévu jeu. 18 mars, 10 h</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Maquette de la lettre montée dans Brevo, liste de diffusion vérifiée</dd></div>
+              <div><dt>Point de blocage</dt><dd>Photo de couverture à fournir par le Parc</dd></div>
+            </dl>
+          </div>
+        </details>
+        <details class="req" id="PNR-2027-039">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Signalements Suricate sur les portails</b><span class="meta"><a class="id" href="#PNR-2027-039">PNR-2027-039</a> · Évolution</span></span>
+            <span class="clamp">Geotrek-rando</span>
+            <span><span class="badge p-normale">Normale</span></span>
+            <span class="clamp" title="En recette, à valider par le Parc">En recette, à valider par le Parc</span>
+            <span class="cell">Hugo</span>
+            <span class="clamp block-no" title="Aucun">Aucun</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Jeu. 11 mars, 16 h 02</dd></div>
+              <div><dt>Demandeur</dt><dd>Julien Mercier</dd></div>
+              <div><dt>Prise en charge</dt><dd>Ven. 12 mars, 9 h 20</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">2 jours</dd></div>
+              <div><dt>Résolution</dt><dd>Mise en ligne après validation</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Bouton « Signaler un problème » relié à Suricate sur les trois portails, tests en recette</dd></div>
+              <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details>
+        <details class="req" id="PNR-2027-038">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Fiches en attente invisibles pour un contributeur</b><span class="meta"><a class="id" href="#PNR-2027-038">PNR-2027-038</a> · Anomalie</span></span>
+            <span class="clamp">Site Patrimoines</span>
+            <span><span class="badge p-normale">Normale</span></span>
+            <span class="clamp" title="Corrigée, en observation">Corrigée, en observation</span>
+            <span class="cell">Lucas</span>
+            <span class="clamp block-no" title="Aucun">Aucun</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Mer. 10 mars, 10 h 45</dd></div>
+              <div><dt>Demandeur</dt><dd>Thomas Faure</dd></div>
+              <div><dt>Prise en charge</dt><dd>Mer. 10 mars, 15 h 10</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">0,25 jour</dd></div>
+              <div><dt>Résolution</dt><dd>Lun. 15 mars, 17 h 30</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Droits du rôle contributeur corrigés, fiches en attente de nouveau visibles</dd></div>
+              <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details>
+        <details class="req" id="PNR-2027-037">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Nouvelle version de Geotrek-admin</b><span class="meta"><a class="id" href="#PNR-2027-037">PNR-2027-037</a> · Mise à jour</span></span>
+            <span class="clamp">Geotrek-admin</span>
+            <span><span class="badge p-normale">Normale</span></span>
+            <span class="clamp" title="Testée en recette, mise en production planifiée">Testée en recette, mise en production planifiée</span>
+            <span class="cell">Hugo</span>
+            <span class="clamp block-yes" title="Accord des partenaires sur le créneau">Accord des partenaires sur le créneau</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Mar. 9 mars, 9 h 00</dd></div>
+              <div><dt>Demandeur</dt><dd>Hugo</dd></div>
+              <div><dt>Prise en charge</dt><dd>Mar. 9 mars, 9 h 00</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">1,5 jour</dd></div>
+              <div><dt>Résolution</dt><dd>Prévue mar. 23 mars, 7 h</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Nouvelle version installée et testée en recette, créneau proposé aux partenaires</dd></div>
+              <div><dt>Point de blocage</dt><dd>Accord des partenaires sur le créneau</dd></div>
+            </dl>
+          </div>
+        </details>
+        <details class="req" id="PNR-2027-036">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Compte contributeur Géoparc des Causses</b><span class="meta"><a class="id" href="#PNR-2027-036">PNR-2027-036</a> · Question</span></span>
+            <span class="clamp">Site Réseau des Géoparcs</span>
+            <span><span class="badge p-basse">Basse</span></span>
+            <span class="clamp" title="Qualifiée, planifiée">Qualifiée, planifiée</span>
+            <span class="cell">Lucas</span>
+            <span class="clamp block-no" title="Aucun">Aucun</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Lun. 8 mars, 14 h 20</dd></div>
+              <div><dt>Demandeur</dt><dd>Claire Lebrun (Géoparc des Causses)</dd></div>
+              <div><dt>Prise en charge</dt><dd>Mar. 9 mars, 10 h 05</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">0 jour</dd></div>
+              <div><dt>Résolution</dt><dd>Prévue ven. 19 mars</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Demande qualifiée, création du compte et des droits planifiée</dd></div>
+              <div><dt>Point de blocage</dt><dd>Aucun</dd></div>
+            </dl>
+          </div>
+        </details>
+        <details class="req" id="PNR-2027-035">
+          <summary class="req-grid">
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="req-title"><b>Grande Traversée : étapes et contenus audio</b><span class="meta"><a class="id" href="#PNR-2027-035">PNR-2027-035</a> · Projet</span></span>
+            <span class="clamp">Geotrek-admin, Rando Hautes-Combes</span>
+            <span><span class="badge p-normale">Normale</span></span>
+            <span class="clamp" title="Feuille de route validée, étape 2 sur 5">Feuille de route validée, étape 2 sur 5</span>
+            <span class="cell">Hugo</span>
+            <span class="clamp block-yes" title="Fichiers audio de 4 étapes à fournir">Fichiers audio de 4 étapes à fournir</span>
+          </summary>
+          <div class="req-detail">
+            <dl>
+              <div><dt>Reçue le</dt><dd>Ven. 5 mars, 15 h 30</dd></div>
+              <div><dt>Demandeur</dt><dd>Julien Mercier</dd></div>
+              <div><dt>Prise en charge</dt><dd>Lun. 8 mars, 9 h 30</dd></div>
+              <div><dt>Temps consacré</dt><dd class="num">3 jours</dd></div>
+              <div><dt>Résolution</dt><dd>Prévue ven. 30 avril</dd></div>
+              <div class="wide"><dt>Actions réalisées</dt><dd>Feuille de route validée, étape 1 intégrée dans Geotrek-admin</dd></div>
+              <div><dt>Point de blocage</dt><dd>Fichiers audio de 4 étapes à fournir</dd></div>
+            </dl>
+          </div>
+        </details>
+        </div>
+        <div class="list-foot">
+          <p><img class="ico ico-sm" src="icons/clock.svg" alt="">Chaque demande déposée est prise en compte et qualifiée sous 48 heures ouvrées.</p>
+          <a class="link" href="#export">Exporter le tableau en CSV</a>
+        </div>
+      </section>
+
+      <div class="split">
+        <section class="section" aria-labelledby="parc-titre">
+          <div class="section-head"><h2 id="parc-titre">État du parc</h2><a class="link" href="#">Tout l'état du parc<img class="ico ico-sm" src="icons/arrow-right.svg" alt=""></a></div>
+          <div class="table">
+            <table>
+              <thead><tr><th scope="col">Site ou outil</th><th scope="col">Mises à jour</th><th scope="col">Dernière sauvegarde</th><th scope="col">Certificat</th></tr></thead>
+              <tbody>
+            <tr><th scope="row">Site du Parc</th><td><span class="state ">À jour</span></td><td class="num">Mar. 16 mars, 2 h</td><td class="num">Valide jusqu&#x27;au 2 juin</td></tr>
+            <tr><th scope="row">Noiseraies</th><td><span class="state ">À jour</span></td><td class="num">Mar. 16 mars, 2 h</td><td class="num">Valide jusqu&#x27;au 2 juin</td></tr>
+            <tr><th scope="row">La Ligne de Crête</th><td><span class="state warn">2 extensions à mettre à jour jeudi</span></td><td class="num">Mar. 16 mars, 2 h</td><td class="num">Valide jusqu&#x27;au 11 mai</td></tr>
+            <tr><th scope="row">Destination</th><td><span class="state bad">Import APIDAE en incident</span></td><td class="num">Mar. 16 mars, 2 h</td><td class="num">Valide jusqu&#x27;au 2 juin</td></tr>
+            <tr><th scope="row">Patrimoines</th><td><span class="state ">À jour</span></td><td class="num">Mar. 16 mars, 2 h</td><td class="num">Valide jusqu&#x27;au 28 avril</td></tr>
+            <tr><th scope="row">Réseau des Géoparcs</th><td><span class="state ">À jour</span></td><td class="num">Mar. 16 mars, 2 h 30</td><td class="num">Valide jusqu&#x27;au 19 mai</td></tr>
+            <tr><th scope="row">Geotrek-admin</th><td><span class="state warn">Nouvelle version le 23 mars</span></td><td class="num">Mar. 16 mars, 1 h</td><td class="num">Valide jusqu&#x27;au 7 juin</td></tr>
+            <tr><th scope="row">Rando Hautes-Combes</th><td><span class="state ">Version 3.4 publiée le 2 mars</span></td><td class="num">Sans objet</td><td class="num">Sans objet</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="under"><span>Dernier test de restauration : site Patrimoines, lundi 1er mars, réussi en 42 minutes.</span></p>
+        </section>
+
+        <section class="section card report-card" aria-labelledby="cr-titre">
+          <h2 id="cr-titre">Dernier compte rendu</h2>
+          <a class="report-link" href="compte-rendu.html"><img class="ico" src="icons/file-text.svg" alt="">Compte rendu de février 2027</a>
+          <p>Remis le mercredi 3 mars.</p>
+          <span class="badge wait">Un arbitrage attend votre décision</span>
+        </section>
+      </div>
+    </main>
+    <footer class="foot content">
+      <p>Demandes prises en compte et qualifiées sous 48 heures ouvrées, du lundi au vendredi. Incident bloquant : <a href="mailto:support-parc@atelier-web.example">support-parc@atelier-web.example</a>.</p>
+      <p>Maintenance et évolution de l'écosystème web du Parc naturel régional des Hautes-Combes : L'Atelier Web.</p>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

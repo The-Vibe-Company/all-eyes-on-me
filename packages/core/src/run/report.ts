@@ -525,7 +525,7 @@ const WORDS = {
       uneven: "cards of one shape", clipped: "no text cut off", "tap-size": "targets big enough to tap", "font-size": "text big enough to read", "line-length": "lines short enough", zoom: "zoom left to people",
       images: "images that load", labels: "a name for every control", focus: "a visible focus", "layout-shift": "a page that does not jump", "gradient-text": "no gradient text", "side-stripe": "no stripe on one side",
       "nested-card": "no card in a card", bounce: "no bouncing motion", placeholder: "no hole left unfilled", "ai-text": "no text about the interface", "hollow-words": "no hollow words",
-      "nested-radius": "corners that follow", orphan: "no word alone on a heading's last line", motion: "motion that keeps the layout", finish: "a finished page",
+      "nested-radius": "corners that follow", orphan: "no word alone on a heading's last line", motion: "motion that keeps the layout", finish: "a finished page", layers: "a page read in layers",
     } as Record<string, string>,
   },
   fr: {
@@ -580,7 +580,7 @@ const WORDS = {
       uneven: "des cartes de même forme", clipped: "pas de texte coupé", "tap-size": "des cibles assez grandes", "font-size": "un texte assez grand", "line-length": "des lignes pas trop longues", zoom: "le zoom laissé",
       images: "des images qui chargent", labels: "un nom pour chaque contrôle", focus: "un focus visible", "layout-shift": "une page qui ne saute pas", "gradient-text": "pas de texte en dégradé", "side-stripe": "pas de liseré d'un côté",
       "nested-card": "pas de carte dans une carte", bounce: "pas de mouvement qui rebondit", placeholder: "pas de trou à remplir", "ai-text": "pas de texte sur l'interface", "hollow-words": "pas de mots creux",
-      "nested-radius": "des coins qui se suivent", orphan: "pas de mot seul en fin de titre", motion: "un mouvement qui garde la mise en page", finish: "une page finie",
+      "nested-radius": "des coins qui se suivent", orphan: "pas de mot seul en fin de titre", motion: "un mouvement qui garde la mise en page", finish: "une page finie", layers: "une page qui se lit par couches",
     } as Record<string, string>,
   },
 };

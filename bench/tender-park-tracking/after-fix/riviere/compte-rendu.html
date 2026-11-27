@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compte rendu de février 2027 · Parc naturel régional des Hautes-Combes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="who">Parc naturel régional des Hautes-Combes</div>
+    <nav aria-label="Navigation principale">
+      <a href="index.html">Tableau de suivi</a>
+      <a href="parc.html">État du parc</a>
+      <a href="feuilles-de-route.html">Feuilles de route</a>
+      <a href="compte-rendu.html" aria-current="page">Comptes rendus</a>
+      <a href="documentation.html">Documentation</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="cr-head">
+    <div>
+      <p class="date">Compte rendu mensuel, remis le mardi 2 mars 2027 par Camille Roux</p>
+      <h1>Février 2027 : un mois tenu, un arbitrage vous attend.</h1>
+    </div>
+    <dl class="figs">
+      <div><dt>Reçues</dt><dd>23</dd></div>
+      <div><dt>Traitées</dt><dd>21</dd></div>
+      <div><dt>Ouvertes</dt><dd>9</dd></div>
+    </dl>
+  </section>
+
+  <section class="source" aria-labelledby="arb-title">
+    <div>
+      <p class="level-name">Décision du Parc</p>
+      <p class="big">15 mars</p>
+      <p class="big-cap">au plus tard</p>
+    </div>
+    <div>
+      <h2 id="arb-title">Migrer la base de Geotrek-admin avant la saison, ou reporter à novembre</h2>
+      <p class="meta">La version 2.112 exige PostgreSQL 16 ; l'hébergement actuel s'arrête à la version 13.</p>
+      <details>
+        <summary><span class="more">Les deux options et le risque <span class="i i-down" aria-hidden="true"></span></span></summary>
+        <dl class="facts">
+          <div><dt>Migrer en mars</dt><dd>2 jours de travail, 4 heures de coupure un lundi matin, portails et application arrêtés pendant la coupure. Coût d'hébergement inchangé.</dd></div>
+          <div><dt>Reporter à novembre</dt><dd>Aucune coupure en saison, mais plus de correctif de sécurité pour Geotrek-admin à partir de juin, et la Grande Traversée reste sur l'ancienne version.</dd></div>
+          <div class="wide"><dt>Risque partagé</dt><dd>La coopération avec l'instance de Haut-Val sur le Grand Mont suppose une version commune ; Haut-Val passe en 2.112 en avril.</dd></div>
+        </dl>
+        <div class="choice">
+          <button class="btn" type="button">Migrer en mars</button>
+          <button class="btn ghost" type="button">Reporter à novembre</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <div class="course">
+    <details class="level cr">
+      <summary>
+        <span class="k">Demandes</span>
+        <span class="line">23 reçues, 21 traitées <span>· 9 restent ouvertes au 28 février, dont 1 bloquée</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <table>
+          <thead><tr><th>Nature</th><th>Reçues</th><th>Traitées</th><th>Ouvertes</th></tr></thead>
+          <tbody>
+            <tr><td>Anomalie</td><td>8</td><td>9</td><td>2</td></tr>
+            <tr><td>Mise à jour de contenu</td><td>7</td><td>7</td><td>1</td></tr>
+            <tr><td>Évolution</td><td>4</td><td>2</td><td>5</td></tr>
+            <tr><td>Question</td><td>3</td><td>3</td><td>0</td></tr>
+            <tr><td>Formation</td><td>1</td><td>0</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Délais de prise en charge</span>
+        <span class="line">7 h ouvrées en moyenne <span>· 23 demandes sur 23 qualifiées sous 48 heures ouvrées</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>Le plus court : 20 minutes, D-2027-030, incident bloquant sur noiseraies.fr.</li>
+          <li>Le plus long : 31 h ouvrées, D-2027-026, question reçue le vendredi 12 février à 18 h.</li>
+          <li>Incidents bloquants : pris en charge en 35 minutes en moyenne.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Incidents</span>
+        <span class="line">2 incidents, tous deux rétablis <span>· 3 h 40 d'interruption au total</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>9 février, noiseraies.fr inaccessible 2 h 50 : saturation de l'hébergement à l'ouverture de la billetterie. Mémoire doublée, cache de pages activé.</li>
+          <li>21 février, application Rando Hautes-Combes : cartes vides pendant 50 minutes après le renouvellement du fond IGN. Clé d'accès remplacée.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Mises à jour</span>
+        <span class="line">34 réalisées <span>· WordPress 6.7.2 sur les six sites, 28 extensions</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>WordPress 6.7.1 vers 6.7.2 sur les six sites, passé en recette le 24 février.</li>
+          <li>28 extensions, dont le formulaire de contact et l'extension de traduction sur Destination.</li>
+          <li>Geotrek-rando 3.18 sur les quatre portails partenaires.</li>
+          <li>En attente : Geotrek-admin 2.112, liée à l'arbitrage ci-dessus.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Mises en production</span>
+        <span class="line">5 mises en production <span>· toutes validées par le Parc après recette</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>3 février, Destination : filtre « accessible en famille » sur les randonnées.</li>
+          <li>10 février, Site du Parc : nouvelle page des marchés publics.</li>
+          <li>16 février, Les Noiseraies : plan du site du festival.</li>
+          <li>19 février, Patrimoines : carte des contributions par commune.</li>
+          <li>25 février, Application : version 2.4 sur les deux magasins.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Sécurité</span>
+        <span class="line">3 actions <span>· aucune intrusion constatée</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>Double authentification activée pour les 14 comptes administrateurs WordPress.</li>
+          <li>1 280 tentatives de connexion bloquées sur patrimoines.parc-hautes-combes.fr.</li>
+          <li>Certificat de reseau-geoparcs.fr renouvelé, valide jusqu'au 29 avril.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Sauvegardes</span>
+        <span class="line">28 nuits sur 28 réussies <span>· restauration testée le 17 février en 42 minutes</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>Sauvegarde chaque nuit à 2 h 10, conservée 30 jours, copie hors site à Lyon.</li>
+          <li>Test du 17 février : Patrimoines restauré en entier sur la recette, contributions comprises.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Évolutions en cours</span>
+        <span class="line">5 évolutions <span>· 2 attendent votre validation en recette</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>Grande Traversée : 9 étapes sur 14 saisies dans Geotrek, contenus audio sur 4 étapes.</li>
+          <li>Les Noiseraies : page programme 2027 avec billetterie, en recette depuis le 26 février.</li>
+          <li>Patrimoines : formulaire contributeur avec photo, en recette.</li>
+          <li>Coopération Haut-Val : échange des itinéraires du Grand Mont, en attente de l'arbitrage.</li>
+          <li>Formation des offices de tourisme à Geotrek-admin, le 11 mars.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr" open>
+      <summary>
+        <span class="k">Temps consacré</span>
+        <span class="line">14,5 jours en février <span>· Geotrek en tête avec 3,5 jours</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="bars" aria-label="Temps consacré par site ou outil, en jours">
+          <li><span>Geotrek-admin et portails Geotrek-rando</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="d">3,5 j</span></li>
+          <li><span>Destination Parc des Hautes-Combes</span><span class="track"><span class="fill" style="width:86%"></span></span><span class="d">3 j</span></li>
+          <li><span>Les Noiseraies</span><span class="track"><span class="fill" style="width:71%"></span></span><span class="d">2,5 j</span></li>
+          <li><span>Site du Parc</span><span class="track"><span class="fill" style="width:43%"></span></span><span class="d">1,5 j</span></li>
+          <li><span>Patrimoines</span><span class="track"><span class="fill" style="width:43%"></span></span><span class="d">1,5 j</span></li>
+          <li><span>Réseau des Géoparcs</span><span class="track"><span class="fill" style="width:21%"></span></span><span class="d">0,75 j</span></li>
+          <li><span>La Ligne de Crête</span><span class="track"><span class="fill" style="width:14%"></span></span><span class="d">0,5 j</span></li>
+          <li><span>Application Rando Hautes-Combes</span><span class="track"><span class="fill" style="width:14%"></span></span><span class="d">0,5 j</span></li>
+          <li><span>Brevo</span><span class="track"><span class="fill" style="width:7%"></span></span><span class="d">0,25 j</span></li>
+          <li><span>Réservation en ligne</span><span class="track"><span class="fill" style="width:7%"></span></span><span class="d">0,25 j</span></li>
+          <li><span>Mesure d'audience</span><span class="track"><span class="fill" style="width:7%"></span></span><span class="d">0,25 j</span></li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="level cr">
+      <summary>
+        <span class="k">Prévu en mars</span>
+        <span class="line">6 actions <span>· la première le 8 mars</span></span>
+        <span class="i i-down" aria-hidden="true"></span>
+      </summary>
+      <div class="body">
+        <ul class="plain">
+          <li>8 mars : lettre d'information de printemps dans Brevo.</li>
+          <li>11 mars : formation des offices de tourisme à Saint-Aubin.</li>
+          <li>15 mars : itinéraires hivernaux masqués dans l'application.</li>
+          <li>Migration de Geotrek-admin, si le Parc la retient.</li>
+          <li>19 mars : étapes restantes de la Grande Traversée.</li>
+          <li>Test de restauration de Destination Parc des Hautes-Combes.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
+  <details class="park">
+    <summary>
+      <h2 class="sec">Mois précédents</h2>
+      <span class="line">Janvier 2027 <span>· remis le 2 février</span></span>
+      <span class="i i-down" aria-hidden="true"></span>
+    </summary>
+    <div class="body prev">
+      <a href="compte-rendu-2027-01.html">Janvier 2027</a>
+      <a href="compte-rendu-2026-12.html">Décembre 2026, reprise du parc</a>
+    </div>
+  </details>
+</main>
+
+<footer>
+  <span><a href="index.html">Retour au tableau de suivi</a></span>
+  <span>Astreinte : 03 84 41 27 00</span>
+</footer>
+</body>
+</html>

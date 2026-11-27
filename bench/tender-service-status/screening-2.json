@@ -1,0 +1,41 @@
+{
+  "out": {
+    "vigilance-2": "Elle ne suit pas la structure donnée : on lui avait donné deux colonnes (ouvert et prévu à gauche, services et ressources à droite, déroulé et délais côte à côte sur la fiche), mais ses deux écrans sont une seule colonne de lignes à chevron sous une bande, le même squelette que rampe et suivi (barre en haut, bande ou chiffre, lignes repliables), et elle en est la plus éloignée de sa propre structure, donc c'est elle que je nomme. S'y ajoutent un champ rose pâle avec un « Bloquant » géant en rouge brique, proche du look interdit papier clair, grand titre et accent brique, et un registre d'alerte plus criard que calme."
+  },
+  "compare": {
+    "classique-2": {
+      "strong": "Rail à gauche, phrase d'état, 97,7 % en grand avec le seuil de 96 % marqué, puis « À faire » et les incidents : une hiérarchie nette, de l'air, des listes sans cadre et des replis (ressources, changement, sauvegarde, administration) qui gardent leur ligne résumée.",
+      "weak": "Le texte est petit et gris sur de grandes marges, la liste des dix services reste ouverte en entier, et rien ne saute vraiment aux yeux à part le chiffre du mois ; la fiche est propre mais sans voix.",
+      "fit": "Se reconnaît tout de suite comme une console d'exploitation ; toutes les exigences sont à une ligne ou à un clic et la fiche tient ses deux délais et ses trois actions à droite, à portée."
+    },
+    "vigilance-2": {
+      "strong": "Un seul geste fort, le niveau « Bloquant » en grand avec le temps restant, la disponibilité du mois et le prochain point, dit en mots et pas seulement en couleur ; les lignes de détail se replient bien.",
+      "weak": "Le fond rose et le rouge brique tirent vers le look interdit et vers l'alarme, la structure en deux colonnes promise n'existe pas, et les services déployés en deux colonnes alignent beaucoup de petit texte.",
+      "fit": "Se lit comme un suivi de service avec ses exigences visibles, mais l'ambiance de bulletin d'alerte met l'outil de travail hors du registre calme."
+    },
+    "rampe-2": {
+      "strong": "Le mois en cases teintées par jour (une seule teinte vert-bleu) donne un vrai geste de données, très lisible pour la disponibilité contre 96 %, et la fiche montre les heures consommées sur une rampe.",
+      "weak": "La première page empile beaucoup : le chiffre, la matrice, les dix services toujours ouverts, puis cinq lignes de plus, avec des textes minuscules ; l'effet de masse revient à bas bruit, et les trois colonnes promises sont une pile de lignes.",
+      "fit": "Le thème donne bien l'engagement de disponibilité de l'administratrice, mais le suivi des incidents passe au second plan sur l'écran d'accueil."
+    },
+    "suivi-2": {
+      "strong": "La frise déclaré, pris en compte, rétabli, qualifié avec le temps restant en grand, en violet sobre, se lit en une seconde et montre l'étape en cours ; la page respire bien, avec beaucoup de lignes repliées.",
+      "weak": "La colonne unique est longue et les services restent déployés en entier ; sur la fiche, la frise répète celle de l'accueil, et l'ensemble garde le même squelette que vigilance et rampe.",
+      "fit": "Très adaptée au suivi d'un incident jusqu'à sa qualification signée, avec toutes les exigences visibles ou à un clic."
+    },
+    "departs-2": {
+      "strong": "L'heure en grand sur une bande bleu nuit, puis une liste triée par échéance avec statut et temps restant écrits : un geste fort et clair, avec l'action « Valider » ouverte sous la première ligne.",
+      "weak": "Les listes en gris très clair et petit corps manquent de contraste, les lignes sont tassées en tableaux serrés, et la bande sombre fait pencher l'outil vers un tableau d'affichage.",
+      "fit": "Bonne pour ce qui a une heure limite et pour l'administratrice qui doit agir, un peu moins pour dire d'un coup d'œil si la plateforme tient son mois."
+    },
+    "parapheur-2": {
+      "strong": "Deux volets : la pile « À traiter » triée par échéance à gauche, l'état du service à droite, un seul accent bordeaux, 97,7 % avec son seuil, et la fiche qui ouvre sa pièce à côté de la pile avec Valider et Signer ; la structure est la plus distincte et la plus aérée.",
+      "weak": "Le volet de gauche reste présent sur la fiche et mange de la largeur, et le texte secondaire est petit et pâle ; les ressources s'ouvrent en barres, mais l'ensemble reste un peu dense à droite.",
+      "fit": "Colle au travail de l'administratrice (valider, signer, accepter, lire) avec toutes les exigences en une ligne résumée, et se reconnaît comme un outil de suivi sobre."
+    }
+  },
+  "start": {
+    "source": "parapheur-2",
+    "why": "C'est celle qui respecte le mieux les règles de la personne : une phrase d'état, un chiffre clé, une pile d'actions, une ligne par bloc et un seul dépli ouvert, avec peu de cadres. Sa structure en deux volets est la seule vraiment différente des autres, et elle sert ce que l'administratrice doit faire : valider et signer."
+  }
+}

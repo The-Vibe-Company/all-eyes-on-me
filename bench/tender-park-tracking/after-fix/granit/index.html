@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de suivi · Parc naturel régional des Hautes-Combes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">Parc naturel régional<br>des Hautes-Combes</div>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="index.html" aria-current="page">Tableau de suivi</a>
+      <a href="parc.html">État du parc</a>
+      <a href="feuilles-de-route.html">Feuilles de route</a>
+      <a href="compte-rendu.html">Comptes rendus</a>
+      <a href="documentation.html">Documentation</a>
+    </nav>
+    <a class="btn" href="demandes/nouvelle.html"><img class="i" src="icons/plus.svg" alt="">Déposer une demande</a>
+  </div>
+</header>
+
+<main class="page">
+  <div class="state">
+    <h1>Un incident en cours sur le flux APIDAE. <b>Trois points attendent le Parc.</b></h1>
+    <p class="meta">Jeudi 4 mars 2027, 10 h 20 · Qualification de chaque demande sous
+      <span class="tip" tabindex="0" aria-describedby="tip-48h">48 heures ouvrées<span role="tooltip" id="tip-48h">Du lundi au vendredi, de 9 h à 18 h, hors jours fériés. Une demande déposée jeudi à 9 h 12 est qualifiée au plus tard lundi à 9 h 12.</span></span></p>
+  </div>
+
+  <div class="wall">
+    <!-- À vous : ce que le Parc doit faire -->
+    <section class="stone parc" aria-labelledby="h-vous">
+      <div class="stone-head">
+        <h2 id="h-vous">À vous</h2><span class="count">3</span>
+        <p>Incident, validations, réponse</p>
+      </div>
+
+      <details class="incident" open>
+        <summary>
+          <img class="chev" src="icons/chevron-down.svg" alt="">
+          <span class="row-main">
+            <span class="row-title"><span class="label-alert"><img class="i" src="icons/triangle-alert.svg" alt=""> Incident bloquant</span> · Flux APIDAE vers Destination</span>
+            <span class="row-sub">DEM-2027-047 · Correctif en recette · Sofia B.</span>
+            <span class="eta"><strong>17 h</strong><span>rétablissement prévu<br>aujourd'hui, jeudi 4 mars</span></span>
+          </span>
+        </summary>
+        <div class="body">
+          <dl class="fields">
+            <dt>Diagnostic</dt><dd>APIDAE a changé sa clé d'accès le 3 mars ; la synchronisation de 6 h a échoué.</dd>
+            <dt>Conséquences</dt><dd>312 fiches d'hébergement figées au 2 mars ; les nouvelles fêtes de village n'apparaissent pas.</dd>
+            <dt>Contournement</dt><dd>Les fiches urgentes se saisissent à la main dans Destination.</dd>
+            <dt>Avancement</dt><dd>Diagnostic le 3 mars à 11 h 40 ; nouvelle clé en recette ce matin ; mise en production à 16 h.</dd>
+            <dt>Votre part</dt><dd>Prévenir les offices de tourisme du délai.</dd>
+          </dl>
+        </div>
+      </details>
+
+      <div class="group">
+        <h3>À valider avant mise en ligne · 2</h3>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-038</span>Grande Traversée : 12 étapes géolocalisées</span>
+              <span class="row-sub">Destination · Évolution · en recette depuis le 1er mars</span>
+            </span>
+          </summary>
+          <div class="body">
+            <p>Les 12 étapes de la Grande Traversée s'affichent sur la carte de Destination, avec leurs contenus audio venus de Geotrek. Testé sur ordinateur et téléphone le 1er mars par Julien R.</p>
+            <div class="row-action"><button class="btn-quiet" type="button"><img class="i" src="icons/check.svg" alt="">Valider la mise en ligne</button><a href="https://recette.destination-parc-hautes-combes.fr/grande-traversee">Ouvrir la recette</a></div>
+          </div>
+        </details>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-041</span>Nouveau formulaire de contribution</span>
+              <span class="row-sub">Patrimoines · Évolution · en recette depuis le 26 février</span>
+            </span>
+          </summary>
+          <div class="body">
+            <p>Le formulaire accepte trois photos par fiche, une commune et une période. Le réseau des contributeurs l'a essayé le 1er mars, sans remarque.</p>
+            <div class="row-action"><button class="btn-quiet" type="button"><img class="i" src="icons/check.svg" alt="">Valider la mise en ligne</button><a href="https://recette.patrimoines.parc-hautes-combes.fr/contribuer">Ouvrir la recette</a></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="group">
+        <h3>Réponse attendue · 1</h3>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-044</span>Textes et tarifs des Noiseraies 2027</span>
+              <span class="row-sub">Noiseraies · demandés le 25 février · billetterie en attente</span>
+            </span>
+          </summary>
+          <div class="body">
+            <p>La billetterie de l'édition 2027 ouvre dès réception des tarifs et du texte de présentation. Inès T. la met en ligne sous un jour ouvré.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Chez nous : ce que le prestataire fait -->
+    <section class="stone" aria-labelledby="h-nous">
+      <div class="stone-head">
+        <h2 id="h-nous">Chez nous</h2><span class="count">6</span>
+        <p>Demandes en traitement</p>
+      </div>
+
+      <div class="group">
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-047</span>Flux APIDAE · Anomalie</span>
+              <span class="row-sub">Bloquante · Correctif en recette · Sofia B.</span>
+            </span>
+          </summary>
+          <div class="body"><dl class="fields">
+            <dt>Reçue</dt><dd>3 mars, 7 h 50, Claire Vuillet</dd>
+            <dt>Prise en charge</dt><dd>3 mars, 8 h 10</dd>
+            <dt>Temps consacré</dt><dd>0,75 jour</dd>
+            <dt>Résolution</dt><dd>Prévue le 4 mars à 17 h</dd>
+            <dt>Actions</dt><dd>Diagnostic, nouvelle clé en recette</dd>
+            <dt>Blocage</dt><dd>Aucun</dd>
+          </dl></div>
+        </details>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-042</span>Application Rando Hautes-Combes · Mise à jour</span>
+              <span class="row-sub">Haute · En cours · Marc L. · <span class="block"><img class="i" src="icons/circle-pause.svg" alt=""> Bloquée : accès au compte Apple</span></span>
+            </span>
+          </summary>
+          <div class="body"><dl class="fields">
+            <dt>Reçue</dt><dd>18 février, Thomas Grosjean</dd>
+            <dt>Prise en charge</dt><dd>18 février, 14 h 30</dd>
+            <dt>Temps consacré</dt><dd>1,5 jour</dd>
+            <dt>Résolution</dt><dd>Avant le 25 avril, date imposée par Apple</dd>
+            <dt>Actions</dt><dd>Application recompilée, testée sur six téléphones</dd>
+            <dt>Blocage</dt><dd>Le Parc doit inviter Marc L. sur son compte développeur Apple</dd>
+          </dl></div>
+        </details>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-045</span>Geotrek-admin · Évolution</span>
+              <span class="row-sub">Normale · En cours · Marc L. · <span class="block"><img class="i" src="icons/circle-pause.svg" alt=""> Bloquée : tracés de Haut-Val</span></span>
+            </span>
+          </summary>
+          <div class="body"><dl class="fields">
+            <dt>Reçue</dt><dd>24 février, Thomas Grosjean</dd>
+            <dt>Prise en charge</dt><dd>25 février, 9 h 15</dd>
+            <dt>Temps consacré</dt><dd>0,5 jour</dd>
+            <dt>Résolution</dt><dd>À fixer après réception des tracés</dd>
+            <dt>Actions</dt><dd>Import des sentiers du Grand Mont préparé</dd>
+            <dt>Blocage</dt><dd>L'instance Geotrek de Haut-Val doit envoyer son export</dd>
+          </dl></div>
+        </details>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-043</span>Patrimoines · Anomalie</span>
+              <span class="row-sub">Haute · Qualifiée · Julien R.</span>
+            </span>
+          </summary>
+          <div class="body"><dl class="fields">
+            <dt>Reçue</dt><dd>1er mars, Bastien Jacquet</dd>
+            <dt>Prise en charge</dt><dd>1er mars, 11 h 00</dd>
+            <dt>Temps consacré</dt><dd>0,25 jour</dd>
+            <dt>Résolution</dt><dd>Prévue le 5 mars</dd>
+            <dt>Actions</dt><dd>Photos des contributeurs non redimensionnées, cause trouvée</dd>
+            <dt>Blocage</dt><dd>Aucun</dd>
+          </dl></div>
+        </details>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-040</span>Site du Parc · Mise à jour de contenu</span>
+              <span class="row-sub">Normale · En cours · Inès T.</span>
+            </span>
+          </summary>
+          <div class="body"><dl class="fields">
+            <dt>Reçue</dt><dd>26 février, Claire Vuillet</dd>
+            <dt>Prise en charge</dt><dd>26 février, 15 h 40</dd>
+            <dt>Temps consacré</dt><dd>0,5 jour</dd>
+            <dt>Résolution</dt><dd>Prévue le 8 mars</dd>
+            <dt>Actions</dt><dd>Rubrique marchés publics refondue, 9 avis sur 14 repris</dd>
+            <dt>Blocage</dt><dd>Aucun</dd>
+          </dl></div>
+        </details>
+        <details>
+          <summary>
+            <img class="chev" src="icons/chevron-down.svg" alt="">
+            <span class="row-main">
+              <span class="row-title"><span class="num">DEM-2027-048</span>Réseau des Géoparcs · Question</span>
+              <span class="row-sub">Basse · Reçue, qualifiée avant le 8 mars, 9 h 12 · Inès T.</span>
+            </span>
+          </summary>
+          <div class="body"><dl class="fields">
+            <dt>Reçue</dt><dd>4 mars, 9 h 12, Lise Fabre, Géoparc des Causses</dd>
+            <dt>Prise en charge</dt><dd>À venir</dd>
+            <dt>Temps consacré</dt><dd>0 jour</dd>
+            <dt>Résolution</dt><dd>À fixer à la qualification</dd>
+            <dt>Actions</dt><dd>Ajouter un administrateur pour le Géoparc des Causses</dd>
+            <dt>Blocage</dt><dd>Aucun</dd>
+          </dl></div>
+        </details>
+      </div>
+      <div class="group">
+        <h3>État du parc</h3>
+      <details class="park">
+        <summary>
+          <img class="chev" src="icons/chevron-down.svg" alt="">
+          <span class="row-main">
+            <span class="row-title">8 sites et outils à jour sur 9</span>
+            <span class="row-sub"><img class="i" src="icons/hard-drive-download.svg" alt=""> Sauvegardes réussies cette nuit à 2 h 10</span>
+          </span>
+          <span class="row-side">Détails</span>
+        </summary>
+        <div class="body">
+          <table>
+            <thead><tr><th>Site ou outil</th><th>État</th><th>Sauvegarde de la nuit</th><th>Certificat jusqu’au</th></tr></thead>
+            <tbody>
+              <tr><td>Site du Parc</td><td>À jour</td><td>2 h 10</td><td>12 mai</td></tr>
+              <tr><td>Noiseraies</td><td>À jour</td><td>2 h 12</td><td>12 mai</td></tr>
+              <tr><td>La Ligne de Crête</td><td>À jour</td><td>2 h 14</td><td>30 avril</td></tr>
+              <tr><td>Destination</td><td>À jour</td><td>2 h 16</td><td>12 mai</td></tr>
+              <tr><td>Patrimoines</td><td>À jour</td><td>2 h 20</td><td>12 mai</td></tr>
+              <tr><td>Réseau des Géoparcs</td><td class="block">1 extension en attente</td><td>2 h 22</td><td>18 avril</td></tr>
+              <tr><td>Geotrek-admin</td><td>À jour</td><td>2 h 30</td><td>2 juin</td></tr>
+              <tr><td>Portails Geotrek-rando</td><td>À jour</td><td>2 h 40</td><td>2 juin</td></tr>
+              <tr><td>Application Rando</td><td>À jour</td><td>2 h 45</td><td>Sans objet</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:14px"><a href="parc.html">Versions, tests de restauration et hébergeurs</a></p>
+        </div>
+      </details>
+      </div>
+    </section>
+  </div>
+
+
+  <footer class="foot">
+    <span>Compte rendu de février remis le 3 mars · <a href="compte-rendu.html">Lire le compte rendu</a></span>
+    <span>Équipe de maintenance : Julien R., Sofia B., Marc L., Inès T.</span>
+  </footer>
+</main>
+</body>
+</html>

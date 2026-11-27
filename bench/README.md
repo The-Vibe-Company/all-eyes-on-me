@@ -16,6 +16,10 @@ Only the files git tracks are copied: an app's local data, such as `data/db.json
 | `studio-respire` | Booking classes at a yoga studio | Built by an agent from an ordinary request, without AEOM |
 | `factures` | A freelancer's invoices | Built by an agent from an ordinary request, without AEOM |
 
+## Rounds of directions
+
+Two folders hold no app: `tender-service-status/` and `tender-park-tracking/` are rounds of `/aeom directions --tender` the person judged, kept to hold the checks of a mockup to what they said. Each has its README: the spec, the briefs the workers got, the screening's answers, the person's verdict word for word, and what must hold. `aeom bench prepare` passes them by; the tests of `aeom check` read them.
+
 ## Running it
 
 ```bash

@@ -22,6 +22,8 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages a
     await writeFile(join(chosen, "img", "hero.png"), "an illustration generated for it");
     await mkdir(`${chosen}-shots`, { recursive: true });
     await writeFile(join(`${chosen}-shots`, "x.png"), "a capture");
+    await mkdir(join(chosen, ".work", "check"), { recursive: true });
+    await writeFile(join(chosen, ".work", "check", "check.json"), "{}");
 
     assert.equal((await run(["direction", "show"])).code, 1, "nothing kept yet");
     const kept = await run(["direction", "keep", chosen, "--sentence", "The logbook a captain keeps, ruled and dated.", "--source", "the front as it is", "--why", "it feels like the boat"]);
@@ -31,6 +33,7 @@ test("aeom direction keeps the direction chosen in .aeom/direction/, its pages a
     assert.ok(existsSync(join(dir, ".aeom", "direction", "img", "hero.png")), "the images generated for it are the direction's too");
     assert.match(readFileSync(join(dir, ".aeom", "direction", ".gitignore"), "utf8"), /^\*\.png$/m, "and they stay on this machine");
     assert.ok(!existsSync(join(dir, ".aeom", "direction", "x.png")), "its captures, beside its folder, stay in the run");
+    assert.ok(!existsSync(join(dir, ".aeom", "direction", ".work")), "what its worker kept to look at its own work stays in the run");
     const saved = JSON.parse(readFileSync(join(dir, ".aeom", "direction", "direction.json"), "utf8"));
     assert.deepEqual({ ...saved, kept: typeof saved.kept }, { slug: "carnet-de-bord", sentence: "The logbook a captain keeps, ruled and dated.", source: "the front as it is", why: "it feels like the boat", run: "run-20261020-1500", kept: "string" });
 
